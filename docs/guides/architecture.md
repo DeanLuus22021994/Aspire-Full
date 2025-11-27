@@ -42,8 +42,25 @@ Aspire-Full is a distributed application orchestrator built on .NET Aspire, desi
 The AppHost is the orchestrator for the distributed application:
 
 - **Entry Point**: `Aspire-Full/AppHost.cs`
-- **SDK**: `Aspire.AppHost.Sdk` v13.1.0-preview
+- **SDK**: `Aspire.AppHost.Sdk` v13.0.1
 - **Framework**: .NET 10.0
+
+### API Service
+
+RESTful API with Entity Framework Core:
+
+- **Entry Point**: `Aspire-Full.Api/Program.cs`
+- **Database**: PostgreSQL via `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`
+- **ORM**: Entity Framework Core with soft-delete pattern
+
+### Web Frontend
+
+React SPA with Vite:
+
+- **Entry Point**: `Aspire-Full.Web/src/main.tsx`
+- **Framework**: React 19 + TypeScript
+- **UI**: Semantic UI React
+- **Build**: Vite 6
 
 ### Aspire Dashboard
 
@@ -116,3 +133,40 @@ All persistent data is stored in named Docker volumes, not host mounts:
 - Use HTTPS for all endpoints
 - Implement proper secrets management
 - Use Azure Key Vault or similar
+
+## Database Layer
+
+### Entity Framework Core
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AppDbContext                              │
+├─────────────────────────────────────────────────────────────┤
+│  DbSet<Item> Items                                          │
+│  DbSet<User> Users                                          │
+├─────────────────────────────────────────────────────────────┤
+│  Global Query Filters:                                       │
+│  - Users: IsActive == true (soft-delete)                    │
+├─────────────────────────────────────────────────────────────┤
+│  Relationships:                                              │
+│  - User 1:N Items (SetNull on delete)                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Soft-Delete Pattern
+
+Users are never physically deleted by default:
+
+```
+[Active User] ─── DELETE ───► [Inactive User] ─── Reactivate ───► [Active User]
+      │                              │
+      │                              │
+      └── Admin Permanent Delete ────┘──► [Removed from DB]
+```
+
+### Upsert/Downsert Operations
+
+| Operation | Description | Effect |
+|-----------|-------------|--------|
+| **Upsert** | Create or reactivate | New user or restore soft-deleted |
+| **Downsert** | Soft delete | Sets `IsActive=false`, `DeletedAt` |

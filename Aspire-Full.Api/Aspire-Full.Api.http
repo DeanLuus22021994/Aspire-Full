@@ -1,6 +1,93 @@
-@Aspire_Full.Api_HostAddress = http://localhost:5110
+@ApiHost = http://localhost:5110
 
-GET {{Aspire_Full.Api_HostAddress}}/weatherforecast/
+### Health Check
+GET {{ApiHost}}/health
 Accept: application/json
+
+### Alive Check
+GET {{ApiHost}}/alive
+Accept: application/json
+
+### Get All Items
+GET {{ApiHost}}/api/items
+Accept: application/json
+
+### Get Item by ID
+GET {{ApiHost}}/api/items/1
+Accept: application/json
+
+### Create Item
+POST {{ApiHost}}/api/items
+Content-Type: application/json
+
+{
+  "name": "New Item",
+  "description": "Item created via HTTP file"
+}
+
+### Update Item
+PUT {{ApiHost}}/api/items/1
+Content-Type: application/json
+
+{
+  "name": "Updated Item",
+  "description": "Item updated via HTTP file"
+}
+
+### Delete Item
+DELETE {{ApiHost}}/api/items/1
+
+###
+
+### ===== USER ENDPOINTS =====
+
+### Get All Users
+GET {{ApiHost}}/api/users
+Accept: application/json
+
+### Get User by ID
+GET {{ApiHost}}/api/users/1
+Accept: application/json
+
+### Create User (Upsert)
+POST {{ApiHost}}/api/users
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "displayName": "Test User",
+  "role": "User"
+}
+
+### Update User
+PUT {{ApiHost}}/api/users/1
+Content-Type: application/json
+
+{
+  "displayName": "Updated User",
+  "isActive": true
+}
+
+### Delete User (Soft Delete/Downsert)
+DELETE {{ApiHost}}/api/users/1
+
+###
+
+### ===== ADMIN ENDPOINTS =====
+
+### Get All Admins
+GET {{ApiHost}}/api/admin/users
+Accept: application/json
+
+### Promote User to Admin
+POST {{ApiHost}}/api/admin/users/1/promote
+Content-Type: application/json
+
+### Demote Admin to User
+POST {{ApiHost}}/api/admin/users/1/demote
+Content-Type: application/json
+
+### Hard Delete User (Admin Only)
+DELETE {{ApiHost}}/api/admin/users/1/permanent
 
 ###

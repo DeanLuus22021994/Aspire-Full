@@ -53,8 +53,7 @@ var frontend = builder.AddJavaScriptApp("frontend", "../Aspire-Full.Web", "dev")
     .WithReference(api)
     .WaitFor(api)
     .WithHttpEndpoint(env: "PORT")
-    .WithExternalHttpEndpoints()
-    .PublishAsDockerFile();
+    .WithExternalHttpEndpoints();
 
 // Build and run the distributed application
 builder.Build().Run();

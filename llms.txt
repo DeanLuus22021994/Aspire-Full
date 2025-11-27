@@ -6,7 +6,8 @@
 
 This project demonstrates a complete .NET Aspire distributed application setup with:
 - .NET 10 SDK (LTS)
-- Aspire 13.1.0-preview (bleeding edge)
+- Aspire 13.0.1 (stable)
+- Entity Framework Core with PostgreSQL
 - Docker-based devcontainer with named volumes
 - GitHub CLI tooling with AI extensions
 - AI-optimized documentation
@@ -15,7 +16,7 @@ This project demonstrates a complete .NET Aspire distributed application setup w
 
 - [Getting Started](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/getting-started.md): Setup and run the application
 - [Architecture](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/architecture.md): System architecture and design
-- [API Reference](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/api/index.md): Generated API documentation
+- [API Reference](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/api/index.md): REST API documentation
 - [DevContainer](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/devcontainer.md): Development environment setup
 - [GitHub Tooling](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/github-tooling.md): CLI tools and extensions
 
@@ -38,9 +39,10 @@ dotnet run --project Aspire-Full
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | .NET SDK | 10.0.100 | Runtime and build |
-| Aspire | 13.1.0-preview | Distributed app orchestration |
+| Aspire | 13.0.1 | Distributed app orchestration |
+| EF Core | 10.0.0-preview | ORM with PostgreSQL |
 | Docker | 28.x | Containerization |
-| GitHub CLI | 2.83+ | Repository management |
+| React | 19.x | Frontend SPA |
 
 ## Project Structure
 
@@ -49,9 +51,49 @@ Aspire-Full/
 ├── .devcontainer/          # Docker devcontainer config
 ├── .github/workflows/      # CI/CD pipelines
 ├── Aspire-Full/            # AppHost project
+├── Aspire-Full.Api/        # REST API with EF Core
+├── Aspire-Full.Web/        # React frontend
+├── Aspire-Full.Tests.Unit/ # Unit tests (xUnit)
+├── Aspire-Full.Tests.E2E/  # E2E tests (NUnit)
 ├── docs/                   # Documentation
 ├── scripts/                # Automation scripts
 └── llms.txt                # AI documentation index
+```
+
+## API Endpoints
+
+### Items API
+- `GET /api/items` - List items
+- `POST /api/items` - Create item
+- `PUT /api/items/{id}` - Update item
+- `DELETE /api/items/{id}` - Delete item
+
+### Users API (Upsert/Downsert)
+- `GET /api/users` - List active users
+- `POST /api/users` - Upsert: Create or reactivate
+- `DELETE /api/users/{id}` - Downsert: Soft delete
+- `POST /api/users/{id}/login` - Record login
+
+### Admin API
+- `GET /api/admin/users` - All users (including deleted)
+- `POST /api/admin/users/{id}/promote` - Promote to Admin
+- `POST /api/admin/users/{id}/reactivate` - Reactivate user
+- `DELETE /api/admin/users/{id}/permanent` - Hard delete
+- `GET /api/admin/stats` - Admin statistics
+
+## Database Schema
+
+```
+Users (soft-delete enabled)
+├── Id, Email (unique), DisplayName
+├── Role (User/Admin), IsActive
+├── CreatedAt, UpdatedAt, DeletedAt, LastLoginAt
+└── Items (1:N navigation)
+
+Items
+├── Id, Name, Description
+├── CreatedAt, UpdatedAt
+└── CreatedByUserId (FK → Users, nullable)
 ```
 
 ## Optional

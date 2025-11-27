@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.1.0-preview.1.25576.5" />
-    <PackageReference Include="Aspire.StackExchange.Redis" Version="13.1.0-preview.1.25576.5" />
-    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.1.0-preview.1.25576.5" />
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.0.1" />
+    <PackageReference Include="Aspire.StackExchange.Redis" Version="13.0.1" />
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

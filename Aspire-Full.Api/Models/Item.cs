@@ -7,6 +7,16 @@ public class Item
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Foreign key to the user who created this item.
+    /// </summary>
+    public int? CreatedByUserId { get; set; }
+
+    /// <summary>
+    /// Navigation property to the user who created this item.
+    /// </summary>
+    public User? CreatedByUser { get; set; }
 }
 
 public class CreateItemDto
