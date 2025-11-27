@@ -1,5 +1,12 @@
 {
-  "inputs": [],
+  "inputs": [
+    {
+      "id": "aspireMcpApiKey",
+      "type": "promptString",
+      "description": "Aspire Dashboard API Key",
+      "default": ""
+    }
+  ],
   "servers": {
     "aspire-dashboard": {
       "type": "http",
