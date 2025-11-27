@@ -1,0 +1,133 @@
+:root {
+    color-scheme: light dark;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background-color: #0b0c10;
+    color: #f4f4f4;
+}
+
+.app-menu.ui.menu {
+    border-radius: 0;
+}
+
+.page-container {
+    padding-bottom: 4rem;
+}
+
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.sparkline {
+    display: flex;
+    gap: 2px;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.clearfix {
+    clear: both;
+}
+
+.status-strip {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.meta-text {
+    color: #b5b5b5;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
+}
+
+.sparkline-bar {
+    flex: 1;
+    min-height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, #21ba45 0%, #09642a 100%);
+}
+
+.sparkline-bar.h-1 {
+    height: 4px;
+}
+
+.sparkline-bar.h-2 {
+    height: 7px;
+}
+
+.sparkline-bar.h-3 {
+    height: 10px;
+}
+
+.sparkline-bar.h-4 {
+    height: 13px;
+}
+
+.sparkline-bar.h-5 {
+    height: 16px;
+}
+
+.sparkline-bar.h-6 {
+    height: 19px;
+}
+
+.sparkline-bar.h-7 {
+    height: 22px;
+}
+
+.sparkline-bar.h-8 {
+    height: 25px;
+}
+
+.sparkline-bar.h-9 {
+    height: 28px;
+}
+
+.sparkline-bar.h-10 {
+    height: 31px;
+}
+
+.sparkline-bar.h-11 {
+    height: 34px;
+}
+
+.sparkline-bar.h-12 {
+    height: 37px;
+}
+
+.sparkline-bar.h-13 {
+    height: 40px;
+}
+
+.sparkline-bar.h-14 {
+    height: 43px;
+}
+
+.sparkline-bar.h-15 {
+    height: 46px;
+}
+
+.sparkline-bar.h-16 {
+    height: 49px;
+}
+
+.sparkline-bar.h-17 {
+    height: 52px;
+}
+
+.sparkline-bar.h-18 {
+    height: 55px;
+}
+
+.sparkline-bar.h-19 {
+    height: 58px;
+}
+
+.sparkline-bar.h-20 {
+    height: 62px;
+}

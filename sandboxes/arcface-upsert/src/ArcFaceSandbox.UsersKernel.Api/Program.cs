@@ -8,8 +8,33 @@ using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string SandboxUiCorsPolicy = "SandboxUi";
+
 builder.Services.AddArcFaceEmbedding(builder.Configuration);
 builder.Services.AddSandboxVectorStore(builder.Configuration);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(SandboxUiCorsPolicy, policy =>
+    {
+        var allowedOrigins = builder.Configuration
+            .GetSection("SandboxUi:AllowedOrigins")
+            .Get<string[]>();
+
+        if (allowedOrigins is { Length: > 0 })
+        {
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
+});
 
 builder.Services.AddDbContext<SandboxUsersDbContext>(options =>
 {
@@ -42,6 +67,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(SandboxUiCorsPolicy);
 app.MapControllers();
 
 app.Run();
