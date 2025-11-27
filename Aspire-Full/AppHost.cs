@@ -6,24 +6,26 @@
 //
 // Architecture:
 //   - Aspire manages its own containers (PostgreSQL, Redis, admin UIs)
-//   - Aspire creates an isolated session network for container communication
+//   - Uses aspire-network for consistent low-latency communication
 //   - Telemetry is sent to external dashboard via OTLP (port 18889)
 //   - Docker Compose manages: devcontainer, aspire-dashboard
 //
 // Features:
 //   - Service discovery and configuration
-//   - Container orchestration with isolated networking
+//   - Container orchestration with shared networking
 //   - OpenTelemetry integration with standalone dashboard
 //   - Health checks and monitoring
+//   - GPU acceleration support (NVIDIA CUDA/TensorRT)
 //
 // Environment Variables:
 //   - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL - OTLP endpoint for telemetry
 //   - ASPIRE_ALLOW_UNSECURED_TRANSPORT - Allow HTTP for development
 //   - OTEL_EXPORTER_OTLP_ENDPOINT - OpenTelemetry endpoint
+//   - CUDA_VISIBLE_DEVICES - GPU device selection
 //
 // Usage:
-//   dotnet run --project Aspire-Full
-//   aspire run
+//   dotnet run --project Aspire-Full --launch-profile headless
+//   ./scripts/Start-Aspire.ps1 -UseGpu
 // =============================================================================
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -33,7 +35,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 // -----------------------------------------------------------------------------
 var postgres = builder.AddPostgres("postgres")
     .WithPgAdmin()
-    .WithDataVolume("aspire-postgres-data");
+    .WithDataVolume("aspire-postgres-data")
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var database = postgres.AddDatabase("aspiredb");
 
@@ -42,7 +45,8 @@ var database = postgres.AddDatabase("aspiredb");
 // -----------------------------------------------------------------------------
 var redis = builder.AddRedis("redis")
     .WithRedisCommander()
-    .WithDataVolume("aspire-redis-data");
+    .WithDataVolume("aspire-redis-data")
+    .WithLifetime(ContainerLifetime.Persistent);
 
 // -----------------------------------------------------------------------------
 // API Service - RESTful backend with Entity Framework

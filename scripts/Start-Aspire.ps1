@@ -6,10 +6,16 @@
 # suitable for AI agent invocation without blocking the terminal.
 #
 # Usage:
-#   ./scripts/Start-Aspire.ps1              # Start in background
+#   ./scripts/Start-Aspire.ps1              # Start in background (headless)
 #   ./scripts/Start-Aspire.ps1 -Wait        # Start and wait (blocking)
 #   ./scripts/Start-Aspire.ps1 -Stop        # Stop running instance
 #   ./scripts/Start-Aspire.ps1 -Status      # Check status
+#   ./scripts/Start-Aspire.ps1 -UseGpu      # Enable GPU acceleration
+#
+# Environment:
+#   - Uses 'headless' launch profile (no browser, no interactive prompts)
+#   - Connects to aspire-network for low-latency container communication
+#   - Supports NVIDIA GPU acceleration via CUDA when -UseGpu is specified
 # =============================================================================
 
 [CmdletBinding()]
@@ -17,7 +23,8 @@ param(
     [switch]$Wait,
     [switch]$Stop,
     [switch]$Status,
-    [int]$TimeoutSeconds = 30
+    [switch]$UseGpu,
+    [int]$TimeoutSeconds = 60
 )
 
 $ErrorActionPreference = "Stop"
@@ -136,20 +143,41 @@ function Start-AspireApp {
         return $false
     }
 
-    Write-Host "Starting Aspire distributed application..." -ForegroundColor Cyan
+    # Set up environment for non-interactive execution
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+    $env:DOTNET_NOLOGO = "1"
+    $env:ASPIRE_ALLOW_UNSECURED_TRANSPORT = "true"
+    $env:ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL = "http://localhost:18889"
+    $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:18889"
+
+    # GPU configuration if available
+    if ($UseGpu) {
+        $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
+        if ($gpuAvailable) {
+            Write-Host "GPU acceleration enabled (NVIDIA)" -ForegroundColor Magenta
+            $env:CUDA_VISIBLE_DEVICES = "0"
+            $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
+            $env:NVIDIA_VISIBLE_DEVICES = "all"
+            $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
+        } else {
+            Write-Host "GPU requested but nvidia-smi not found" -ForegroundColor Yellow
+        }
+    }
+
+    Write-Host "Starting Aspire distributed application (headless mode)..." -ForegroundColor Cyan
 
     if ($WaitForExit) {
-        # Blocking mode - run in foreground
+        # Blocking mode - run in foreground with headless profile
         Push-Location $script:ProjectRoot
-        & dotnet run --project Aspire-Full --no-build
+        & dotnet run --project Aspire-Full --no-build --launch-profile headless
         Pop-Location
         return $true
     }
 
     # Non-blocking mode - use Start-Process for reliable background execution
-    # Note: We can't use -RedirectStandardOutput as it blocks until the process exits
+    # Use headless profile to avoid browser launch and interactive prompts
     $proc = Start-Process -FilePath "dotnet" `
-        -ArgumentList "run", "--project", "Aspire-Full", "--no-build" `
+        -ArgumentList "run", "--project", "Aspire-Full", "--no-build", "--launch-profile", "headless" `
         -WorkingDirectory $script:ProjectRoot `
         -WindowStyle Hidden `
         -PassThru

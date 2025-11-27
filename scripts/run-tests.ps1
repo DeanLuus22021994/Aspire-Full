@@ -1,6 +1,7 @@
 # Aspire-Full Test Automation Script
 # Runs unit tests, E2E tests, and Aspire integration tests with full reporting
 # Note: Function names use Run- prefix for clarity; suppress PSScriptAnalyzer warnings if needed
+# GPU Support: Uses NVIDIA CUDA when available for accelerated test execution
 
 param(
     [switch]$UnitOnly,
@@ -8,10 +9,41 @@ param(
     [switch]$AspireOnly,
     [switch]$Coverage,
     [switch]$Verbose,
+    [switch]$UseGpu,
+    [switch]$NonInteractive,
     [string]$Filter = ""
 )
 
 $ErrorActionPreference = "Continue"
+
+# Non-interactive mode for CI/CD and AI agents
+if ($NonInteractive) {
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+    $env:DOTNET_NOLOGO = "1"
+    $env:CI = "true"
+}
+
+# GPU Configuration
+if ($UseGpu) {
+    $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
+    if ($gpuAvailable) {
+        Write-Host "GPU acceleration enabled" -ForegroundColor Magenta
+        $gpuInfo = nvidia-smi --query-gpu=name,memory.free --format=csv,noheader 2>$null
+        Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+
+        $env:CUDA_VISIBLE_DEVICES = "0"
+        $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
+        $env:NVIDIA_VISIBLE_DEVICES = "all"
+
+        # .NET SIMD/AVX optimizations
+        $env:DOTNET_EnableAVX2 = "1"
+        $env:DOTNET_EnableSSE41 = "1"
+        $env:DOTNET_TieredPGO = "1"
+    } else {
+        Write-Host "GPU requested but nvidia-smi not found" -ForegroundColor Yellow
+    }
+}
+
 $script:TestResults = @{
     UnitTests = @{ Passed = 0; Failed = 0; Skipped = 0; Total = 0; Duration = 0 }
     E2ETests = @{ Passed = 0; Failed = 0; Skipped = 0; Total = 0; Duration = 0 }
@@ -50,7 +82,7 @@ function Write-TestResult {
     Write-Host "-" * 60 -ForegroundColor Gray
 }
 
-function Parse-TestOutput {
+function ConvertFrom-TestOutput {
     param([string[]]$Output)
 
     $result = @{ Passed = 0; Failed = 0; Skipped = 0; Total = 0; Duration = 0 }
@@ -79,7 +111,7 @@ function Parse-TestOutput {
     return $result
 }
 
-function Run-UnitTests {
+function Invoke-UnitTests {
     Write-TestHeader "Running Unit Tests (xUnit)"
 
     $startTime = Get-Date
@@ -98,7 +130,7 @@ function Run-UnitTests {
         $output | ForEach-Object { Write-Host $_ }
     }
 
-    $result = Parse-TestOutput $output
+    $result = ConvertFrom-TestOutput $output
     $result.Duration = ((Get-Date) - $startTime).TotalSeconds
     $script:TestResults.UnitTests = $result
 
@@ -107,7 +139,7 @@ function Run-UnitTests {
     return $result.Failed -eq 0
 }
 
-function Run-E2ETests {
+function Invoke-E2ETests {
     param([string]$Category = "")
 
     $categoryDisplay = if ($Category) { " ($Category)" } else { "" }
@@ -127,20 +159,20 @@ function Run-E2ETests {
         $output | ForEach-Object { Write-Host $_ }
     }
 
-    $result = Parse-TestOutput $output
+    $result = ConvertFrom-TestOutput $output
     $result.Duration = ((Get-Date) - $startTime).TotalSeconds
 
     return $result
 }
 
-function Run-AspireIntegrationTests {
+function Invoke-AspireIntegrationTests {
     Write-TestHeader "Running Aspire Distributed App Tests"
 
     Write-Host "Starting Aspire distributed application..." -ForegroundColor Yellow
     Write-Host "This will start PostgreSQL, Redis, API, and Frontend services." -ForegroundColor Gray
     Write-Host ""
 
-    $result = Run-E2ETests -Category "AspireIntegration"
+    $result = Invoke-E2ETests -Category "AspireIntegration"
     $script:TestResults.AspireTests = $result
 
     Write-TestResult "Aspire Integration Tests" $result.Passed $result.Failed $result.Skipped $result.Total $result.Duration
@@ -148,10 +180,10 @@ function Run-AspireIntegrationTests {
     return $result.Failed -eq 0
 }
 
-function Run-DashboardTests {
+function Invoke-DashboardTests {
     Write-TestHeader "Running Dashboard Tests"
 
-    $result = Run-E2ETests -Category "Dashboard"
+    $result = Invoke-E2ETests -Category "Dashboard"
     $script:TestResults.E2ETests = $result
 
     Write-TestResult "Dashboard Tests" $result.Passed $result.Failed $result.Skipped $result.Total $result.Duration
@@ -243,17 +275,17 @@ try {
 
     # Run Unit Tests
     if (-not $E2EOnly -and -not $AspireOnly) {
-        if (-not (Run-UnitTests)) { $script:allTestsPassed = $false }
+        if (-not (Invoke-UnitTests)) { $script:allTestsPassed = $false }
     }
 
     # Run E2E/Dashboard Tests
     if (-not $UnitOnly -and -not $AspireOnly) {
-        if (-not (Run-DashboardTests)) { $script:allTestsPassed = $false }
+        if (-not (Invoke-DashboardTests)) { $script:allTestsPassed = $false }
     }
 
     # Run Aspire Integration Tests
     if (-not $UnitOnly -and -not $E2EOnly) {
-        if (-not (Run-AspireIntegrationTests)) { $script:allTestsPassed = $false }
+        if (-not (Invoke-AspireIntegrationTests)) { $script:allTestsPassed = $false }
     }
 
     # Show final summary (uses $script:allTestsPassed internally via test results)
