@@ -33,7 +33,7 @@ export default function Layout({ children }: LayoutProps) {
         </Container>
       </Menu>
 
-      <div style={{ paddingTop: '5em' }}>
+      <div className="main-content">
         {children}
       </div>
     </>

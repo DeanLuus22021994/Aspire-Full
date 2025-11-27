@@ -4,7 +4,7 @@
 param(
     [string]$Workflow = "",
     [string]$Job = "",
-    [string]$GhEventName = "push",
+    [string]$TriggerEvent = "push",
     [switch]$List,
     [switch]$DryRun
 )
@@ -22,7 +22,7 @@ if (-not $actInstalled) {
 }
 
 # Check if Docker is running
-docker info 2>&1 | Out-Null
+$null = docker info 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Docker is not running. Please start Docker Desktop." -ForegroundColor Red
     exit 1
@@ -37,31 +37,31 @@ try {
         exit 0
     }
 
-    $ghActParams = @()
+    [System.Collections.ArrayList]$actOptions = @()
 
-    if ($GhEventName) {
-        $ghActParams += $GhEventName
+    if ($TriggerEvent) {
+        [void]$actOptions.Add($TriggerEvent)
     }
 
     if ($Workflow) {
-        $ghActParams += "-W"
-        $ghActParams += ".github/workflows/$Workflow"
+        [void]$actOptions.Add("-W")
+        [void]$actOptions.Add(".github/workflows/$Workflow")
     }
 
     if ($Job) {
-        $ghActParams += "-j"
-        $ghActParams += $Job
+        [void]$actOptions.Add("-j")
+        [void]$actOptions.Add($Job)
     }
 
     if ($DryRun) {
-        $ghActParams += "-n"
+        [void]$actOptions.Add("-n")
         Write-Host "🔍 Dry run mode enabled" -ForegroundColor Yellow
     }
 
-    Write-Host "🚀 Running: gh act $($ghActParams -join ' ')" -ForegroundColor Green
+    Write-Host "🚀 Running: gh act $($actOptions -join ' ')" -ForegroundColor Green
     Write-Host ""
 
-    gh act @ghActParams
+    gh act @actOptions
 }
 finally {
     Pop-Location

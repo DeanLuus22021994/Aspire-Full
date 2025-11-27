@@ -1,0 +1,12 @@
+<Project>
+  <!-- Post-build targets for test projects -->
+  <Target Name="PrintTestSummary" AfterTargets="VSTest" Condition="$(IsTestProject) == 'true'">
+    <Message Importance="High" Text="Tests completed for $(MSBuildProjectName)" />
+  </Target>
+
+  <!-- Custom target to run frontend tests after .NET tests -->
+  <Target Name="RunFrontendTests" AfterTargets="VSTest" Condition="'$(RunFrontendTests)' == 'true' AND Exists('$(MSBuildThisFileDirectory)Aspire-Full.Web/package.json')">
+    <Message Importance="High" Text="Running frontend tests..." />
+    <Exec Command="npm run test:run" WorkingDirectory="$(MSBuildThisFileDirectory)Aspire-Full.Web" ContinueOnError="true" />
+  </Target>
+</Project>
