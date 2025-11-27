@@ -130,10 +130,34 @@ function Start-AspireApp {
         New-Item -ItemType Directory -Path $testResultsDir -Force | Out-Null
     }
 
+    # ==========================================================================
+    # Enable SIMD/AVX optimizations during build (always)
+    # ==========================================================================
+    $env:DOTNET_EnableAVX2 = "1"
+    $env:DOTNET_EnableSSE41 = "1"
+    $env:DOTNET_TieredPGO = "1"
+    $env:DOTNET_TieredCompilation = "1"
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+    $env:DOTNET_NOLOGO = "1"
+
+    # GPU configuration if requested
+    $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
+    if ($UseGpu -and $gpuAvailable) {
+        Write-Host "GPU acceleration enabled (NVIDIA)" -ForegroundColor Magenta
+        $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
+        Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+        $env:CUDA_VISIBLE_DEVICES = "0"
+        $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
+        $env:NVIDIA_VISIBLE_DEVICES = "all"
+        $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
+    } elseif ($UseGpu) {
+        Write-Host "GPU requested but nvidia-smi not found - using CPU SIMD" -ForegroundColor Yellow
+    }
+
     # Build first to catch errors early
-    Write-Host "Building Aspire-Full..." -ForegroundColor Cyan
+    Write-Host "Building Aspire-Full (SIMD optimized)..." -ForegroundColor Cyan
     Push-Location $script:ProjectRoot
-    $buildOutput = & dotnet build Aspire-Full --verbosity quiet 2>&1
+    $buildOutput = & dotnet build Aspire-Full --configuration Release --verbosity quiet 2>&1
     $buildExitCode = $LASTEXITCODE
     Pop-Location
 
@@ -144,25 +168,9 @@ function Start-AspireApp {
     }
 
     # Set up environment for non-interactive execution
-    $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
-    $env:DOTNET_NOLOGO = "1"
     $env:ASPIRE_ALLOW_UNSECURED_TRANSPORT = "true"
     $env:ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL = "http://localhost:18889"
     $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:18889"
-
-    # GPU configuration if available
-    if ($UseGpu) {
-        $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
-        if ($gpuAvailable) {
-            Write-Host "GPU acceleration enabled (NVIDIA)" -ForegroundColor Magenta
-            $env:CUDA_VISIBLE_DEVICES = "0"
-            $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
-            $env:NVIDIA_VISIBLE_DEVICES = "all"
-            $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
-        } else {
-            Write-Host "GPU requested but nvidia-smi not found" -ForegroundColor Yellow
-        }
-    }
 
     Write-Host "Starting Aspire distributed application (headless mode)..." -ForegroundColor Cyan
 

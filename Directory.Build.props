@@ -7,6 +7,31 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
+  <!-- ==========================================================================
+       GPU/SIMD Optimization Settings
+       Enable hardware acceleration for builds and runtime
+       ========================================================================== -->
+  <PropertyGroup>
+    <!-- Enable SIMD/AVX vectorization for better performance -->
+    <EnableAVX2>true</EnableAVX2>
+    <EnableSSE41>true</EnableSSE41>
+
+    <!-- Tiered compilation with Profile-Guided Optimization -->
+    <TieredPGO>true</TieredPGO>
+    <TieredCompilation>true</TieredCompilation>
+
+    <!-- ReadyToRun for faster startup -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+
+    <!-- Hardware intrinsics for tensor operations -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- GPU-specific optimizations when CUDA is available -->
+  <PropertyGroup Condition="'$(CUDA_VISIBLE_DEVICES)' != ''">
+    <DefineConstants>$(DefineConstants);GPU_ENABLED;CUDA_ENABLED</DefineConstants>
+  </PropertyGroup>
+
   <!-- Test project configuration -->
   <PropertyGroup Condition="$(IsTestProject) == 'true'">
     <IsPackable>false</IsPackable>

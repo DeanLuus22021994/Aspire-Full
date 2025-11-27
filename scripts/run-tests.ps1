@@ -1,7 +1,7 @@
 # Aspire-Full Test Automation Script
 # Runs unit tests, E2E tests, and Aspire integration tests with full reporting
-# Note: Function names use Run- prefix for clarity; suppress PSScriptAnalyzer warnings if needed
 # GPU Support: Uses NVIDIA CUDA when available for accelerated test execution
+# Non-blocking: Designed for CI/CD and AI agent invocation
 
 param(
     [switch]$UnitOnly,
@@ -16,33 +16,44 @@ param(
 
 $ErrorActionPreference = "Continue"
 
-# Non-interactive mode for CI/CD and AI agents
-if ($NonInteractive) {
-    $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
-    $env:DOTNET_NOLOGO = "1"
-    $env:CI = "true"
-}
-
-# GPU Configuration
-if ($UseGpu) {
+# =============================================================================
+# GPU and SIMD Optimization - Always enable for maximum performance
+# =============================================================================
+function Initialize-GpuEnvironment {
     $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
-    if ($gpuAvailable) {
+
+    # Always enable .NET SIMD/AVX optimizations (CPU)
+    $env:DOTNET_EnableAVX2 = "1"
+    $env:DOTNET_EnableSSE41 = "1"
+    $env:DOTNET_TieredPGO = "1"
+    $env:DOTNET_TieredCompilation = "1"
+    $env:DOTNET_ReadyToRun = "1"
+
+    if ($gpuAvailable -and $UseGpu) {
         Write-Host "GPU acceleration enabled" -ForegroundColor Magenta
-        $gpuInfo = nvidia-smi --query-gpu=name,memory.free --format=csv,noheader 2>$null
+        $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
         Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
 
         $env:CUDA_VISIBLE_DEVICES = "0"
         $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
         $env:NVIDIA_VISIBLE_DEVICES = "all"
-
-        # .NET SIMD/AVX optimizations
-        $env:DOTNET_EnableAVX2 = "1"
-        $env:DOTNET_EnableSSE41 = "1"
-        $env:DOTNET_TieredPGO = "1"
+        $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
+    } elseif ($UseGpu) {
+        Write-Host "GPU requested but nvidia-smi not found - using CPU SIMD" -ForegroundColor Yellow
     } else {
-        Write-Host "GPU requested but nvidia-smi not found" -ForegroundColor Yellow
+        Write-Host "CPU SIMD optimizations enabled (AVX2, SSE4.1)" -ForegroundColor Gray
     }
 }
+
+# Non-interactive mode for CI/CD and AI agents - always set for automation
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+$env:DOTNET_NOLOGO = "1"
+if ($NonInteractive) {
+    $env:CI = "true"
+}
+
+# Initialize GPU/SIMD environment
+Initialize-GpuEnvironment
 
 $script:TestResults = @{
     UnitTests = @{ Passed = 0; Failed = 0; Skipped = 0; Total = 0; Duration = 0 }
