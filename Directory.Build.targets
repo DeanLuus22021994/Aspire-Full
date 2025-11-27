@@ -47,6 +47,7 @@
     <SetEnv Name="DOTNET_EnableAVX2" Value="1" Condition="'$(DOTNET_EnableAVX2)' == ''" />
     <SetEnv Name="DOTNET_EnableSSE41" Value="1" Condition="'$(DOTNET_EnableSSE41)' == ''" />
     <SetEnv Name="DOTNET_TieredPGO" Value="1" Condition="'$(DOTNET_TieredPGO)' == ''" />
+    <SetEnv Name="DOTNET_TieredCompilation" Value="1" Condition="'$(DOTNET_TieredCompilation)' == ''" />
     <SetEnv Name="DOTNET_TC_QuickJitForLoops" Value="1" Condition="'$(DOTNET_TC_QuickJitForLoops)' == ''" />
     <SetEnv Name="DOTNET_ReadyToRun" Value="1" Condition="'$(DOTNET_ReadyToRun)' == ''" />
 
@@ -55,9 +56,9 @@
     <SetEnv Name="DOTNET_GCConcurrent" Value="1" Condition="'$(DOTNET_GCConcurrent)' == ''" />
 
     <!-- Non-interactive/CI mode settings -->
-    <SetEnv Name="DOTNET_NOLOGO" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
-    <SetEnv Name="DOTNET_CLI_TELEMETRY_OPTOUT" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
-    <SetEnv Name="DOTNET_SKIP_FIRST_TIME_EXPERIENCE" Value="1" Condition="'$(CI)' == 'true'" />
+    <SetEnv Name="DOTNET_NOLOGO" Value="1" Condition="'$(DOTNET_NOLOGO)' == ''" />
+    <SetEnv Name="DOTNET_CLI_TELEMETRY_OPTOUT" Value="1" Condition="'$(DOTNET_CLI_TELEMETRY_OPTOUT)' == ''" />
+    <SetEnv Name="DOTNET_SKIP_FIRST_TIME_EXPERIENCE" Value="1" Condition="'$(DOTNET_SKIP_FIRST_TIME_EXPERIENCE)' == ''" />
 
     <Message Importance="High" Text="GPU Acceleration: $(_HasNvidiaGpu)" Condition="'$(_HasNvidiaGpu)' == 'true'" />
     <Message Importance="Normal" Text=".NET 10 optimizations enabled (SIMD, TieredPGO, ServerGC)" />

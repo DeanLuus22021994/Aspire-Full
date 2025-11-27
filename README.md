@@ -26,12 +26,15 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - [Node.js 22+](https://nodejs.org/) (for frontend)
 
-### Run the Application
+# Run the Application
 
 ```bash
 # Clone the repository
 git clone https://github.com/DeanLuus22021994/Aspire-Full.git
 cd Aspire-Full
+
+# Full restore/clean/format/build/run pipeline (no PowerShell required)
+dotnet run --project tools/PipelineRunner/PipelineRunner.csproj
 
 # Run with Aspire AppHost (blocking)
 dotnet run --project Aspire-Full
@@ -55,7 +58,19 @@ dotnet test Aspire-Full.Tests.E2E
 
 # All tests with PowerShell script
 ./scripts/run-tests.ps1
+
 ```
+
+### Pipeline Runner Options
+
+`tools/PipelineRunner` targets the `Aspire-Full.slnf` solution filter by default so the same curated project set is used across build commands and executes `dotnet restore`, `dotnet clean`, `dotnet format`, `dotnet build`, and `dotnet run` in that order. It accepts a few optional switches:
+
+- `-c|--configuration <Config>` – defaults to `Release`.
+- `--solution <Path>` – solution/solution-filter to clean/format/build (defaults to `Aspire-Full.slnx`).
+- `--project <Path>` – project to execute during `dotnet run` (defaults to `Aspire-Full/Aspire-Full.csproj`).
+- `--run-profile <Profile>` – launch profile for `dotnet run` (defaults to `headless`).
+- `--skip-run` – execute clean/format/build only.
+- `--run-arg <Value>` – forward extra arguments to the final `dotnet run` invocation.
 
 ## Architecture
 

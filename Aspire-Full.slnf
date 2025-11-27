@@ -1,0 +1,15 @@
+{
+  "solution": {
+    "path": "Aspire-Full.slnx",
+    "projects": [
+      "Aspire-Full/Aspire-Full.csproj",
+      "Aspire-Full.Api/Aspire-Full.Api.csproj",
+      "Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj",
+      "Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj",
+      "Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj",
+      "Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj",
+      "Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj",
+      "Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj"
+    ]
+  }
+}
