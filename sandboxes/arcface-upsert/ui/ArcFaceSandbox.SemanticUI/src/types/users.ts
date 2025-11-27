@@ -1,4 +1,4 @@
-import type { SandboxUserRole } from './usersKernel';
+import type { SandboxUserRole } from './usersKernel.ts';
 
 export interface SandboxUserResponse {
   id: string;
