@@ -1,7 +1,6 @@
 {
   "dotnet.defaultSolution": "Aspire-Full.slnx",
   "omnisharp.enableRoslynAnalyzers": true,
-  "omnisharp.enableImportCompletion": true,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
@@ -11,5 +10,6 @@
     "**/obj": true
   },
   "github.copilot.chat.codeGeneration.useReferencedFiles": true,
-  "github.copilot.chat.codesearch.enabled": true
+  "github.copilot.chat.codesearch.enabled": true,
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
 }

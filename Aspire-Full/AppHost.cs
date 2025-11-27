@@ -1,3 +1,5 @@
+using Aspire.Hosting.Qdrant;
+
 // =============================================================================
 // Aspire Full AppHost - Distributed Application Orchestrator
 // =============================================================================
@@ -5,8 +7,8 @@
 // It configures and orchestrates all services in the distributed application.
 //
 // Architecture:
-//   - Aspire manages its own containers (PostgreSQL, Redis, admin UIs)
-//   - Uses aspire-network for consistent low-latency communication
+//   - Aspire manages its own containers (PostgreSQL, Redis, Qdrant, admin UIs)
+//   - All containers join aspire-network for unified low-latency communication
 //   - Telemetry is sent to external dashboard via OTLP (port 18889)
 //   - Docker Compose manages: devcontainer, aspire-dashboard
 //
@@ -30,13 +32,17 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// External network for container-to-container communication
+const string networkName = "aspire-network";
+
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search
 // -----------------------------------------------------------------------------
 var postgres = builder.AddPostgres("postgres")
     .WithPgAdmin()
     .WithDataVolume("aspire-postgres-data")
-    .WithLifetime(ContainerLifetime.Persistent);
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithContainerRuntimeArgs("--network", networkName);
 
 var database = postgres.AddDatabase("aspiredb");
 
@@ -46,14 +52,16 @@ var database = postgres.AddDatabase("aspiredb");
 var redis = builder.AddRedis("redis")
     .WithRedisCommander()
     .WithDataVolume("aspire-redis-data")
-    .WithLifetime(ContainerLifetime.Persistent);
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithContainerRuntimeArgs("--network", networkName);
 
 // -----------------------------------------------------------------------------
 // Vector Database - Qdrant for semantic search and embeddings
 // -----------------------------------------------------------------------------
 var qdrant = builder.AddQdrant("qdrant")
     .WithDataVolume("aspire-qdrant-data")
-    .WithLifetime(ContainerLifetime.Persistent);
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithContainerRuntimeArgs("--network", networkName);
 
 // -----------------------------------------------------------------------------
 // API Service - RESTful backend with Entity Framework
