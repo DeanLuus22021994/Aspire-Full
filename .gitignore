@@ -2,21 +2,51 @@
 bin/
 obj/
 out/
+publish/
+artifacts/
 
 # IDE
 .vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.user
 *.suo
+*.rsuser
+*.sln.docstates
 
 # OS
 Thumbs.db
 .DS_Store
+ehthumbs.db
 
 # Secrets
 *.pfx
+*.p12
+*.key
 appsettings.*.json
 !appsettings.Development.json
+secrets.json
 
 # Logs
 *.log
 logs/
+*.blg
+*.bak
+
+# NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Test results
+TestResults/
+*.trx
+
+# Aspire
+.aspire/
+
+# Docker
+docker-compose.override.yml

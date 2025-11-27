@@ -1,0 +1,70 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Named volumes only - NO host mounts for codebase isolation
+      - aspire-nuget-cache:/home/vscode/.nuget
+      - aspire-dotnet-tools:/home/vscode/.dotnet/tools
+      - aspire-aspire-cli:/home/vscode/.aspire
+      - aspire-vscode-extensions:/home/vscode/.vscode-server/extensions
+      - aspire-workspace:/workspace
+      # Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOTNET_CLI_TELEMETRY_OPTOUT=1
+      - DOTNET_NOLOGO=1
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - NUGET_PACKAGES=/home/vscode/.nuget/packages
+      - ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
+      - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL=http://aspire-dashboard:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+    networks:
+      - aspire-network
+    depends_on:
+      aspire-dashboard:
+        condition: service_healthy
+    command: sleep infinity
+    init: true
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: aspire-dashboard
+    ports:
+      - "18888:18888"
+      - "18889:18889"
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - DASHBOARD__OTLP__AUTHMODE=Unsecured
+      - DASHBOARD__FRONTEND__AUTHMODE=Unsecured
+      - DASHBOARD__RESOURCESERVICE__AUTHMODE=Unsecured
+    volumes:
+      - aspire-dashboard-data:/app/data
+    networks:
+      - aspire-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18888/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  aspire-nuget-cache:
+    external: true
+  aspire-dotnet-tools:
+    external: true
+  aspire-aspire-cli:
+    external: true
+  aspire-vscode-extensions:
+    external: true
+  aspire-workspace:
+    external: true
+  aspire-dashboard-data:
+    external: true
+
+networks:
+  aspire-network:
+    external: true

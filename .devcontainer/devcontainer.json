@@ -1,27 +1,87 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
 {
-	"name": "C# (.NET)",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0"
+  "name": "Aspire Full - .NET 10 + Docker",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "vscode"
+    }
+  },
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5001],
-	// "portsAttributes": {
-	//		"5001": {
-	//			"protocol": "https"
-	//		}
-	// }
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.dotnet-interactive-vscode",
+        "ms-azuretools.vscode-docker",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "GitHub.vscode-pull-request-github",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "Aspire-Full.slnx",
+        "omnisharp.enableRoslynAnalyzers": true,
+        "omnisharp.enableImportCompletion": true,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "files.exclude": {
+          "**/bin": true,
+          "**/obj": true
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  },
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "dotnet restore",
+  "forwardPorts": [18888, 18889, 5000, 5001, 5173, 5174],
+  "portsAttributes": {
+    "18888": {
+      "label": "Aspire Dashboard",
+      "onAutoForward": "notify"
+    },
+    "18889": {
+      "label": "OTLP Endpoint",
+      "onAutoForward": "silent"
+    },
+    "5000": {
+      "label": "HTTP",
+      "onAutoForward": "notify"
+    },
+    "5001": {
+      "label": "HTTPS",
+      "protocol": "https",
+      "onAutoForward": "notify"
+    }
+  },
 
-	// Configure tool-specific properties.
-	// "customizations": {},
+  "postCreateCommand": "bash /workspace/.devcontainer/scripts/post-create.sh",
+  "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
 
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+  "remoteEnv": {
+    "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://aspire-dashboard:18889",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://aspire-dashboard:18889"
+  },
+
+  "mounts": [
+    "source=aspire-nuget-cache,target=/home/vscode/.nuget,type=volume",
+    "source=aspire-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume",
+    "source=aspire-aspire-cli,target=/home/vscode/.aspire,type=volume"
+  ],
+
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1"
+  }
 }
