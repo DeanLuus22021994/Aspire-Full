@@ -10,6 +10,8 @@ internal sealed class FakeVectorStore : ISandboxVectorStore
 
     public IReadOnlyDictionary<string, SandboxVectorDocument> Documents => _documents;
 
+    public void Reset() => _documents.Clear();
+
     public Task EnsureCollectionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     public Task<SandboxVectorDocument?> GetAsync(string id, CancellationToken cancellationToken = default)

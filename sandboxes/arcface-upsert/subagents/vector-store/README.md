@@ -1,12 +1,12 @@
 # Vector Store Sub-Agent
 
 ## Mission
-Expose Qdrant-backed persistence tailored to ArcFace embeddings while mirroring the production upsert/downsert semantics.
+Expose Qdrant-backed persistence tailored to ArcFace embeddings while mirroring the production upsert/downsert semantics, with status surfaced through the shared sandbox UI rather than Aspire wiring for now.
 
 ## Responsibilities
 - Ensure the `arcface-sandbox` collection exists with size=512 and cosine distance.
 - Validate all embeddings before upsert; reject mismatched vectors with actionable errors.
-- Provide CRUD + search APIs compatible with `IVectorStoreService` from production code.
+- Provide CRUD + search APIs compatible with `IVectorStoreService` from production code (other solutions can defer direct integration until later).
 - Record soft-delete metadata (`is_deleted`, `deleted_at`) just like [Aspire-Full.VectorStore](../../../Aspire-Full.VectorStore/VectorStoreService.cs).
 
 ## Out of Scope
@@ -44,3 +44,10 @@ Configuration keys (section `ArcFace:VectorStore`):
 ## Operational Notes
 - Qdrant endpoint defaults to `http://localhost:6334`; override via config/env.
 - Test runs can override `CollectionName` to append build-specific suffixes.
+
+## UI Requirement (Page 3 of 3)
+- Deliver a "Vector Store Monitor" page within the sandbox semantic UI that:
+    - Shows collection health (name, vector size, distance metric, doc count, auto-create status).
+    - Streams recent upsert/downsert operations with document IDs and delete flags.
+    - Provides a lightweight similarity search panel for manual queries against stored embeddings.
+- The page should read only from the Vector Store agent endpoints/fakes and does not require Aspire AppHost registration yet.

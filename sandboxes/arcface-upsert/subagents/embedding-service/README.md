@@ -1,11 +1,11 @@
 # Embedding Service Sub-Agent
 
 ## Mission
-Own ArcFace model execution and deliver normalized 512-float embeddings for downstream upsert/downsert usage. This agent is the only component allowed to touch ONNXRuntime APIs or model files.
+Own ArcFace model execution and deliver normalized 512-float embeddings for downstream semantic experiences. This agent is the only component allowed to touch ONNXRuntime APIs or model files, and its outputs will be visualized alongside status metadata in the shared sandbox UI.
 
 ## Responsibilities
 - Manage model acquisition and validation (hashing, version pinning).
-- Provide async APIs for single/batch embedding generation.
+- Provide async APIs for single/batch embedding generation (consumers can defer wiring these calls into Aspire until the API integration phase).
 - Surface telemetry (latency, device info, failures) for observability.
 - Offer configuration toggles for CPU vs CUDA execution providers.
 
@@ -13,6 +13,14 @@ Own ArcFace model execution and deliver normalized 512-float embeddings for down
 - Persisting embeddings
 - Calling Qdrant directly
 - Handling HTTP requests
+- Owning presentation logic outside of the sandbox UI page documented below
+
+## UI Requirement (Page 1 of 3)
+- Deliver an "Embedding Diagnostics" page in the sandbox semantic UI (shared with Users Kernel + Vector Store pages) showing:
+    - Current model name/version, execution provider, and checksum status.
+    - Realtime telemetry: average latency, queue depth, and last error (if any).
+    - A sample embedding request preview (mock face input → 512-value sparkline) fetched via the public API.
+- The page should read from the Embedding Service API only; no Aspire AppHost wiring is required until later integration.
 
 ## Interfaces
 ```csharp
