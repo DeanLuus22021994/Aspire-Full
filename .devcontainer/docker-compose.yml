@@ -30,6 +30,47 @@ services:
     depends_on:
       - docker
 
+  # Self-hosted GitHub Actions Runner
+  github-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    container_name: aspire-github-runner
+    volumes:
+      # Named volumes for runner persistence
+      - aspire-runner-data:/home/runner/actions-runner
+      - aspire-runner-work:/home/runner/_work
+      - aspire-runner-nuget:/home/runner/.nuget
+      - aspire-runner-npm:/home/runner/.npm
+      - aspire-runner-toolcache:/opt/hostedtoolcache
+      - aspire-docker-certs:/certs:ro
+    environment:
+      # GitHub configuration (set via .env file or docker-compose override)
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-DeanLuus22021994/Aspire-Full}
+      - RUNNER_NAME=${RUNNER_NAME:-aspire-runner}
+      - RUNNER_LABELS=${RUNNER_LABELS:-self-hosted,Linux,X64,docker,dotnet,aspire}
+      - RUNNER_GROUP=${RUNNER_GROUP:-Default}
+      - RUNNER_WORKDIR=/home/runner/_work
+      # .NET configuration
+      - DOTNET_CLI_TELEMETRY_OPTOUT=1
+      - DOTNET_NOLOGO=1
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - NUGET_PACKAGES=/home/runner/.nuget/packages
+      # Docker-in-Docker connection
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_CERT_PATH=/certs/client
+      # Tool cache for GitHub Actions
+      - RUNNER_TOOL_CACHE=/opt/hostedtoolcache
+      - AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
+    networks:
+      - aspire-network
+    restart: unless-stopped
+    depends_on:
+      - docker
+      - aspire-dashboard
+
   # Docker-in-Docker service - isolated Docker daemon with named volume
   docker:
     image: docker:27-dind
@@ -60,6 +101,45 @@ services:
       - aspire-network
     restart: unless-stopped
 
+  # PostgreSQL database for API
+  postgres:
+    image: postgres:17-alpine
+    container_name: aspire-postgres
+    volumes:
+      - aspire-postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=aspire
+      - POSTGRES_PASSWORD=aspire_dev_password
+      - POSTGRES_DB=aspire
+    ports:
+      - "5432:5432"
+    networks:
+      - aspire-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aspire -d aspire"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: aspire-redis
+    volumes:
+      - aspire-redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - aspire-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
 volumes:
   aspire-nuget-cache:
     external: true
@@ -76,6 +156,22 @@ volumes:
   aspire-docker-data:
     external: true
   aspire-docker-certs:
+    external: true
+  # GitHub Actions Runner volumes
+  aspire-runner-data:
+    external: true
+  aspire-runner-work:
+    external: true
+  aspire-runner-nuget:
+    external: true
+  aspire-runner-npm:
+    external: true
+  aspire-runner-toolcache:
+    external: true
+  # Database volumes
+  aspire-postgres-data:
+    external: true
+  aspire-redis-data:
     external: true
 
 networks:

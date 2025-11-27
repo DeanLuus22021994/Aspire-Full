@@ -41,4 +41,11 @@ gh extension install githubnext/gh-aw 2>/dev/null || true
 gh extension install seachicken/gh-poi 2>/dev/null || true
 gh extension install chelnak/gh-changelog 2>/dev/null || true
 
+echo ""
+echo "📋 Self-hosted runner info:"
+echo "   The GitHub Actions runner runs as a separate service."
+echo "   To configure it, set GITHUB_TOKEN environment variable."
+echo "   Use: scripts/manage-runner.ps1 -Action setup -Token <token>"
+echo ""
+
 echo "✅ Post-create setup complete!"

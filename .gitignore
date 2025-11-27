@@ -50,3 +50,9 @@ TestResults/
 
 # Docker
 docker-compose.override.yml
+.devcontainer/.env
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml

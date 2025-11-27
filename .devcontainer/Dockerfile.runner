@@ -1,0 +1,118 @@
+# Self-hosted GitHub Actions Runner with .NET 10, Node.js 22, and Docker support
+FROM mcr.microsoft.com/devcontainers/base:bookworm
+
+ARG RUNNER_VERSION=2.321.0
+ARG TARGETARCH=x64
+
+# Install prerequisites
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        curl \
+        wget \
+        git \
+        jq \
+        unzip \
+        zip \
+        ca-certificates \
+        gnupg \
+        lsb-release \
+        apt-transport-https \
+        software-properties-common \
+        build-essential \
+        libicu-dev \
+        libssl-dev \
+        libkrb5-3 \
+        zlib1g \
+        liblttng-ust1 \
+        libstdc++6 \
+        libgcc-s1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI for Docker-in-Docker support
+RUN install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc \
+    && chmod a+r /etc/apt/keyrings/docker.asc \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends docker-ce-cli docker-compose-plugin docker-buildx-plugin \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GitHub CLI
+RUN (type -p wget >/dev/null || apt-get install wget -y) \
+    && mkdir -p -m 755 /etc/apt/keyrings \
+    && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    && cat $out | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install gh -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install .NET 10 SDK
+RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    && ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet \
+    && rm /tmp/dotnet-install.sh
+
+# Install Node.js 22 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright system dependencies
+RUN npx playwright install-deps chromium
+
+# Create runner user and directories
+RUN useradd -m -d /home/runner -s /bin/bash runner \
+    && groupadd -f docker \
+    && usermod -aG docker runner \
+    && mkdir -p /home/runner/actions-runner \
+    && mkdir -p /home/runner/_work \
+    && mkdir -p /home/runner/.nuget \
+    && mkdir -p /home/runner/.npm \
+    && mkdir -p /opt/hostedtoolcache \
+    && chown -R runner:runner /home/runner \
+    && chown -R runner:runner /opt/hostedtoolcache
+
+# Download and extract GitHub Actions runner
+WORKDIR /home/runner/actions-runner
+RUN curl -o actions-runner-linux-${TARGETARCH}-${RUNNER_VERSION}.tar.gz -L \
+        https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${TARGETARCH}-${RUNNER_VERSION}.tar.gz \
+    && tar xzf ./actions-runner-linux-${TARGETARCH}-${RUNNER_VERSION}.tar.gz \
+    && rm -f ./actions-runner-linux-${TARGETARCH}-${RUNNER_VERSION}.tar.gz \
+    && chown -R runner:runner /home/runner/actions-runner \
+    && ./bin/installdependencies.sh
+
+# Set environment variables
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH="${PATH}:/usr/share/dotnet:/home/runner/.dotnet/tools:/opt/hostedtoolcache"
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_NOLOGO=1
+ENV NUGET_PACKAGES=/home/runner/.nuget/packages
+ENV NUGET_XMLDOC_MODE=skip
+ENV npm_config_cache=/home/runner/.npm
+ENV RUNNER_ALLOW_RUNASROOT=false
+# Docker-in-Docker TLS configuration
+ENV DOCKER_HOST=tcp://docker:2376
+ENV DOCKER_TLS_VERIFY=1
+ENV DOCKER_CERT_PATH=/certs/client
+# Tool cache for actions/setup-*
+ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
+ENV AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
+
+# Copy startup script
+COPY scripts/runner-entrypoint.sh /home/runner/actions-runner/entrypoint.sh
+RUN chmod +x /home/runner/actions-runner/entrypoint.sh \
+    && chown runner:runner /home/runner/actions-runner/entrypoint.sh
+
+# Switch to runner user
+USER runner
+WORKDIR /home/runner/actions-runner
+
+# Install global .NET tools
+RUN dotnet tool install -g dotnet-ef \
+    && dotnet tool install -g dotnet-outdated-tool
+
+ENTRYPOINT ["/home/runner/actions-runner/entrypoint.sh"]
