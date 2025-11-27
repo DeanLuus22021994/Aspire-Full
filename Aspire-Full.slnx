@@ -3,5 +3,6 @@
   <Project Path="Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj" />
   <Project Path="Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj" />
   <Project Path="Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
+  <Project Path="Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj" />
   <Project Path="Aspire-Full/Aspire-Full.csproj" />
 </Solution>

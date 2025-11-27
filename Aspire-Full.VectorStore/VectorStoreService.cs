@@ -2,7 +2,9 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
+using Aspire_Full.Qdrant;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
@@ -90,13 +92,17 @@ public class QdrantVectorStoreService : IVectorStoreService
     public QdrantVectorStoreService(
         QdrantClient client,
         ILogger<QdrantVectorStoreService> logger,
-        string collectionName = "documents",
-        int vectorSize = 1536)
+        IOptions<QdrantOptions>? options = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _collectionName = collectionName;
-        _vectorSize = vectorSize;
+        var qdrantOptions = options?.Value ?? new QdrantOptions();
+        _collectionName = string.IsNullOrWhiteSpace(qdrantOptions.Collection)
+            ? QdrantDefaults.DefaultCollectionName
+            : qdrantOptions.Collection;
+        _vectorSize = qdrantOptions.VectorSize > 0
+            ? qdrantOptions.VectorSize
+            : QdrantDefaults.DefaultVectorSize;
 
         LogHardwareCapabilities();
     }

@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.67.1-preview" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire-Full.Qdrant\Aspire-Full.Qdrant.csproj" />
+  </ItemGroup>
+
 </Project>
