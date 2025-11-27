@@ -50,7 +50,7 @@ RUN curl -sSL https://aspire.dev/install.sh | bash \
     && mv /root/.aspire /opt/aspire \
     && chmod -R 755 /opt/aspire
 
-# Set environment variables
+# Set environment variables for .NET and Docker-in-Docker
 ENV DOTNET_ROOT=/usr/share/dotnet
 ENV PATH="${PATH}:/usr/share/dotnet:/home/${USERNAME}/.dotnet/tools:/opt/aspire/bin"
 ENV DOTNET_RUNNING_IN_CONTAINER=true
@@ -58,6 +58,10 @@ ENV DOTNET_USE_POLLING_FILE_WATCHER=true
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV DOTNET_NOLOGO=1
 ENV NUGET_XMLDOC_MODE=skip
+# Docker-in-Docker TLS configuration
+ENV DOCKER_HOST=tcp://docker:2376
+ENV DOCKER_TLS_VERIFY=1
+ENV DOCKER_CERT_PATH=/certs/client
 
 # Add vscode user to docker group
 RUN groupadd -f docker && usermod -aG docker ${USERNAME}

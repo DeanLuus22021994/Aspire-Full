@@ -71,14 +71,11 @@
 
   "remoteEnv": {
     "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://aspire-dashboard:18889",
-    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://aspire-dashboard:18889"
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://aspire-dashboard:18889",
+    "DOCKER_HOST": "tcp://docker:2376",
+    "DOCKER_TLS_VERIFY": "1",
+    "DOCKER_CERT_PATH": "/certs/client"
   },
-
-  "mounts": [
-    "source=aspire-nuget-cache,target=/home/vscode/.nuget,type=volume",
-    "source=aspire-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume",
-    "source=aspire-aspire-cli,target=/home/vscode/.aspire,type=volume"
-  ],
 
   "containerEnv": {
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",

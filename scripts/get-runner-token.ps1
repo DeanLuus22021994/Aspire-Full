@@ -1,16 +1,14 @@
 # GitHub PAT Runner Token Script
 # Retrieves self-hosted runner registration token using a GitHub PAT
 # Requires: repo scope for repo-level runners, admin:org for org-level runners
+# Uses GITHUB_TOKEN environment variable by default
 
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$PAT,
+    [string]$PAT = $env:GITHUB_TOKEN,
 
-    [Parameter(Mandatory=$true)]
-    [string]$Owner,
+    [string]$Owner = "DeanLuus22021994",
 
-    [Parameter(Mandatory=$true)]
-    [string]$Repo,
+    [string]$Repo = "Aspire-Full",
 
     [ValidateSet("repo", "org")]
     [string]$Level = "repo"
@@ -20,6 +18,18 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "🔑 GitHub Runner Token Retrieval" -ForegroundColor Cyan
 Write-Host ""
+
+# Validate PAT
+if (-not $PAT) {
+    Write-Host "❌ No PAT provided." -ForegroundColor Red
+    Write-Host "   Set GITHUB_TOKEN environment variable or use -PAT parameter" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "   Example: `$env:GITHUB_TOKEN = 'ghp_xxx'" -ForegroundColor Gray
+    Write-Host "   Or: .\get-runner-token.ps1 -PAT 'ghp_xxx'" -ForegroundColor Gray
+    exit 1
+}
+
+Write-Host "🔐 Using GITHUB_TOKEN from environment" -ForegroundColor Green
 
 # Set up headers with PAT
 $headers = @{

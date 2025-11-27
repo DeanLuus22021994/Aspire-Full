@@ -4,14 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      # Named volumes only - NO host mounts for codebase isolation
+      # Named volumes only - NO host mounts for complete isolation
       - aspire-nuget-cache:/home/vscode/.nuget
       - aspire-dotnet-tools:/home/vscode/.dotnet/tools
       - aspire-aspire-cli:/home/vscode/.aspire
       - aspire-vscode-extensions:/home/vscode/.vscode-server/extensions
       - aspire-workspace:/workspace
-      # Docker socket for Docker-in-Docker
-      - /var/run/docker.sock:/var/run/docker.sock
+      - aspire-docker-certs:/certs
     environment:
       - DOTNET_CLI_TELEMETRY_OPTOUT=1
       - DOTNET_NOLOGO=1
@@ -20,10 +19,29 @@ services:
       - ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
       - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL=http://aspire-dashboard:18889
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      # Docker-in-Docker connection
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_CERT_PATH=/certs/client
     networks:
       - aspire-network
     command: sleep infinity
     init: true
+    depends_on:
+      - docker
+
+  # Docker-in-Docker service - isolated Docker daemon with named volume
+  docker:
+    image: docker:27-dind
+    privileged: true
+    volumes:
+      - aspire-docker-data:/var/lib/docker
+      - aspire-docker-certs:/certs
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    networks:
+      - aspire-network
+    restart: unless-stopped
 
   aspire-dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
@@ -54,6 +72,10 @@ volumes:
   aspire-workspace:
     external: true
   aspire-dashboard-data:
+    external: true
+  aspire-docker-data:
+    external: true
+  aspire-docker-certs:
     external: true
 
 networks:
