@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+obj/
+out/
+
+# IDE
+.vs/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Secrets
+*.pfx
+appsettings.*.json
+!appsettings.Development.json
+
+# Logs
+*.log
+logs/
