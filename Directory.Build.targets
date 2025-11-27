@@ -1,5 +1,11 @@
 <Project>
   <!-- ==========================================================================
+       .NET 10 Optimized Build Targets
+       Provides best-in-class build performance for standard dotnet commands
+       Usage: dotnet build, dotnet test, dotnet publish
+       ========================================================================== -->
+
+  <!-- ==========================================================================
        Default Build Configuration
        Enable parallel builds by default for all projects
        ========================================================================== -->
@@ -9,37 +15,8 @@
   </PropertyGroup>
 
   <!-- ==========================================================================
-       GPU/SIMD Environment Setup
-       Automatically configure hardware acceleration for standard dotnet commands
+       Inline Tasks for Environment Configuration
        ========================================================================== -->
-
-  <!-- Set GPU environment variables before any build/test operations -->
-  <Target Name="ConfigureGpuEnvironment" BeforeTargets="BeforeBuild;BeforeRebuild;VSTest;Restore">
-    <PropertyGroup>
-      <!-- Detect NVIDIA GPU availability -->
-      <_HasNvidiaGpu Condition="Exists('$(ProgramFiles)\NVIDIA Corporation\NVSMI\nvidia-smi.exe') OR Exists('$(SystemRoot)\System32\nvidia-smi.exe')">true</_HasNvidiaGpu>
-    </PropertyGroup>
-
-    <!-- Set CUDA/GPU environment variables when GPU is available -->
-    <SetEnv Name="CUDA_VISIBLE_DEVICES" Value="0" Condition="'$(_HasNvidiaGpu)' == 'true' AND '$(CUDA_VISIBLE_DEVICES)' == ''" />
-    <SetEnv Name="NVIDIA_VISIBLE_DEVICES" Value="all" Condition="'$(_HasNvidiaGpu)' == 'true' AND '$(NVIDIA_VISIBLE_DEVICES)' == ''" />
-
-    <!-- Enable SIMD/vectorization environment variables -->
-    <SetEnv Name="DOTNET_EnableAVX2" Value="1" Condition="'$(DOTNET_EnableAVX2)' == ''" />
-    <SetEnv Name="DOTNET_EnableSSE41" Value="1" Condition="'$(DOTNET_EnableSSE41)' == ''" />
-    <SetEnv Name="DOTNET_TieredPGO" Value="1" Condition="'$(DOTNET_TieredPGO)' == ''" />
-    <SetEnv Name="DOTNET_TC_QuickJitForLoops" Value="1" Condition="'$(DOTNET_TC_QuickJitForLoops)' == ''" />
-    <SetEnv Name="DOTNET_ReadyToRun" Value="1" Condition="'$(DOTNET_ReadyToRun)' == ''" />
-
-    <!-- Non-interactive/CI mode settings -->
-    <SetEnv Name="DOTNET_NOLOGO" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
-    <SetEnv Name="DOTNET_CLI_TELEMETRY_OPTOUT" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
-
-    <Message Importance="High" Text="GPU Acceleration: $(_HasNvidiaGpu)" Condition="'$(_HasNvidiaGpu)' == 'true'" />
-    <Message Importance="Normal" Text="SIMD optimizations enabled (AVX2, SSE4.1, TieredPGO)" />
-  </Target>
-
-  <!-- Inline task to set environment variables during build -->
   <UsingTask TaskName="SetEnv" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <Name ParameterType="System.String" Required="true" />
@@ -53,7 +30,53 @@
   </UsingTask>
 
   <!-- ==========================================================================
-       Post-build and Test Targets
+       GPU/SIMD Environment Setup
+       Automatically configure hardware acceleration for standard dotnet commands
+       ========================================================================== -->
+  <Target Name="ConfigureGpuEnvironment" BeforeTargets="BeforeBuild;BeforeRebuild;VSTest;Restore">
+    <PropertyGroup>
+      <!-- Detect NVIDIA GPU availability -->
+      <_HasNvidiaGpu Condition="Exists('$(ProgramFiles)\NVIDIA Corporation\NVSMI\nvidia-smi.exe') OR Exists('$(SystemRoot)\System32\nvidia-smi.exe')">true</_HasNvidiaGpu>
+    </PropertyGroup>
+
+    <!-- Set CUDA/GPU environment variables when GPU is available -->
+    <SetEnv Name="CUDA_VISIBLE_DEVICES" Value="0" Condition="'$(_HasNvidiaGpu)' == 'true' AND '$(CUDA_VISIBLE_DEVICES)' == ''" />
+    <SetEnv Name="NVIDIA_VISIBLE_DEVICES" Value="all" Condition="'$(_HasNvidiaGpu)' == 'true' AND '$(NVIDIA_VISIBLE_DEVICES)' == ''" />
+
+    <!-- .NET 10 Runtime optimizations -->
+    <SetEnv Name="DOTNET_EnableAVX2" Value="1" Condition="'$(DOTNET_EnableAVX2)' == ''" />
+    <SetEnv Name="DOTNET_EnableSSE41" Value="1" Condition="'$(DOTNET_EnableSSE41)' == ''" />
+    <SetEnv Name="DOTNET_TieredPGO" Value="1" Condition="'$(DOTNET_TieredPGO)' == ''" />
+    <SetEnv Name="DOTNET_TC_QuickJitForLoops" Value="1" Condition="'$(DOTNET_TC_QuickJitForLoops)' == ''" />
+    <SetEnv Name="DOTNET_ReadyToRun" Value="1" Condition="'$(DOTNET_ReadyToRun)' == ''" />
+
+    <!-- Server GC for better throughput -->
+    <SetEnv Name="DOTNET_gcServer" Value="1" Condition="'$(DOTNET_gcServer)' == ''" />
+    <SetEnv Name="DOTNET_GCConcurrent" Value="1" Condition="'$(DOTNET_GCConcurrent)' == ''" />
+
+    <!-- Non-interactive/CI mode settings -->
+    <SetEnv Name="DOTNET_NOLOGO" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
+    <SetEnv Name="DOTNET_CLI_TELEMETRY_OPTOUT" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
+    <SetEnv Name="DOTNET_SKIP_FIRST_TIME_EXPERIENCE" Value="1" Condition="'$(CI)' == 'true'" />
+
+    <Message Importance="High" Text="GPU Acceleration: $(_HasNvidiaGpu)" Condition="'$(_HasNvidiaGpu)' == 'true'" />
+    <Message Importance="Normal" Text=".NET 10 optimizations enabled (SIMD, TieredPGO, ServerGC)" />
+  </Target>
+
+  <!-- ==========================================================================
+       Build Performance Targets
+       ========================================================================== -->
+
+  <!-- Optimize restore for faster package resolution -->
+  <Target Name="OptimizeRestore" BeforeTargets="Restore">
+    <PropertyGroup>
+      <RestorePackagesWithLockFile Condition="'$(RestorePackagesWithLockFile)' == ''">false</RestorePackagesWithLockFile>
+      <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+    </PropertyGroup>
+  </Target>
+
+  <!-- ==========================================================================
+       Test Targets
        ========================================================================== -->
 
   <!-- Post-build target for test projects -->
@@ -69,15 +92,26 @@
   </Target>
 
   <!-- ==========================================================================
-       GPU-Optimized Build Configuration
+       Release Build Optimizations
        ========================================================================== -->
 
   <!-- Apply optimized compiler flags for Release builds -->
-  <Target Name="ApplyGpuOptimizedCompilerFlags" BeforeTargets="CoreCompile" Condition="'$(Configuration)' == 'Release'">
+  <Target Name="ApplyOptimizedCompilerFlags" BeforeTargets="CoreCompile" Condition="'$(Configuration)' == 'Release'">
     <PropertyGroup>
       <Optimize>true</Optimize>
       <DebugType>embedded</DebugType>
     </PropertyGroup>
-    <Message Importance="Normal" Text="Applied GPU-optimized compiler flags for Release build" />
+    <Message Importance="Normal" Text="Applied .NET 10 optimized compiler flags for Release build" />
+  </Target>
+
+  <!-- ==========================================================================
+       Clean Targets
+       ========================================================================== -->
+
+  <!-- Deep clean target for complete rebuild -->
+  <Target Name="DeepClean" AfterTargets="Clean">
+    <RemoveDir Directories="$(BaseIntermediateOutputPath)" Condition="Exists('$(BaseIntermediateOutputPath)')" />
+    <RemoveDir Directories="$(BaseOutputPath)" Condition="Exists('$(BaseOutputPath)')" />
+    <Message Importance="High" Text="Deep cleaned $(MSBuildProjectName)" />
   </Target>
 </Project>

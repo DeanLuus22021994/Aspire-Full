@@ -1,10 +1,36 @@
 <Project>
+  <!-- ==========================================================================
+       .NET 10 Optimized Build Configuration
+       Provides best-in-class performance for standard dotnet commands
+       ========================================================================== -->
+
   <!-- Common properties for all projects -->
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>14.0</LangVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <!-- ==========================================================================
+       Build Performance Optimizations
+       ========================================================================== -->
+  <PropertyGroup>
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Source Link for debugging -->
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Incremental build optimization -->
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
   </PropertyGroup>
 
   <!-- ==========================================================================
@@ -15,6 +41,7 @@
     <!-- Enable SIMD/AVX vectorization for better performance -->
     <EnableAVX2>true</EnableAVX2>
     <EnableSSE41>true</EnableSSE41>
+    <EnableAVX512F Condition="'$(EnableAVX512F)' == ''">false</EnableAVX512F>
 
     <!-- Tiered compilation with Profile-Guided Optimization -->
     <TieredPGO>true</TieredPGO>
@@ -23,8 +50,20 @@
     <!-- ReadyToRun for faster startup -->
     <PublishReadyToRun>true</PublishReadyToRun>
 
-    <!-- Hardware intrinsics for tensor operations -->
+    <!-- Hardware intrinsics for tensor/vector operations -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- ==========================================================================
+       Runtime Configuration
+       ========================================================================== -->
+  <PropertyGroup>
+    <!-- Server GC for better throughput -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+
+    <!-- Invariant globalization for containers (optional, enable per-project) -->
+    <!-- <InvariantGlobalization>true</InvariantGlobalization> -->
   </PropertyGroup>
 
   <!-- GPU-specific optimizations when CUDA is available -->
@@ -32,7 +71,9 @@
     <DefineConstants>$(DefineConstants);GPU_ENABLED;CUDA_ENABLED</DefineConstants>
   </PropertyGroup>
 
-  <!-- Test project configuration -->
+  <!-- ==========================================================================
+       Test Project Configuration
+       ========================================================================== -->
   <PropertyGroup Condition="$(IsTestProject) == 'true'">
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
@@ -45,5 +86,18 @@
     <CoverletOutput>$(MSBuildProjectDirectory)/coverage/</CoverletOutput>
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
     <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+  </PropertyGroup>
+
+  <!-- ==========================================================================
+       Release Build Optimizations
+       ========================================================================== -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+
+    <!-- AOT/Trimming preparation (enable per-project as needed) -->
+    <!-- <PublishTrimmed>true</PublishTrimmed> -->
+    <!-- <TrimMode>partial</TrimMode> -->
   </PropertyGroup>
 </Project>

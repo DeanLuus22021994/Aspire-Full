@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Qdrant.Client;
+using Qdrant.Client.Grpc;
 
 namespace Aspire_Full.VectorStore;
 
@@ -10,31 +9,19 @@ namespace Aspire_Full.VectorStore;
 /// </summary>
 public record VectorDocument
 {
-    [VectorStoreRecordKey]
     public required string Id { get; init; }
-
-    [VectorStoreRecordData]
     public required string Content { get; init; }
-
-    [VectorStoreRecordVector(1536, DistanceFunction.CosineSimilarity)]
     public required ReadOnlyMemory<float> Embedding { get; init; }
-
-    [VectorStoreRecordData]
+    public Dictionary<string, object>? Metadata { get; init; }
     public bool IsDeleted { get; init; } = false;
-
-    [VectorStoreRecordData]
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
-
-    [VectorStoreRecordData]
     public DateTime? UpdatedAt { get; init; }
-
-    [VectorStoreRecordData]
     public DateTime? DeletedAt { get; init; }
 }
 
 /// <summary>
 /// Service for vector storage operations with upsert/downsert (soft-delete) support.
-/// Uses Qdrant via Semantic Kernel abstractions for .NET 10 compatibility.
+/// Uses Qdrant as the underlying vector database.
 /// </summary>
 public interface IVectorStoreService
 {
@@ -66,35 +53,42 @@ public interface IVectorStoreService
     /// <summary>
     /// Ensure the collection exists with proper configuration.
     /// </summary>
-    Task EnsureCollectionAsync(CancellationToken cancellationToken = default);
+    Task EnsureCollectionAsync(string collectionName, int vectorSize, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Qdrant implementation of vector store with upsert/downsert pattern using SK abstractions.
+/// Qdrant implementation of vector store with upsert/downsert pattern.
 /// </summary>
 public class QdrantVectorStoreService : IVectorStoreService
 {
-    private readonly IVectorStoreRecordCollection<string, VectorDocument> _collection;
+    private readonly QdrantClient _client;
     private readonly ILogger<QdrantVectorStoreService> _logger;
     private readonly string _collectionName;
+    private readonly int _vectorSize;
 
     public QdrantVectorStoreService(
         QdrantClient client,
         ILogger<QdrantVectorStoreService> logger,
-        string collectionName = "documents")
+        string collectionName = "documents",
+        int vectorSize = 1536)
     {
-        ArgumentNullException.ThrowIfNull(client);
+        _client = client ?? throw new ArgumentNullException(nameof(client));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _collectionName = collectionName;
-
-        var vectorStore = new QdrantVectorStore(client);
-        _collection = vectorStore.GetCollection<string, VectorDocument>(collectionName);
+        _vectorSize = vectorSize;
     }
 
-    public async Task EnsureCollectionAsync(CancellationToken cancellationToken = default)
+    public async Task EnsureCollectionAsync(string collectionName, int vectorSize, CancellationToken cancellationToken = default)
     {
-        await _collection.CreateCollectionIfNotExistsAsync(cancellationToken);
-        _logger.LogInformation("Ensured Qdrant collection exists: {CollectionName}", _collectionName);
+        var collections = await _client.ListCollectionsAsync(cancellationToken);
+        if (!collections.Contains(collectionName))
+        {
+            await _client.CreateCollectionAsync(
+                collectionName,
+                new VectorParams { Size = (ulong)vectorSize, Distance = Distance.Cosine },
+                cancellationToken: cancellationToken);
+            _logger.LogInformation("Created Qdrant collection: {CollectionName}", collectionName);
+        }
     }
 
     public async Task<VectorDocument> UpsertAsync(VectorDocument document, CancellationToken cancellationToken = default)
@@ -104,20 +98,41 @@ public class QdrantVectorStoreService : IVectorStoreService
         var existingDoc = await GetAsync(document.Id, cancellationToken);
         var now = DateTime.UtcNow;
 
-        var updatedDoc = document with
+        var payload = new Dictionary<string, Value>
+        {
+            ["content"] = document.Content,
+            ["is_deleted"] = false,
+            ["created_at"] = existingDoc?.CreatedAt.ToString("O") ?? now.ToString("O"),
+            ["updated_at"] = now.ToString("O")
+        };
+
+        if (document.Metadata != null)
+        {
+            foreach (var kvp in document.Metadata)
+            {
+                payload[$"meta_{kvp.Key}"] = kvp.Value?.ToString() ?? string.Empty;
+            }
+        }
+
+        var point = new PointStruct
+        {
+            Id = new PointId { Uuid = document.Id },
+            Vectors = document.Embedding.ToArray(),
+            Payload = { payload }
+        };
+
+        await _client.UpsertAsync(_collectionName, [point], cancellationToken: cancellationToken);
+
+        var action = existingDoc == null ? "Created" : (existingDoc.IsDeleted ? "Reactivated" : "Updated");
+        _logger.LogInformation("{Action} document {Id} in collection {Collection}", action, document.Id, _collectionName);
+
+        return document with
         {
             CreatedAt = existingDoc?.CreatedAt ?? now,
             UpdatedAt = now,
             IsDeleted = false,
             DeletedAt = null
         };
-
-        await _collection.UpsertAsync(updatedDoc, cancellationToken: cancellationToken);
-
-        var action = existingDoc == null ? "Created" : (existingDoc.IsDeleted ? "Reactivated" : "Updated");
-        _logger.LogInformation("{Action} document {Id} in collection {Collection}", action, document.Id, _collectionName);
-
-        return updatedDoc;
     }
 
     public async Task<bool> DownsertAsync(string id, CancellationToken cancellationToken = default)
@@ -127,6 +142,7 @@ public class QdrantVectorStoreService : IVectorStoreService
         var existing = await GetAsync(id, cancellationToken);
         if (existing == null) return false;
 
+        // Re-upsert with soft-delete flag
         var now = DateTime.UtcNow;
         var softDeleted = existing with
         {
@@ -135,16 +151,42 @@ public class QdrantVectorStoreService : IVectorStoreService
             UpdatedAt = now
         };
 
-        await _collection.UpsertAsync(softDeleted, cancellationToken: cancellationToken);
+        await UpsertSoftDeleteAsync(softDeleted, cancellationToken);
         _logger.LogInformation("Soft-deleted (downsert) document {Id} in collection {Collection}", id, _collectionName);
         return true;
+    }
+
+    private async Task UpsertSoftDeleteAsync(VectorDocument document, CancellationToken cancellationToken)
+    {
+        var payload = new Dictionary<string, Value>
+        {
+            ["content"] = document.Content,
+            ["is_deleted"] = true,
+            ["created_at"] = document.CreatedAt.ToString("O"),
+            ["updated_at"] = document.UpdatedAt?.ToString("O") ?? DateTime.UtcNow.ToString("O"),
+            ["deleted_at"] = document.DeletedAt?.ToString("O") ?? DateTime.UtcNow.ToString("O")
+        };
+
+        var point = new PointStruct
+        {
+            Id = new PointId { Uuid = document.Id },
+            Vectors = document.Embedding.ToArray(),
+            Payload = { payload }
+        };
+
+        await _client.UpsertAsync(_collectionName, [point], cancellationToken: cancellationToken);
     }
 
     public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
 
-        await _collection.DeleteAsync(id, cancellationToken: cancellationToken);
+        var pointsSelector = new PointsSelector
+        {
+            Points = new PointsIdsList { Ids = { new PointId { Uuid = id } } }
+        };
+
+        await _client.DeleteAsync(_collectionName, pointsSelector, cancellationToken: cancellationToken);
         _logger.LogInformation("Hard-deleted document {Id} from collection {Collection}", id, _collectionName);
         return true;
     }
@@ -152,7 +194,25 @@ public class QdrantVectorStoreService : IVectorStoreService
     public async Task<VectorDocument?> GetAsync(string id, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
-        return await _collection.GetAsync(id, cancellationToken: cancellationToken);
+
+        try
+        {
+            var points = await _client.RetrieveAsync(
+                _collectionName,
+                [new PointId { Uuid = id }],
+                withPayload: true,
+                withVectors: true,
+                cancellationToken: cancellationToken);
+
+            var point = points.FirstOrDefault();
+            if (point == null) return null;
+
+            return MapPointToDocument(point);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<IList<VectorDocument>> SearchAsync(
@@ -161,24 +221,55 @@ public class QdrantVectorStoreService : IVectorStoreService
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var searchOptions = new VectorSearchOptions
+        Filter? filter = includeDeleted ? null : new Filter
         {
-            Top = topK
+            Must = {
+                new Condition { Field = new FieldCondition {
+                    Key = "is_deleted",
+                    Match = new Match { Boolean = false }
+                }}
+            }
         };
 
-        // Note: Filtering for soft-deleted documents would need a filter expression
-        // For now, we filter in-memory after search
-        var results = await _collection.VectorizedSearchAsync(queryVector, searchOptions, cancellationToken);
+        var results = await _client.SearchAsync(
+            _collectionName,
+            queryVector.ToArray(),
+            filter: filter,
+            limit: (ulong)topK,
+            payloadSelector: true,
+            vectorsSelector: true,
+            cancellationToken: cancellationToken);
 
-        var documents = new List<VectorDocument>();
-        await foreach (var result in results.Results.WithCancellation(cancellationToken))
+        return results.Select(MapScoredPointToDocument).ToList();
+    }
+
+    private static VectorDocument MapPointToDocument(RetrievedPoint point)
+    {
+        var payload = point.Payload;
+        return new VectorDocument
         {
-            if (result.Record != null && (includeDeleted || !result.Record.IsDeleted))
-            {
-                documents.Add(result.Record);
-            }
-        }
+            Id = point.Id.Uuid,
+            Content = payload.TryGetValue("content", out var content) ? content.StringValue : string.Empty,
+            Embedding = point.Vectors.Vector.Data.ToArray(),
+            IsDeleted = payload.TryGetValue("is_deleted", out var deleted) && deleted.BoolValue,
+            CreatedAt = payload.TryGetValue("created_at", out var created) ? DateTime.Parse(created.StringValue) : DateTime.UtcNow,
+            UpdatedAt = payload.TryGetValue("updated_at", out var updated) ? DateTime.Parse(updated.StringValue) : null,
+            DeletedAt = payload.TryGetValue("deleted_at", out var deletedAt) && !string.IsNullOrEmpty(deletedAt.StringValue) ? DateTime.Parse(deletedAt.StringValue) : null
+        };
+    }
 
-        return documents;
+    private static VectorDocument MapScoredPointToDocument(ScoredPoint point)
+    {
+        var payload = point.Payload;
+        return new VectorDocument
+        {
+            Id = point.Id.Uuid,
+            Content = payload.TryGetValue("content", out var content) ? content.StringValue : string.Empty,
+            Embedding = point.Vectors.Vector.Data.ToArray(),
+            IsDeleted = payload.TryGetValue("is_deleted", out var deleted) && deleted.BoolValue,
+            CreatedAt = payload.TryGetValue("created_at", out var created) ? DateTime.Parse(created.StringValue) : DateTime.UtcNow,
+            UpdatedAt = payload.TryGetValue("updated_at", out var updated) ? DateTime.Parse(updated.StringValue) : null,
+            DeletedAt = payload.TryGetValue("deleted_at", out var deletedAt) && !string.IsNullOrEmpty(deletedAt.StringValue) ? DateTime.Parse(deletedAt.StringValue) : null
+        };
     }
 }
