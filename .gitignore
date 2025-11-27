@@ -12,6 +12,7 @@ artifacts/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/mcp.json
 *.user
 *.suo
 *.rsuser

@@ -19,6 +19,7 @@ services:
       - ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
       - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL=http://aspire-dashboard:18889
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://aspire-dashboard:16036
       # Docker-in-Docker connection
       - DOCKER_HOST=tcp://docker:2376
       - DOCKER_TLS_VERIFY=1
@@ -29,6 +30,7 @@ services:
     init: true
     depends_on:
       - docker
+      - aspire-dashboard
 
   # Self-hosted GitHub Actions Runner
   github-runner:
@@ -90,11 +92,15 @@ services:
     ports:
       - "18888:18888"
       - "18889:18889"
+      - "16036:16036"
     environment:
       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
       - DASHBOARD__OTLP__AUTHMODE=Unsecured
       - DASHBOARD__FRONTEND__AUTHMODE=Unsecured
       - DASHBOARD__RESOURCESERVICE__AUTHMODE=Unsecured
+      # MCP Server configuration for Copilot integration
+      - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://0.0.0.0:16036
+      - ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
     volumes:
       - aspire-dashboard-data:/app/data
     networks:
