@@ -1,12 +1,83 @@
 <Project>
-  <!-- Post-build targets for test projects -->
+  <!-- ==========================================================================
+       Default Build Configuration
+       Enable parallel builds by default for all projects
+       ========================================================================== -->
+  <PropertyGroup>
+    <BuildInParallel>true</BuildInParallel>
+    <MaxCpuCount Condition="'$(MaxCpuCount)' == ''">0</MaxCpuCount>
+  </PropertyGroup>
+
+  <!-- ==========================================================================
+       GPU/SIMD Environment Setup
+       Automatically configure hardware acceleration for standard dotnet commands
+       ========================================================================== -->
+
+  <!-- Set GPU environment variables before any build/test operations -->
+  <Target Name="ConfigureGpuEnvironment" BeforeTargets="BeforeBuild;BeforeRebuild;VSTest;Restore">
+    <PropertyGroup>
+      <!-- Detect NVIDIA GPU availability -->
+      <_HasNvidiaGpu Condition="Exists('$(ProgramFiles)\NVIDIA Corporation\NVSMI\nvidia-smi.exe') OR Exists('$(SystemRoot)\System32\nvidia-smi.exe')">true</_HasNvidiaGpu>
+    </PropertyGroup>
+
+    <!-- Set CUDA/GPU environment variables when GPU is available -->
+    <SetEnv Name="CUDA_VISIBLE_DEVICES" Value="0" Condition="'$(_HasNvidiaGpu)' == 'true' AND '$(CUDA_VISIBLE_DEVICES)' == ''" />
+    <SetEnv Name="NVIDIA_VISIBLE_DEVICES" Value="all" Condition="'$(_HasNvidiaGpu)' == 'true' AND '$(NVIDIA_VISIBLE_DEVICES)' == ''" />
+
+    <!-- Enable SIMD/vectorization environment variables -->
+    <SetEnv Name="DOTNET_EnableAVX2" Value="1" Condition="'$(DOTNET_EnableAVX2)' == ''" />
+    <SetEnv Name="DOTNET_EnableSSE41" Value="1" Condition="'$(DOTNET_EnableSSE41)' == ''" />
+    <SetEnv Name="DOTNET_TieredPGO" Value="1" Condition="'$(DOTNET_TieredPGO)' == ''" />
+    <SetEnv Name="DOTNET_TC_QuickJitForLoops" Value="1" Condition="'$(DOTNET_TC_QuickJitForLoops)' == ''" />
+    <SetEnv Name="DOTNET_ReadyToRun" Value="1" Condition="'$(DOTNET_ReadyToRun)' == ''" />
+
+    <!-- Non-interactive/CI mode settings -->
+    <SetEnv Name="DOTNET_NOLOGO" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
+    <SetEnv Name="DOTNET_CLI_TELEMETRY_OPTOUT" Value="1" Condition="'$(CI)' == 'true' OR '$(TF_BUILD)' == 'true'" />
+
+    <Message Importance="High" Text="GPU Acceleration: $(_HasNvidiaGpu)" Condition="'$(_HasNvidiaGpu)' == 'true'" />
+    <Message Importance="Normal" Text="SIMD optimizations enabled (AVX2, SSE4.1, TieredPGO)" />
+  </Target>
+
+  <!-- Inline task to set environment variables during build -->
+  <UsingTask TaskName="SetEnv" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Name ParameterType="System.String" Required="true" />
+      <Value ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs">
+        System.Environment.SetEnvironmentVariable(Name, Value, System.EnvironmentVariableTarget.Process);
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <!-- ==========================================================================
+       Post-build and Test Targets
+       ========================================================================== -->
+
+  <!-- Post-build target for test projects -->
   <Target Name="PrintTestSummary" AfterTargets="VSTest" Condition="$(IsTestProject) == 'true'">
     <Message Importance="High" Text="Tests completed for $(MSBuildProjectName)" />
+    <Message Importance="Normal" Text="GPU acceleration was active during test execution" Condition="'$(_HasNvidiaGpu)' == 'true'" />
   </Target>
 
   <!-- Custom target to run frontend tests after .NET tests -->
   <Target Name="RunFrontendTests" AfterTargets="VSTest" Condition="'$(RunFrontendTests)' == 'true' AND Exists('$(MSBuildThisFileDirectory)Aspire-Full.Web/package.json')">
     <Message Importance="High" Text="Running frontend tests..." />
     <Exec Command="npm run test:run" WorkingDirectory="$(MSBuildThisFileDirectory)Aspire-Full.Web" ContinueOnError="true" />
+  </Target>
+
+  <!-- ==========================================================================
+       GPU-Optimized Build Configuration
+       ========================================================================== -->
+
+  <!-- Apply optimized compiler flags for Release builds -->
+  <Target Name="ApplyGpuOptimizedCompilerFlags" BeforeTargets="CoreCompile" Condition="'$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <Optimize>true</Optimize>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+    <Message Importance="Normal" Text="Applied GPU-optimized compiler flags for Release build" />
   </Target>
 </Project>

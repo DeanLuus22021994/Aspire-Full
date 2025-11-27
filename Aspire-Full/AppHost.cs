@@ -49,6 +49,13 @@ var redis = builder.AddRedis("redis")
     .WithLifetime(ContainerLifetime.Persistent);
 
 // -----------------------------------------------------------------------------
+// Vector Database - Qdrant for semantic search and embeddings
+// -----------------------------------------------------------------------------
+var qdrant = builder.AddQdrant("qdrant")
+    .WithDataVolume("aspire-qdrant-data")
+    .WithLifetime(ContainerLifetime.Persistent);
+
+// -----------------------------------------------------------------------------
 // API Service - RESTful backend with Entity Framework
 // -----------------------------------------------------------------------------
 var api = builder.AddProject<Projects.Aspire_Full_Api>("api")
