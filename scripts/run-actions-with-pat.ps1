@@ -1,18 +1,27 @@
-# Run GitHub Actions Locally
-# Uses gh-act extension to run workflows locally with Docker
+# Run GitHub Workflows with PAT Authentication
+# Uses gh-act to run workflows locally with PAT for API access
 
 param(
     [string]$Workflow = "",
     [string]$Job = "",
     [string]$GhEventName = "push",
+    [string]$PAT = $env:GITHUB_TOKEN,
     [switch]$List,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Verbose
 )
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "🎬 GitHub Actions Local Runner" -ForegroundColor Cyan
+Write-Host "🎬 GitHub Actions Local Runner (PAT Mode)" -ForegroundColor Cyan
 Write-Host ""
+
+# Validate PAT
+if (-not $PAT -and -not $List) {
+    Write-Host "⚠️  No PAT provided. Set GITHUB_TOKEN env var or use -PAT parameter" -ForegroundColor Yellow
+    Write-Host "   Some workflows may fail without authentication" -ForegroundColor Gray
+    Write-Host ""
+}
 
 # Check if gh-act is installed
 $actInstalled = gh extension list | Select-String "gh-act"
@@ -56,6 +65,17 @@ try {
     if ($DryRun) {
         $ghActParams += "-n"
         Write-Host "🔍 Dry run mode enabled" -ForegroundColor Yellow
+    }
+
+    if ($Verbose) {
+        $ghActParams += "-v"
+    }
+
+    # Pass secrets to act
+    if ($PAT) {
+        $ghActParams += "-s"
+        $ghActParams += "GITHUB_TOKEN=$PAT"
+        Write-Host "🔐 Using provided PAT for authentication" -ForegroundColor Green
     }
 
     Write-Host "🚀 Running: gh act $($ghActParams -join ' ')" -ForegroundColor Green
