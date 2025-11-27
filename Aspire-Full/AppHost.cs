@@ -4,15 +4,22 @@
 // This is the main entry point for the .NET Aspire application.
 // It configures and orchestrates all services in the distributed application.
 //
+// Architecture:
+//   - Aspire manages its own containers (PostgreSQL, Redis, admin UIs)
+//   - Aspire creates an isolated session network for container communication
+//   - Telemetry is sent to external dashboard via OTLP (port 18889)
+//   - Docker Compose manages: devcontainer, aspire-dashboard
+//
 // Features:
 //   - Service discovery and configuration
-//   - Container orchestration
-//   - OpenTelemetry integration
+//   - Container orchestration with isolated networking
+//   - OpenTelemetry integration with standalone dashboard
 //   - Health checks and monitoring
 //
 // Environment Variables:
 //   - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL - OTLP endpoint for telemetry
 //   - ASPIRE_ALLOW_UNSECURED_TRANSPORT - Allow HTTP for development
+//   - OTEL_EXPORTER_OTLP_ENDPOINT - OpenTelemetry endpoint
 //
 // Usage:
 //   dotnet run --project Aspire-Full

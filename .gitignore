@@ -48,6 +48,8 @@ TestResults/
 
 # Aspire
 .aspire/
+.aspire.pid
+.api.pid
 
 # Docker
 docker-compose.override.yml
