@@ -1,10 +1,9 @@
-using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -26,28 +25,23 @@ public sealed class ArcFaceEmbeddingService : IArcFaceEmbeddingService, IDisposa
 
     private readonly ILogger<ArcFaceEmbeddingService> _logger;
     private readonly ArcFaceEmbeddingOptions _options;
-    private readonly InferenceSession _session;
+    private readonly IArcFaceInferenceRunner _runner;
     private readonly int _effectiveBatchSize;
     private readonly SemaphoreSlim _concurrencySemaphore;
     private readonly ArcFaceModelInfo _modelInfo;
     private bool _disposed;
 
-    public ArcFaceEmbeddingService(IOptions<ArcFaceEmbeddingOptions> options, ILogger<ArcFaceEmbeddingService> logger)
+    public ArcFaceEmbeddingService(
+        IOptions<ArcFaceEmbeddingOptions> options,
+        ILogger<ArcFaceEmbeddingService> logger,
+        IArcFaceInferenceRunner runner)
     {
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        ValidateOptions(_options);
-
-        if (_options.VerifyModelChecksum && !string.IsNullOrWhiteSpace(_options.ExpectedSha256))
-        {
-            VerifyModelChecksum(_options.ModelPath, _options.ExpectedSha256);
-        }
-
-        var (sessionOptions, resolvedProvider) = CreateSessionOptions(_options, logger);
-        _session = new InferenceSession(_options.ModelPath, sessionOptions);
+        _runner = runner ?? throw new ArgumentNullException(nameof(runner));
         _effectiveBatchSize = Math.Max(1, (int)Math.Floor(_options.MaxBatchSize * (1.0 - _options.TensorCoreHeadroom)));
         _concurrencySemaphore = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2));
-        _modelInfo = BuildModelInfo(_session, _options, resolvedProvider);
+        _modelInfo = runner.ModelInfo;
 
         _logger.LogInformation(
             "ArcFace model {Model} ({Version}) loaded with provider {Provider} | batchSize={Batch} | headroom={Headroom:P0}",
@@ -113,13 +107,16 @@ public sealed class ArcFaceEmbeddingService : IArcFaceEmbeddingService, IDisposa
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            using var inputs = new[] { NamedOnnxValue.CreateFromTensor(InputName, Concatenate(tensors)) };
-            using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _session.Run(inputs);
-            var rawOutput = results.First().AsEnumerable<float>().ToArray();
+            var rawOutput = _runner.Run(InputName, Concatenate(tensors));
             stopwatch.Stop();
 
             LatencyHistogram.Record(stopwatch.Elapsed.TotalMilliseconds);
             BatchCounter.Add(tensors.Count);
+
+            if (_options.EnableVerboseLogging)
+            {
+                _logger.LogDebug("ArcFace inference finished for batch {Batch} in {Elapsed} ms", tensors.Count, stopwatch.Elapsed.TotalMilliseconds);
+            }
 
             return SliceEmbeddings(rawOutput, tensors.Count);
         }
@@ -194,90 +191,6 @@ public sealed class ArcFaceEmbeddingService : IArcFaceEmbeddingService, IDisposa
         }
     }
 
-    private static void ValidateOptions(ArcFaceEmbeddingOptions options)
-    {
-        if (string.IsNullOrWhiteSpace(options.ModelPath))
-        {
-            throw new ValidationException("ArcFace model path is required.");
-        }
-
-        if (!File.Exists(options.ModelPath))
-        {
-            throw new FileNotFoundException("ArcFace ONNX model not found.", options.ModelPath);
-        }
-    }
-
-    private static void VerifyModelChecksum(string path, string expectedSha256)
-    {
-        var normalizedExpected = expectedSha256.Replace(" ", string.Empty, StringComparison.OrdinalIgnoreCase);
-        using var stream = File.OpenRead(path);
-        using var sha = System.Security.Cryptography.SHA256.Create();
-        var actual = Convert.ToHexString(sha.ComputeHash(stream));
-        if (!actual.Equals(normalizedExpected, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException($"ArcFace model checksum mismatch. Expected {normalizedExpected}, got {actual}.");
-        }
-    }
-
-    private static (SessionOptions Options, ArcFaceExecutionProvider Provider) CreateSessionOptions(ArcFaceEmbeddingOptions options, ILogger logger)
-    {
-        var provider = options.ExecutionProvider == ArcFaceExecutionProvider.Auto
-            ? DetectDefaultProvider()
-            : options.ExecutionProvider;
-
-        var sessionOptions = new SessionOptions
-        {
-            LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING,
-            EnableMemoryPattern = true,
-            ExecutionMode = ExecutionMode.ORT_SEQUENTIAL
-        };
-
-        try
-        {
-            switch (provider)
-            {
-                case ArcFaceExecutionProvider.Cuda:
-                    sessionOptions.AppendExecutionProvider_CUDA(options.CudaDeviceId);
-                    break;
-                case ArcFaceExecutionProvider.DirectMl:
-                    sessionOptions.AppendExecutionProvider_DML();
-                    break;
-                default:
-                    sessionOptions.AppendExecutionProvider_CPU();
-                    break;
-            }
-        }
-        catch (OnnxRuntimeException ex)
-        {
-            logger.LogWarning(ex, "Falling back to CPU execution provider for ArcFace embeddings.");
-            sessionOptions.AppendExecutionProvider_CPU();
-            provider = ArcFaceExecutionProvider.Cpu;
-        }
-
-        return (sessionOptions, provider);
-    }
-
-    private static ArcFaceExecutionProvider DetectDefaultProvider()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return ArcFaceExecutionProvider.DirectMl;
-        }
-
-        return ArcFaceExecutionProvider.Cpu;
-    }
-
-    private static ArcFaceModelInfo BuildModelInfo(InferenceSession session, ArcFaceEmbeddingOptions options, ArcFaceExecutionProvider provider)
-    {
-        var metadata = session.ModelMetadata;
-        return new ArcFaceModelInfo(
-            metadata?.GraphName ?? metadata?.Name ?? "arcface_r100_v1",
-            metadata?.Version ?? metadata?.ProducerVersion ?? "unknown",
-            provider.ToString().ToLowerInvariant(),
-            options.ExpectedSha256 ?? "n/a",
-            DateTime.UtcNow);
-    }
-
     public void Dispose()
     {
         if (_disposed)
@@ -285,7 +198,6 @@ public sealed class ArcFaceEmbeddingService : IArcFaceEmbeddingService, IDisposa
             return;
         }
 
-        _session.Dispose();
         _concurrencySemaphore.Dispose();
         _disposed = true;
     }

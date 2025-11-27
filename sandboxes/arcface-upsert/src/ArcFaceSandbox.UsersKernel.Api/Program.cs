@@ -1,23 +1,47 @@
+using System.Text.Json.Serialization;
+using ArcFaceSandbox.EmbeddingService;
+using ArcFaceSandbox.UsersKernel.Infrastructure.Data;
+using ArcFaceSandbox.UsersKernel.Infrastructure.Services;
+using ArcFaceSandbox.VectorStore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddArcFaceEmbedding(builder.Configuration);
+builder.Services.AddSandboxVectorStore(builder.Configuration);
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddDbContext<SandboxUsersDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("Users")
+        ?? "Data Source=arcface-sandbox-users.db";
+    options.UseSqlite(connectionString);
+});
+
+builder.Services.AddScoped<ISandboxUserService, SandboxUserService>();
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SandboxUsersDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

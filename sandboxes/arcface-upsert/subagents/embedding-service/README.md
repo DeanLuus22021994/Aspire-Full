@@ -14,7 +14,7 @@ Own ArcFace model execution and deliver normalized 512-float embeddings for down
 - Calling Qdrant directly
 - Handling HTTP requests
 
-## Interfaces (Draft)
+## Interfaces
 ```csharp
 public interface IArcFaceEmbeddingService
 {
@@ -23,6 +23,21 @@ public interface IArcFaceEmbeddingService
     ArcFaceModelInfo ModelInfo { get; }
 }
 ```
+
+### DI Registration
+```csharp
+builder.Services.AddArcFaceEmbedding(builder.Configuration);
+```
+
+Configuration keys live under `ArcFace:Embedding`:
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `ModelPath` | Absolute/relative path to `arcface_r100_v1.onnx`. Must exist and pass optional SHA check. | `./models/arcface_r100_v1.onnx` |
+| `ExecutionProvider` | `Cuda`, `DirectMl`, `Cpu`, or `Auto`. | `Cuda` |
+| `TensorCoreHeadroom` | Fractional headroom reserved when batching (0.05-0.5). | `0.1` |
+| `VerifyModelChecksum` | Toggles SHA-256 verification using `ExpectedSha256`. | `true` |
+| `EnableVerboseLogging` | Emits per-batch latency logs. | `false` |
 
 ## Open Tasks
 - Define model download script contract (`scripts/get-arcface-model.ps1`).

@@ -14,16 +14,33 @@ Expose Qdrant-backed persistence tailored to ArcFace embeddings while mirroring 
 - Managing HTTP transport
 - Owning business logic for users
 
-## Interfaces (Draft)
+## Interfaces
 ```csharp
 public interface ISandboxVectorStore
 {
-    Task<VectorDocument> UpsertAsync(VectorDocument doc, CancellationToken ct = default);
+    Task<SandboxVectorDocument> UpsertAsync(SandboxVectorDocument doc, CancellationToken ct = default);
     Task<bool> DownsertAsync(string id, CancellationToken ct = default);
-    Task<IList<VectorDocument>> SearchAsync(ReadOnlyMemory<float> query, int topK = 10, CancellationToken ct = default);
+    Task<IList<SandboxVectorDocument>> SearchAsync(ReadOnlyMemory<float> query, int topK = 10, bool includeDeleted = false, CancellationToken ct = default);
+    Task<SandboxVectorDocument?> GetAsync(string id, CancellationToken ct = default);
+    Task EnsureCollectionAsync(CancellationToken ct = default);
 }
 ```
 
+### DI Registration
+```csharp
+builder.Services.AddSandboxVectorStore(builder.Configuration);
+```
+
+Configuration keys (section `ArcFace:VectorStore`):
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `Endpoint` | Qdrant endpoint (HTTP or gRPC). | `http://localhost:6334` |
+| `CollectionName` | Sandbox collection name. | `arcface-sandbox` |
+| `VectorSize` | Must remain 512 for ArcFace. | `512` |
+| `ApiKey` | Optional token for managed clusters. | _null_ |
+| `AutoCreateCollection` | Ensure collection exists on startup. | `true` |
+
 ## Operational Notes
-- Qdrant endpoint defaults to `http://localhost:6334`; override via `SANDBOX_QDRANT_ENDPOINT`.
-- Collection names include a timestamp suffix when running tests to avoid collisions.
+- Qdrant endpoint defaults to `http://localhost:6334`; override via config/env.
+- Test runs can override `CollectionName` to append build-specific suffixes.
