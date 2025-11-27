@@ -22,9 +22,6 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
     networks:
       - aspire-network
-    depends_on:
-      aspire-dashboard:
-        condition: service_healthy
     command: sleep infinity
     init: true
 
@@ -43,12 +40,6 @@ services:
       - aspire-dashboard-data:/app/data
     networks:
       - aspire-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:18888/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
     restart: unless-stopped
 
 volumes:
