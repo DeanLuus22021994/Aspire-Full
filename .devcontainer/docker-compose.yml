@@ -114,6 +114,38 @@ services:
       - aspire-network
     restart: unless-stopped
 
+  github-mcp:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.github-mcp
+    container_name: aspire-github-mcp
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: ["gpu"]
+    environment:
+      - GITHUB_MCP_TOKEN=${GITHUB_MCP_TOKEN}
+      - GITHUB_MCP_REPOSITORY=${GITHUB_MCP_REPOSITORY:-DeanLuus22021994/Aspire-Full}
+      - GITHUB_MCP_API_KEY=${GITHUB_MCP_API_KEY:-aspire-github-mcp}
+      - GITHUB_MCP_CACHE_SECONDS=45
+      - ASPIRE_DASHBOARD_URL=http://aspire-dashboard:18888
+      - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://aspire-dashboard:16036
+    ports:
+      - "17071:17071"
+    volumes:
+      - aspire-github-mcp-data:/opt/github-mcp/data
+      - aspire-github-mcp-logs:/var/log/github-mcp
+      - aspire-github-mcp-cache:/home/node/.cache/github-mcp
+    networks:
+      - aspire-network
+    restart: unless-stopped
+    depends_on:
+      - aspire-dashboard
+
 # =============================================================================
 # Named Volumes
 # =============================================================================
@@ -147,6 +179,12 @@ volumes:
   aspire-runner-npm:
     external: true
   aspire-runner-toolcache:
+    external: true
+  aspire-github-mcp-data:
+    external: true
+  aspire-github-mcp-logs:
+    external: true
+  aspire-github-mcp-cache:
     external: true
 
 networks:

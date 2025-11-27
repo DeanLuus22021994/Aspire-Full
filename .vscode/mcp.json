@@ -6,6 +6,13 @@
       "description": "Aspire Dashboard API Key",
       "default": "",
       "password": true
+    },
+    {
+      "id": "githubMcpApiKey",
+      "type": "promptString",
+      "description": "GitHub MCP API Key",
+      "default": "aspire-github-mcp",
+      "password": true
     }
   ],
   "servers": {
@@ -14,6 +21,13 @@
       "url": "http://localhost:16036",
       "headers": {
         "x-mcp-api-key": "${input:aspireMcpApiKey}"
+      }
+    },
+    "github-mcp": {
+      "type": "http",
+      "url": "http://localhost:17071/mcp",
+      "headers": {
+        "x-mcp-api-key": "${input:githubMcpApiKey}"
       }
     }
   }

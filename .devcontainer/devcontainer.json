@@ -45,7 +45,9 @@
     }
   },
 
-  "forwardPorts": [18888, 18889, 16036, 5000, 5001, 5173, 5174, 5432, 6379],
+  "forwardPorts": [
+    18888, 18889, 16036, 17071, 5000, 5001, 5173, 5174, 5432, 6379
+  ],
   "portsAttributes": {
     "18888": {
       "label": "Aspire Dashboard",
@@ -57,6 +59,10 @@
     },
     "16036": {
       "label": "Aspire MCP Server",
+      "onAutoForward": "silent"
+    },
+    "17071": {
+      "label": "GitHub MCP",
       "onAutoForward": "silent"
     },
     "5000": {
