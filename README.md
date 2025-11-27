@@ -33,8 +33,13 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 git clone https://github.com/DeanLuus22021994/Aspire-Full.git
 cd Aspire-Full
 
-# Run with Aspire AppHost
+# Run with Aspire AppHost (blocking)
 dotnet run --project Aspire-Full
+
+# Headless/non-blocking run (mirrors clean/restore/build/run)
+./scripts/Start-Aspire.ps1          # start + detach
+./scripts/Start-Aspire.ps1 -Status  # view PID / dashboard link
+./scripts/Start-Aspire.ps1 -Stop    # stop background host
 ```
 
 The Aspire Dashboard will be available at `http://localhost:18888`

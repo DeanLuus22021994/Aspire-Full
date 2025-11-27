@@ -50,6 +50,27 @@ if (-not (Test-Path (Join-Path $script:ProjectRoot "Aspire-Full"))) {
 $script:PidFile = Join-Path $script:ProjectRoot ".aspire.pid"
 $script:LogFile = Join-Path $script:ProjectRoot "TestResults" "aspire.log"
 
+function Invoke-DotnetStage {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Stage,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments
+    )
+
+    Write-Host $Stage -ForegroundColor Cyan
+    Push-Location $script:ProjectRoot
+    $output = & dotnet @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+    Pop-Location
+
+    if ($exitCode -ne 0) {
+        Write-Host "`n$Stage failed:" -ForegroundColor Red
+        Write-Host ($output -join "`n")
+        throw "dotnet stage failed: $Stage"
+    }
+}
+
 function Get-AspireStatus {
     if (Test-Path $script:PidFile) {
         $aspirePid = Get-Content $script:PidFile -ErrorAction SilentlyContinue
@@ -154,18 +175,10 @@ function Start-AspireApp {
         Write-Host "GPU requested but nvidia-smi not found - using CPU SIMD" -ForegroundColor Yellow
     }
 
-    # Build first to catch errors early
-    Write-Host "Building Aspire-Full (SIMD optimized)..." -ForegroundColor Cyan
-    Push-Location $script:ProjectRoot
-    $buildOutput = & dotnet build Aspire-Full --configuration Release --verbosity quiet 2>&1
-    $buildExitCode = $LASTEXITCODE
-    Pop-Location
-
-    if ($buildExitCode -ne 0) {
-        Write-Host "Build failed:" -ForegroundColor Red
-        Write-Host ($buildOutput -join "`n")
-        return $false
-    }
+    # Full clean/restore/build pipeline mirrors manual developer workflow
+    Invoke-DotnetStage -Stage "dotnet clean (Release)" -Arguments @("clean", "Aspire-Full", "--configuration", "Release")
+    Invoke-DotnetStage -Stage "dotnet restore" -Arguments @("restore", "Aspire-Full")
+    Invoke-DotnetStage -Stage "dotnet build (Release)" -Arguments @("build", "Aspire-Full", "--configuration", "Release", "--no-restore")
 
     # Set up environment for non-interactive execution
     $env:ASPIRE_ALLOW_UNSECURED_TRANSPORT = "true"
@@ -177,7 +190,7 @@ function Start-AspireApp {
     if ($WaitForExit) {
         # Blocking mode - run in foreground with headless profile
         Push-Location $script:ProjectRoot
-        & dotnet run --project Aspire-Full --no-build --launch-profile headless
+        & dotnet run --project Aspire-Full --no-build --launch-profile headless --configuration Release
         Pop-Location
         return $true
     }
@@ -185,7 +198,7 @@ function Start-AspireApp {
     # Non-blocking mode - use Start-Process for reliable background execution
     # Use headless profile to avoid browser launch and interactive prompts
     $proc = Start-Process -FilePath "dotnet" `
-        -ArgumentList "run", "--project", "Aspire-Full", "--no-build", "--launch-profile", "headless" `
+        -ArgumentList "run", "--project", "Aspire-Full", "--no-build", "--launch-profile", "headless", "--configuration", "Release" `
         -WorkingDirectory $script:ProjectRoot `
         -WindowStyle Hidden `
         -PassThru
@@ -214,7 +227,8 @@ function Start-AspireApp {
         }
 
         # Check for Aspire-created containers (postgres, redis with random suffixes)
-        $containers = docker ps --format "{{.Names}}" 2>$null | Where-Object { $_ -match "^(postgres|redis)-[a-z]+" }
+        $containers = docker ps --format "{{.Names}}" 2>$null |
+            Where-Object { $_ -match "^(postgres|redis|qdrant|pgadmin|rediscommander)-[a-z0-9]+" }
         if ($containers -and ($containers | Measure-Object).Count -ge 2) {
             $containersReady = $true
             break
