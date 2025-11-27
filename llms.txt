@@ -1,0 +1,60 @@
+# Aspire-Full
+
+> .NET Aspire Full AppHost with bleeding-edge tooling for AI-assisted development
+
+## Overview
+
+This project demonstrates a complete .NET Aspire distributed application setup with:
+- .NET 10 SDK (LTS)
+- Aspire 13.1.0-preview (bleeding edge)
+- Docker-based devcontainer with named volumes
+- GitHub CLI tooling with AI extensions
+- AI-optimized documentation
+
+## Documentation
+
+- [Getting Started](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/getting-started.md): Setup and run the application
+- [Architecture](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/architecture.md): System architecture and design
+- [API Reference](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/api/index.md): Generated API documentation
+- [DevContainer](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/devcontainer.md): Development environment setup
+- [GitHub Tooling](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/github-tooling.md): CLI tools and extensions
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/DeanLuus22021994/Aspire-Full.git
+cd Aspire-Full
+
+# Run with Aspire CLI
+aspire run
+
+# Or with dotnet
+dotnet run --project Aspire-Full
+```
+
+## Key Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| .NET SDK | 10.0.100 | Runtime and build |
+| Aspire | 13.1.0-preview | Distributed app orchestration |
+| Docker | 28.x | Containerization |
+| GitHub CLI | 2.83+ | Repository management |
+
+## Project Structure
+
+```
+Aspire-Full/
+├── .devcontainer/          # Docker devcontainer config
+├── .github/workflows/      # CI/CD pipelines
+├── Aspire-Full/            # AppHost project
+├── docs/                   # Documentation
+├── scripts/                # Automation scripts
+└── llms.txt                # AI documentation index
+```
+
+## Optional
+
+- [Contributing Guidelines](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/CONTRIBUTING.md)
+- [Changelog](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/CHANGELOG.md)
