@@ -80,6 +80,7 @@ def _gpu_summary() -> str:
 
 
 def main() -> None:
+    """Run the VS Code post-start diagnostics and readiness logging."""
     _extend_path()
     _log("🚀 Running post-start setup...")
     _wait_for_dashboard()

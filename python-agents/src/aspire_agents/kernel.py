@@ -41,8 +41,10 @@ def _require_env(name: str) -> str:
 def build_kernel(agent: AgentConfig) -> Any:
     """Configure a Semantic Kernel instance for the configured provider."""
 
-    KernelCls, AzureOpenAIChatCompletion, OpenAIChatCompletion = _load_semantic_kernel()
-    kernel = KernelCls()
+    kernel_cls, azure_openai_chat_completion, openai_chat_completion = (
+        _load_semantic_kernel()
+    )
+    kernel = kernel_cls()
     provider = agent.model.provider
 
     if provider == "azure":
@@ -50,7 +52,7 @@ def build_kernel(agent: AgentConfig) -> Any:
         api_key = _require_env("AZURE_OPENAI_API_KEY")
         deployment = agent.model.deployment or agent.model.name
         kernel.add_service(
-            AzureOpenAIChatCompletion(
+            azure_openai_chat_completion(
                 service_id="azure-default",
                 api_key=api_key,
                 deployment_name=deployment,
@@ -62,7 +64,7 @@ def build_kernel(agent: AgentConfig) -> Any:
     api_key = _require_env("OPENAI_API_KEY")
     base_url = os.getenv("OPENAI_BASE_URL")
     kernel.add_service(
-        OpenAIChatCompletion(
+        openai_chat_completion(
             service_id="openai-default",
             ai_model_id=agent.model.name,
             api_key=api_key,

@@ -125,6 +125,7 @@ def _install_gh_extensions() -> None:
 
 
 def main() -> None:
+    """Execute the VS Code post-create automation sequence."""
     _log("🚀 Running post-create setup...")
     _extend_path()
     _show_gpu_status()

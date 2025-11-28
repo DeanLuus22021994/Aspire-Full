@@ -52,13 +52,11 @@ def _configure_torch_runtime(torch_mod: Any, device_index: int) -> None:
 def ensure_tensor_core_gpu() -> TensorCoreInfo:
     """Validate that torch sees a Tensor Core capable GPU and return its metadata."""
 
-    try:
-        import torch  # type: ignore
-    except ImportError as exc:  # pragma: no cover - environment guard
+    if torch is None:  # pragma: no cover - environment guard
         raise TensorCoreUnavailableError(
             "PyTorch with CUDA support is required. Run `uv pip install .` from "
             "python-agents/ after ensuring CUDA wheels are available."
-        ) from exc
+        )
 
     if not torch.cuda.is_available():  # pragma: no cover - runtime env check
         raise TensorCoreUnavailableError(
