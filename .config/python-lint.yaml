@@ -1,12 +1,18 @@
 {
   "line_length": 100,
   "flake8": {
-    "extend_ignore": ["E203", "W503"]
+    "extend_ignore": ["E203", "W503"],
+    "exclude": [
+      ".vscode/extensions"
+    ]
   },
   "pylint": {
     "disable": [
       "missing-docstring",
       "invalid-name"
+    ],
+    "ignore": [
+      ".vscode/extensions"
     ]
   }
 }

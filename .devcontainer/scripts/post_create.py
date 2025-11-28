@@ -81,7 +81,8 @@ def _show_gpu_status() -> None:
             pass
     else:
         raise RuntimeError(
-            "NVIDIA GPU utilities are not accessible in this container. Tensor workloads strictly require CUDA."
+            "NVIDIA GPU utilities are not accessible in this container. "
+            "Tensor workloads strictly require CUDA."
         )
 
 

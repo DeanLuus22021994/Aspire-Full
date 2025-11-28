@@ -63,7 +63,8 @@ def _gpu_summary() -> str:
     nvidia_smi = shutil.which("nvidia-smi")
     if not nvidia_smi:
         raise RuntimeError(
-            "NVIDIA GPU utilities are not available inside the devcontainer; Tensor workloads cannot start."
+            "NVIDIA GPU utilities are not available inside the devcontainer; "
+            "Tensor workloads cannot start."
         )
     try:
         completed = subprocess.run(
