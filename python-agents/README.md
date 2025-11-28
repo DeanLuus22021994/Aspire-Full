@@ -22,7 +22,7 @@ This workspace hosts the shared Semantic Kernel (SK) scaffolding for folder-scop
    $env:OPENAI_API_KEY = "sk-..."
    ```
 
-3. Verify CUDA/Tensor Core access (agents refuse to start without it):
+3. Verify CUDA/Tensor Core access (agents refuse to start without it and will pin `cuda:0` with Tensor Core math optimizations):
 
    ```bash
    uv run python - <<'PY'

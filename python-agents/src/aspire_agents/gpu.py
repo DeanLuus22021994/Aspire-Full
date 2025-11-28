@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 
 class TensorCoreUnavailableError(RuntimeError):
@@ -17,10 +18,29 @@ class TensorCoreInfo:
     name: str
     compute_capability: str
     total_memory_gb: float
+    device_index: int
 
 
 def _format_mem(bytes_total: int) -> float:
     return round(bytes_total / (1024**3), 2)
+
+
+def _configure_torch_runtime(torch_mod: Any, device_index: int) -> None:
+    """Pin PyTorch to the requested device and enable Tensor Core math optimizations."""
+
+    torch_mod.cuda.set_device(device_index)
+
+    # Leverage Tensor Core friendly defaults when available.
+    torch_mod.backends.cuda.matmul.allow_tf32 = True
+    torch_mod.backends.cudnn.allow_tf32 = True
+    try:  # torch>=2.0
+        torch_mod.set_default_device(f"cuda:{device_index}")
+    except AttributeError:  # pragma: no cover - legacy fallback
+        pass
+    try:
+        torch_mod.set_float32_matmul_precision("high")
+    except AttributeError:  # pragma: no cover - legacy fallback
+        pass
 
 
 @lru_cache(maxsize=1)
@@ -51,8 +71,11 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
             "Detected GPU lacks Tensor Cores (compute capability < 7.0)."
         )
 
+    _configure_torch_runtime(torch, device_index)
+
     return TensorCoreInfo(
         name=gpu_name,
         compute_capability=capability_str,
         total_memory_gb=_format_mem(total_memory),
+        device_index=device_index,
     )
