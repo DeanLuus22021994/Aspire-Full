@@ -296,22 +296,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
     private static ConnectorMetricReport CreateReport(ConnectorMetricDimension dimension, double score, string detail, IReadOnlyDictionary<string, string> metadata)
     {
         var normalized = Math.Clamp(score, 0, 1);
-        return new ConnectorMetricReport(dimension, normalized, DeriveStatus(normalized), detail, metadata);
-    }
-
-    private static ConnectorMetricStatus DeriveStatus(double score)
-    {
-        if (score >= 0.8)
-        {
-            return ConnectorMetricStatus.Pass;
-        }
-
-        if (score >= 0.5)
-        {
-            return ConnectorMetricStatus.Warning;
-        }
-
-        return ConnectorMetricStatus.Fail;
+        return new ConnectorMetricReport(dimension, normalized, ConnectorMetricStatusHelper.FromScore(normalized), detail, metadata);
     }
 
     private static double NormalizeLatency(double latencyMs)
