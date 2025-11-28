@@ -3,9 +3,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Aspire_Full.Qdrant;
+using Aspire_Full.Connectors;
 using Aspire_Full.Tensor;
-using Aspire_Full.VectorStore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -23,12 +22,12 @@ public interface ITensorVectorBridge
 
 public sealed class TensorVectorBridge : ITensorVectorBridge
 {
-    private readonly IVectorStoreService _vectorStore;
+    private readonly IVectorStoreConnector _vectorConnector;
     private readonly ILogger<TensorVectorBridge> _logger;
 
-    public TensorVectorBridge(IVectorStoreService vectorStore, ILogger<TensorVectorBridge> logger)
+    public TensorVectorBridge(IVectorStoreConnector vectorConnector, ILogger<TensorVectorBridge> logger)
     {
-        _vectorStore = vectorStore;
+        _vectorConnector = vectorConnector;
         _logger = logger;
     }
 
@@ -40,23 +39,27 @@ public sealed class TensorVectorBridge : ITensorVectorBridge
 
         try
         {
-            var document = new VectorDocument
-            {
-                Id = job.Id.ToString(),
-                Content = job.Prompt,
-                Embedding = embedding,
-                Metadata = new Dictionary<string, object>
+            var request = new VectorStoreConnectorRequest(
+                job.Id.ToString(),
+                job.Prompt,
+                embedding,
+                new Dictionary<string, object?>
                 {
                     ["model_id"] = job.ModelId,
                     ["execution_provider"] = job.ExecutionProvider ?? "wasm-cpu",
                     ["created_at"] = job.CreatedAt.ToString("O")
-                }
-            };
+                });
 
-            await _vectorStore.EnsureCollectionAsync(QdrantDefaults.DefaultCollectionName, embedding.Length, cancellationToken).ConfigureAwait(false);
-            await _vectorStore.UpsertAsync(document, cancellationToken).ConfigureAwait(false);
+            var result = await _vectorConnector.UpsertAsync(request, cancellationToken).ConfigureAwait(false);
+            if (!result.Success)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, result.Error ?? "vector_persist_failed");
+                _logger.LogWarning("Vector connector failed to persist job {JobId}: {Error}", job.Id, result.Error);
+                return null;
+            }
+
             activity?.SetStatus(ActivityStatusCode.Ok);
-            return document.Id;
+            return result.DocumentId;
         }
         catch (Exception ex)
         {

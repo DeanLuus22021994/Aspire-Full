@@ -1,5 +1,6 @@
 using Aspire_Full.Api.Data;
 using Aspire_Full.Api.Tensor;
+using Aspire_Full.Connectors;
 using Aspire_Full.DockerRegistry;
 using Aspire_Full.Qdrant;
 using Aspire_Full.Tensor;
@@ -11,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add Aspire service defaults
 builder.AddServiceDefaults();
+
+builder.Services.AddConnectorHub(builder.Configuration);
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing.AddSource(TensorDiagnostics.ActivitySourceName));
