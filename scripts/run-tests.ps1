@@ -21,7 +21,7 @@ $ErrorActionPreference = "Continue"
 function Initialize-GpuEnvironment {
     $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
 
-    # Always enable .NET SIMD/AVX optimizations (CPU)
+    # Always enable .NET SIMD/AVX optimizations for the runtime
     $env:DOTNET_EnableAVX2 = "1"
     $env:DOTNET_EnableSSE41 = "1"
     $env:DOTNET_TieredPGO = "1"

@@ -10,7 +10,7 @@ The devcontainer provides a fully isolated, reproducible development environment
 - **No Host Mounts**: All data stored in named Docker volumes
 - **Pre-warmed Caches**: NuGet packages pre-cached for faster builds
 - **Full Toolchain**: .NET 10, Docker CLI, GitHub CLI, Aspire CLI
-- **Tensor Acceleration**: Devcontainer requests NVIDIA runtime + devices by default; fall back to CPU with `Start-Aspire.ps1 -CpuOnly`
+- **Tensor Acceleration**: Devcontainer requires NVIDIA runtime + devices; startup scripts fail fast if CUDA hardware is missing
 
 ## Configuration Files
 
