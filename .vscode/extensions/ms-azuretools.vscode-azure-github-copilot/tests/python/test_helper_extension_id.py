@@ -11,7 +11,7 @@ EXTENSION_ID = "ms-azuretools.vscode-azure-github-copilot"
 
 
 def _load_helper() -> ModuleType:
-    helper_path = Path(__file__).resolve().parents[3] / "helper.py"
+    helper_path = Path(__file__).resolve().parents[2] / "helper.py"
     spec = importlib.util.spec_from_file_location("azure_github_copilot_helper", helper_path)
     if spec is None or spec.loader is None:
         raise RuntimeError("Unable to load ms-azuretools.vscode-azure-github-copilot helper module")

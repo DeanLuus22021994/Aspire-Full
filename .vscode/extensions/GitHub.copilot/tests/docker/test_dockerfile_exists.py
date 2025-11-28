@@ -9,7 +9,7 @@ EXTENSION_ID = "GitHub.copilot"
 
 
 def _dockerfile_path() -> Path:
-    return Path(__file__).resolve().parents[3] / "Dockerfile"
+    return Path(__file__).resolve().parents[2] / "Dockerfile"
 
 
 def test_dockerfile_exists() -> None:

@@ -9,7 +9,7 @@ EXTENSION_ID = "ms-windows-ai-studio.windows-ai-studio"
 
 
 def _dockerfile_path() -> Path:
-    return Path(__file__).resolve().parents[3] / "Dockerfile"
+    return Path(__file__).resolve().parents[2] / "Dockerfile"
 
 
 def test_dockerfile_exists() -> None:

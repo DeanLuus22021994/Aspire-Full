@@ -11,7 +11,7 @@ EXTENSION_ID = "ms-windows-ai-studio.windows-ai-studio"
 
 
 def _load_helper() -> ModuleType:
-    helper_path = Path(__file__).resolve().parents[3] / "helper.py"
+    helper_path = Path(__file__).resolve().parents[2] / "helper.py"
     spec = importlib.util.spec_from_file_location(
         "windows_ai_studio_helper",
         helper_path,

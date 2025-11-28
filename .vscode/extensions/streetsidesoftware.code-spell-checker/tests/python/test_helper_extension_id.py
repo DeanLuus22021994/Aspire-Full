@@ -11,7 +11,7 @@ EXTENSION_ID = "streetsidesoftware.code-spell-checker"
 
 
 def _load_helper() -> ModuleType:
-    helper_path = Path(__file__).resolve().parents[3] / "helper.py"
+    helper_path = Path(__file__).resolve().parents[2] / "helper.py"
     spec = importlib.util.spec_from_file_location(
         "code_spell_checker_helper",
         helper_path,
