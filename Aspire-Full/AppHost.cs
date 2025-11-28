@@ -57,8 +57,7 @@ var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotn
     .WithHttpEndpoint(name: "otlp", port: 18889, targetPort: 18889)
     .WithHttpEndpoint(name: "mcp", port: 16036, targetPort: 16036)
     .WithContainerRuntimeArgs("--network", networkName)
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithReference(dockerDaemon);
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var devcontainer = builder.AddDockerfile("devcontainer", "../.devcontainer")
     .WithVolume("aspire-nuget-cache", "/home/vscode/.nuget")
@@ -83,9 +82,7 @@ var devcontainer = builder.AddDockerfile("devcontainer", "../.devcontainer")
     .WithEnvironment("NVIDIA_REQUIRE_CUDA", "cuda>=12.4,driver>=535")
     .WithArgs("sleep", "infinity")
     .WithContainerRuntimeArgs("--network", networkName, "--gpus", "all", "--init")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithReference(dockerDaemon)
-    .WithReference(dashboard);
+    .WithLifetime(ContainerLifetime.Persistent);
 
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search
