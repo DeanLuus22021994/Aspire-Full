@@ -5,6 +5,8 @@
     ".vscode-test",
     ".vscode-test/**",
     ".vscode-*",
-    ".vscode-*/**"
+    ".vscode-*/**",
+    "node_modules",
+    "node_modules/**"
   ]
 }

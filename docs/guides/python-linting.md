@@ -3,7 +3,7 @@
 Python lint settings are centralized to keep VS Code, VS Code Insiders, and CLI tooling aligned.
 
 - Source of truth: `.config/python-lint.yaml` (YAML/JSON). Update this file to change the global line length or shared rules.
-- Generator: `python tools/python-lint/sync_configs.py` reads the YAML and rewrites `.flake8`, `.pylintrc`, `.pycodestyle`, and `pyrightconfig.json` with the derived settings.
+- Generator: `python tools/python-lint/sync_configs.py` reads the YAML and rewrites `.flake8`, `.pylintrc`, `.pycodestyle`, `pyrightconfig.json`, plus `.config/python-lint-roots.yaml` and `.config/python-lint-excludes.yaml`. Those YAML exports give shell scripts and other ecosystems a lightweight way to consume `paths.lint_roots` and `vendor_globs` without parsing the full config.
 - Runner: `python tools/python-lint/run.py` shells out to `pylint` after reading `.config/python-lint.yaml`. It now draws its default directories from `runner.auto_targets` (which aliases `paths.lint_roots`) and automatically injects the shared `pylint.disable` list when no `--disable` flag is supplied. When VS Code passes direct file targets the runner filters anything matching `vendor_globs` before delegating.
 - Editors: VS Code and VS Code Insiders automatically pick up `.flake8` and `.pylintrc`. To prevent bundled extensions under `.vscode/` and `.vscode-test/` from triggering diagnostics, the workspace sets:
 	```jsonc

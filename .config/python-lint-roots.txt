@@ -1,4 +1,0 @@
-python-agents
-sandboxes
-scripts
-tools

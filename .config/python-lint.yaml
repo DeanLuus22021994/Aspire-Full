@@ -7,6 +7,8 @@ vendor_globs: &vendor_globs
   - .vscode-test/**
   - .vscode-*
   - .vscode-*/**
+  - node_modules
+  - node_modules/**
 
 paths:
   lint_roots: &lint_roots
