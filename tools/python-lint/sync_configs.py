@@ -80,7 +80,7 @@ def write_lint_roots() -> None:
     roots = ["python-agents", "sandboxes", "scripts", "tools"]
     LINT_ROOTS_FILE.parent.mkdir(parents=True, exist_ok=True)
     LINT_ROOTS_FILE.write_text("\n".join(roots) + "\n", encoding="utf-8")
-    excludes = [".vscode", ".vscode-test", "node_modules"]
+    excludes = [".vscode", ".vscode/extensions", ".vscode-test", "node_modules"]
     LINT_EXCLUDE_FILE.write_text("\n".join(excludes) + "\n", encoding="utf-8")
 
 

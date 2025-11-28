@@ -1,3 +1,4 @@
 .vscode
+.vscode/extensions
 .vscode-test
 node_modules
