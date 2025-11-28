@@ -1,11 +1,13 @@
 @namespace Aspire_Full.WebAssembly
+@using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Routing
-<Router AppAssembly="typeof(App).Assembly">
+
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
     </Found>
     <NotFound>
-        <LayoutView Layout="typeof(MainLayout)">
+        <LayoutView Layout="@typeof(MainLayout)">
             <p role="alert">Sorry, we could not find that page.</p>
         </LayoutView>
     </NotFound>
