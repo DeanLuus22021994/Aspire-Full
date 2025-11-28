@@ -41,11 +41,23 @@ class PylintConfig:
     disable: tuple[str, ...]
     ignore: tuple[str, ...]
     ignore_paths: tuple[str, ...]
+    ignore_patterns: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class PyrightConfig:
     exclude: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class PycodestyleConfig:
+    ignore: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RunnerConfig:
+    auto_targets: tuple[str, ...]
+    pylint_disable: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -56,6 +68,8 @@ class LintConfig:
     flake8: Flake8Config
     pylint: PylintConfig
     pyright: PyrightConfig
+    pycodestyle: PycodestyleConfig
+    runner: RunnerConfig
 
 
 @lru_cache(maxsize=1)
@@ -66,6 +80,8 @@ def load_config() -> LintConfig:
     flake8 = raw.get("flake8", {})
     pylint = raw.get("pylint", {})
     pyright = raw.get("pyright", {})
+    pycodestyle = raw.get("pycodestyle", {})
+    runner = raw.get("runner", {})
     return LintConfig(
         line_length=int(raw.get("line_length", 100)),
         vendor_globs=vendor,
@@ -81,15 +97,27 @@ def load_config() -> LintConfig:
             disable=_as_tuple(pylint.get("disable")),
             ignore=_as_tuple(pylint.get("ignore")),
             ignore_paths=_as_tuple(pylint.get("ignore_paths")),
+            ignore_patterns=_as_tuple(pylint.get("ignore_patterns")),
         ),
         pyright=PyrightConfig(exclude=_as_tuple(pyright.get("exclude")) or vendor),
+        pycodestyle=PycodestyleConfig(
+            ignore=_as_tuple(pycodestyle.get("ignore"))
+            or _as_tuple(flake8.get("extend_ignore"))
+        ),
+        runner=RunnerConfig(
+            auto_targets=_as_tuple(runner.get("auto_targets"))
+            or _as_tuple(paths.get("lint_roots")),
+            pylint_disable=_as_tuple(runner.get("pylint_disable"))
+            or _as_tuple(pylint.get("disable")),
+        ),
     )
 
 
 def collect_existing_roots(cfg: LintConfig) -> list[str]:
     """Return repo-relative directories that actually exist."""
     existing: list[str] = []
-    for relative in cfg.paths.roots:
+    source = cfg.runner.auto_targets or cfg.paths.roots
+    for relative in source:
         candidate = REPO_ROOT / relative
         if candidate.exists():
             existing.append(str(candidate))

@@ -22,6 +22,9 @@ flake8:
     - W503
   exclude: *vendor_globs
 
+pycodestyle:
+  ignore: *flake8_ignore
+
 pylint:
   disable: &pylint_disable
     - missing-docstring
@@ -32,10 +35,18 @@ pylint:
     - .vscode-test
     - .vscode-debug
     - .vscode-extensions
-  ignore_paths:
-    - ".*[/\\]\\.vscode[/\\].*"
-    - ".*[/\\]\\.vscode-test[/\\].*"
-    - ".*[/\\]\\.vscode-.*"
+  ignore_paths: &pylint_vendor_regex
+    - ".*/\\.vscode/.*"
+    - ".*\\\\.vscode\\\\.*"
+    - ".*/\\.vscode-test/.*"
+    - ".*\\\\.vscode-test\\\\.*"
+    - ".*/\\.vscode-.*"
+    - ".*\\\\.vscode-.*"
+  ignore_patterns: *pylint_vendor_regex
 
 pyright:
   exclude: *vendor_globs
+
+runner:
+  auto_targets: *lint_roots
+  pylint_disable: *pylint_disable

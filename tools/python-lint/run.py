@@ -63,12 +63,28 @@ def _build_command(
     targets: list[str],
     append_double_dash: bool,
 ) -> list[str]:
-    command = [sys.executable, "-m", "pylint", *options]
+    command = [sys.executable, "-m", "pylint", *_apply_default_disable(options, config)]
     if targets:
         if append_double_dash:
             command.append("--")
         command.extend(targets)
     return command
+
+
+def _apply_default_disable(options: list[str], config: LintConfig) -> list[str]:
+    if not config.runner.pylint_disable:
+        return options
+    if _has_disable_flag(options):
+        return options
+    disable_value = ",".join(config.runner.pylint_disable)
+    return [*options, f"--disable={disable_value}"]
+
+
+def _has_disable_flag(options: Iterable[str]) -> bool:
+    for opt in options:
+        if opt.startswith("--disable") or opt.startswith("-d"):
+            return True
+    return False
 
 
 def main(argv: list[str] | None = None) -> int:
