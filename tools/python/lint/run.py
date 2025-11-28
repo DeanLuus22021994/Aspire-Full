@@ -3,25 +3,35 @@
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
-from typing import Iterable, Tuple
+from types import ModuleType
+from typing import Any, Iterable, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONFIG_MODULE_DIR = REPO_ROOT / ".config" / "python"
-if str(CONFIG_MODULE_DIR) not in sys.path:
-    sys.path.insert(0, str(CONFIG_MODULE_DIR))
+CONFIG_MODULE_PATH = REPO_ROOT / ".config" / "config.py"
 
-from config import (  # type: ignore  # noqa: E402
-    REPO_ROOT as CONFIG_REPO_ROOT,
-)
-from config import (
-    LintConfig,
-    collect_existing_roots,
-    is_vendor_path,
-    load_config,
-)
+
+def _load_config_module() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        "workspace_dotconfig", CONFIG_MODULE_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Unable to load .config/config.py module")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+CONFIG_MODULE = _load_config_module()
+CONFIG_REPO_ROOT = getattr(CONFIG_MODULE, "REPO_ROOT")
+LintConfig = getattr(CONFIG_MODULE, "LintConfig")
+LintConfigType = Any
+collect_existing_roots = getattr(CONFIG_MODULE, "collect_existing_roots")
+is_vendor_path = getattr(CONFIG_MODULE, "is_vendor_path")
+load_config = getattr(CONFIG_MODULE, "load_config")
 
 if CONFIG_REPO_ROOT != REPO_ROOT:
     raise RuntimeError("Mismatch between tool repo root and .config python module.")
@@ -46,7 +56,7 @@ def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
 
 
 def _filter_vendor_targets(
-    targets: Iterable[str], config: LintConfig
+    targets: Iterable[str], config: LintConfigType
 ) -> tuple[list[str], list[str]]:
     kept: list[str] = []
     dropped: list[str] = []
@@ -64,7 +74,7 @@ def _invoke(command: list[str]) -> int:
 
 
 def _build_command(
-    config: LintConfig,
+    config: LintConfigType,
     options: list[str],
     targets: list[str],
     append_double_dash: bool,
@@ -77,7 +87,7 @@ def _build_command(
     return command
 
 
-def _apply_default_disable(options: list[str], config: LintConfig) -> list[str]:
+def _apply_default_disable(options: list[str], config: LintConfigType) -> list[str]:
     if not config.runner.pylint_disable:
         return options
     if _has_disable_flag(options):
