@@ -1,34 +1,38 @@
-{
-  "line_length": 100,
-  "flake8": {
-    "extend_ignore": ["E203", "W503"],
-    "exclude": [
-      ".vscode",
-      ".vscode/extensions",
-      ".vscode/extensions/*",
-      ".vscode-test",
-      ".vscode-test/*"
-    ]
-  },
-  "pylint": {
-    "disable": [
-      "missing-docstring",
-      "invalid-name"
-    ],
-    "ignore": [
-      ".vscode",
-      ".vscode/extensions",
-      ".vscode-test"
-    ],
-    "ignore_paths": [
-      ".*/\\.vscode/.*",
-      ".*\\\\.vscode\\\\.*",
-      ".*/\\.vscode-test/.*",
-      ".*\\\\.vscode-test\\\\.*"
-    ],
-    "ignore_patterns": [
-      ".*[/\\\\]\\.vscode[/\\\\].*",
-      ".*[/\\\\]\\.vscode-test[/\\\\].*"
-    ]
+  {
+    "line_length": 100,
+    "flake8": {
+      "extend_ignore": ["E203", "W503"],
+      "exclude": [
+        ".vscode",
+        ".vscode/extensions",
+        ".vscode/extensions/*",
+        ".vscode-test",
+        ".vscode-test/*",
+        ".vscode-*/**"
+      ]
+    },
+    "pylint": {
+      "disable": [
+        "missing-docstring",
+        "invalid-name"
+      ],
+      "ignore": [
+        ".vscode",
+        ".vscode/extensions",
+        ".vscode-test",
+        ".vscode-debug",
+        ".vscode-extensions"
+      ],
+      "ignore_paths": [
+        ".*/\\.vscode/.*",
+        ".*\\\\.vscode\\\\.*",
+        ".*/\\.vscode-test/.*",
+        ".*\\\\.vscode-test\\\\.*"
+      ],
+      "ignore_patterns": [
+        ".*[/\\]\\.vscode[/\\].*",
+        ".*[/\\]\\.vscode-test[/\\].*",
+        ".*[/\\]\\.vscode-.*"
+      ]
+    }
   }
-}
