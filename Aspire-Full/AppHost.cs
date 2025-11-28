@@ -27,7 +27,7 @@ using Aspire.Hosting.Qdrant;
 //
 // Usage:
 //   dotnet run --project Aspire-Full --launch-profile headless
-//   ./scripts/Start-Aspire.ps1 -UseGpu
+//   ./scripts/Start-Aspire.ps1
 // =============================================================================
 
 var builder = DistributedApplication.CreateBuilder(args);
