@@ -24,7 +24,7 @@ public sealed class RegistryApiClient
             var uri = new Uri(new Uri(env.ApiBaseAddress), "/api/docker-registry/repositories");
             var repositories = await _httpClient.GetFromJsonAsync<List<DockerRegistryRepositoryDto>>(uri, cancellationToken)
                 .ConfigureAwait(false);
-            return repositories ?? Array.Empty<DockerRegistryRepositoryDto>();
+            return repositories ?? new List<DockerRegistryRepositoryDto>();
         }
         catch
         {
