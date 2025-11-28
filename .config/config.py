@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared lint-configuration loader and helpers."""
+"""Shared lint/test configuration loader and helpers."""
 
 from __future__ import annotations
 
@@ -19,7 +19,8 @@ except ImportError as exc:  # pragma: no cover
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_ROOT = REPO_ROOT / ".config"
 CONFIG_PATH = CONFIG_ROOT / "config.yaml"
-CONTEXT_CHAIN = ("contexts", "python", "lint")
+LINT_CONTEXT_CHAIN = ("contexts", "python", "lint")
+TEST_CONTEXT_CHAIN = ("contexts", "python", "test")
 
 
 def _as_tuple(values: Sequence[str] | None) -> tuple[str, ...]:
@@ -74,10 +75,31 @@ class LintConfig:
     runner: RunnerConfig
 
 
+@dataclass(frozen=True)
+class PytestConfig:
+    addopts: tuple[str, ...]
+    markers: tuple[str, ...]
+    filterwarnings: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class TestRunnerConfig:
+    auto_targets: tuple[str, ...]
+    default_addopts: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class TestConfig:
+    vendor_globs: tuple[str, ...]
+    paths: PathsConfig
+    pytest: PytestConfig
+    runner: TestRunnerConfig
+
+
 @lru_cache(maxsize=1)
 def load_config() -> LintConfig:
     payload = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8")) or {}
-    raw = _resolve_context(payload)
+    raw = _resolve_context(payload, LINT_CONTEXT_CHAIN)
     vendor = _as_tuple(raw.get("vendor_globs"))
     paths = raw.get("paths", {})
     flake8 = raw.get("flake8", {})
@@ -116,21 +138,61 @@ def load_config() -> LintConfig:
     )
 
 
-def _resolve_context(payload: dict[str, Any]) -> dict[str, Any]:
+@lru_cache(maxsize=1)
+def load_test_config() -> TestConfig:
+    payload = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8")) or {}
+    raw = _resolve_context(payload, TEST_CONTEXT_CHAIN)
+    vendor = _as_tuple(raw.get("vendor_globs"))
+    paths = raw.get("paths", {})
+    pytest_cfg = raw.get("pytest", {})
+    runner = raw.get("runner", {})
+    return TestConfig(
+        vendor_globs=vendor,
+        paths=PathsConfig(
+            roots=_as_tuple(paths.get("test_roots")),
+            exclude_globs=_as_tuple(paths.get("exclude_globs")) or vendor,
+        ),
+        pytest=PytestConfig(
+            addopts=_as_tuple(pytest_cfg.get("addopts")),
+            markers=_as_tuple(pytest_cfg.get("markers")),
+            filterwarnings=_as_tuple(pytest_cfg.get("filterwarnings")),
+        ),
+        runner=TestRunnerConfig(
+            auto_targets=_as_tuple(runner.get("auto_targets"))
+            or _as_tuple(paths.get("test_roots")),
+            default_addopts=_as_tuple(runner.get("default_addopts"))
+            or _as_tuple(pytest_cfg.get("addopts")),
+        ),
+    )
+
+
+def _resolve_context(payload: dict[str, Any], chain: tuple[str, ...]) -> dict[str, Any]:
     node: Any = payload
-    for key in CONTEXT_CHAIN:
+    for key in chain:
         if not isinstance(node, dict) or key not in node:
             raise KeyError(
-                "Missing python.lint context in .config/config.yaml; rerun lint bootstrap."
+                "Missing configuration context in .config/config.yaml; rerun bootstrap."
             )
         node = node[key]
     if not isinstance(node, dict):
-        raise TypeError("python.lint context in .config/config.yaml must be a mapping.")
+        raise TypeError(
+            "Configuration context in .config/config.yaml must be a mapping."
+        )
     return node
 
 
 def collect_existing_roots(cfg: LintConfig) -> list[str]:
     """Return repo-relative directories that actually exist."""
+    existing: list[str] = []
+    source = cfg.runner.auto_targets or cfg.paths.roots
+    for relative in source:
+        candidate = REPO_ROOT / relative
+        if candidate.exists():
+            existing.append(str(candidate))
+    return existing
+
+
+def collect_existing_test_roots(cfg: TestConfig) -> list[str]:
     existing: list[str] = []
     source = cfg.runner.auto_targets or cfg.paths.roots
     for relative in source:

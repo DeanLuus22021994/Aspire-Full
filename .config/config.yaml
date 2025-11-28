@@ -57,3 +57,26 @@ contexts:
       runner:
         auto_targets: *lint_roots
         pylint_disable: *pylint_disable
+
+    test:
+      vendor_globs: *vendor_globs
+
+      paths:
+        test_roots: &test_roots
+          - python-agents/tests
+          - sandboxes
+          - scripts/tests
+        exclude_globs: *vendor_globs
+
+      pytest:
+        addopts: &pytest_addopts
+          - -q
+        markers:
+          - "slow: marks tests as slow"
+          - "gpu: requires NVIDIA GPU"
+        filterwarnings:
+          - ignore::DeprecationWarning
+
+      runner:
+        auto_targets: *test_roots
+        default_addopts: *pytest_addopts
