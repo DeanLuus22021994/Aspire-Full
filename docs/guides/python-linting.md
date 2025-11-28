@@ -8,17 +8,20 @@ Python lint settings are centralized to keep VS Code, VS Code Insiders, and CLI 
 - Editors: VS Code and VS Code Insiders automatically pick up `.flake8` and `.pylintrc`. To prevent bundled extensions under `.vscode/` and `.vscode-test/` from triggering diagnostics, the workspace sets:
 	```jsonc
 	"python.linting.ignorePatterns": [
-		"**/.vscode/**/*.py",
-		"**/.vscode/**",
-		"**/.vscode-test/**/*.py",
-		"**/.vscode-test/**",
-		"**/.vscode-*/**/*.py",
-		"**/.vscode-*/**"
+		".vscode",
+		".vscode/**",
+		".vscode-test",
+		".vscode-test/**",
+		".vscode-*",
+		".vscode-*/**"
 	],
 	"python.analysis.exclude": [
-		"**/.vscode/**",
-		"**/.vscode-test/**",
-		"**/.vscode-*/**"
+		".vscode",
+		".vscode/**",
+		".vscode-test",
+		".vscode-test/**",
+		".vscode-*",
+		".vscode-*/**"
 	]
 	```
 	Keep these arrays in sync with `.config/python-lint.yaml` whenever new vendor directories need to be muted.
