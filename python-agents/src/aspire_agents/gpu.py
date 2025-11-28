@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
+try:  # pylint: disable=import-error
+    import torch  # type: ignore
+except ImportError:  # pragma: no cover - torch not installed yet
+    torch = None  # type: ignore[assignment]
+
 
 class TensorCoreUnavailableError(RuntimeError):
     """Raised when the environment cannot satisfy the GPU requirements."""
