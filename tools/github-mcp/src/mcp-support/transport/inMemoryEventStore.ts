@@ -1,3 +1,6 @@
+/**
+ * Derived from the MCP SDK streamable HTTP example; keeps resumability logic under source control.
+ */
 export interface EventReplayContext {
   send(eventId: string, message: unknown): Promise<void> | void;
 }
@@ -7,10 +10,6 @@ interface StoredEvent {
   message: unknown;
 }
 
-/**
- * Simple in-memory EventStore implementation to support resumable transports.
- * Intended for local demos and tests rather than production workloads.
- */
 export class InMemoryEventStore {
   private readonly events = new Map<string, StoredEvent>();
 

@@ -4,15 +4,24 @@ import express, { type Request, type Response } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
-import { requireBearerAuth } from "@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js";
-import { getOAuthProtectedResourceMetadataUrl, mcpAuthMetadataRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import {
+    McpAuth,
+    McpServer,
+    McpTransport,
+    StreamableHTTPServerTransport,
+    isInitializeRequest,
+    type AuthMetadata
+} from "../mcp-support/index.js";
 
-import { checkResourceAllowed, setupAuthServer, type AuthMetadata } from "./shared/demoInMemoryOAuthProvider.js";
-import { InMemoryEventStore } from "./shared/inMemoryEventStore.js";
+const {
+  requireBearerAuth,
+  getOAuthProtectedResourceMetadataUrl,
+  mcpAuthMetadataRouter,
+  setupAuthServer,
+  checkResourceAllowed
+} = McpAuth;
 
+const { InMemoryEventStore } = McpTransport;
 const useOAuth = process.argv.includes("--oauth");
 const strictOAuth = process.argv.includes("--oauth-strict");
 

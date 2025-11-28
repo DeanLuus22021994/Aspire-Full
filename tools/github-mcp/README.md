@@ -52,6 +52,14 @@ npm run demo:simple-stream -- --oauth # pass --oauth/--oauth-strict flags as nee
 The implementation lives in `src/examples` so any tweaks remain under source control and survive
 `npm install` / dependency updates.
 
+### MCP support layer & ownership guard
+
+All MCP SDK touch-points live under `src/mcp-support`. Re-exporting the SDK from this
+layer keeps us in control of transport/auth primitives and guarantees the repo still
+functions when the upstream example changes. ESLint now enforces this policy with a
+`no-restricted-imports` rule, so if you need a new type or helper, add it to the
+support barrel first and import from there everywhere else.
+
 ## Docker support
 
 The root `.devcontainer/docker-compose.yml` defines a `github-mcp` service based on

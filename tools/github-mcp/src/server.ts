@@ -1,12 +1,14 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import type { AnySchema } from "@modelcontextprotocol/sdk/server/zod-compat.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import { randomUUID } from "node:crypto";
 import pino from "pino";
 import { z } from "zod";
+import {
+    McpServer,
+    StreamableHTTPServerTransport,
+    isInitializeRequest,
+    type AnySchema
+} from "./mcp-support/index.js";
 
 import { TimedCache } from "./cache.js";
 import { loadConfig } from "./config.js";

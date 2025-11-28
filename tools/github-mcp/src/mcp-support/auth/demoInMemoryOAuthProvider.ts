@@ -1,4 +1,4 @@
-// @ts-nocheck -- Demo code intentionally mirrors the upstream JS example without full typings.
+// @ts-nocheck -- Demo code intentionally mirrors the upstream MCP SDK example without full typings.
 import express, { type Response } from "express";
 import { randomUUID } from "node:crypto";
 
@@ -127,7 +127,10 @@ export class DemoInMemoryAuthProvider {
     return codeData.params.codeChallenge ?? "";
   }
 
-  async exchangeAuthorizationCode(client: OAuthClientMetadata, authorizationCode: string): Promise<{ access_token: string; token_type: "bearer"; expires_in: number; scope: string; }> {
+  async exchangeAuthorizationCode(
+    client: OAuthClientMetadata,
+    authorizationCode: string
+  ): Promise<{ access_token: string; token_type: "bearer"; expires_in: number; scope: string }> {
     const codeData = this.codes.get(authorizationCode);
     if (!codeData) {
       throw new Error("Invalid authorization code");
@@ -165,7 +168,7 @@ export class DemoInMemoryAuthProvider {
     throw new Error("Not implemented for demo");
   }
 
-  async verifyAccessToken(token: string): Promise<{ token: string; clientId: string; scopes: string[]; expiresAt: number; resource?: string; }> {
+  async verifyAccessToken(token: string): Promise<{ token: string; clientId: string; scopes: string[]; expiresAt: number; resource?: string }> {
     const tokenData = this.tokens.get(token);
     if (!tokenData || tokenData.expiresAt < Date.now()) {
       throw new Error("Invalid or expired token");
@@ -184,12 +187,12 @@ export class DemoInMemoryAuthProvider {
 export const setupAuthServer = ({ authServerUrl, mcpServerUrl, strictResource }: SetupAuthServerOptions): AuthMetadata => {
   const validateResource = strictResource
     ? (resource?: string) => {
-      if (!resource) {
-        return false;
+        if (!resource) {
+          return false;
+        }
+        const expected = resourceUrlFromServerUrl(mcpServerUrl);
+        return checkResourceAllowed(resource, expected);
       }
-      const expected = resourceUrlFromServerUrl(mcpServerUrl);
-      return checkResourceAllowed(resource, expected);
-    }
     : undefined;
 
   const provider = new DemoInMemoryAuthProvider(validateResource);
@@ -231,7 +234,7 @@ export const setupAuthServer = ({ authServerUrl, mcpServerUrl, strictResource }:
   });
 
   const port = authServerUrl.port;
-  authApp.listen(port, error => {
+  authApp.listen(port, (error?: unknown) => {
     if (error) {
       console.error("Failed to start auth server", error);
       process.exit(1);
