@@ -5,7 +5,9 @@
     "exclude": [
       ".vscode",
       ".vscode/extensions",
-      ".vscode/extensions/*"
+      ".vscode/extensions/*",
+      ".vscode-test",
+      ".vscode-test/*"
     ]
   },
   "pylint": {
@@ -15,14 +17,18 @@
     ],
     "ignore": [
       ".vscode",
-      ".vscode/extensions"
+      ".vscode/extensions",
+      ".vscode-test"
     ],
     "ignore_paths": [
       ".*/\\.vscode/.*",
-      ".*\\\\.vscode\\\\.*"
+      ".*\\\\.vscode\\\\.*",
+      ".*/\\.vscode-test/.*",
+      ".*\\\\.vscode-test\\\\.*"
     ],
     "ignore_patterns": [
-      ".*[/\\\\]\\.vscode[/\\\\].*"
+      ".*[/\\\\]\\.vscode[/\\\\].*",
+      ".*[/\\\\]\\.vscode-test[/\\\\].*"
     ]
   }
 }
