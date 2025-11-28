@@ -47,7 +47,7 @@ public sealed class ConnectorMetricSnapshotProviderTests
         var summary = snapshot.Summaries[0];
         summary.Dimension.Should().Be(ConnectorMetricDimension.CodeQuality);
         summary.Observations.Should().Be(2);
-        summary.Status.Should().Be(ConnectorMetricStatus.Pass);
+        summary.Status.Should().Be(ConnectorMetricStatus.Warning);
         summary.AverageScore.Should().BeApproximately(0.75, 0.001);
         summary.Samples.Should().HaveCount(2);
         summary.Samples[0].Detail.Should().Be("clean");
