@@ -10,7 +10,6 @@
 #   ./scripts/Start-Aspire.ps1 -Wait        # Start and wait (blocking)
 #   ./scripts/Start-Aspire.ps1 -Stop        # Stop running instance
 #   ./scripts/Start-Aspire.ps1 -Status      # Check status
-#   ./scripts/Start-Aspire.ps1 -CpuOnly     # Force CPU/SIMD only
 #
 # Environment:
 #   - Uses 'headless' launch profile (no browser, no interactive prompts)
@@ -23,7 +22,6 @@ param(
     [switch]$Wait,
     [switch]$Stop,
     [switch]$Status,
-    [switch]$CpuOnly,
     [int]$TimeoutSeconds = 60
 )
 
