@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  aspire-dashboard:
+    build:
+      context: ../..
+      dockerfile: .vscode/mcp/aspire-dashboard/Dockerfile
+    image: aspire/mcp-aspire-dashboard:latest
+    container_name: aspire-mcp-dashboard
+    ports:
+      - "18888:18888"
+      - "18889:18889"
+      - "16036:16036"
+    volumes:
+      - aspire_mcp_dashboard_data:/app/data
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - DASHBOARD__OTLP__AUTHMODE=Unsecured
+      - DASHBOARD__FRONTEND__AUTHMODE=Unsecured
+      - DASHBOARD__RESOURCESERVICE__AUTHMODE=Unsecured
+      - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://0.0.0.0:16036
+      - ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
+    restart: unless-stopped
+
+  github-mcp:
+    build:
+      context: ../..
+      dockerfile: .vscode/mcp/github-mcp/Dockerfile
+    image: aspire/mcp-github:latest
+    container_name: aspire-mcp-github
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: ["gpu"]
+    ports:
+      - "17071:17071"
+    environment:
+      - GITHUB_MCP_TOKEN=${GITHUB_MCP_TOKEN}
+      - GITHUB_MCP_REPOSITORY=${GITHUB_MCP_REPOSITORY:-DeanLuus22021994/Aspire-Full}
+      - GITHUB_MCP_API_KEY=${GITHUB_MCP_API_KEY:-aspire-github-mcp}
+      - GITHUB_MCP_CACHE_SECONDS=45
+      - ASPIRE_DASHBOARD_URL=http://aspire-dashboard:18888
+      - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://aspire-dashboard:16036
+    volumes:
+      - aspire_mcp_github_data:/opt/github-mcp/data
+      - aspire_mcp_github_logs:/var/log/github-mcp
+      - aspire_mcp_github_cache:/home/node/.cache/github-mcp
+    depends_on:
+      - aspire-dashboard
+    restart: unless-stopped
+
+volumes:
+  aspire_mcp_dashboard_data:
+    name: aspire_mcp_dashboard_data
+  aspire_mcp_github_data:
+    name: aspire_mcp_github_data
+  aspire_mcp_github_logs:
+    name: aspire_mcp_github_logs
+  aspire_mcp_github_cache:
+    name: aspire_mcp_github_cache

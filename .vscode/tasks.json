@@ -39,6 +39,44 @@
         "--pull"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "mcp:start",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "${workspaceFolder}/.vscode/mcp/docker-compose.mcp.yml",
+        "up",
+        "-d"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "mcp:stop",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "${workspaceFolder}/.vscode/mcp/docker-compose.mcp.yml",
+        "down"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "mcp:rebuild",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "${workspaceFolder}/.vscode/mcp/docker-compose.mcp.yml",
+        "build",
+        "--pull"
+      ],
+      "problemMatcher": []
     }
   ]
 }

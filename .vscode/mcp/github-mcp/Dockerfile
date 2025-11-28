@@ -1,0 +1,30 @@
+# GitHub MCP server image built from the workspace sources
+FROM node:22-slim AS deps
+WORKDIR /workspace/tools/github-mcp
+
+COPY tools/github-mcp/package*.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+COPY tools/github-mcp .
+RUN npm run build && npm prune --omit=dev
+
+FROM node:22-slim AS runtime
+WORKDIR /opt/github-mcp
+ENV NODE_ENV=production \
+    GITHUB_MCP_PORT=17071
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tini \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /opt/github-mcp/data /var/log/github-mcp /home/node/.cache/github-mcp \
+    && chown -R node:node /opt/github-mcp /var/log/github-mcp /home/node/.cache/github-mcp
+
+COPY --from=deps /workspace/tools/github-mcp/dist ./dist
+COPY --from=deps /workspace/tools/github-mcp/package*.json ./
+COPY --from=deps /workspace/tools/github-mcp/node_modules ./node_modules
+COPY tools/github-mcp/README.md ./README.md
+
+USER node
+EXPOSE 17071
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "dist/server.js"]
