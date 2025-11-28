@@ -13,7 +13,8 @@ WORKDIR /opt/github-mcp
 ENV NODE_ENV=production \
     GITHUB_MCP_PORT=17071 \
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl gnupg tini \
