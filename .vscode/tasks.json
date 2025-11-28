@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/vscode-tasks",
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "extensions:start",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "${workspaceFolder}/.vscode/extensions/docker-compose.extensions.yml",
+        "up",
+        "-d"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "extensions:stop",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "${workspaceFolder}/.vscode/extensions/docker-compose.extensions.yml",
+        "down"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "extensions:rebuild",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "${workspaceFolder}/.vscode/extensions/docker-compose.extensions.yml",
+        "build",
+        "--pull"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
