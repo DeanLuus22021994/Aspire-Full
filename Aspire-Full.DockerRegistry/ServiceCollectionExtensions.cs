@@ -49,7 +49,7 @@ public static class ServiceCollectionExtensions
 
     private static Uri EnsureTrailingSlash(string baseAddress)
     {
-        var formatted = baseAddress.EndsWith('/', StringComparison.Ordinal) ? baseAddress : baseAddress + "/";
+        var formatted = baseAddress.EndsWith("/", StringComparison.Ordinal) ? baseAddress : baseAddress + "/";
         return new Uri(formatted, UriKind.Absolute);
     }
 
