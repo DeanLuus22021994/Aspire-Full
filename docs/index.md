@@ -8,6 +8,8 @@ Welcome to the Aspire-Full documentation. This project demonstrates a complete .
 - [Architecture](guides/architecture.md) - System design and components
 - [DevContainer](guides/devcontainer.md) - Development environment setup
 - [GitHub Tooling](guides/github-tooling.md) - CLI tools and extensions
+- [Python Linting](guides/python-linting.md) - Shared lint config and tooling
+- [Python Testing](guides/python-testing.md) - Pytest workflow and runner details
 
 ## API Reference
 
