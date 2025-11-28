@@ -3,13 +3,13 @@
 Each sandbox component is treated as an autonomous sub-agent. The following single-responsibility specs define what each one owns, the inputs/outputs it must honor, and its future acceptance criteria.
 
 ## Embedding Service Agent
-- **Responsibility**: Execute ArcFace ONNX inference (CPU or CUDA) and emit normalized 512-float vectors.
-- **Inputs**: Byte streams or file paths for aligned face crops; configuration for provider (CPU, CUDA, DirectML).
+- **Responsibility**: Execute ArcFace ONNX inference on CUDA-only Tensor Core GPUs and emit normalized 512-float vectors.
+- **Inputs**: Byte streams or file paths for aligned face crops; configuration for CUDA execution (device selection, Tensor Core headroom).
 - **Outputs**: `ReadOnlyMemory<float>` embeddings plus metadata (model version, device, inference latency).
 - **Constraints**:
   - Must verify the ONNX model hash before first use.
   - Provides async APIs for single and batched inference.
-  - Emits structured logs when vectors are generated or when fallbacks (CPU) are triggered.
+  - Emits structured logs when vectors are generated and when the service fails fast because CUDA hardware is missing.
 
 ## Vector Store Agent
 - **Responsibility**: Interact with the sandbox Qdrant collection (`arcface-sandbox`) enforcing 512-dim vectors, and implement upsert/downsert/search semantics identical to production.

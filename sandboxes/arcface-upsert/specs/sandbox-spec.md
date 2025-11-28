@@ -5,7 +5,7 @@ Create a standalone .NET 10 solution dedicated to testing ArcFace (InsightFace `
 - Require zero coupling to the main `Aspire-Full` solution beyond documented contracts.
 - Pin Qdrant collections to **512-dimension** cosine vectors.
 - Provide scriptable model acquisition (PowerShell + Bash) with checksum validation.
-- Document resource assumptions (GPU optional, CPU baseline) and env vars.
+- Document resource assumptions (CUDA Tensor Core GPUs required, no CPU baseline) and env vars.
 
 ## Architectural Pillars
 1. **Isolation** – no shared databases, caches, or queues. Sandbox components use their own containers or in-memory stores.

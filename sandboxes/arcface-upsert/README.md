@@ -4,9 +4,11 @@ Experimental workspace for validating ArcFace-based embeddings against the Aspir
 
 ## Goals
 - Mirror the Users API soft-delete semantics in isolation for rapid iteration
-- Exercise ArcFace ONNX inference locally (CPU or CUDA) before sharing weights with the main app
+- Exercise ArcFace ONNX inference on CUDA-only Tensor Core hardware before sharing weights with the main app
 - Validate upsert/downsert flows into a sandbox Qdrant collection using the reduced 512-dim schema
 - Provide explicit specs so autonomous agents can own their slice of work without overlap
+
+> **GPU requirement**: Every sandbox sub-agent now fails fast if CUDA Tensor Core devices are unavailable. There are no CPU or DirectML escape hatches, so provision NVIDIA hardware before running any scripts.
 
 ## Layout
 ```

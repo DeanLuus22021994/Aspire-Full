@@ -5,20 +5,20 @@ This document repurposes the existing sub-agent specs into a concise reference s
 ## Snapshot
 | Agent | Directory | Primary Surface | Key Inputs | Key Outputs | UI Page |
 | --- | --- | --- | --- | --- | --- |
-| Embedding Service | `subagents/embedding-service/` | ArcFace ONNX runtime harness exposed via `IArcFaceEmbeddingService` | Aligned 112x112 face crops, execution-provider config, model metadata | Normalized 512-float vectors, model telemetry, hash validation events | Embedding Diagnostics (Page 1/3) |
+| Embedding Service | `subagents/embedding-service/` | ArcFace ONNX runtime harness exposed via `IArcFaceEmbeddingService` | Aligned 112x112 face crops, CUDA execution config, model metadata | Normalized 512-float vectors, model telemetry, hash validation events | Embedding Diagnostics (Page 1/3) |
 | Vector Store | `subagents/vector-store/` | Qdrant orchestration via `ISandboxVectorStore` | Embeddings + payload metadata from Users Kernel & Embedding Service | Upsert/downsert confirmations, search results, collection health | Vector Store Monitor (Page 3/3) |
 | Users Kernel | `subagents/users-kernel/` | REST API + EF Core persistence mirroring production Users controller | Sandbox HTTP requests, embeddings fetched from Embedding Service | JSON user responses, persistence changes, vector sync events | Users Sandbox (Page 2/3) |
 
 ## Embedding Service Agent
 - **Mission**: Own ArcFace model lifecycle and expose async embedding generation (single & batch) without letting other components touch ONNX runtime internals.
-- **Inputs**: Face image streams, provider toggles (CPU/CUDA/DirectML), model path & checksum expectations from `ArcFace:Embedding` config.
-- **Outputs**: Normalized `ReadOnlyMemory<float>` vectors, model info (name/version/provider/hash), latency and fallback telemetry surfaced via diagnostics endpoints/metrics.
+- **Inputs**: Face image streams, CUDA execution parameters (device visibility, Tensor Core headroom), model path & checksum expectations from `ArcFace:Embedding` config.
+- **Outputs**: Normalized `ReadOnlyMemory<float>` vectors, model info (name/version/provider/hash), latency and failure telemetry surfaced via diagnostics endpoints/metrics.
 - **Interfaces**: `IArcFaceEmbeddingService` plus DI helper `AddArcFaceEmbedding` (see `subagents/embedding-service/README.md`). Consumers pull embeddings before persisting users or searching vectors.
 - **UI Expectations**: Power the “Embedding Diagnostics” page by exposing REST diagnostics: runtime metadata, sample embedding endpoint, telemetry summaries, and placeholder sparkline data when the backend is offline.
 - **Constraints & Notes**:
   - Rejects unsigned/invalid models (hash validation before first inference).
   - Handles both single and batch inference; batching obeys `TensorCoreHeadroom` for GPU utilization.
-  - Emits structured logs for vector generation or provider fallbacks to aid automated regression agents.
+  - Emits structured logs for vector generation and for fail-fast exits when CUDA hardware is missing.
 
 ## Vector Store Agent
 - **Mission**: Provide a sandbox Qdrant façade that enforces 512-dimension vectors, production-parity upsert/downsert semantics, and health diagnostics.
