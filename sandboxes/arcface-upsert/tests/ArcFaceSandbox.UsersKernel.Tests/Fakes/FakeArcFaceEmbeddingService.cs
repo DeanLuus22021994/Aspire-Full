@@ -21,7 +21,7 @@ internal sealed class FakeArcFaceEmbeddingService : IArcFaceEmbeddingService
     public ArcFaceModelInfo ModelInfo { get; } = new(
         "fake",
         "1.0.0",
-        "cpu",
+        "cuda",
         "sha256",
         DateTime.UtcNow,
         SandboxVectorStoreOptions.DefaultVectorSize,
