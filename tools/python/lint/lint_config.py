@@ -13,11 +13,12 @@ try:
     import yaml
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError(
-        "PyYAML is required to load .config/python-lint.yaml with anchors/tags"
+        "PyYAML is required to load .config/python/lint/config.yaml with anchors/tags"
     ) from exc
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH = REPO_ROOT / ".config" / "python-lint.yaml"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CONFIG_DIR = REPO_ROOT / ".config" / "python" / "lint"
+CONFIG_PATH = CONFIG_DIR / "config.yaml"
 
 
 def _as_tuple(values: Sequence[str] | None) -> tuple[str, ...]:

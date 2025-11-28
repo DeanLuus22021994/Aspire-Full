@@ -17,8 +17,8 @@
     ".vscode-*",
     ".vscode-*/**"
   ],
-  "python.linting.pylintPath": "${workspaceFolder}/tools/python-lint/pylint_wrapper.py",
-  "pylint.path": "${workspaceFolder}/tools/python-lint/pylint_wrapper.py",
+  "python.linting.pylintPath": "${workspaceFolder}/tools/python/lint/pylint_wrapper.py",
+  "pylint.path": "${workspaceFolder}/tools/python/lint/pylint_wrapper.py",
   "github.copilot.chat.codeGeneration.useReferencedFiles": true,
   "github.copilot.chat.codesearch.enabled": true,
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
