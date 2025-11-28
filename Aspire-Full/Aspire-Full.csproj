@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.Api\Aspire-Full.Api.csproj" />
+    <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
   </ItemGroup>
 
 </Project>

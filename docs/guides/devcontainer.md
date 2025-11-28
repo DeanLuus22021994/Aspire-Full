@@ -26,7 +26,8 @@ The devcontainer provides a fully isolated, reproducible development environment
 
 ## .NET Aspire Integration
 
-- `Aspire-Full/AppHost.cs` calls `builder.AddDockerfile("devcontainer", "../.devcontainer")`, so the image is always built from the same relative path that VS Code uses.
+- `Aspire-Full.DevContainer` is a dedicated .NET 10 project that ships the Dockerfile, compose file, and bootstrap scripts. It also exposes `AddDevContainer()` so the AppHost can register the container declaratively.
+- `Aspire-Full/AppHost.cs` now calls `builder.AddDevContainer("aspire-network")`, guaranteeing all resource metadata (volumes, env vars, Python 3.14 free-threaded pins) stays centralized.
 - The devcontainer depends on two additional Aspire resources:
   - `docker` (Docker-in-Docker daemon with the `aspire-docker-*` volumes)
   - `aspire-dashboard` (dashboard/MCP endpoints mapped through `WithHttpEndpoint`)

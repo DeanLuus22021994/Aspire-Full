@@ -1,5 +1,6 @@
 using Aspire.Hosting;
 using Aspire.Hosting.Qdrant;
+using Aspire_Full.DevContainer;
 
 // =============================================================================
 // Aspire Full AppHost - Distributed Application Orchestrator
@@ -59,30 +60,7 @@ var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotn
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
-var devcontainer = builder.AddDockerfile("devcontainer", "../.devcontainer")
-    .WithVolume("aspire-nuget-cache", "/home/vscode/.nuget")
-    .WithVolume("aspire-dotnet-tools", "/home/vscode/.dotnet/tools")
-    .WithVolume("aspire-aspire-cli", "/home/vscode/.aspire")
-    .WithVolume("aspire-vscode-extensions", "/home/vscode/.vscode-server/extensions")
-    .WithVolume("aspire-workspace", "/workspace")
-    .WithVolume("aspire-docker-certs", "/certs")
-    .WithEnvironment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
-    .WithEnvironment("DOTNET_NOLOGO", "1")
-    .WithEnvironment("DOTNET_RUNNING_IN_CONTAINER", "true")
-    .WithEnvironment("NUGET_PACKAGES", "/home/vscode/.nuget/packages")
-    .WithEnvironment("DOTNET_DASHBOARD_OTLP_ENDPOINT_URL", "http://aspire-dashboard:18889")
-    .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
-    .WithEnvironment("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL", "http://aspire-dashboard:16036")
-    .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
-    .WithEnvironment("DOCKER_HOST", "tcp://docker:2376")
-    .WithEnvironment("DOCKER_TLS_VERIFY", "1")
-    .WithEnvironment("DOCKER_CERT_PATH", "/certs/client")
-    .WithEnvironment("NVIDIA_VISIBLE_DEVICES", "all")
-    .WithEnvironment("NVIDIA_DRIVER_CAPABILITIES", "compute,utility")
-    .WithEnvironment("NVIDIA_REQUIRE_CUDA", "cuda>=12.4,driver>=535")
-    .WithArgs("sleep", "infinity")
-    .WithContainerRuntimeArgs("--network", networkName, "--gpus", "all", "--init")
-    .WithLifetime(ContainerLifetime.Persistent);
+var devcontainer = builder.AddDevContainer(networkName);
 
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search

@@ -16,7 +16,7 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - **React Frontend** - Vite + TypeScript + Semantic UI
 - **Observability** - OpenTelemetry with Aspire Dashboard
 - **Testing** - Unit tests (xUnit) and E2E tests (NUnit)
-- **DevContainer** - Aspire-managed Docker development environment (AddDockerfile + named volumes)
+- **DevContainer** - `Aspire-Full.DevContainer` project exposes `AddDevContainer()` so Aspire manages the Docker workspace + Python 3.14 free-threaded tooling
 
 ## Quick Start
 
@@ -47,7 +47,7 @@ dotnet run --project Aspire-Full
 ./scripts/Start-Aspire.ps1 -Status  # view PID / dashboard link
 ./scripts/Start-Aspire.ps1 -Stop    # stop background host
 
-> The AppHost now builds the VS Code devcontainer image via `.devcontainer/` using `AddDockerfile`, so both Aspire and Docker Compose share the same relative context and named volumes.
+> The AppHost now builds the VS Code devcontainer image through `AddDevContainer()` (from `Aspire-Full.DevContainer`), so both Aspire and Docker Compose share the same relative context, Python 3.14 constraints, and named volumes.
 ```
 
 > Tensor acceleration is mandatory. `Start-Aspire.ps1` validates CUDA Tensor Core hardware at startup and exits with an error if NVIDIA GPUs are unavailable.
@@ -151,6 +151,7 @@ Aspire-Full/
 │       ├── components/       # UI components
 │       └── services/         # API client
 ├── Aspire-Full.ServiceDefaults/ # Shared config
+├── Aspire-Full.DevContainer/   # Devcontainer resource + assets
 ├── Aspire-Full.Tests.Unit/   # Unit tests
 ├── Aspire-Full.Tests.E2E/    # E2E tests
 ├── docs/                     # Documentation

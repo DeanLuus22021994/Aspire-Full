@@ -9,7 +9,8 @@
       "Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj",
       "Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj",
       "Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj",
-      "Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj"
+      "Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj",
+      "Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj"
     ]
   }
 }
