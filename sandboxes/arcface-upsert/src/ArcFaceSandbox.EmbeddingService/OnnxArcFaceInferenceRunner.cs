@@ -32,7 +32,7 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
             VerifyModelChecksum(_options.ModelPath, _options.ExpectedSha256);
         }
 
-        var sessionOptions = CreateCudaSessionOptions(_options);
+        var sessionOptions = CreateCudaSessionOptions(_options, logger);
         _session = new InferenceSession(_options.ModelPath, sessionOptions);
         _modelInfo = BuildModelInfo(_session, _options);
     }
@@ -87,7 +87,7 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
         }
     }
 
-    private static SessionOptions CreateCudaSessionOptions(ArcFaceEmbeddingOptions options)
+    private static SessionOptions CreateCudaSessionOptions(ArcFaceEmbeddingOptions options, ILogger logger)
     {
         var sessionOptions = new SessionOptions
         {
@@ -102,6 +102,7 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
         }
         catch (OnnxRuntimeException ex)
         {
+            logger.LogError(ex, "CUDA execution provider initialization failed.");
             throw new InvalidOperationException(
                 "CUDA execution provider is required for ArcFace embeddings. Ensure NVIDIA drivers and CUDA libraries are installed.",
                 ex);
