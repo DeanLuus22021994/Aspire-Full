@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -61,7 +62,9 @@ def _wait_for_dashboard() -> None:
 def _gpu_summary() -> str:
     nvidia_smi = shutil.which("nvidia-smi")
     if not nvidia_smi:
-        return "not detected (tensor workloads will run on CPU)"
+        raise RuntimeError(
+            "NVIDIA GPU utilities are not available inside the devcontainer; Tensor workloads cannot start."
+        )
     try:
         completed = subprocess.run(
             [
@@ -83,6 +86,11 @@ def main() -> None:
     """Run the VS Code post-start diagnostics and readiness logging."""
     _extend_path()
     _log("🚀 Running post-start setup...")
+    try:
+        gpu_info = _gpu_summary()
+    except RuntimeError as exc:  # fail fast when no GPU is exposed
+        _log(f"❌ {exc}")
+        sys.exit(1)
     _wait_for_dashboard()
 
     _log("")
@@ -91,7 +99,7 @@ def main() -> None:
     _log(f"   Aspire CLI: {_capture(['aspire', '--version'])}")
     _log(f"   Docker: {_capture(['docker', '--version'])}")
     _log(f"   gh CLI: {_capture(['gh', '--version'])}")
-    _log(f"   GPU: {_gpu_summary()}")
+    _log(f"   GPU: {gpu_info}")
     _log("")
     _log("🌐 Services:")
     _log("   Aspire Dashboard:  http://localhost:18888")
