@@ -5,11 +5,15 @@ using Aspire_Full.Qdrant;
 using Aspire_Full.Tensor;
 using Aspire_Full.VectorStore;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add Aspire service defaults
 builder.AddServiceDefaults();
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddSource(TensorDiagnostics.ActivitySourceName));
 
 // Add PostgreSQL with Entity Framework
 builder.AddNpgsqlDbContext<AppDbContext>("aspiredb");

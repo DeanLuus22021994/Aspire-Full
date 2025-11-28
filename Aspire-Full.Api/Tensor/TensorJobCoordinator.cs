@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -33,6 +34,10 @@ public sealed class TensorVectorBridge : ITensorVectorBridge
 
     public async Task<string?> TryPersistAsync(TensorJobStatusDto job, ReadOnlyMemory<float> embedding, CancellationToken cancellationToken)
     {
+        using var activity = TensorDiagnostics.ActivitySource.StartActivity("TensorVectorBridge.PersistEmbedding");
+        activity?.SetTag("tensor.job_id", job.Id);
+        activity?.SetTag("tensor.vector.length", embedding.Length);
+
         try
         {
             var document = new VectorDocument
@@ -50,10 +55,13 @@ public sealed class TensorVectorBridge : ITensorVectorBridge
 
             await _vectorStore.EnsureCollectionAsync(QdrantDefaults.DefaultCollectionName, embedding.Length, cancellationToken).ConfigureAwait(false);
             await _vectorStore.UpsertAsync(document, cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Ok);
             return document.Id;
         }
         catch (Exception ex)
         {
+            activity?.RecordException(ex);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogWarning(ex, "Failed to persist tensor embedding for job {JobId}", job.Id);
             return null;
         }
@@ -83,8 +91,13 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
     public async Task<TensorJobStatusDto> SubmitAsync(TensorJobSubmissionDto submission, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(submission);
+        using var activity = TensorDiagnostics.ActivitySource.StartActivity("TensorJobCoordinator.Submit");
+        activity?.SetTag("tensor.model_id", submission.ModelId);
+        activity?.SetTag("tensor.persist", submission.PersistToVectorStore);
+
         if (!_catalog.TryGetValue(submission.ModelId, out var model))
         {
+            activity?.SetStatus(ActivityStatusCode.Error, "model_not_found");
             throw new KeyNotFoundException($"Model '{submission.ModelId}' was not found in the tensor catalog.");
         }
 
@@ -118,11 +131,13 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             if (!string.IsNullOrWhiteSpace(vectorId))
             {
                 job = job with { VectorDocumentId = vectorId };
+                activity?.AddEvent(new ActivityEvent("tensor.vector.persisted"));
             }
         }
 
         await _store.UpsertAsync(job, cancellationToken).ConfigureAwait(false);
         _logger.LogInformation("Tensor job {JobId} for model {ModelId} completed using {Provider}", job.Id, job.ModelId, job.ExecutionProvider);
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return job;
     }
 

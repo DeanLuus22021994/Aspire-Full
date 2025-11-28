@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -17,6 +19,7 @@ public static class Extensions
 {
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
+    private const string DefaultOtlpEndpoint = "http://localhost:4318";
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
@@ -80,12 +83,25 @@ public static class Extensions
 
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+        var configuredEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+        var headers = builder.Configuration["OTEL_EXPORTER_OTLP_HEADERS"];
+        var protocolSetting = builder.Configuration["OTEL_EXPORTER_OTLP_PROTOCOL"];
 
-        if (useOtlpExporter)
+        builder.Services.AddOpenTelemetry().UseOtlpExporter(options =>
         {
-            builder.Services.AddOpenTelemetry().UseOtlpExporter();
-        }
+            options.Endpoint = Uri.TryCreate(configuredEndpoint, UriKind.Absolute, out var endpoint)
+                ? endpoint
+                : new Uri(DefaultOtlpEndpoint);
+
+            options.Protocol = string.Equals(protocolSetting, "grpc", StringComparison.OrdinalIgnoreCase)
+                ? OtlpExportProtocol.Grpc
+                : OtlpExportProtocol.HttpProtobuf;
+
+            if (!string.IsNullOrWhiteSpace(headers))
+            {
+                options.Headers = headers;
+            }
+        });
 
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
         //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
