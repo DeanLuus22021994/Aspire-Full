@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from rich.console import Console
 
 from .config import AgentConfig
+from .gpu import TensorCoreInfo, ensure_tensor_core_gpu
 from .kernel import build_kernel
 
 console = Console()
@@ -48,6 +49,7 @@ class AgentRunner:
 
     def __init__(self, config: AgentConfig):
         self.config = config
+        self.tensor_info: TensorCoreInfo = ensure_tensor_core_gpu()
         self.kernel = build_kernel(config)
         prompt_template_config = _create_prompt_template(config)
 

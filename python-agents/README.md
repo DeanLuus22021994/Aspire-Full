@@ -22,7 +22,16 @@ This workspace hosts the shared Semantic Kernel (SK) scaffolding for folder-scop
    $env:OPENAI_API_KEY = "sk-..."
    ```
 
-3. Run an agent config (for example the Web status agent):
+3. Verify CUDA/Tensor Core access (agents refuse to start without it):
+
+   ```bash
+   uv run python - <<'PY'
+   from aspire_agents.gpu import ensure_tensor_core_gpu
+   print(ensure_tensor_core_gpu())
+   PY
+   ```
+
+4. Run an agent config (for example the Web status agent):
 
    ```bash
    uv run python -m aspire_agents.cli run \
@@ -40,6 +49,7 @@ python-agents/
 │  ├─ cli.py                  # Typer entry point
 │  ├─ config.py               # YAML/ENV loaders for agent manifests
 │  ├─ kernel.py               # Semantic Kernel builder helpers
+│  ├─ gpu.py                  # Tensor Core enforcement + metadata helpers
 │  └─ runner.py               # Async agent runner with telemetry hooks
 └─ scripts/run_agent.ps1      # Convenience wrapper for Windows handoffs
 ```
