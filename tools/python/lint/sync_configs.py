@@ -89,6 +89,8 @@ def write_pylintrc(config: LintConfigType) -> None:
 
 def write_pyright(config: LintConfigType) -> None:
     payload = {"exclude": list(config.pyright.exclude)}
+    if config.pyright.extra_paths:
+        payload["extraPaths"] = list(config.pyright.extra_paths)
     PYRIGHT_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 

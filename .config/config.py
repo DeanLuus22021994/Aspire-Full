@@ -50,6 +50,7 @@ class PylintConfig:
 @dataclass(frozen=True)
 class PyrightConfig:
     exclude: tuple[str, ...]
+    extra_paths: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -124,7 +125,10 @@ def load_config() -> LintConfig:
             ignore_paths=_as_tuple(pylint.get("ignore_paths")),
             ignore_patterns=_as_tuple(pylint.get("ignore_patterns")),
         ),
-        pyright=PyrightConfig(exclude=_as_tuple(pyright.get("exclude")) or vendor),
+        pyright=PyrightConfig(
+            exclude=_as_tuple(pyright.get("exclude")) or vendor,
+            extra_paths=_as_tuple(pyright.get("extra_paths")),
+        ),
         pycodestyle=PycodestyleConfig(
             ignore=_as_tuple(pycodestyle.get("ignore"))
             or _as_tuple(flake8.get("extend_ignore"))

@@ -53,6 +53,8 @@ contexts:
 
       pyright:
         exclude: *vendor_globs
+        extra_paths:
+          - python-agents/src
 
       runner:
         auto_targets: *lint_roots

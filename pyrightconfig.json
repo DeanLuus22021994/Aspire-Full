@@ -8,5 +8,8 @@
     ".vscode-*/**",
     "node_modules",
     "node_modules/**"
+  ],
+  "extraPaths": [
+    "python-agents/src"
   ]
 }

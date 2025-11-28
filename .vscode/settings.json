@@ -20,7 +20,6 @@
   "python.linting.pylintPath": "${workspaceFolder}/.config/python/wrapper.py",
   "pylint.path": ["${workspaceFolder}/.config/python/wrapper.py"],
   "python.envFile": "${workspaceFolder}/.config/python/.env",
-  "python.analysis.extraPaths": ["${workspaceFolder}/python-agents/src"],
   "github.copilot.chat.codeGeneration.useReferencedFiles": true,
   "github.copilot.chat.codesearch.enabled": true,
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
