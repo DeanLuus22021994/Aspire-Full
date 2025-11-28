@@ -84,8 +84,8 @@
     }
   },
 
-  "postCreateCommand": "bash /workspace/.devcontainer/scripts/post-create.sh",
-  "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
+  "postCreateCommand": "python3 /workspace/.devcontainer/scripts/post_create.py",
+  "postStartCommand": "python3 /workspace/.devcontainer/scripts/post_start.py",
 
   "remoteEnv": {
     "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://aspire-dashboard:18889",

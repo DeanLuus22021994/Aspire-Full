@@ -20,8 +20,8 @@ The devcontainer provides a fully isolated, reproducible development environment
 ├── docker-compose.yml   # Service definitions
 ├── Dockerfile           # Container image
 └── scripts/
-    ├── post-create.sh   # Initial setup
-    └── post-start.sh    # Startup checks
+  ├── post_create.py   # Initial setup (Python 3.14 free-threaded ready)
+  └── post_start.py    # Startup checks (Python 3.14 free-threaded ready)
 ```
 
 ## Services
