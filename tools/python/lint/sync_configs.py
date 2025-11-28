@@ -3,16 +3,37 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
+from types import ModuleType
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_MODULE_DIR = REPO_ROOT / ".config" / "python"
 if str(CONFIG_MODULE_DIR) not in sys.path:
     sys.path.insert(0, str(CONFIG_MODULE_DIR))
 
-from config import LintConfig, load_config  # type: ignore  # noqa: E402
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CONFIG_MODULE_PATH = REPO_ROOT / ".config" / "config.py"
+
+
+def _load_config_module() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        "workspace_dotconfig", CONFIG_MODULE_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Unable to load .config/config.py module")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+CONFIG_MODULE = _load_config_module()
+LintConfig = getattr(CONFIG_MODULE, "LintConfig")
+LintConfigType = Any
+load_config = getattr(CONFIG_MODULE, "load_config")
 
 FLAKE8_PATH = REPO_ROOT / ".flake8"
 PYLINTRC_PATH = REPO_ROOT / ".pylintrc"
@@ -38,7 +59,7 @@ def _format_yaml_sequence(key: str, values: tuple[str, ...]) -> str:
     return "\n".join(lines)
 
 
-def write_flake8(config: LintConfig) -> None:
+def write_flake8(config: LintConfigType) -> None:
     lines = [
         "[flake8]",
         f"max-line-length = {config.line_length}",
@@ -51,7 +72,7 @@ def write_flake8(config: LintConfig) -> None:
     FLAKE8_PATH.write_text(body, encoding="utf-8")
 
 
-def write_pylintrc(config: LintConfig) -> None:
+def write_pylintrc(config: LintConfigType) -> None:
     ignore_paths = tuple(dict.fromkeys(DEFAULT_PYLINT_IGNORE + config.pylint.ignore))
     lines = ["[MASTER]", f"ignore = {_format_csv(ignore_paths)}"]
     if config.pylint.ignore_paths:
@@ -70,12 +91,12 @@ def write_pylintrc(config: LintConfig) -> None:
     PYLINTRC_PATH.write_text(body, encoding="utf-8")
 
 
-def write_pyright(config: LintConfig) -> None:
+def write_pyright(config: LintConfigType) -> None:
     payload = {"exclude": list(config.pyright.exclude)}
     PYRIGHT_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def write_pycodestyle(config: LintConfig) -> None:
+def write_pycodestyle(config: LintConfigType) -> None:
     lines = ["[pycodestyle]", f"max-line-length = {config.line_length}"]
     if config.pycodestyle.ignore:
         lines.append(f"ignore = {_format_csv(config.pycodestyle.ignore)}")
@@ -83,12 +104,12 @@ def write_pycodestyle(config: LintConfig) -> None:
     PYCODESTYLE_PATH.write_text(body, encoding="utf-8")
 
 
-def write_roots_yaml(config: LintConfig) -> None:
+def write_roots_yaml(config: LintConfigType) -> None:
     data = _format_yaml_sequence("lint_roots", config.runner.auto_targets)
     ROOTS_YAML_PATH.write_text(HEADER + data + "\n", encoding="utf-8")
 
 
-def write_excludes_yaml(config: LintConfig) -> None:
+def write_excludes_yaml(config: LintConfigType) -> None:
     data = _format_yaml_sequence("excludes", config.vendor_globs)
     EXCLUDES_YAML_PATH.write_text(HEADER + data + "\n", encoding="utf-8")
 
