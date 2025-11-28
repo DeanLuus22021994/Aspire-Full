@@ -24,7 +24,7 @@ public sealed class TensorTasksController : ControllerBase
     {
         _jobStore = jobStore;
         _coordinator = coordinator;
-        _models = catalogOptions.Value.Models ?? new List<TensorModelDescriptor>();
+        _models = (catalogOptions.Value.Models ?? new List<TensorModelDescriptor>()).ToList();
     }
 
     [HttpGet("catalog")]

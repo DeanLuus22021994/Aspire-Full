@@ -60,7 +60,11 @@ public sealed class TensorVectorBridge : ITensorVectorBridge
         }
         catch (Exception ex)
         {
-            activity?.RecordException(ex);
+            activity?.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
+            {
+                ["exception.type"] = ex.GetType().FullName ?? "Exception",
+                ["exception.message"] = ex.Message
+            }));
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogWarning(ex, "Failed to persist tensor embedding for job {JobId}", job.Id);
             return null;

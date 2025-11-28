@@ -6,7 +6,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -87,21 +86,26 @@ public static class Extensions
         var headers = builder.Configuration["OTEL_EXPORTER_OTLP_HEADERS"];
         var protocolSetting = builder.Configuration["OTEL_EXPORTER_OTLP_PROTOCOL"];
 
-        builder.Services.AddOpenTelemetry().UseOtlpExporter(options =>
+        if (string.IsNullOrWhiteSpace(configuredEndpoint))
         {
-            options.Endpoint = Uri.TryCreate(configuredEndpoint, UriKind.Absolute, out var endpoint)
-                ? endpoint
-                : new Uri(DefaultOtlpEndpoint);
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", DefaultOtlpEndpoint);
+        }
 
-            options.Protocol = string.Equals(protocolSetting, "grpc", StringComparison.OrdinalIgnoreCase)
-                ? OtlpExportProtocol.Grpc
-                : OtlpExportProtocol.HttpProtobuf;
+        if (!string.IsNullOrWhiteSpace(headers))
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", headers);
+        }
 
-            if (!string.IsNullOrWhiteSpace(headers))
-            {
-                options.Headers = headers;
-            }
-        });
+        if (!string.IsNullOrWhiteSpace(protocolSetting))
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", protocolSetting);
+        }
+        else
+        {
+            Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf");
+        }
+
+        builder.Services.AddOpenTelemetry().UseOtlpExporter();
 
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
         //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))

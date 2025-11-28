@@ -37,7 +37,11 @@ public sealed class TensorRuntimeService(ILogger<TensorRuntimeService> logger, I
         }
         catch (JSException ex)
         {
-            activity?.RecordException(ex);
+            activity?.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
+            {
+                ["exception.type"] = ex.GetType().FullName ?? "JSException",
+                ["exception.message"] = ex.Message
+            }));
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogWarning(ex, "Unable to detect tensor runtime capabilities via JS");
             return new TensorCapabilityResponse
