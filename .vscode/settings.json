@@ -25,5 +25,6 @@
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
   "files.associations": {
     ".pycodestyle": "ini"
-  }
+  },
+  "cSpell.words": ["Serilog"]
 }
