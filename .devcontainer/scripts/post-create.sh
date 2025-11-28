@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# Devcontainer bootstrap: clone repo if needed, run PipelineRunner, install tooling.
+
 echo "🚀 Running post-create setup..."
 
 # Ensure PATH includes dotnet tools
