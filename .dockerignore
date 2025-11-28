@@ -22,6 +22,10 @@ TestResults/
 **/node_modules
 **/.venv
 pip-wheel-metadata/
+python-agents/.ruff_cache/
+python-agents/.mypy_cache/
+tools/github-mcp/dist/
+tools/github-mcp/.turbo/
 
 # Misc. caches
 npm-debug.log*
