@@ -80,9 +80,8 @@ def _show_gpu_status() -> None:
         except subprocess.CalledProcessError:
             pass
     else:
-        _warn(
-            "⚠️ NVIDIA GPU utilities are not accessible in this container; tensor "
-            "workloads will fall back to CPU."
+        raise RuntimeError(
+            "NVIDIA GPU utilities are not accessible in this container. Tensor workloads strictly require CUDA."
         )
 
 
