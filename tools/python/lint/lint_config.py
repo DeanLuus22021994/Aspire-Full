@@ -18,6 +18,7 @@ except ImportError as exc:  # pragma: no cover
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_ROOT = REPO_ROOT / ".config"
+CONTEXT_DIR = CONFIG_ROOT / "python" / "lint"
 CONFIG_PATH = CONFIG_ROOT / "config.yaml"
 CONTEXT_CHAIN = ("contexts", "python", "lint")
 
