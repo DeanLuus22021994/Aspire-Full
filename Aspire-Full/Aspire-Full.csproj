@@ -26,6 +26,7 @@
     <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj">
       <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
+    <ProjectReference Include="..\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
   </ItemGroup>
 
 </Project>

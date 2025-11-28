@@ -136,6 +136,15 @@ dotnet test Aspire-Full.Tests.E2E
 | GET | `/api/docker-registry/repositories/{service}/tags` | Lists tags for the service (optional environment/architecture query parameters) |
 | GET | `/api/docker-registry/repositories/{service}/manifests/{tag}` | Retrieves manifest + layer metadata for a specific tag |
 
+### WASM Frontends
+Three instances of the `Aspire-Full.WebAssembly` project run side-by-side inside the AppHost so every environment has its own UI shell while still sharing the same pattern components.
+
+| Name | AppHost Resource | Port | Purpose |
+|------|------------------|------|---------|
+| Development Docs | `frontend-docs` | `5175` | Live preview of docs + agent tooling |
+| UAT | `frontend-uat` | `5176` | Stakeholder verification against staging services |
+| Production | `frontend-prod` | `5177` | Hardened read-only experience that mirrors production settings |
+
 ## Database Schema
 
 ### Users Table

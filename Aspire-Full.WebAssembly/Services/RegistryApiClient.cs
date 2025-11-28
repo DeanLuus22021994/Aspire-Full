@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace Aspire_Full.WebAssembly.Services;
 

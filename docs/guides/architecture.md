@@ -72,6 +72,15 @@ React SPA with Vite:
 - **UI**: Semantic UI React
 - **Build**: Vite 6
 
+### WASM Frontend Trio
+
+Blazor WebAssembly alternative with a pattern-driven component architecture. The single project is instantiated three times (Docs, UAT, Prod) via AppHost so every environment receives an isolated shell.
+
+- **Entry Point**: `Aspire-Full.WebAssembly/Program.cs`
+- **Components**: `EnvironmentCard`, `EnvironmentGrid`, and `RepositoryGrid` implement the shared pattern library
+- **Configuration**: `wwwroot/appsettings*.json` drives the environment registry (docs/uat/prod definitions)
+- **Ports**: Docs `5175`, UAT `5176`, Prod `5177`
+
 ### Aspire Dashboard
 
 Standalone container providing:
