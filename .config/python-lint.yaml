@@ -18,10 +18,11 @@
       ".vscode/extensions"
     ],
     "ignore_paths": [
-      ".*/\\.vscode/.*"
+      ".*/\\.vscode/.*",
+      ".*\\\\.vscode\\\\.*"
     ],
     "ignore_patterns": [
-      ".*[\\/]\\.vscode[\\/].*"
+      ".*[/\\\\]\\.vscode[/\\\\].*"
     ]
   }
 }
