@@ -17,6 +17,7 @@ class MCPContext:
 
 
 def get_context() -> MCPContext:
+    """Return compose metadata for the GitHub MCP service."""
     root = Path(__file__).resolve().parents[1]
     return MCPContext(
         service_name="github-mcp",

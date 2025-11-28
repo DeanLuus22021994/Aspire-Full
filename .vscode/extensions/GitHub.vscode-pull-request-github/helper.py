@@ -19,6 +19,7 @@ class ExtensionContext:
 
 
 def get_context() -> ExtensionContext:
+    """Return metadata for the GitHub Pull Request extension cache."""
     extension_dir = Path(__file__).resolve().parent
     cache_dir = Path("/opt/extensions") / "GitHub.vscode-pull-request-github"
     return ExtensionContext(

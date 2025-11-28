@@ -19,6 +19,7 @@ class ExtensionContext:
 
 
 def get_context() -> ExtensionContext:
+    """Return metadata for the Code Spell Checker extension cache."""
     extension_dir = Path(__file__).resolve().parent
     cache_dir = Path("/opt/extensions") / "streetsidesoftware.code-spell-checker"
     return ExtensionContext(

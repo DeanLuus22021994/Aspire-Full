@@ -11,6 +11,7 @@ from helper import get_context
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Download the EditorConfig VSIX into the local cache."""
     _ = argv or sys.argv[1:]
     context = get_context()
     env = os.environ.copy()

@@ -19,6 +19,7 @@ class ExtensionContext:
 
 
 def get_context() -> ExtensionContext:
+    """Return metadata for the EditorConfig extension cache."""
     extension_dir = Path(__file__).resolve().parent
     cache_dir = Path("/opt/extensions") / "EditorConfig.EditorConfig"
     return ExtensionContext(

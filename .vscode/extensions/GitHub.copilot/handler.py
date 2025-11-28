@@ -11,6 +11,7 @@ from helper import get_context
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Download the GitHub Copilot VSIX into the cache."""
     _ = argv or sys.argv[1:]
     context = get_context()
     env = os.environ.copy()

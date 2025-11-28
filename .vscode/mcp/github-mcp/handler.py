@@ -29,6 +29,7 @@ def _build_command(action: str, service_name: str, compose_file: Path) -> list[s
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Control the GitHub MCP service via docker compose."""
     args = argv or sys.argv[1:]
     action = args[0] if args else "up"
     extra_args = args[1:]
