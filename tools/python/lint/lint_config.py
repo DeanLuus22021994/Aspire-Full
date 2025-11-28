@@ -7,18 +7,19 @@ import fnmatch
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 try:
     import yaml
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError(
-        "PyYAML is required to load .config/python/lint/config.yaml with anchors/tags"
+        "PyYAML is required to load .config/config.yaml with anchors/tags"
     ) from exc
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONFIG_DIR = REPO_ROOT / ".config" / "python" / "lint"
-CONFIG_PATH = CONFIG_DIR / "config.yaml"
+CONFIG_ROOT = REPO_ROOT / ".config"
+CONFIG_PATH = CONFIG_ROOT / "config.yaml"
+CONTEXT_CHAIN = ("contexts", "python", "lint")
 
 
 def _as_tuple(values: Sequence[str] | None) -> tuple[str, ...]:
@@ -75,7 +76,8 @@ class LintConfig:
 
 @lru_cache(maxsize=1)
 def load_config() -> LintConfig:
-    raw = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+    payload = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8")) or {}
+    raw = _resolve_context(payload)
     vendor = _as_tuple(raw.get("vendor_globs"))
     paths = raw.get("paths", {})
     flake8 = raw.get("flake8", {})
@@ -112,6 +114,19 @@ def load_config() -> LintConfig:
             or _as_tuple(pylint.get("disable")),
         ),
     )
+
+
+def _resolve_context(payload: dict[str, Any]) -> dict[str, Any]:
+    node: Any = payload
+    for key in CONTEXT_CHAIN:
+        if not isinstance(node, dict) or key not in node:
+            raise KeyError(
+                "Missing python.lint context in .config/config.yaml; rerun lint bootstrap."
+            )
+        node = node[key]
+    if not isinstance(node, dict):
+        raise TypeError("python.lint context in .config/config.yaml must be a mapping.")
+    return node
 
 
 def collect_existing_roots(cfg: LintConfig) -> list[str]:

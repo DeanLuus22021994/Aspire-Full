@@ -1,0 +1,59 @@
+version: 1
+
+contexts:
+  python:
+    lint:
+      line_length: 100
+
+      vendor_globs: &vendor_globs
+        - .vscode
+        - .vscode/**
+        - .vscode-test
+        - .vscode-test/**
+        - .vscode-*
+        - .vscode-*/**
+        - node_modules
+        - node_modules/**
+
+      paths:
+        lint_roots: &lint_roots
+          - python-agents
+          - sandboxes
+          - scripts
+          - tools
+        exclude_globs: *vendor_globs
+
+      flake8:
+        extend_ignore: &flake8_ignore
+          - E203
+          - W503
+        exclude: *vendor_globs
+
+      pycodestyle:
+        ignore: *flake8_ignore
+
+      pylint:
+        disable: &pylint_disable
+          - missing-docstring
+          - invalid-name
+        ignore:
+          - .vscode
+          - .vscode/extensions
+          - .vscode-test
+          - .vscode-debug
+          - .vscode-extensions
+        ignore_paths: &pylint_vendor_regex
+          - '.*\/\.vscode\/.*'
+          - '.*\\\.vscode\\.*'
+          - '.*\/\.vscode-test\/.*'
+          - '.*\\\.vscode-test\\.*'
+          - '.*\/\.vscode-.*'
+          - '.*\\\.vscode-.*'
+        ignore_patterns: *pylint_vendor_regex
+
+      pyright:
+        exclude: *vendor_globs
+
+      runner:
+        auto_targets: *lint_roots
+        pylint_disable: *pylint_disable
