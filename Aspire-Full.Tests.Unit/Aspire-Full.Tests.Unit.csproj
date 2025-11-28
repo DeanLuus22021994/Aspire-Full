@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.Api\Aspire-Full.Api.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
     <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
     <ProjectReference Include="..\Aspire-Full.Subagents\Aspire-Full.Subagents.csproj" />
     <ProjectReference Include="..\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />

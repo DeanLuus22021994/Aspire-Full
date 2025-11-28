@@ -7,6 +7,7 @@ public static class ConnectorTraceTags
     public const string Status = "connector.metric.status";
     public const string Score = "connector.metric.score";
     public const string Detail = "connector.metric.detail";
+    public const string MetricName = "connector.metric.name";
 
     public const string EfCore = "connector.metric.efcore";
     public const string CodeQuality = "connector.metric.code_quality";

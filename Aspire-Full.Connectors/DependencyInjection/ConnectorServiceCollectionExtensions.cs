@@ -16,6 +16,7 @@ public static class ConnectorServiceCollectionExtensions
         services.AddSingleton<IConnectorHealthRegistry, ConnectorHealthRegistry>();
         services.AddSingleton<IEvaluationOrchestrator, InMemoryEvaluationOrchestrator>();
         services.AddSingleton<IConnectorMetricReporter, ConnectorMetricReporter>();
+        services.AddSingleton<IConnectorMetricSnapshotProvider, ConnectorMetricSnapshotProvider>();
         services.AddSingleton<IVectorStoreConnector, VectorStoreConnector>();
 
         services.AddOpenTelemetry().WithTracing(builder => builder.AddSource(ConnectorDiagnostics.ActivitySourceName));
