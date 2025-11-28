@@ -22,5 +22,8 @@
   "python.envFile": "${workspaceFolder}/.config/python/.env",
   "github.copilot.chat.codeGeneration.useReferencedFiles": true,
   "github.copilot.chat.codesearch.enabled": true,
-  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "files.associations": {
+    ".pycodestyle": "ini"
+  }
 }
