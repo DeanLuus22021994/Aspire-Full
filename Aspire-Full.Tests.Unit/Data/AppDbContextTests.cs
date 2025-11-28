@@ -1,6 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using Aspire_Full.Api.Data;
 using Aspire_Full.Api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aspire_Full.Tests.Unit.Data;
 

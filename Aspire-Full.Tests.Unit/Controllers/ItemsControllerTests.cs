@@ -1,10 +1,10 @@
+using Aspire_Full.Api.Controllers;
+using Aspire_Full.Api.Models;
+using Aspire_Full.Tests.Unit.Fixtures;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Aspire_Full.Api.Controllers;
-using Aspire_Full.Api.Models;
-using Aspire_Full.Tests.Unit.Fixtures;
 
 namespace Aspire_Full.Tests.Unit.Controllers;
 

@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
@@ -253,7 +253,8 @@ public class QdrantVectorStoreService : IVectorStoreService
         _ = ThrowHelper.ValidateAndParseGuid(id);
 
         var existing = await GetAsync(id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return false;
+        if (existing is null)
+            return false;
 
         var now = DateTime.UtcNow;
         var softDeleted = existing with
@@ -308,7 +309,8 @@ public class QdrantVectorStoreService : IVectorStoreService
             guidList.Add(ThrowHelper.ValidateAndParseGuid(id));
         }
 
-        if (guidList.Count == 0) return 0;
+        if (guidList.Count == 0)
+            return 0;
 
         await _client.DeleteAsync(_collectionName, guidList, cancellationToken: cancellationToken).ConfigureAwait(false);
         _logger.LogInformation("Batch hard-deleted {Count} documents from {Collection}", guidList.Count, _collectionName);

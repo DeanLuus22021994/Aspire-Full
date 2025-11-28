@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Aspire_Full.Api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aspire_Full.Api.Data;
 
