@@ -10,7 +10,9 @@
       "Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj",
       "Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj",
       "Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj",
-      "Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj"
+      "Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj",
+      "Aspire-Full.Subagents/Aspire-Full.Subagents.csproj",
+      "Aspire-Full.Subagents.Agent/Aspire-Full.Subagents.Agent.csproj"
     ]
   }
 }

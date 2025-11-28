@@ -34,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.Api\Aspire-Full.Api.csproj" />
     <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Subagents\Aspire-Full.Subagents.csproj" />
   </ItemGroup>
 
 </Project>
