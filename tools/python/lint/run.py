@@ -8,17 +8,23 @@ import sys
 from pathlib import Path
 from typing import Iterable, Tuple
 
-THIS_DIR = Path(__file__).resolve().parent
-if str(THIS_DIR) not in sys.path:
-    sys.path.insert(0, str(THIS_DIR))
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CONFIG_MODULE_DIR = REPO_ROOT / ".config" / "python"
+if str(CONFIG_MODULE_DIR) not in sys.path:
+    sys.path.insert(0, str(CONFIG_MODULE_DIR))
 
-from lint_config import (  # type: ignore  # noqa: E402
-    REPO_ROOT,
+from config import (  # type: ignore  # noqa: E402
+    REPO_ROOT as CONFIG_REPO_ROOT,
+)
+from config import (
     LintConfig,
     collect_existing_roots,
     is_vendor_path,
     load_config,
 )
+
+if CONFIG_REPO_ROOT != REPO_ROOT:
+    raise RuntimeError("Mismatch between tool repo root and .config python module.")
 
 
 def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
@@ -104,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     auto_targets = collect_existing_roots(config)
     if not auto_targets:
         print(
-            "No lint targets were found in lint_roots from python/lint/config.yaml.",
+            "No lint targets were found in lint_roots from .config/config.yaml.",
             file=sys.stderr,
         )
         return 0

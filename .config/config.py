@@ -16,9 +16,8 @@ except ImportError as exc:  # pragma: no cover
         "PyYAML is required to load .config/config.yaml with anchors/tags"
     ) from exc
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_ROOT = REPO_ROOT / ".config"
-CONTEXT_DIR = CONFIG_ROOT / "python" / "lint"
 CONFIG_PATH = CONFIG_ROOT / "config.yaml"
 CONTEXT_CHAIN = ("contexts", "python", "lint")
 

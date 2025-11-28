@@ -7,13 +7,13 @@ import json
 import sys
 from pathlib import Path
 
-THIS_DIR = Path(__file__).resolve().parent
-if str(THIS_DIR) not in sys.path:
-    sys.path.insert(0, str(THIS_DIR))
-
-from lint_config import LintConfig, load_config  # type: ignore  # noqa: E402
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
+CONFIG_MODULE_DIR = REPO_ROOT / ".config" / "python"
+if str(CONFIG_MODULE_DIR) not in sys.path:
+    sys.path.insert(0, str(CONFIG_MODULE_DIR))
+
+from config import LintConfig, load_config  # type: ignore  # noqa: E402
+
 FLAKE8_PATH = REPO_ROOT / ".flake8"
 PYLINTRC_PATH = REPO_ROOT / ".pylintrc"
 PYCODESTYLE_PATH = REPO_ROOT / ".pycodestyle"

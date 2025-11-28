@@ -7,7 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-RUNNER = Path(__file__).with_name("run.py")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+RUNNER = REPO_ROOT / "tools" / "python" / "lint" / "run.py"
 
 
 def main() -> int:
