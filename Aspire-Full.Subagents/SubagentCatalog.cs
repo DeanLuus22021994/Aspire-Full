@@ -8,7 +8,7 @@ public static class SubagentCatalog
     private static readonly IReadOnlyDictionary<SubagentRole, SubagentDefinition> _definitions =
         BuildDefinitions();
 
-    public static IReadOnlyCollection<SubagentDefinition> All => _definitions.Values;
+    public static IEnumerable<SubagentDefinition> All => _definitions.Values;
 
     public static SubagentDefinition Get(SubagentRole role)
     {
