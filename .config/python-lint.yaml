@@ -21,9 +21,6 @@ pylint:
     - .vscode-debug
     - .vscode-extensions
   ignore_paths:
-    - ".*/\\.vscode/.*"
-    - ".*/\\.vscode-test/.*"
-  ignore_patterns:
-    - ".*\\.vscode.*"
-    - ".*\\.vscode-test.*"
-    - ".*\\.vscode-.*"
+    - ".*[/\\]\\.vscode[/\\].*"
+    - ".*[/\\]\\.vscode-test[/\\].*"
+    - ".*[/\\]\\.vscode-.*"
