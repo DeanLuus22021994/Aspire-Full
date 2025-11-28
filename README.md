@@ -161,6 +161,7 @@ Aspire-Full/
 - [Architecture](docs/guides/architecture.md)
 - [API Reference](docs/api/index.md)
 - [DevContainer](docs/guides/devcontainer.md)
+- [Python Linting](docs/guides/python-linting.md)
 
 ## Technologies
 

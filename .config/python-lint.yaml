@@ -1,0 +1,12 @@
+{
+  "line_length": 100,
+  "flake8": {
+    "extend_ignore": ["E203", "W503"]
+  },
+  "pylint": {
+    "disable": [
+      "missing-docstring",
+      "invalid-name"
+    ]
+  }
+}
