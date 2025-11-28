@@ -1,62 +1,100 @@
 #!/usr/bin/env python3
-"""Entry point that lints only first-party Python directories."""
+"""Unified Pylint runner for both CLI usage and VS Code integration."""
 
 from __future__ import annotations
 
 import subprocess
 import sys
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, Tuple
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_DIR = REPO_ROOT / ".config"
-ROOTS_FILE = CONFIG_DIR / "python-lint-roots.txt"
-EXCLUDES_FILE = CONFIG_DIR / "python-lint-excludes.txt"
+THIS_DIR = Path(__file__).resolve().parent
+if str(THIS_DIR) not in sys.path:
+    sys.path.insert(0, str(THIS_DIR))
 
-
-def _read_lines(path: Path) -> List[str]:
-    if not path.exists():
-        return []
-    return [
-        line.strip()
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+from lint_config import (  # type: ignore  # noqa: E402
+    REPO_ROOT,
+    LintConfig,
+    collect_existing_roots,
+    is_vendor_path,
+    load_config,
+)
 
 
-def _collect_targets() -> List[str]:
-    targets: List[str] = []
-    for relative in _read_lines(ROOTS_FILE):
-        candidate = REPO_ROOT / relative
-        if candidate.exists():
-            targets.append(str(candidate))
-    return targets
+def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
+    options: list[str] = []
+    targets: list[str] = []
+    after_double_dash = False
+    for arg in args:
+        if after_double_dash:
+            targets.append(arg)
+            continue
+        if arg == "--":
+            after_double_dash = True
+            continue
+        if arg.startswith("-") and arg != "-":
+            options.append(arg)
+        else:
+            targets.append(arg)
+    return options, targets, after_double_dash
 
 
-def _build_command(extra_args: Iterable[str], targets: Iterable[str]) -> List[str]:
-    command = [sys.executable, "-m", "pylint"]
-    command.extend(extra_args)
-    command.extend(targets)
+def _filter_vendor_targets(
+    targets: Iterable[str], config: LintConfig
+) -> tuple[list[str], list[str]]:
+    kept: list[str] = []
+    dropped: list[str] = []
+    for target in targets:
+        if is_vendor_path(target, config.vendor_globs):
+            dropped.append(target)
+        else:
+            kept.append(target)
+    return kept, dropped
+
+
+def _invoke(command: list[str]) -> int:
+    completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
+    return completed.returncode
+
+
+def _build_command(
+    config: LintConfig,
+    options: list[str],
+    targets: list[str],
+    append_double_dash: bool,
+) -> list[str]:
+    command = [sys.executable, "-m", "pylint", *options]
+    if targets:
+        if append_double_dash:
+            command.append("--")
+        command.extend(targets)
     return command
 
 
 def main(argv: list[str] | None = None) -> int:
+    config = load_config()
     args = argv if argv is not None else sys.argv[1:]
-    targets = _collect_targets()
-    if not targets:
-        message = (
-            "No lint targets were found. Did you run "
-            "tools/python-lint/sync_configs.py?"
+    options, targets, saw_double_dash = _partition_args(args)
+    if targets:
+        filtered, dropped = _filter_vendor_targets(targets, config)
+        if dropped and not filtered:
+            print("All pylint targets filtered; skipping vendor bundle.")
+            return 0
+        if dropped:
+            print(f"Skipping vendor targets: {', '.join(dropped)}")
+        command = _build_command(config, options, filtered, saw_double_dash)
+        return _invoke(command)
+
+    auto_targets = collect_existing_roots(config)
+    if not auto_targets:
+        print(
+            "No lint targets were found in lint_roots from python-lint.yaml.",
+            file=sys.stderr,
         )
-        print(message, file=sys.stderr)
         return 0
-    excludes = _read_lines(EXCLUDES_FILE)
-    if excludes:
-        print(f"Skipping excluded entries: {', '.join(excludes)}")
-    command = _build_command(args, targets)
+    command = _build_command(config, options, auto_targets, False)
     print("Running:", " ".join(command))
-    completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
-    return completed.returncode
+    return _invoke(command)
 
 
 if __name__ == "__main__":
