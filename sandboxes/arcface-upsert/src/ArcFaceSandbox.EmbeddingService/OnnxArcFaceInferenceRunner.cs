@@ -16,7 +16,6 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
     private const string CudaProviderName = "cuda";
 
     private readonly ArcFaceEmbeddingOptions _options;
-    private readonly ILogger<OnnxArcFaceInferenceRunner> _logger;
     private readonly InferenceSession _session;
     private readonly ArcFaceModelInfo _modelInfo;
     private bool _disposed;
@@ -24,7 +23,7 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
     public OnnxArcFaceInferenceRunner(IOptions<ArcFaceEmbeddingOptions> options, ILogger<OnnxArcFaceInferenceRunner> logger)
     {
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
         ValidateOptions(_options);
 
         if (_options.VerifyModelChecksum && !string.IsNullOrWhiteSpace(_options.ExpectedSha256))
