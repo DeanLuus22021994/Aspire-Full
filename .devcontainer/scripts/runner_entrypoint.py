@@ -161,6 +161,7 @@ def _install_signal_handlers(process: subprocess.Popen[bytes]) -> None:
 
 
 def main() -> None:
+    """Bootstrap, configure, and execute the GitHub runner inside the container."""
     _log("INFO", "==========================================")
     _log("INFO", "GitHub Actions Self-Hosted Runner")
     _log("INFO", "==========================================")
