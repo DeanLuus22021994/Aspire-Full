@@ -158,7 +158,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return metadata;
     }
 
-    private static IEnumerable<ConnectorMetricReport> BuildMetricReports(in MetricContext context)
+    private static IEnumerable<ConnectorMetricReport> BuildMetricReports(MetricContext context)
     {
         yield return BuildEfCoreMetric(context);
         yield return BuildCodeQualityMetric(context);
@@ -173,7 +173,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         yield return BuildCpuMetric(context);
     }
 
-    private static ConnectorMetricReport BuildEfCoreMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildEfCoreMetric(MetricContext context)
     {
         var latency = TryGetDouble(context.Metadata, EfCoreLatencyKey);
         var score = latency.HasValue ? NormalizeLatency(latency.Value) : DefaultScore(context.Success, 0.9, 0.35);
@@ -183,7 +183,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.EfCore, score, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildCodeQualityMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildCodeQualityMetric(MetricContext context)
     {
         var score = ResolveCodeQuality(context, out var fromMetadata);
         var detail = fromMetadata
@@ -192,7 +192,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.CodeQuality, score, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildNamedVolumeMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildNamedVolumeMetric(MetricContext context)
     {
         var ratio = TryGetDouble(context.Metadata, VolumeOffloadKey) ?? ComputeVolumeOffloadRatio(context.Request);
         var detail = context.Metadata.ContainsKey(VolumeOffloadKey)
@@ -201,7 +201,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.NamedVolumeEfficiency, ratio, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildRedundancyMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildRedundancyMetric(MetricContext context)
     {
         var rawFactor = TryGetDouble(context.Metadata, RedundancyKey) ?? ComputeRedundancyFactor(context.Request);
         var normalized = Math.Clamp(rawFactor / 3d, 0, 1);
@@ -211,7 +211,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.Redundancy, normalized, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildResourceMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildResourceMetric(MetricContext context)
     {
         var score = TryGetDouble(context.Metadata, ResourceUtilizationKey) ?? ComputeResourceUtilization(context.Request, context.Metadata);
         var detail = context.Metadata.ContainsKey(ResourceUtilizationKey)
@@ -220,7 +220,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.ResourceUtilization, score, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildCodebasePollutionMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildCodebasePollutionMetric(MetricContext context)
     {
         if (TryGetDouble(context.Metadata, PollutionKey) is { } pollutionScore)
         {
@@ -234,7 +234,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.CodebasePollution, derived, "Pollution derived from code quality heuristics.", context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildVectorQualityMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildVectorQualityMetric(MetricContext context)
     {
         var score = TryGetDouble(context.Metadata, VectorQualityKey) ?? ComputeVectorQuality(context.Request.Embedding);
         var detail = context.Metadata.ContainsKey(VectorQualityKey)
@@ -243,7 +243,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.VectorStoreQuality, score, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildTestingMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildTestingMetric(MetricContext context)
     {
         var score = TryGetDouble(context.Metadata, TestingAcceptanceKey) ?? ComputeTestingAcceptance(context);
         var detail = context.Metadata.ContainsKey(TestingAcceptanceKey)
@@ -252,7 +252,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.TestingEfficiency, score, detail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildAlertingMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildAlertingMetric(MetricContext context)
     {
         if (TryGetDouble(context.Metadata, AlertingLatencyKey) is { } latencyMs)
         {
@@ -265,7 +265,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.AlertingReliability, computed, "Alerting latency derived from timestamps.", context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildGpuOnlyMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildGpuOnlyMetric(MetricContext context)
     {
         var gpuOnly = TryGetBool(context.Metadata, GpuOnlyKey);
         if (gpuOnly.HasValue)
@@ -283,7 +283,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return CreateReport(ConnectorMetricDimension.GpuOnlyAlerting, derivedScore, derivedDetail, context.Metadata);
     }
 
-    private static ConnectorMetricReport BuildCpuMetric(in MetricContext context)
+    private static ConnectorMetricReport BuildCpuMetric(MetricContext context)
     {
         var cpuCost = TryGetDouble(context.Metadata, CpuComputationKey)
             ?? EstimateCpuCost(context.Request, context.Metadata);
@@ -339,7 +339,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return 0.3;
     }
 
-    private static double ResolveCodeQuality(in MetricContext context, out bool fromMetadata)
+    private static double ResolveCodeQuality(MetricContext context, out bool fromMetadata)
     {
         if (TryGetDouble(context.Metadata, CodeQualityKey) is { } metadataScore)
         {
@@ -426,7 +426,7 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         return Math.Clamp(stdDev / 0.75, 0, 1);
     }
 
-    private static double ComputeTestingAcceptance(in MetricContext context)
+    private static double ComputeTestingAcceptance(MetricContext context)
     {
         var metadataCount = context.Request.Metadata?.Count ?? 0;
         var baseScore = Math.Clamp(0.7 + metadataCount * 0.025, 0, 1);
