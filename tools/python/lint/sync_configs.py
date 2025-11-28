@@ -11,11 +11,6 @@ from types import ModuleType
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONFIG_MODULE_DIR = REPO_ROOT / ".config" / "python"
-if str(CONFIG_MODULE_DIR) not in sys.path:
-    sys.path.insert(0, str(CONFIG_MODULE_DIR))
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_MODULE_PATH = REPO_ROOT / ".config" / "config.py"
 
 
@@ -26,6 +21,7 @@ def _load_config_module() -> ModuleType:
     if spec is None or spec.loader is None:
         raise RuntimeError("Unable to load .config/config.py module")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
