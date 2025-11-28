@@ -1,0 +1,18 @@
+@using Aspire_Full.WebAssembly.Services
+
+<div class="environment-card" style=$"border-color:{Definition.PrimaryColor}">
+    <header>
+        <span class="badge" style=$"background:{Definition.PrimaryColor}">@Definition.BadgeText</span>
+        <h3>@Definition.DisplayName</h3>
+    </header>
+    <p>@Definition.Description</p>
+    <ul>
+        <li><strong>API:</strong> @Definition.ApiBaseAddress</li>
+        <li><strong>Docs:</strong> @Definition.DocumentationUrl</li>
+    </ul>
+</div>
+
+@code {
+    [Parameter]
+    public required FrontendEnvironmentDefinition Definition { get; set; }
+}

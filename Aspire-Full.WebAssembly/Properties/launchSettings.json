@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Aspire-Full.WebAssembly": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "inspectUri": "http://localhost:9222",
+      "applicationUrl": "https://localhost:7175;http://localhost:5175",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+@using Aspire_Full.WebAssembly.Services
+
+@if (Repositories.Count == 0)
+{
+    <p class="muted">No repositories available yet.</p>
+}
+else
+{
+    <table class="repo-table">
+        <thead>
+            <tr>
+                <th>Repository</th>
+                <th>Service</th>
+                <th>Environment</th>
+                <th>Architecture</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var repository in Repositories)
+            {
+                <tr>
+                    <td>@repository.Repository</td>
+                    <td>@repository.Service</td>
+                    <td>@repository.Environment</td>
+                    <td>@repository.Architecture</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<DockerRegistryRepositoryDto> Repositories { get; set; } = Array.Empty<DockerRegistryRepositoryDto>();
+}

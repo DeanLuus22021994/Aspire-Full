@@ -1,0 +1,36 @@
+@page "/"
+@using Aspire_Full.WebAssembly.Components
+@using Microsoft.AspNetCore.Components.Web
+@inject FrontendEnvironmentRegistry Registry
+@inject RegistryApiClient RegistryClient
+
+<PageTitle>Frontend Environment Hub</PageTitle>
+
+<h1>Frontend Surface</h1>
+<p class="muted">Pattern-based WASM experience representing docs, UAT, and production frontends.</p>
+
+<EnvironmentGrid Definitions="_definitions" />
+
+<section>
+    <header class="section-header">
+        <h2>Patterned Docker Repositories</h2>
+        <button class="refresh" @onclick="ReloadAsync">Refresh</button>
+    </header>
+    <RepositoryGrid Repositories="_repositories" />
+</section>
+
+@code {
+    private IReadOnlyCollection<FrontendEnvironmentDefinition> _definitions = Array.Empty<FrontendEnvironmentDefinition>();
+    private IReadOnlyList<DockerRegistryRepositoryDto> _repositories = Array.Empty<DockerRegistryRepositoryDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _definitions = Registry.GetAll();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _repositories = await RegistryClient.GetRepositoriesAsync();
+    }
+}

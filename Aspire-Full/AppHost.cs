@@ -108,5 +108,29 @@ var frontend = builder.AddJavaScriptApp("frontend", "../Aspire-Full.Web", "dev")
     .WithHttpEndpoint(env: "PORT")
     .WithExternalHttpEndpoints();
 
+var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-docs")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "docs")
+    .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5175")
+    .WithHttpEndpoint(name: "docs", port: 5175, targetPort: 5175)
+    .WithExternalHttpEndpoints();
+
+var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-uat")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "uat")
+    .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5176")
+    .WithHttpEndpoint(name: "uat", port: 5176, targetPort: 5176)
+    .WithExternalHttpEndpoints();
+
+var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-prod")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "prod")
+    .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5177")
+    .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 5177)
+    .WithExternalHttpEndpoints();
+
 // Build and run the distributed application
 builder.Build().Run();

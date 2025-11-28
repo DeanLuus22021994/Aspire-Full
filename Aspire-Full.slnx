@@ -7,6 +7,7 @@
   <Project Path="Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
   <Project Path="Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj" />
   <Project Path="Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
+  <Project Path="Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj" />
   <Project Path="Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
   <Project Path="Aspire-Full.Subagents/Aspire-Full.Subagents.csproj" />
   <Project Path="Aspire-Full.Subagents.Agent/Aspire-Full.Subagents.Agent.csproj" />

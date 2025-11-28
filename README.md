@@ -14,6 +14,7 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - **Entity Framework Core** - PostgreSQL with soft-delete pattern
 - **User Management** - Upsert/downsert operations, role-based access
 - **React Frontend** - Vite + TypeScript + Semantic UI
+- **WebAssembly Frontends** - Blazor WASM alternative that renders Docs, UAT, and Production shells using the same component patterns
 - **Observability** - OpenTelemetry with Aspire Dashboard
 - **Testing** - Unit tests (xUnit) and E2E tests (NUnit)
 - **DevContainer** - `Aspire-Full.DevContainer` project exposes `AddDevContainer()` so Aspire manages the Docker workspace + Python 3.14 free-threaded tooling
@@ -161,6 +162,7 @@ Aspire-Full/
 │       └── services/         # API client
 ├── Aspire-Full.ServiceDefaults/ # Shared config
 ├── Aspire-Full.DockerRegistry/  # Pattern-based Docker registry client & DI helpers
+├── Aspire-Full.WebAssembly/     # Blazor WASM frontends (Docs/UAT/Prod shells)
 ├── Aspire-Full.DevContainer/   # Devcontainer resource + assets
 ├── Aspire-Full.Tests.Unit/   # Unit tests
 ├── Aspire-Full.Tests.E2E/    # E2E tests

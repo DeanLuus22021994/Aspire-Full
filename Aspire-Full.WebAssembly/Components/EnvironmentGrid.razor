@@ -1,0 +1,14 @@
+@using Aspire_Full.WebAssembly.Services
+@using Aspire_Full.WebAssembly.Components
+
+<section class="environment-grid">
+    @foreach (var definition in Definitions)
+    {
+        <EnvironmentCard Definition="definition" />
+    }
+</section>
+
+@code {
+    [Parameter]
+    public IReadOnlyCollection<FrontendEnvironmentDefinition> Definitions { get; set; } = Array.Empty<FrontendEnvironmentDefinition>();
+}
