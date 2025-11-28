@@ -30,6 +30,10 @@ $RequiredVolumes = @(
     @{ Name = "aspire-runner-nuget"; Description = "Runner NuGet cache" },
     @{ Name = "aspire-runner-npm"; Description = "Runner npm cache" },
     @{ Name = "aspire-runner-toolcache"; Description = "GitHub Actions tool cache" },
+    # GitHub MCP service volumes
+    @{ Name = "aspire-github-mcp-data"; Description = "GitHub MCP data" },
+    @{ Name = "aspire-github-mcp-logs"; Description = "GitHub MCP logs" },
+    @{ Name = "aspire-github-mcp-cache"; Description = "GitHub MCP cache" },
     # Database volumes
     @{ Name = "aspire-postgres-data"; Description = "PostgreSQL database" },
     @{ Name = "aspire-redis-data"; Description = "Redis cache" }
