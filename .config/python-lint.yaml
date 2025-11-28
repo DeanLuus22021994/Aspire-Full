@@ -38,12 +38,12 @@ pylint:
     - .vscode-debug
     - .vscode-extensions
   ignore_paths: &pylint_vendor_regex
-    - '.*\/\.vscode\/.*'
-    - '.*\\\\\.vscode\\\\.*'
-    - '.*\/\.vscode-test\/.*'
-    - '.*\\\\\.vscode-test\\\\.*'
-    - '.*\/\.vscode-.*'
-    - '.*\\\\\.vscode-.*'
+     - ".*/\\.vscode/.*"
+     - ".*\\\\.vscode\\\\.*"
+     - ".*/\\.vscode-test/.*"
+     - ".*\\\\.vscode-test\\\\.*"
+     - ".*/\\.vscode-.*"
+     - ".*\\\\.vscode-.*"
   ignore_patterns: *pylint_vendor_regex
 
 pyright:
