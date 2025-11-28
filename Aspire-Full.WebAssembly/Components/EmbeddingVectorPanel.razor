@@ -1,0 +1,31 @@
+<div class="embedding-panel">
+    <header>
+        <h3>Embedding Preview</h3>
+        @if (!string.IsNullOrWhiteSpace(ExecutionProvider))
+        {
+            <span class="muted">Provider: @ExecutionProvider</span>
+        }
+    </header>
+    @if (VectorPreview.Count == 0)
+    {
+        <p class="muted">No embedding preview available yet.</p>
+    }
+    else
+    {
+        <p>First @VectorPreview.Count dimensions:</p>
+        <div class="vector-grid">
+            @foreach (var (value, index) in VectorPreview.Select((val, idx) => (val, idx)))
+            {
+                <span class="vector-cell" title=$"Dim {index}">@value.ToString("0.0000")</span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<double> VectorPreview { get; set; } = Array.Empty<double>();
+
+    [Parameter]
+    public string? ExecutionProvider { get; set; }
+}

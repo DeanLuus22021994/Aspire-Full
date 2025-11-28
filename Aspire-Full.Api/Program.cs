@@ -1,5 +1,9 @@
 using Aspire_Full.Api.Data;
+using Aspire_Full.Api.Tensor;
 using Aspire_Full.DockerRegistry;
+using Aspire_Full.Qdrant;
+using Aspire_Full.Tensor;
+using Aspire_Full.VectorStore;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +21,14 @@ builder.AddRedisDistributedCache("redis");
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDockerRegistryClient(builder.Configuration);
+builder.Services.AddOptions<TensorModelCatalogOptions>()
+    .Bind(builder.Configuration.GetSection("TensorModels"))
+    .ValidateOnStart();
+builder.Services.AddSingleton<ITensorJobStore, InMemoryTensorJobStore>();
+builder.Services.AddSingleton<ITensorVectorBridge, TensorVectorBridge>();
+builder.Services.AddSingleton<ITensorJobCoordinator, TensorJobCoordinator>();
+builder.Services.AddQdrantClient(builder.Configuration);
+builder.Services.AddSingleton<IVectorStoreService, QdrantVectorStoreService>();
 
 // Add CORS for frontend
 builder.Services.AddCors(options =>

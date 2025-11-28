@@ -1,0 +1,64 @@
+@using Aspire_Full.WebAssembly.Services
+
+<div class="tensor-stream">
+    <article>
+        <header>
+            <h3>Local Edge Execution</h3>
+            <span class="muted">Client-side WebGPU/WebGL run</span>
+        </header>
+        @if (LocalChunks.Count == 0)
+        {
+            <p class="muted">Run a local execution to see immediate feedback.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var chunk in LocalChunks.OrderBy(c => c.Sequence))
+                {
+                    <li>
+                        <strong>@chunk.Type</strong>
+                        <span>@chunk.Content</span>
+                        <small class="muted">Confidence: @(chunk.Confidence?.ToString("0.00") ?? "~")</small>
+                    </li>
+                }
+            </ul>
+        }
+    </article>
+    <article>
+        <header>
+            <h3>Server Tracked Job</h3>
+            @if (ActiveJob is not null)
+            {
+                <span class="muted">@ActiveJob.Status • @ActiveJob.ExecutionProvider</span>
+            }
+        </header>
+        @if (RemoteChunks.Count == 0)
+        {
+            <p class="muted">Submit a tensor job to stream orchestrated output.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var chunk in RemoteChunks.OrderBy(c => c.Sequence))
+                {
+                    <li>
+                        <strong>@chunk.Type</strong>
+                        <span>@chunk.Content</span>
+                        <small class="muted">Confidence: @(chunk.Confidence?.ToString("0.00") ?? "~")</small>
+                    </li>
+                }
+            </ul>
+        }
+    </article>
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<TensorInferenceChunk> LocalChunks { get; set; } = Array.Empty<TensorInferenceChunk>();
+
+    [Parameter]
+    public IReadOnlyList<TensorInferenceChunk> RemoteChunks { get; set; } = Array.Empty<TensorInferenceChunk>();
+
+    [Parameter]
+    public TensorJobStatus? ActiveJob { get; set; }
+}

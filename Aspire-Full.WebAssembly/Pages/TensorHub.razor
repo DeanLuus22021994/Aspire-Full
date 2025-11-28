@@ -1,0 +1,291 @@
+@page "/tensor-hub"
+@using Aspire_Full.Tensor
+@using Aspire_Full.WebAssembly.Services
+@using Microsoft.Extensions.Options
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Web
+@inject TensorJobService JobService
+@inject ITensorExecutionService ExecutionService
+@inject ITensorRuntimeService RuntimeService
+@inject IOptions<TensorModelCatalogOptions> TensorOptions
+
+<PageTitle>Tensor Hub</PageTitle>
+
+<section class="tensor-hub">
+    <header>
+        <h1>Edge Tensor Hub</h1>
+        <p class="muted">Queue orchestrated jobs, run WebGPU previews, and inspect embeddings side-by-side.</p>
+    </header>
+
+    <div class="tensor-grid">
+        <div class="grid-column large">
+            <TensorJobComposer Models="_models" ExecutionProviders="_executionProviders" RecommendedProvider="_capabilities?.RecommendedExecutionProvider" IsBusy="_isSubmitting" StatusMessage="_statusMessage" OnSubmit="HandleJobSubmissionAsync" />
+        </div>
+        <div class="grid-column">
+            <TensorCapabilityPanel Capabilities="_capabilities" IsBusy="_capabilityBusy" />
+            <EmbeddingVectorPanel VectorPreview="_embeddingPreview" ExecutionProvider="_localExecutionProvider" />
+        </div>
+    </div>
+
+    <section class="tensor-stream-section">
+        <TensorInferenceStream LocalChunks="_localChunks" RemoteChunks="_remoteChunks" ActiveJob="_activeJob" />
+    </section>
+
+    <section>
+        <header class="section-header">
+            <h2>Model Catalog</h2>
+            <button class="refresh" @onclick="RefreshCatalogAsync">Refresh</button>
+        </header>
+        <TensorModelList Models="_models" Capabilities="_capabilities" />
+    </section>
+
+    <section>
+        <header class="section-header">
+            <h2>Recent Tensor Jobs</h2>
+            <button class="refresh" @onclick="RefreshJobsAsync">Reload</button>
+        </header>
+        @if (_jobs.Count == 0)
+        {
+            <p class="muted">No tensor jobs have been orchestrated yet.</p>
+        }
+        else
+        {
+            <table class="repo-table">
+                <thead>
+                    <tr>
+                        <th>Job Id</th>
+                        <th>Model</th>
+                        <th>Status</th>
+                        <th>Provider</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in _jobs)
+                    {
+                        <tr class="@(job.Id == _activeJob?.Id ? "active-job" : string.Empty)">
+                            <td>@job.Id</td>
+                            <td>@job.ModelId</td>
+                            <td>@job.Status</td>
+                            <td>@job.ExecutionProvider</td>
+                            <td>@job.CreatedAt.ToLocalTime().ToString("u")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+</section>
+
+@code {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private List<TensorModelDescriptor> _models = new();
+    private IReadOnlyList<string> _executionProviders = Array.Empty<string>();
+    private IReadOnlyList<TensorJobSummary> _jobs = Array.Empty<TensorJobSummary>();
+    private TensorCapabilityResponse? _capabilities;
+    private bool _isSubmitting;
+    private bool _capabilityBusy;
+    private string _statusMessage = string.Empty;
+    private TensorJobStatus? _activeJob;
+    private List<TensorInferenceChunk> _remoteChunks = new();
+    private List<TensorInferenceChunk> _localChunks = new();
+    private IReadOnlyList<double> _embeddingPreview = Array.Empty<double>();
+    private string? _localExecutionProvider;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _models = (TensorOptions.Value.Models ?? new List<TensorModelDescriptor>()).ToList();
+        _executionProviders = BuildProviderList(_models);
+        await Task.WhenAll(DetectCapabilitiesAsync(), RefreshJobsAsync(), RefreshCatalogAsync()).ConfigureAwait(false);
+    }
+
+    private IReadOnlyList<string> BuildProviderList(IEnumerable<TensorModelDescriptor> models)
+    {
+        var providers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "webgpu",
+            "webgl2",
+            "wasm-simd",
+            "wasm-cpu"
+        };
+
+        foreach (var model in models)
+        {
+            foreach (var provider in model.PreferredExecutionProviders)
+            {
+                providers.Add(provider);
+            }
+            foreach (var provider in model.AlternateExecutionProviders)
+            {
+                providers.Add(provider);
+            }
+        }
+
+        return providers.ToList();
+    }
+
+    private async Task DetectCapabilitiesAsync()
+    {
+        _capabilityBusy = true;
+        try
+        {
+            _capabilities = await RuntimeService.DetectCapabilitiesAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            _capabilityBusy = false;
+        }
+    }
+
+    private async Task RefreshJobsAsync()
+    {
+        _jobs = await JobService.GetRecentJobsAsync().ConfigureAwait(false);
+    }
+
+    private async Task RefreshCatalogAsync()
+    {
+        var catalog = await JobService.GetServerCatalogAsync().ConfigureAwait(false);
+        if (catalog.Count == 0)
+        {
+            return;
+        }
+
+        var lookup = catalog.ToDictionary(model => model.Id, model => model, StringComparer.OrdinalIgnoreCase);
+        _models = _models.Select(model => lookup.TryGetValue(model.Id, out var server)
+            ? model with { Description = string.IsNullOrWhiteSpace(model.Description) ? server.Description : model.Description }
+            : model).ToList();
+    }
+
+    private async Task HandleJobSubmissionAsync(TensorJobComposerSubmission submission)
+    {
+        if (string.IsNullOrWhiteSpace(submission.ModelId))
+        {
+            _statusMessage = "Select a model before submitting.";
+            return;
+        }
+
+        var descriptor = _models.FirstOrDefault(model => string.Equals(model.Id, submission.ModelId, StringComparison.OrdinalIgnoreCase));
+        if (descriptor is null)
+        {
+            _statusMessage = "Model descriptor not found.";
+            return;
+        }
+
+        _isSubmitting = true;
+        _statusMessage = "Executing local preview and queuing server job...";
+        _localChunks = new List<TensorInferenceChunk>();
+        _remoteChunks = new List<TensorInferenceChunk>();
+        _embeddingPreview = Array.Empty<double>();
+        _localExecutionProvider = null;
+        StateHasChanged();
+
+        try
+        {
+            await RunLocalExecutionAsync(descriptor, submission);
+            await QueueServerJobAsync(descriptor, submission);
+            await RefreshJobsAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Tensor job failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private async Task RunLocalExecutionAsync(TensorModelDescriptor descriptor, TensorJobComposerSubmission submission)
+    {
+        if (string.IsNullOrWhiteSpace(descriptor.ModelUri))
+        {
+            return;
+        }
+
+        var executionRequest = new TensorExecutionRequest
+        {
+            ModelId = descriptor.Id,
+            ModelUri = descriptor.ModelUri,
+            ExecutionProvider = submission.ExecutionProvider,
+            Prompt = submission.Prompt,
+            InputImageUrl = submission.InputImageUrl,
+            Metadata = new Dictionary<string, string>
+            {
+                ["InputName"] = descriptor.InputShape.Count > 0 ? "input" : "tokens",
+                ["OutputName"] = "output"
+            }
+        };
+
+        var result = await ExecutionService.ExecuteAsync(executionRequest).ConfigureAwait(false);
+        _localExecutionProvider = result.ExecutionProvider;
+        _localChunks = result.Chunks
+            .Select(chunk => new TensorInferenceChunk
+            {
+                Type = chunk.Type,
+                Content = chunk.Content,
+                Sequence = chunk.Sequence,
+                Confidence = chunk.Confidence
+            })
+            .ToList();
+
+        _embeddingPreview = TryParseVectorPreview(_localChunks);
+        _statusMessage = result.Status;
+    }
+
+    private async Task QueueServerJobAsync(TensorModelDescriptor descriptor, TensorJobComposerSubmission submission)
+    {
+        var jobRequest = new TensorJobSubmission
+        {
+            ModelId = descriptor.Id,
+            Prompt = submission.Prompt,
+            InputImageUrl = submission.InputImageUrl,
+            ExecutionProvider = submission.ExecutionProvider,
+            PersistToVectorStore = submission.PersistToVectorStore,
+            Metadata = new Dictionary<string, string> { ["client"] = "wasm" }
+        };
+
+        var created = await JobService.SubmitJobAsync(jobRequest).ConfigureAwait(false);
+        if (created is null)
+        {
+            _statusMessage = "Server-side tensor job could not be created.";
+            return;
+        }
+
+        _activeJob = created;
+        await foreach (var chunk in JobService.StreamJobOutputAsync(created.Id))
+        {
+            _remoteChunks.Add(chunk);
+            _activeJob = _activeJob with { Output = _remoteChunks.ToList() };
+            await InvokeAsync(StateHasChanged);
+        }
+
+        var refreshed = await JobService.GetJobAsync(created.Id).ConfigureAwait(false);
+        if (refreshed is not null)
+        {
+            _activeJob = refreshed;
+        }
+    }
+
+    private static IReadOnlyList<double> TryParseVectorPreview(IReadOnlyList<TensorInferenceChunk> chunks)
+    {
+        var vectorChunk = chunks.FirstOrDefault(chunk => string.Equals(chunk.Type, "vector", StringComparison.OrdinalIgnoreCase));
+        if (vectorChunk is null)
+        {
+            return Array.Empty<double>();
+        }
+
+        try
+        {
+            var values = JsonSerializer.Deserialize<List<double>>(vectorChunk.Content, JsonOptions);
+            return values?.ToArray() ?? Array.Empty<double>();
+        }
+        catch
+        {
+            return Array.Empty<double>();
+        }
+    }
+}

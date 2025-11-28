@@ -1,0 +1,90 @@
+@using Aspire_Full.Tensor
+@using System.ComponentModel.DataAnnotations
+
+<EditForm Model="_model" OnValidSubmit="HandleSubmitAsync" class="tensor-job-composer">
+    <DataAnnotationsValidator />
+    <div class="field">
+        <label>Model</label>
+        <InputSelect @bind-Value="_model.ModelId">
+            @foreach (var model in Models)
+            {
+                <option value="@model.Id">@model.DisplayName</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="field">
+        <label>Execution Provider</label>
+        <InputSelect @bind-Value="_model.ExecutionProvider">
+            @foreach (var provider in ExecutionProviders)
+            {
+                <option value="@provider">@provider</option>
+            }
+        </InputSelect>
+        @if (!string.IsNullOrWhiteSpace(RecommendedProvider))
+        {
+            <small class="muted">Recommended: @RecommendedProvider</small>
+        }
+    </div>
+    <div class="field">
+        <label>Prompt</label>
+        <InputTextArea @bind-Value="_model.Prompt" rows="5" />
+    </div>
+    <div class="field">
+        <label>Input Image URL (optional)</label>
+        <InputText @bind-Value="_model.InputImageUrl" />
+    </div>
+    <div class="toggles">
+        <label>
+            <InputCheckbox @bind-Value="_model.PersistToVectorStore" />
+            Persist embedding into vector store
+        </label>
+    </div>
+    <button type="submit" disabled="@IsBusy">@(!IsBusy ? "Submit Tensor Job" : "Submitting…")</button>
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <p class="status">@StatusMessage</p>
+    }
+</EditForm>
+
+@code {
+    private TensorJobComposerSubmission _model = new();
+
+    [Parameter]
+    public IReadOnlyList<TensorModelDescriptor> Models { get; set; } = Array.Empty<TensorModelDescriptor>();
+
+    [Parameter]
+    public IReadOnlyList<string> ExecutionProviders { get; set; } = new List<string> { "webgpu", "webgl2", "wasm-simd" };
+
+    [Parameter]
+    public string? RecommendedProvider { get; set; }
+
+    [Parameter]
+    public bool IsBusy { get; set; }
+
+    [Parameter]
+    public string StatusMessage { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<TensorJobComposerSubmission> OnSubmit { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(_model.ModelId) && Models.Count > 0)
+        {
+            _model.ModelId = Models[0].Id;
+        }
+
+        if (string.IsNullOrWhiteSpace(_model.ExecutionProvider) && ExecutionProviders.Count > 0)
+        {
+            _model.ExecutionProvider = RecommendedProvider ?? ExecutionProviders[0];
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await OnSubmit.InvokeAsync(_model);
+        }
+    }
+}

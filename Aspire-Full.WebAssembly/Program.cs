@@ -11,6 +11,8 @@ builder.Services.Configure<FrontendOptions>(builder.Configuration.GetSection(Fro
 builder.Services.AddSingleton<FrontendEnvironmentRegistry>();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<RegistryApiClient>();
+builder.Services.AddScoped<TensorJobService>();
+builder.Services.AddScoped<ITensorExecutionService, TensorExecutionService>();
 builder.Services.AddTensorRuntime(builder.Configuration);
 
 await builder.Build().RunAsync();
