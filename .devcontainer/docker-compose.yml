@@ -17,8 +17,8 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
-              capabilities: ["gpu"]
+              count: all
+              capabilities: ["gpu", "utility"]
     environment:
       - DOTNET_CLI_TELEMETRY_OPTOUT=1
       - DOTNET_NOLOGO=1
@@ -26,6 +26,7 @@ services:
       - NUGET_PACKAGES=/home/vscode/.nuget/packages
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
       - ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
       # Telemetry configuration - send to standalone dashboard
       - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL=http://aspire-dashboard:18889

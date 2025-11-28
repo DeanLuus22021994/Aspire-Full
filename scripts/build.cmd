@@ -7,14 +7,19 @@ REM ============================================================================
 
 cd /d c:\Users\Dean\source\Aspire-Full
 
-REM Enable GPU compute if available
+REM Require NVIDIA GPU + CUDA runtime
 where nvidia-smi >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo [GPU] NVIDIA GPU detected - enabling compute acceleration
-    set CUDA_VISIBLE_DEVICES=0
-    set NVIDIA_VISIBLE_DEVICES=all
-    set TF_FORCE_GPU_ALLOW_GROWTH=true
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] NVIDIA utilities (nvidia-smi) not found. Tensor builds require a CUDA-capable GPU.
+    exit /b 1
 )
+
+echo [GPU] NVIDIA GPU detected - enabling compute acceleration
+set CUDA_VISIBLE_DEVICES=all
+set NVIDIA_VISIBLE_DEVICES=all
+set NVIDIA_DRIVER_CAPABILITIES=compute,utility
+set NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
+set TF_FORCE_GPU_ALLOW_GROWTH=true
 
 REM Enable .NET SIMD/AVX optimizations
 set DOTNET_EnableAVX2=1
