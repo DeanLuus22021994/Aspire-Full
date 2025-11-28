@@ -54,10 +54,12 @@ def write_pylintrc(config: Dict[str, Any]) -> None:
     line_length = config.get("line_length", 100)
     disable = config.get("pylint", {}).get("disable", [])
     additional_ignore = config.get("pylint", {}).get("ignore", [])
+    ignore_paths_patterns = config.get("pylint", {}).get("ignore_paths", [])
     ignore_paths = list(dict.fromkeys(DEFAULT_PYLINT_IGNORE + additional_ignore))
     body = (
         "[MASTER]\n"
         f"ignore = {_format_csv(ignore_paths)}\n"
+        f"ignore-paths = {_format_csv(ignore_paths_patterns)}\n"
         "extension-pkg-allow-list =\n\n"
         "[MESSAGES CONTROL]\n"
         f"disable = {_format_csv(disable)}\n\n"

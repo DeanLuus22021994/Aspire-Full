@@ -3,7 +3,8 @@
   "flake8": {
     "extend_ignore": ["E203", "W503"],
     "exclude": [
-      ".vscode/extensions"
+      ".vscode/extensions",
+      ".vscode/extensions/*"
     ]
   },
   "pylint": {
@@ -13,6 +14,9 @@
     ],
     "ignore": [
       ".vscode/extensions"
+    ],
+    "ignore_paths": [
+      ".*/\\.vscode/extensions/.*"
     ]
   }
 }
