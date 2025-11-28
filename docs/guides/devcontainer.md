@@ -24,6 +24,15 @@ The devcontainer provides a fully isolated, reproducible development environment
   └── post_start.py    # Startup checks (Python 3.14 free-threaded ready)
 ```
 
+## .NET Aspire Integration
+
+- `Aspire-Full/AppHost.cs` calls `builder.AddDockerfile("devcontainer", "../.devcontainer")`, so the image is always built from the same relative path that VS Code uses.
+- The devcontainer depends on two additional Aspire resources:
+  - `docker` (Docker-in-Docker daemon with the `aspire-docker-*` volumes)
+  - `aspire-dashboard` (dashboard/MCP endpoints mapped through `WithHttpEndpoint`)
+- Running `dotnet run --project Aspire-Full` starts the API, web app, backing stores, the Docker daemon, and the devcontainer itself with the same named volumes defined in `.devcontainer/docker-compose.yml`.
+- All bootstrap scripts (`post_create.py`, `post_start.py`) now resolve the workspace via `WORKSPACE_FOLDER`/`cwd`, so no absolute `/workspace` assumptions leak outside the container runtime.
+
 ## Services
 
 ### DevContainer Service

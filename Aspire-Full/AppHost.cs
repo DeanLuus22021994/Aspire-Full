@@ -1,3 +1,4 @@
+using Aspire.Hosting;
 using Aspire.Hosting.Qdrant;
 
 // =============================================================================
@@ -7,10 +8,9 @@ using Aspire.Hosting.Qdrant;
 // It configures and orchestrates all services in the distributed application.
 //
 // Architecture:
-//   - Aspire manages its own containers (PostgreSQL, Redis, Qdrant, admin UIs)
+//   - Aspire manages its own containers (PostgreSQL, Redis, Qdrant, devcontainer, admin UIs)
 //   - All containers join aspire-network for unified low-latency communication
-//   - Telemetry is sent to external dashboard via OTLP (port 18889)
-//   - Docker Compose manages: devcontainer, aspire-dashboard
+//   - Telemetry is sent to internal dashboard via OTLP (port 18889)
 //
 // Features:
 //   - Service discovery and configuration
@@ -34,6 +34,58 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // External network for container-to-container communication
 const string networkName = "aspire-network";
+
+// -----------------------------------------------------------------------------
+// Dev Infrastructure - Docker-in-Docker daemon + dashboard + devcontainer
+// -----------------------------------------------------------------------------
+var dockerDaemon = builder.AddContainer("docker", "docker:27-dind")
+    .WithVolume("aspire-docker-data", "/var/lib/docker")
+    .WithVolume("aspire-docker-certs", "/certs")
+    .WithEnvironment("DOCKER_TLS_CERTDIR", "/certs")
+    .WithContainerRuntimeArgs("--network", networkName)
+    .WithLifetime(ContainerLifetime.Persistent);
+
+var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotnet/aspire-dashboard:latest")
+    .WithVolume("aspire-dashboard-data", "/app/data")
+    .WithEnvironment("DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS", "true")
+    .WithEnvironment("DASHBOARD__OTLP__AUTHMODE", "Unsecured")
+    .WithEnvironment("DASHBOARD__FRONTEND__AUTHMODE", "Unsecured")
+    .WithEnvironment("DASHBOARD__RESOURCESERVICE__AUTHMODE", "Unsecured")
+    .WithEnvironment("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL", "http://0.0.0.0:16036")
+    .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
+    .WithHttpEndpoint(name: "ui", port: 18888, targetPort: 18888)
+    .WithHttpEndpoint(name: "otlp", port: 18889, targetPort: 18889)
+    .WithHttpEndpoint(name: "mcp", port: 16036, targetPort: 16036)
+    .WithContainerRuntimeArgs("--network", networkName)
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithReference(dockerDaemon);
+
+var devcontainer = builder.AddDockerfile("devcontainer", "../.devcontainer")
+    .WithVolume("aspire-nuget-cache", "/home/vscode/.nuget")
+    .WithVolume("aspire-dotnet-tools", "/home/vscode/.dotnet/tools")
+    .WithVolume("aspire-aspire-cli", "/home/vscode/.aspire")
+    .WithVolume("aspire-vscode-extensions", "/home/vscode/.vscode-server/extensions")
+    .WithVolume("aspire-workspace", "/workspace")
+    .WithVolume("aspire-docker-certs", "/certs")
+    .WithEnvironment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
+    .WithEnvironment("DOTNET_NOLOGO", "1")
+    .WithEnvironment("DOTNET_RUNNING_IN_CONTAINER", "true")
+    .WithEnvironment("NUGET_PACKAGES", "/home/vscode/.nuget/packages")
+    .WithEnvironment("DOTNET_DASHBOARD_OTLP_ENDPOINT_URL", "http://aspire-dashboard:18889")
+    .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
+    .WithEnvironment("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL", "http://aspire-dashboard:16036")
+    .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
+    .WithEnvironment("DOCKER_HOST", "tcp://docker:2376")
+    .WithEnvironment("DOCKER_TLS_VERIFY", "1")
+    .WithEnvironment("DOCKER_CERT_PATH", "/certs/client")
+    .WithEnvironment("NVIDIA_VISIBLE_DEVICES", "all")
+    .WithEnvironment("NVIDIA_DRIVER_CAPABILITIES", "compute,utility")
+    .WithEnvironment("NVIDIA_REQUIRE_CUDA", "cuda>=12.4,driver>=535")
+    .WithArgs("sleep", "infinity")
+    .WithContainerRuntimeArgs("--network", networkName, "--gpus", "all", "--init")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithReference(dockerDaemon)
+    .WithReference(dashboard);
 
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search

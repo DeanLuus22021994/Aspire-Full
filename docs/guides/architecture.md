@@ -44,6 +44,7 @@ The AppHost is the orchestrator for the distributed application:
 - **Entry Point**: `Aspire-Full/AppHost.cs`
 - **SDK**: `Aspire.AppHost.Sdk` v13.0.1
 - **Framework**: .NET 10.0
+- **DevContainer Integration**: `builder.AddDockerfile("devcontainer", "../.devcontainer")` keeps the VS Code image, Docker-in-Docker daemon, and Aspire dashboard on the same relative path + network.
 
 ### API Service
 
@@ -74,9 +75,10 @@ Standalone container providing:
 
 Isolated development environment with:
 - Full .NET toolchain
-- Docker-in-Docker capability
+- Docker-in-Docker capability (Aspire `docker` resource)
 - GitHub CLI with AI extensions
 - Pre-warmed NuGet cache
+- Same AddDockerfile context used by VS Code and the AppHost, ensuring all host paths stay relative.
 
 ## Data Flow
 

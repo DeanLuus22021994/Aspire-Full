@@ -16,7 +16,7 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - **React Frontend** - Vite + TypeScript + Semantic UI
 - **Observability** - OpenTelemetry with Aspire Dashboard
 - **Testing** - Unit tests (xUnit) and E2E tests (NUnit)
-- **DevContainer** - Docker-based development environment
+- **DevContainer** - Aspire-managed Docker development environment (AddDockerfile + named volumes)
 
 ## Quick Start
 
@@ -46,6 +46,8 @@ dotnet run --project Aspire-Full
 ./scripts/Start-Aspire.ps1          # start + detach
 ./scripts/Start-Aspire.ps1 -Status  # view PID / dashboard link
 ./scripts/Start-Aspire.ps1 -Stop    # stop background host
+
+> The AppHost now builds the VS Code devcontainer image via `.devcontainer/` using `AddDockerfile`, so both Aspire and Docker Compose share the same relative context and named volumes.
 ```
 
 > Tensor acceleration is mandatory. `Start-Aspire.ps1` validates CUDA Tensor Core hardware at startup and exits with an error if NVIDIA GPUs are unavailable.
