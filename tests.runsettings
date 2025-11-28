@@ -5,6 +5,17 @@
     <TestSessionTimeout>600000</TestSessionTimeout>
     <TreatNoTestsAsError>true</TreatNoTestsAsError>
     <ResultsDirectory>./TestResults</ResultsDirectory>
+    <EnvironmentVariables>
+      <DOTNET_ENVIRONMENT>Development</DOTNET_ENVIRONMENT>
+      <ASPIRE_ALLOW_UNSECURED_TRANSPORT>true</ASPIRE_ALLOW_UNSECURED_TRANSPORT>
+      <API_BASE_URL>http://localhost:5000</API_BASE_URL>
+      <WEB_BASE_URL>http://localhost:3000</WEB_BASE_URL>
+      <ASPIRE_DASHBOARD_URL>http://localhost:18888</ASPIRE_DASHBOARD_URL>
+      <ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL>http://localhost:18889</ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL>
+      <ASPIRE_DASHBOARD_MCP_ENDPOINT_URL>http://localhost:16036</ASPIRE_DASHBOARD_MCP_ENDPOINT_URL>
+      <DOTNET_DASHBOARD_OTLP_ENDPOINT_URL>http://localhost:18889</DOTNET_DASHBOARD_OTLP_ENDPOINT_URL>
+      <OTEL_EXPORTER_OTLP_ENDPOINT>http://localhost:18889</OTEL_EXPORTER_OTLP_ENDPOINT>
+    </EnvironmentVariables>
   </RunConfiguration>
   <DataCollectionRunSettings>
     <DataCollectors>
