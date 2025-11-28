@@ -11,6 +11,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="wwwroot\appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="wwwroot\appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" Condition=" '$(Configuration)' == 'Debug' " />
   </ItemGroup>

@@ -1,3 +1,4 @@
+using Aspire_Full.Tensor;
 using Aspire_Full.WebAssembly.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -10,5 +11,6 @@ builder.Services.Configure<FrontendOptions>(builder.Configuration.GetSection(Fro
 builder.Services.AddSingleton<FrontendEnvironmentRegistry>();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<RegistryApiClient>();
+builder.Services.AddTensorRuntime(builder.Configuration);
 
 await builder.Build().RunAsync();

@@ -3,6 +3,8 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject FrontendEnvironmentRegistry Registry
 @inject RegistryApiClient RegistryClient
+@inject ITensorRuntimeService TensorRuntime
+@inject Microsoft.Extensions.Options.IOptions<TensorModelCatalogOptions> TensorOptions
 
 <PageTitle>Frontend Environment Hub</PageTitle>
 
@@ -19,18 +21,54 @@
     <RepositoryGrid Repositories="_repositories" />
 </section>
 
+<section>
+    <header class="section-header">
+        <h2>Edge Tensor Runtime</h2>
+        <button class="refresh" @onclick="DetectCapabilitiesAsync" disabled="_tensorBusy">
+            @_tensorBusy ? "Scanning..." : "Re-run Scan"
+        </button>
+    </header>
+    <TensorCapabilityPanel Capabilities="_capabilities" IsBusy="_tensorBusy" />
+    <TensorModelList Models="_tensorModels" Capabilities="_capabilities" />
+</section>
+
 @code {
     private IReadOnlyCollection<FrontendEnvironmentDefinition> _definitions = Array.Empty<FrontendEnvironmentDefinition>();
     private IReadOnlyList<DockerRegistryRepositoryDto> _repositories = Array.Empty<DockerRegistryRepositoryDto>();
+    private IReadOnlyList<TensorModelDescriptor> _tensorModels = Array.Empty<TensorModelDescriptor>();
+    private TensorCapabilityResponse? _capabilities;
+    private bool _tensorBusy;
 
     protected override async Task OnInitializedAsync()
     {
         _definitions = Registry.GetAll();
-        await ReloadAsync();
+        _tensorModels = TensorOptions.Value.Models.Count == 0
+            ? Array.Empty<TensorModelDescriptor>()
+            : new List<TensorModelDescriptor>(TensorOptions.Value.Models);
+
+        await Task.WhenAll(ReloadAsync(), DetectCapabilitiesAsync());
     }
 
     private async Task ReloadAsync()
     {
         _repositories = await RegistryClient.GetRepositoriesAsync();
+    }
+
+    private async Task DetectCapabilitiesAsync()
+    {
+        if (_tensorBusy)
+        {
+            return;
+        }
+
+        _tensorBusy = true;
+        try
+        {
+            _capabilities = await TensorRuntime.DetectCapabilitiesAsync();
+        }
+        finally
+        {
+            _tensorBusy = false;
+        }
     }
 }

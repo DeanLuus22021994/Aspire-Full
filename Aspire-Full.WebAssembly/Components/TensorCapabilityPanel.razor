@@ -1,0 +1,53 @@
+@using Aspire_Full.Tensor
+
+<div class="tensor-panel">
+    @if (IsBusy)
+    {
+        <p class="muted">Detecting available tensor runtimes via WebGPU/WebGL...</p>
+    }
+    else if (Capabilities is null)
+    {
+        <p class="muted">Trigger a scan to surface browser-side tensor capabilities.</p>
+    }
+    else
+    {
+        <div class="capability-grid">
+            <article>
+                <header>WebGPU</header>
+                <p class="capability-value">@(Capabilities.SupportsWebGpu ? "Available" : "Unavailable")</p>
+            </article>
+            <article>
+                <header>WebGL 2</header>
+                <p class="capability-value">@(Capabilities.SupportsWebGl2 ? "Available" : "Unavailable")</p>
+            </article>
+            <article>
+                <header>WASM SIMD</header>
+                <p class="capability-value">@(Capabilities.SupportsSimd ? "Enabled" : "Missing")</p>
+            </article>
+            <article>
+                <header>Recommended Provider</header>
+                <p class="capability-value provider">@Capabilities.RecommendedExecutionProvider</p>
+            </article>
+        </div>
+        @if (Capabilities.Metadata?.Count > 0)
+        {
+            <div class="metadata-grid">
+                @foreach (var entry in Capabilities.Metadata)
+                {
+                    <div class="metadata-row">
+                        <span>@entry.Key</span>
+                        <span>@entry.Value</span>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public TensorCapabilityResponse? Capabilities { get; set; }
+
+    [Parameter]
+    public bool IsBusy { get; set; }
+}
