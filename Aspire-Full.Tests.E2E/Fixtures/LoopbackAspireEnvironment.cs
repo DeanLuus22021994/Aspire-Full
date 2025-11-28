@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 
 namespace Aspire_Full.Tests.E2E.Fixtures;
@@ -174,7 +175,8 @@ public sealed class LoopbackAspireEnvironment : IAsyncDisposable
         {
             using var reader = new StreamReader(context.Request.Body);
             var body = await reader.ReadToEndAsync();
-            return Results.Json(new { jsonrpc = "2.0", id = 1, result = new { echoed = body.Length } });
+            var payload = new { jsonrpc = "2.0", id = 1, result = new { echoed = body.Length } };
+            await context.Response.WriteAsJsonAsync(payload);
         });
 
         return app;
