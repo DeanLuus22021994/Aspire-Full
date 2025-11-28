@@ -4,7 +4,6 @@
     <MaxCpuCount>0</MaxCpuCount>
     <TestSessionTimeout>600000</TestSessionTimeout>
     <TreatNoTestsAsError>true</TreatNoTestsAsError>
-    <ResultsDirectory>./TestResults</ResultsDirectory>
     <EnvironmentVariables>
       <DOTNET_ENVIRONMENT>Development</DOTNET_ENVIRONMENT>
       <ASPIRE_ALLOW_UNSECURED_TRANSPORT>true</ASPIRE_ALLOW_UNSECURED_TRANSPORT>
