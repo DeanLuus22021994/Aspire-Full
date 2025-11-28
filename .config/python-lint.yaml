@@ -19,6 +19,9 @@
     ],
     "ignore_paths": [
       ".*/\\.vscode/.*"
+    ],
+    "ignore_patterns": [
+      ".*[\\/]\\.vscode[\\/].*"
     ]
   }
 }
