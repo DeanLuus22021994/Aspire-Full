@@ -197,9 +197,22 @@ def collect_existing_test_roots(cfg: TestConfig) -> list[str]:
     source = cfg.runner.auto_targets or cfg.paths.roots
     for relative in source:
         candidate = REPO_ROOT / relative
-        if candidate.exists():
+        if candidate.exists() and _has_python_tests(candidate):
             existing.append(str(candidate))
     return existing
+
+
+def _has_python_tests(path: Path) -> bool:
+    if path.is_file():
+        return path.suffix == ".py" and path.name.startswith("test_")
+    if not path.is_dir():
+        return False
+    patterns = ("test_*.py", "*_test.py")
+    for pattern in patterns:
+        # Short-circuit as soon as a match is found to avoid full traversal
+        for _ in path.rglob(pattern):
+            return True
+    return False
 
 
 def normalize_for_matching(path: str | Path) -> str:
