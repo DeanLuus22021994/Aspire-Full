@@ -26,7 +26,6 @@ RUNNER_WORKDIR = os.environ.get("RUNNER_WORKDIR", "/home/runner/_work")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY")
 MAX_DOCKER_ATTEMPTS = 30
-_runner_process: subprocess.Popen[str] | None = None
 
 
 class RunnerError(RuntimeError):
@@ -138,29 +137,37 @@ def _remove_runner() -> None:
     _run(["./config.sh", "remove", "--token", token], allow_failure=True)
 
 
-def _launch_runner() -> None:
-    global _runner_process
+def _launch_runner() -> subprocess.Popen[bytes]:
     _log("INFO", "Starting runner...")
-    _runner_process = subprocess.Popen(["./run.sh"], cwd=RUNNER_ROOT)
-    _runner_process.wait()
+    return subprocess.Popen(["./run.sh"], cwd=RUNNER_ROOT)
 
 
-def _handle_signal(signum: int, _frame: Any) -> None:
-    _log("WARN", f"Received signal {signum}, shutting down runner...")
-    if _runner_process and _runner_process.poll() is None:
-        _runner_process.terminate()
-    _remove_runner()
-    sys.exit(0)
+def _install_signal_handlers(process: subprocess.Popen[bytes]) -> None:
+    """Attach termination handlers that gracefully stop the runner."""
+
+    def _handle_signal(signum: int, _frame: Any) -> None:
+        _log("WARN", f"Received signal {signum}, shutting down runner...")
+        if process.poll() is None:
+            process.terminate()
+        _remove_runner()
+        sys.exit(0)
+
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, _handle_signal)
+
+    sigquit = getattr(signal, "SIGQUIT", None)
+    if sigquit is not None:
+        signal.signal(sigquit, _handle_signal)
 
 
 def main() -> None:
     _log("INFO", "==========================================")
     _log("INFO", "GitHub Actions Self-Hosted Runner")
     _log("INFO", "==========================================")
-    _log(
-        "INFO",
-        f"Runner Version: {(RUNNER_ROOT / 'bin/runner.version').read_text().strip() if (RUNNER_ROOT / 'bin/runner.version').exists() else 'unknown'}",
-    )
+
+    version_file = RUNNER_ROOT / "bin/runner.version"
+    version = version_file.read_text().strip() if version_file.exists() else "unknown"
+    _log("INFO", f"Runner Version: {version}")
     _log("INFO", f".NET SDK: {_capture_cli(['dotnet', '--version'])}")
     _log("INFO", f"Node.js: {_capture_cli(['node', '--version'])}")
     _log("INFO", f"npm: {_capture_cli(['npm', '--version'])}")
@@ -171,11 +178,10 @@ def main() -> None:
 
     _configure_runner()
 
-    signal.signal(signal.SIGTERM, _handle_signal)
-    signal.signal(signal.SIGINT, _handle_signal)
-    signal.signal(signal.SIGQUIT, _handle_signal)
-
-    _launch_runner()
+    runner_process = _launch_runner()
+    _install_signal_handlers(runner_process)
+    runner_process.wait()
+    _remove_runner()
 
 
 def _capture_cli(cmd: list[str]) -> str:
