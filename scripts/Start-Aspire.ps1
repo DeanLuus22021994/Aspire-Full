@@ -160,24 +160,22 @@ function Start-AspireApp {
     $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
     $env:DOTNET_NOLOGO = "1"
 
-    # Prefer GPU acceleration when hardware is available unless explicitly disabled
     $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
-    $gpuRequested = -not $CpuOnly
-    if ($gpuRequested -and $gpuAvailable) {
-        Write-Host "GPU acceleration enabled (NVIDIA)" -ForegroundColor Magenta
-        $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
-        if ($gpuInfo) {
-            Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
-        }
-        $env:CUDA_VISIBLE_DEVICES = "0"
-        $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
-        $env:NVIDIA_VISIBLE_DEVICES = "all"
-        $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
-    } elseif ($gpuRequested -and -not $gpuAvailable) {
-        Write-Warning "GPU acceleration requested but NVIDIA utilities are not available. Falling back to CPU SIMD."
-    } elseif ($CpuOnly) {
-        Write-Host "CPU-only mode requested; SIMD optimizations remain enabled." -ForegroundColor Yellow
+    if (-not $gpuAvailable) {
+        Write-Error "NVIDIA utilities (nvidia-smi) not found. Tensor workloads require a CUDA-capable GPU."
+        exit 1
     }
+
+    Write-Host "GPU acceleration enforced (NVIDIA)" -ForegroundColor Magenta
+    $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
+    if ($gpuInfo) {
+        Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+    }
+    $env:CUDA_VISIBLE_DEVICES = "all"
+    $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
+    $env:NVIDIA_VISIBLE_DEVICES = "all"
+    $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
+    $env:NVIDIA_REQUIRE_CUDA = "cuda>=12.4,driver>=535"
 
     # Full clean/restore/format/build pipeline handled by PipelineRunner
     Invoke-PipelineRunner
