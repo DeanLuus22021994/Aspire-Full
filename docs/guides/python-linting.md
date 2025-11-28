@@ -15,16 +15,10 @@ Python lint settings are centralized to keep VS Code, VS Code Insiders, and CLI 
 		".vscode-*",
 		".vscode-*/**"
 	],
-	"python.analysis.exclude": [
-		".vscode",
-		".vscode/**",
-		".vscode-test",
-		".vscode-test/**",
-		".vscode-*",
-		".vscode-*/**"
-	],
-	"python.linting.pylintPath": "${workspaceFolder}/tools/python-lint/pylint_wrapper.py"
+	"python.linting.pylintPath": "${workspaceFolder}/tools/python-lint/pylint_wrapper.py",
+	"pylint.path": "${workspaceFolder}/tools/python-lint/pylint_wrapper.py"
 	```
 	The wrapper filters any lint targets that reside inside vendor directories before shelling out to `python -m pylint`, guaranteeing that even per-file lint requests from extensions stay quiet. Keep these settings in sync with `.config/python-lint.yaml` whenever new vendor directories need to be muted.
+- Language server: `pyrightconfig.json` at the repo root mirrors the same exclusion list (a requirement because `python.analysis.exclude` must stay unset when a pyrightconfig is active) so Pyright/Pylance never indexes `.vscode*` folders regardless of editor state.
 
 After editing the YAML file, run the sync script (or re-run the task defined above) to propagate updates. This keeps both linters consistent while still using their native config formats for compatibility.

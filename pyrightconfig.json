@@ -1,0 +1,10 @@
+{
+  "exclude": [
+    ".vscode",
+    ".vscode/**",
+    ".vscode-test",
+    ".vscode-test/**",
+    ".vscode-*",
+    ".vscode-*/**"
+  ]
+}
