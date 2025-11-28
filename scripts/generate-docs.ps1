@@ -19,7 +19,7 @@ try {
     # Build if requested or if doing all
     if ($Build -or $All) {
         Write-Host "🔨 Building project with XML documentation..." -ForegroundColor Yellow
-        dotnet build Aspire-Full.slnx --configuration Release
+        dotnet build Aspire-Full.slnf --configuration Release
         if ($LASTEXITCODE -ne 0) {
             throw "Build failed"
         }

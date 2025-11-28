@@ -7,17 +7,17 @@ echo "🚀 Running post-create setup..."
 export PATH="$PATH:/home/vscode/.dotnet/tools:/opt/aspire/bin"
 
 # Clone repo content to workspace if empty
-if [ ! -f "/workspace/Aspire-Full.slnx" ]; then
+if [ ! -f "/workspace/Aspire-Full.slnf" ]; then
     echo "📥 Cloning repository to workspace volume..."
     cd /workspace
     git clone https://github.com/DeanLuus22021994/Aspire-Full.git . 2>/dev/null || true
 fi
 
-# Restore NuGet packages
-if [ -f "/workspace/Aspire-Full.slnx" ]; then
-    echo "📦 Restoring NuGet packages..."
+# Execute canonical pipeline (clean/restore/format/build)
+if [ -f "/workspace/Aspire-Full.slnf" ]; then
+    echo "📦 Running PipelineRunner (skip run)..."
     cd /workspace
-    dotnet restore Aspire-Full.slnx || true
+    dotnet run --project tools/PipelineRunner/PipelineRunner.csproj -- --skip-run || true
 fi
 
 # Update global tools

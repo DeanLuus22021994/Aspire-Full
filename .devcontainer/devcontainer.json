@@ -29,7 +29,7 @@
         "EditorConfig.EditorConfig"
       ],
       "settings": {
-        "dotnet.defaultSolution": "Aspire-Full.slnx",
+        "dotnet.defaultSolution": "Aspire-Full.slnf",
         "omnisharp.enableRoslynAnalyzers": true,
         "omnisharp.enableImportCompletion": true,
         "editor.formatOnSave": true,

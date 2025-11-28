@@ -286,18 +286,32 @@ internal sealed class PipelineOptions
     private static string LocateRepositoryRoot()
     {
         var current = Directory.GetCurrentDirectory();
-        if (File.Exists(Path.Combine(current, "Aspire-Full.slnx")))
+        if (ContainsSolutionMarker(current))
         {
             return current;
         }
 
         var candidate = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        if (File.Exists(Path.Combine(candidate, "Aspire-Full.slnx")))
+        if (ContainsSolutionMarker(candidate))
         {
             return candidate;
         }
 
         throw new DirectoryNotFoundException("Unable to locate repository root. Run from the repo or pass absolute paths.");
+
+        static bool ContainsSolutionMarker(string path)
+        {
+            var markers = new[] { "Aspire-Full.slnf", "Aspire-Full.slnx" };
+            foreach (var marker in markers)
+            {
+                if (File.Exists(Path.Combine(path, marker)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     private static void PrintHelp()
@@ -306,7 +320,7 @@ internal sealed class PipelineOptions
 Usage: dotnet run --project tools/PipelineRunner [options]
 
 Options:
-  -s|--solution <Path>       Solution or solution filter to clean/format/build (default: Aspire-Full.slnx)
+  -s|--solution <Path>       Solution or solution filter to clean/format/build (default: Aspire-Full.slnf)
   -p|--project <Path>        Application project to execute for dotnet run (default: Aspire-Full/Aspire-Full.csproj)
   -c|--configuration <Name>  Build/run configuration (default: Release)
      --run-profile <Name>    Launch profile for dotnet run (default: headless)

@@ -36,6 +36,9 @@ cd Aspire-Full
 # Full restore/clean/format/build/run pipeline (no PowerShell required)
 dotnet run --project tools/PipelineRunner/PipelineRunner.csproj
 
+# Build-only pipeline (CI/headless parity)
+dotnet run --project tools/PipelineRunner/PipelineRunner.csproj -- --skip-run
+
 # Run with Aspire AppHost (blocking)
 dotnet run --project Aspire-Full
 
@@ -66,7 +69,7 @@ dotnet test Aspire-Full.Tests.E2E
 `tools/PipelineRunner` targets the `Aspire-Full.slnf` solution filter by default so the same curated project set is used across build commands and executes `dotnet restore`, `dotnet clean`, `dotnet format`, `dotnet build`, and `dotnet run` in that order. It accepts a few optional switches:
 
 - `-c|--configuration <Config>` – defaults to `Release`.
-- `--solution <Path>` – solution/solution-filter to clean/format/build (defaults to `Aspire-Full.slnx`).
+- `--solution <Path>` – solution/solution-filter to clean/format/build (defaults to `Aspire-Full.slnf`).
 - `--project <Path>` – project to execute during `dotnet run` (defaults to `Aspire-Full/Aspire-Full.csproj`).
 - `--run-profile <Profile>` – launch profile for `dotnet run` (defaults to `headless`).
 - `--skip-run` – execute clean/format/build only.

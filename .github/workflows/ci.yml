@@ -31,11 +31,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: Aspire-Full.Web/package-lock.json
 
-      - name: Restore .NET dependencies
-        run: dotnet restore
-
-      - name: Build .NET solution
-        run: dotnet build --configuration Release --no-restore
+      - name: Run canonical .NET pipeline
+        run: dotnet run --project tools/PipelineRunner/PipelineRunner.csproj -- --skip-run --configuration Release
 
       - name: Run .NET unit tests with coverage
         run: dotnet test Aspire-Full.Tests.Unit --configuration Release --no-build --settings tests.runsettings
@@ -90,8 +87,8 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           dotnet-quality: 'preview'
 
-      - name: Restore and build
-        run: dotnet build --configuration Release
+      - name: Run canonical .NET pipeline
+        run: dotnet run --project tools/PipelineRunner/PipelineRunner.csproj -- --skip-run --configuration Release
 
       - name: Install Playwright browsers
         run: pwsh -Command "./Aspire-Full.Tests.E2E/bin/Release/net10.0/playwright.ps1 install chromium --with-deps"

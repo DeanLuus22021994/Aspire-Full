@@ -50,24 +50,25 @@ if (-not (Test-Path (Join-Path $script:ProjectRoot "Aspire-Full"))) {
 $script:PidFile = Join-Path $script:ProjectRoot ".aspire.pid"
 $script:LogFile = Join-Path $script:ProjectRoot "TestResults" "aspire.log"
 
-function Invoke-DotnetStage {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Stage,
-        [Parameter(Mandatory = $true)]
-        [string[]]$Arguments
+function Invoke-PipelineRunner {
+    Write-Host "Running PipelineRunner (clean/restore/format/build)..." -ForegroundColor Cyan
+    Push-Location $script:ProjectRoot
+    $arguments = @(
+        "run",
+        "--project", "tools/PipelineRunner/PipelineRunner.csproj",
+        "--",
+        "--skip-run",
+        "--configuration", "Release"
     )
 
-    Write-Host $Stage -ForegroundColor Cyan
-    Push-Location $script:ProjectRoot
-    $output = & dotnet @Arguments 2>&1
+    $output = & dotnet @arguments 2>&1
     $exitCode = $LASTEXITCODE
     Pop-Location
 
     if ($exitCode -ne 0) {
-        Write-Host "`n$Stage failed:" -ForegroundColor Red
+        Write-Host "`nPipelineRunner failed:" -ForegroundColor Red
         Write-Host ($output -join "`n")
-        throw "dotnet stage failed: $Stage"
+        throw "PipelineRunner failed"
     }
 }
 
@@ -175,10 +176,8 @@ function Start-AspireApp {
         Write-Host "GPU requested but nvidia-smi not found - using CPU SIMD" -ForegroundColor Yellow
     }
 
-    # Full clean/restore/build pipeline mirrors manual developer workflow
-    Invoke-DotnetStage -Stage "dotnet clean (Release)" -Arguments @("clean", "Aspire-Full", "--configuration", "Release")
-    Invoke-DotnetStage -Stage "dotnet restore" -Arguments @("restore", "Aspire-Full")
-    Invoke-DotnetStage -Stage "dotnet build (Release)" -Arguments @("build", "Aspire-Full", "--configuration", "Release", "--no-restore")
+    # Full clean/restore/format/build pipeline handled by PipelineRunner
+    Invoke-PipelineRunner
 
     # Set up environment for non-interactive execution
     $env:ASPIRE_ALLOW_UNSECURED_TRANSPORT = "true"
