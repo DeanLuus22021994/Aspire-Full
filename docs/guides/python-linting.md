@@ -22,8 +22,9 @@ Python lint settings are centralized to keep VS Code, VS Code Insiders, and CLI 
 		".vscode-test/**",
 		".vscode-*",
 		".vscode-*/**"
-	]
+	],
+	"python.linting.pylintPath": "${workspaceFolder}/tools/python-lint/pylint_wrapper.py"
 	```
-	Keep these arrays in sync with `.config/python-lint.yaml` whenever new vendor directories need to be muted.
+	The wrapper filters any lint targets that reside inside vendor directories before shelling out to `python -m pylint`, guaranteeing that even per-file lint requests from extensions stay quiet. Keep these settings in sync with `.config/python-lint.yaml` whenever new vendor directories need to be muted.
 
 After editing the YAML file, run the sync script (or re-run the task defined above) to propagate updates. This keeps both linters consistent while still using their native config formats for compatibility.
