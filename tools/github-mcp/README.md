@@ -40,6 +40,18 @@ GITHUB_MCP_TOKEN=ghp_123 GITHUB_MCP_REPOSITORY=DeanLuus22021994/Aspire-Full npm 
 Then configure `.vscode/mcp.json` so Copilot knows about `http://localhost:17071/mcp` and
 forwards the same API key that the container expects.
 
+### Local demo / experimentation
+
+If you need to tinker with the streamable HTTP example that ships with the MCP SDK, use the
+checked-in copy instead of editing files under `node_modules`:
+
+```bash
+npm run demo:simple-stream -- --oauth # pass --oauth/--oauth-strict flags as needed
+```
+
+The implementation lives in `src/examples` so any tweaks remain under source control and survive
+`npm install` / dependency updates.
+
 ## Docker support
 
 The root `.devcontainer/docker-compose.yml` defines a `github-mcp` service based on
