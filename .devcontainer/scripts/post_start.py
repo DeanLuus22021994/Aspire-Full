@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 from typing import Iterable
 
-WORKSPACE = Path("/workspace")
+WORKSPACE = Path(os.environ.get("WORKSPACE_FOLDER", Path.cwd())).resolve()
 DASHBOARD_HEALTH_URL = "http://aspire-dashboard:18888/health"
 
 

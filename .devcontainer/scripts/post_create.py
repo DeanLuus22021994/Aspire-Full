@@ -10,7 +10,7 @@ from pathlib import Path
 from shutil import which
 from typing import Iterable
 
-WORKSPACE = Path("/workspace")
+WORKSPACE = Path(os.environ.get("WORKSPACE_FOLDER", Path.cwd())).resolve()
 SOLUTION_FILTER = WORKSPACE / "Aspire-Full.slnf"
 DOTNET_TOOL_PATHS = ["/home/vscode/.dotnet/tools", "/opt/aspire/bin"]
 PIPELINE_COMMAND = [
