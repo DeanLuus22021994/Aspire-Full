@@ -57,7 +57,7 @@ public sealed class ServiceCollectionExtensionsTests
 
     private sealed class FakeRunner : IArcFaceInferenceRunner
     {
-        public ArcFaceModelInfo ModelInfo { get; } = new("test", "1.0", "cpu", "n/a", DateTime.UtcNow);
+        public ArcFaceModelInfo ModelInfo { get; } = new("test", "1.0", "cuda", "n/a", DateTime.UtcNow);
 
         public float[] Run(string inputName, DenseTensor<float> batchTensor)
         {
