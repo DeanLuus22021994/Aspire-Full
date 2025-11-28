@@ -8,14 +8,23 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 COPY tools/github-mcp .
 RUN npm run build && npm prune --omit=dev
 
-FROM node:22-slim AS runtime
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
 WORKDIR /opt/github-mcp
 ENV NODE_ENV=production \
-    GITHUB_MCP_PORT=17071
+    GITHUB_MCP_PORT=17071 \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tini \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg tini \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system node \
+    && useradd --system --create-home --gid node node \
     && mkdir -p /opt/github-mcp/data /var/log/github-mcp /home/node/.cache/github-mcp \
     && chown -R node:node /opt/github-mcp /var/log/github-mcp /home/node/.cache/github-mcp
 

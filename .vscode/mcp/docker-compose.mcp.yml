@@ -45,6 +45,9 @@ services:
       - GITHUB_MCP_CACHE_SECONDS=45
       - ASPIRE_DASHBOARD_URL=http://aspire-dashboard:18888
       - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://aspire-dashboard:16036
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_REQUIRE_CUDA=cuda>=12.4 driver>=535
     volumes:
       - aspire_mcp_github_data:/opt/github-mcp/data
       - aspire_mcp_github_logs:/var/log/github-mcp
