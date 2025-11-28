@@ -7,7 +7,7 @@ Own ArcFace model execution and deliver normalized 512-float embeddings for down
 - Manage model acquisition and validation (hashing, version pinning).
 - Provide async APIs for single/batch embedding generation (consumers can defer wiring these calls into Aspire until the API integration phase).
 - Surface telemetry (latency, device info, failures) for observability.
-- Offer configuration toggles for CPU vs CUDA execution providers.
+- Enforce CUDA-only execution on Tensor Core GPUs; fail fast when NVIDIA hardware is unavailable.
 
 ## Out of Scope
 - Persisting embeddings
@@ -42,10 +42,12 @@ Configuration keys live under `ArcFace:Embedding`:
 | Key | Description | Default |
 | --- | --- | --- |
 | `ModelPath` | Absolute/relative path to `arcface_r100_v1.onnx`. Must exist and pass optional SHA check. | `./models/arcface_r100_v1.onnx` |
-| `ExecutionProvider` | `Cuda`, `DirectMl`, `Cpu`, or `Auto`. | `Cuda` |
+| `ExecutionProvider` | Must be `Cuda`; CPU/DirectML values are rejected at startup. | `Cuda` |
 | `TensorCoreHeadroom` | Fractional headroom reserved when batching (0.05-0.5). | `0.1` |
 | `VerifyModelChecksum` | Toggles SHA-256 verification using `ExpectedSha256`. | `true` |
 | `EnableVerboseLogging` | Emits per-batch latency logs. | `false` |
+
+> **GPU requirement**: The embedding service verifies CUDA availability during DI setup and throws if Tensor Core devices are missing. There is no CPU or DirectML fallback path.
 
 ## Open Tasks
 - Define model download script contract (`scripts/get-arcface-model.ps1`).
