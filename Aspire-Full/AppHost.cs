@@ -35,6 +35,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // External network for container-to-container communication
 const string networkName = "aspire-network";
+const string dockerDebuggerImage = "docker/debugger:latest";
 
 // -----------------------------------------------------------------------------
 // Dev Infrastructure - Docker-in-Docker daemon + dashboard + devcontainer
@@ -43,6 +44,19 @@ var dockerDaemon = builder.AddContainer("docker", "docker:27-dind")
     .WithVolume("aspire-docker-data", "/var/lib/docker")
     .WithVolume("aspire-docker-certs", "/certs")
     .WithEnvironment("DOCKER_TLS_CERTDIR", "/certs")
+    .WithContainerRuntimeArgs("--host=tcp://0.0.0.0:2376", "--host=unix:///var/run/docker.sock")
+    .WithContainerRuntimeArgs("--network", networkName)
+    .WithHttpEndpoint(name: "engine", port: 2376, targetPort: 2376)
+    .WithLifetime(ContainerLifetime.Persistent);
+
+var dockerDebugger = builder.AddContainer("docker-debugger", dockerDebuggerImage)
+    .WithReference(dockerDaemon)
+    .WithVolume("aspire-docker-certs", "/certs")
+    .WithEnvironment("DOCKER_HOST", "tcp://docker:2376")
+    .WithEnvironment("DOCKER_TLS_VERIFY", "1")
+    .WithEnvironment("DOCKER_CERT_PATH", "/certs/client")
+    .WithEnvironment("DOCKER_DEBUGGER_TARGET_NETWORK", networkName)
+    .WithHttpEndpoint(name: "debugger-ui", port: 9393, targetPort: 9393)
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 

@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -19,9 +22,11 @@ public static class Extensions
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
     private const string DefaultOtlpEndpoint = "http://localhost:4318";
+    private const string SerilogConfigFile = "logging.serilog.yaml";
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.ConfigureSerilogPipeline();
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -44,6 +49,51 @@ public static class Extensions
         // });
 
         return builder;
+    }
+
+    private static void ConfigureSerilogPipeline<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        var configBasePath = builder.Environment.ContentRootPath;
+        var primaryPath = Path.Combine(configBasePath, SerilogConfigFile);
+        var hasConfig = File.Exists(primaryPath);
+
+        if (!hasConfig)
+        {
+            var fallbackPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", SerilogConfigFile));
+            if (File.Exists(fallbackPath))
+            {
+                configBasePath = Path.GetDirectoryName(fallbackPath)!;
+                primaryPath = fallbackPath;
+                hasConfig = true;
+            }
+        }
+
+        var configurationBuilder = new ConfigurationBuilder()
+            .SetBasePath(configBasePath)
+            .AddYamlFile(Path.GetFileName(primaryPath), optional: !hasConfig, reloadOnChange: true)
+            .AddEnvironmentVariables(prefix: "SERILOG_");
+
+        var configuration = configurationBuilder.Build();
+
+        Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "logs"));
+
+        var loggerConfiguration = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName);
+
+        if (!hasConfig)
+        {
+            loggerConfiguration
+                .MinimumLevel.Information()
+                .WriteTo.Console()
+                .WriteTo.Async(writeTo => writeTo.File(Path.Combine(builder.Environment.ContentRootPath, "logs", "aspire-fallback-.log"), rollingInterval: RollingInterval.Day));
+        }
+
+        Log.Logger = loggerConfiguration.CreateLogger();
+
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog(dispose: true);
     }
 
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
