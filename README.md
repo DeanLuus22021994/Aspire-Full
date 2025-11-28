@@ -18,6 +18,7 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - **Testing** - Unit tests (xUnit) and E2E tests (NUnit)
 - **DevContainer** - `Aspire-Full.DevContainer` project exposes `AddDevContainer()` so Aspire manages the Docker workspace + Python 3.14 free-threaded tooling
 - **Subagents** - `Aspire-Full.Subagents` keeps sandbox agent specs self-documented with a CLI (`Aspire-Full.Subagents.Agent`) that automates retrospectives + delegation
+- **Docker Registry Patterns** - `Aspire-Full.DockerRegistry` provides a pattern-driven client and API surface for querying container repositories, tags, and manifests
 
 ## Quick Start
 
@@ -127,6 +128,13 @@ dotnet test Aspire-Full.Tests.E2E
 | DELETE | `/api/admin/users/{id}/permanent` | Permanent delete |
 | GET | `/api/admin/stats` | Admin statistics |
 
+### Docker Registry API (`/api/docker-registry`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/docker-registry/repositories` | Lists repositories that match the configured naming pattern |
+| GET | `/api/docker-registry/repositories/{service}/tags` | Lists tags for the service (optional environment/architecture query parameters) |
+| GET | `/api/docker-registry/repositories/{service}/manifests/{tag}` | Retrieves manifest + layer metadata for a specific tag |
+
 ## Database Schema
 
 ### Users Table
@@ -152,6 +160,7 @@ Aspire-Full/
 │       ├── components/       # UI components
 │       └── services/         # API client
 ├── Aspire-Full.ServiceDefaults/ # Shared config
+├── Aspire-Full.DockerRegistry/  # Pattern-based Docker registry client & DI helpers
 ├── Aspire-Full.DevContainer/   # Devcontainer resource + assets
 ├── Aspire-Full.Tests.Unit/   # Unit tests
 ├── Aspire-Full.Tests.E2E/    # E2E tests

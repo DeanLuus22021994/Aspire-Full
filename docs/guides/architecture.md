@@ -54,6 +54,15 @@ RESTful API with Entity Framework Core:
 - **Database**: PostgreSQL via `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`
 - **ORM**: Entity Framework Core with soft-delete pattern
 
+### Docker Registry Pattern Project
+
+- **Entry Point**: `Aspire-Full.DockerRegistry`
+- **Purpose**: Provides a pattern-driven abstraction and HTTP client for Docker registries so Aspire services can derive repository/tag names consistently across environments.
+- **Features**:
+      - Strategy-based formatter for repository + tag templates (`aspire/{service}-{environment}`, `{version}-{architecture}`, etc.)
+      - Typed `IDockerRegistryClient` registered via DI with resilient fallbacks and offline sample generation
+      - API controller (`DockerRegistryController`) that surfaces repository, tag, and manifest metadata for UI tooling
+
 ### Web Frontend
 
 React SPA with Vite:

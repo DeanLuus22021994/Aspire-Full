@@ -136,6 +136,48 @@ Administrative operations including bulk actions and statistics.
 
 ---
 
+## Docker Registry API
+
+Pattern-based abstraction over the Docker Registry HTTP API v2. Useful for tooling that needs to discover repositories, tags, or manifest metadata that follows the Aspire naming conventions.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/docker-registry/repositories` | Lists repositories that match the configured pattern (namespace/service/environment) |
+| GET | `/api/docker-registry/repositories/{service}/tags` | Lists tags for a service. Optional query string parameters: `environment`, `architecture`, `version`. |
+| GET | `/api/docker-registry/repositories/{service}/manifests/{tag}` | Returns digest + layer metadata for a tag. Optional query parameter `architecture` to influence pattern resolution. |
+
+### Sample Tag Response
+
+```json
+[
+  "1.0.0-linux-x64",
+  "1.0.0-linux-arm64",
+  "nightly-linux-x64"
+]
+```
+
+### Sample Manifest Response
+
+```json
+{
+  "repository": "aspire/api-dev",
+  "tag": "1.0.0-linux-x64",
+  "digest": "sha256:cafedeadbeef",
+  "totalSize": 32768,
+  "layers": [
+    {
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "digest": "sha256:abc123",
+      "size": 32768
+    }
+  ]
+}
+```
+
+---
+
 ## Health Endpoints
 
 | Method | Endpoint | Description |

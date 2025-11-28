@@ -44,7 +44,9 @@ public sealed class PatternDockerRegistryClient : IDockerRegistryClient
             var response = await _httpClient.GetFromJsonAsync<CatalogResponse>(uri, cancellationToken).ConfigureAwait(false);
             if (response?.Repositories is not { Count: > 0 })
             {
-                return BuildSampleRepositories();
+                return _options.EnableOfflineFallback
+                    ? BuildSampleRepositories()
+                    : Array.Empty<DockerRepositoryInfo>();
             }
 
             return response.Repositories

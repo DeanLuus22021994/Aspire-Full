@@ -10,13 +10,14 @@ internal sealed class DockerRegistryPatternEngine
     private readonly string _repositoryTemplate;
     private readonly string _tagTemplate;
     private readonly Regex _repositoryMatcher;
+    private readonly HashSet<string> _repositoryTokens;
 
     public DockerRegistryPatternEngine(DockerRegistryPatternOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
         _repositoryTemplate = options.RepositoryTemplate;
         _tagTemplate = options.TagTemplate;
-        _repositoryMatcher = BuildMatcher(_repositoryTemplate);
+        (_repositoryMatcher, _repositoryTokens) = BuildMatcher(_repositoryTemplate);
     }
 
     public string FormatRepository(DockerImageDescriptor descriptor, DockerRegistryPatternOptions options)
@@ -34,26 +35,24 @@ internal sealed class DockerRegistryPatternEngine
             return false;
         }
 
+        var groups = match.Groups;
         descriptor = new DockerImageDescriptor
         {
-            Service = match.Groups.TryGetValue("service", out var service) && service.Success ? service.Value : repository,
-            Environment = match.Groups.TryGetValue("environment", out var environment) && environment.Success ? environment.Value : null,
-            Architecture = match.Groups.TryGetValue("architecture", out var architecture) && architecture.Success ? architecture.Value : null,
-            Variant = match.Groups.TryGetValue("variant", out var variant) && variant.Success ? variant.Value : null
+            Service = TryGetGroupValue(groups, "service", out var service) ? service! : repository,
+            Environment = TryGetGroupValue(groups, "environment", out var environment) ? environment : null,
+            Architecture = TryGetGroupValue(groups, "architecture", out var architecture) ? architecture : null,
+            Variant = TryGetGroupValue(groups, "variant", out var variant) ? variant : null,
+            Version = TryGetGroupValue(groups, "version", out var version) ? version : null
         };
-
-        if (match.Groups.TryGetValue("version", out var version) && version.Success)
-        {
-            descriptor = descriptor with { Version = version.Value };
-        }
 
         return true;
     }
 
-    private static Regex BuildMatcher(string template)
+    private static (Regex regex, HashSet<string> tokens) BuildMatcher(string template)
     {
         var builder = new StringBuilder("^");
         var cursor = 0;
+        var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (Match tokenMatch in TokenRegex.Matches(template))
         {
             if (tokenMatch.Index > cursor)
@@ -63,6 +62,7 @@ internal sealed class DockerRegistryPatternEngine
             }
 
             var tokenName = tokenMatch.Groups["token"].Value;
+            tokens.Add(tokenName);
             builder.Append($"(?<{tokenName}>[\\w\\.-]+)");
             cursor = tokenMatch.Index + tokenMatch.Length;
         }
@@ -73,7 +73,27 @@ internal sealed class DockerRegistryPatternEngine
         }
 
         builder.Append("$");
-        return new Regex(builder.ToString(), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        var regex = new Regex(builder.ToString(), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        return (regex, tokens);
+    }
+
+    private bool TryGetGroupValue(GroupCollection groups, string token, out string? value)
+    {
+        if (!_repositoryTokens.Contains(token))
+        {
+            value = null;
+            return false;
+        }
+
+        var group = groups[token];
+        if (group.Success)
+        {
+            value = group.Value;
+            return true;
+        }
+
+        value = null;
+        return false;
     }
 
     private static string Format(string template, DockerImageDescriptor descriptor, DockerRegistryPatternOptions options)
