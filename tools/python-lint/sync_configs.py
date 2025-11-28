@@ -55,18 +55,22 @@ def write_pylintrc(config: Dict[str, Any]) -> None:
     disable = config.get("pylint", {}).get("disable", [])
     additional_ignore = config.get("pylint", {}).get("ignore", [])
     ignore_paths_patterns = config.get("pylint", {}).get("ignore_paths", [])
+    ignore_patterns = config.get("pylint", {}).get("ignore_patterns", [])
     ignore_paths = list(dict.fromkeys(DEFAULT_PYLINT_IGNORE + additional_ignore))
-    body = (
-        "[MASTER]\n"
-        f"ignore = {_format_csv(ignore_paths)}\n"
-        f"ignore-paths = {_format_csv(ignore_paths_patterns)}\n"
-        "extension-pkg-allow-list =\n\n"
-        "[MESSAGES CONTROL]\n"
-        f"disable = {_format_csv(disable)}\n\n"
-        "[FORMAT]\n"
-        f"max-line-length = {line_length}\n"
-    )
-    PYLINTRC_PATH.write_text(HEADER + body, encoding="utf-8")
+    body = ["[MASTER]", f"ignore = {_format_csv(ignore_paths)}"]
+    if ignore_paths_patterns:
+        body.append(f"ignore-paths = {_format_csv(ignore_paths_patterns)}")
+    if ignore_patterns:
+        body.append(f"ignore-patterns = {_format_csv(ignore_patterns)}")
+    body.append("extension-pkg-allow-list =")
+    body.append("")
+    body.append("[MESSAGES CONTROL]")
+    body.append(f"disable = {_format_csv(disable)}")
+    body.append("")
+    body.append("[FORMAT]")
+    body.append(f"max-line-length = {line_length}")
+    formatted_body = "\n".join(body) + "\n"
+    PYLINTRC_PATH.write_text(HEADER + formatted_body, encoding="utf-8")
 
 
 def main() -> None:

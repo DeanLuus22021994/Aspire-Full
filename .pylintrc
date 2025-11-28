@@ -2,6 +2,7 @@
 [MASTER]
 ignore = venv,.venv,build,dist,.vscode,.vscode/extensions
 ignore-paths = .*/\.vscode/.*
+ignore-patterns = .*[\/]\.vscode[\/].*
 extension-pkg-allow-list =
 
 [MESSAGES CONTROL]
