@@ -6,13 +6,8 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 from helper import get_context
-
-
-def _fetcher() -> Path:
-    return Path(__file__).resolve().parents[1] / "fetch_extension.py"
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -23,9 +18,10 @@ def main(argv: list[str] | None = None) -> None:
     env["EXTENSION_ID"] = context.extension_id
     env["EXTENSION_CACHE"] = str(context.cache_dir)
     subprocess.run(
-        ["python3", str(_fetcher())],
+        [sys.executable, str(context.fetcher)],
         check=True,
         env=env,
+        cwd=context.extension_dir,
     )
 
 
