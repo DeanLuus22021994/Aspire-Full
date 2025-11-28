@@ -18,11 +18,6 @@ public sealed class ArcFaceEmbeddingOptions
     public string? ExpectedSha256 { get; set; }
 
     /// <summary>
-    /// Execution provider preference. Defaults to CUDA when available.
-    /// </summary>
-    public ArcFaceExecutionProvider ExecutionProvider { get; set; } = ArcFaceExecutionProvider.Cuda;
-
-    /// <summary>
     /// CUDA device index to target when GPU execution is enabled.
     /// </summary>
     [Range(0, 15)]
@@ -50,12 +45,4 @@ public sealed class ArcFaceEmbeddingOptions
     /// Enables aggressive logging for debugging.
     /// </summary>
     public bool EnableVerboseLogging { get; set; }
-}
-
-public enum ArcFaceExecutionProvider
-{
-    Auto = 0,
-    Cuda,
-    DirectMl,
-    Cpu
 }
