@@ -6,8 +6,18 @@ This directory hosts self-contained Docker build contexts for VS Code extensions
 
 | Extension | Folder | Volume |
 | --- | --- | --- |
-| ms-windows-ai-studio.windows-ai-studio | `windows-ai-studio/` | `aspire_windows_ai_studio_extension_cache` |
-| ms-azuretools.vscode-azure-github-copilot | `azure-github-copilot/` | `aspire_azure_github_copilot_extension_cache` |
+| ms-windows-ai-studio.windows-ai-studio | `ms-windows-ai-studio.windows-ai-studio/` | `aspire_ms_windows_ai_studio_windows_ai_studio_extension_cache` |
+| ms-azuretools.vscode-azure-github-copilot | `ms-azuretools.vscode-azure-github-copilot/` | `aspire_ms_azuretools_vscode_azure_github_copilot_extension_cache` |
+| ms-dotnettools.csharp | `ms-dotnettools.csharp/` | `aspire_ms_dotnettools_csharp_extension_cache` |
+| ms-dotnettools.csdevkit | `ms-dotnettools.csdevkit/` | `aspire_ms_dotnettools_csdevkit_extension_cache` |
+| ms-dotnettools.dotnet-interactive-vscode | `ms-dotnettools.dotnet-interactive-vscode/` | `aspire_ms_dotnettools_dotnet_interactive_vscode_extension_cache` |
+| ms-azuretools.vscode-docker | `ms-azuretools.vscode-docker/` | `aspire_ms_azuretools_vscode_docker_extension_cache` |
+| GitHub.copilot | `GitHub.copilot/` | `aspire_github_copilot_extension_cache` |
+| GitHub.copilot-chat | `GitHub.copilot-chat/` | `aspire_github_copilot_chat_extension_cache` |
+| GitHub.vscode-pull-request-github | `GitHub.vscode-pull-request-github/` | `aspire_github_vscode_pull_request_github_extension_cache` |
+| eamodio.gitlens | `eamodio.gitlens/` | `aspire_eamodio_gitlens_extension_cache` |
+| streetsidesoftware.code-spell-checker | `streetsidesoftware.code-spell-checker/` | `aspire_streetsidesoftware_code_spell_checker_extension_cache` |
+| EditorConfig.EditorConfig | `EditorConfig.EditorConfig/` | `aspire_editorconfig_editorconfig_extension_cache` |
 
 ## Usage
 
@@ -15,9 +25,9 @@ This directory hosts self-contained Docker build contexts for VS Code extensions
 # From the repository root
 docker compose -f .vscode/extensions/docker-compose.extensions.yml up -d
 
-# Copy the cached VSIX into your devcontainer/host
+# Copy a cached VSIX into your host (example for GitHub Copilot)
 docker compose -f .vscode/extensions/docker-compose.extensions.yml cp \
-  windows-ai-studio-extension:/opt/extensions/ms-windows-ai-studio.windows-ai-studio/ms-windows-ai-studio.windows-ai-studio.vsix \
+  github-copilot-extension:/opt/extensions/GitHub.copilot/GitHub.copilot.vsix \
   ./artifacts/
 ```
 

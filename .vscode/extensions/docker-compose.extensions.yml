@@ -1,28 +1,148 @@
 version: "3.9"
 
 services:
-  windows-ai-studio-extension:
+  ms-windows-ai-studio-extension:
     build:
       context: .
-      dockerfile: windows-ai-studio/Dockerfile
-    image: aspire/windows-ai-studio-extension:latest
-    container_name: aspire-windows-ai-studio-extension
+      dockerfile: ms-windows-ai-studio.windows-ai-studio/Dockerfile
+    image: aspire/ms-windows-ai-studio-extension:latest
+    container_name: aspire-ms-windows-ai-studio-extension
     volumes:
-      - windows_ai_studio_extension_cache:/opt/extensions/ms-windows-ai-studio.windows-ai-studio
+      - ms_windows_ai_studio_windows_ai_studio_extension_cache:/opt/extensions/ms-windows-ai-studio.windows-ai-studio
     restart: unless-stopped
 
-  azure-github-copilot-extension:
+  ms-azuretools-vscode-azure-github-copilot-extension:
     build:
       context: .
-      dockerfile: azure-github-copilot/Dockerfile
-    image: aspire/azure-github-copilot-extension:latest
-    container_name: aspire-azure-github-copilot-extension
+      dockerfile: ms-azuretools.vscode-azure-github-copilot/Dockerfile
+    image: aspire/ms-azuretools-vscode-azure-github-copilot-extension:latest
+    container_name: aspire-ms-azuretools-vscode-azure-github-copilot-extension
     volumes:
-      - azure_github_copilot_extension_cache:/opt/extensions/ms-azuretools.vscode-azure-github-copilot
+      - ms_azuretools_vscode_azure_github_copilot_extension_cache:/opt/extensions/ms-azuretools.vscode-azure-github-copilot
+    restart: unless-stopped
+
+  ms-dotnettools-csharp-extension:
+    build:
+      context: .
+      dockerfile: ms-dotnettools.csharp/Dockerfile
+    image: aspire/ms-dotnettools-csharp-extension:latest
+    container_name: aspire-ms-dotnettools-csharp-extension
+    volumes:
+      - ms_dotnettools_csharp_extension_cache:/opt/extensions/ms-dotnettools.csharp
+    restart: unless-stopped
+
+  ms-dotnettools-csdevkit-extension:
+    build:
+      context: .
+      dockerfile: ms-dotnettools.csdevkit/Dockerfile
+    image: aspire/ms-dotnettools-csdevkit-extension:latest
+    container_name: aspire-ms-dotnettools-csdevkit-extension
+    volumes:
+      - ms_dotnettools_csdevkit_extension_cache:/opt/extensions/ms-dotnettools.csdevkit
+    restart: unless-stopped
+
+  ms-dotnettools-dotnet-interactive-vscode-extension:
+    build:
+      context: .
+      dockerfile: ms-dotnettools.dotnet-interactive-vscode/Dockerfile
+    image: aspire/ms-dotnettools-dotnet-interactive-vscode-extension:latest
+    container_name: aspire-ms-dotnettools-dotnet-interactive-vscode-extension
+    volumes:
+      - ms_dotnettools_dotnet_interactive_vscode_extension_cache:/opt/extensions/ms-dotnettools.dotnet-interactive-vscode
+    restart: unless-stopped
+
+  ms-azuretools-vscode-docker-extension:
+    build:
+      context: .
+      dockerfile: ms-azuretools.vscode-docker/Dockerfile
+    image: aspire/ms-azuretools-vscode-docker-extension:latest
+    container_name: aspire-ms-azuretools-vscode-docker-extension
+    volumes:
+      - ms_azuretools_vscode_docker_extension_cache:/opt/extensions/ms-azuretools.vscode-docker
+    restart: unless-stopped
+
+  github-copilot-extension:
+    build:
+      context: .
+      dockerfile: GitHub.copilot/Dockerfile
+    image: aspire/github-copilot-extension:latest
+    container_name: aspire-github-copilot-extension
+    volumes:
+      - github_copilot_extension_cache:/opt/extensions/GitHub.copilot
+    restart: unless-stopped
+
+  github-copilot-chat-extension:
+    build:
+      context: .
+      dockerfile: GitHub.copilot-chat/Dockerfile
+    image: aspire/github-copilot-chat-extension:latest
+    container_name: aspire-github-copilot-chat-extension
+    volumes:
+      - github_copilot_chat_extension_cache:/opt/extensions/GitHub.copilot-chat
+    restart: unless-stopped
+
+  github-vscode-pull-request-github-extension:
+    build:
+      context: .
+      dockerfile: GitHub.vscode-pull-request-github/Dockerfile
+    image: aspire/github-vscode-pull-request-github-extension:latest
+    container_name: aspire-github-vscode-pull-request-github-extension
+    volumes:
+      - github_vscode_pull_request_github_extension_cache:/opt/extensions/GitHub.vscode-pull-request-github
+    restart: unless-stopped
+
+  eamodio-gitlens-extension:
+    build:
+      context: .
+      dockerfile: eamodio.gitlens/Dockerfile
+    image: aspire/eamodio-gitlens-extension:latest
+    container_name: aspire-eamodio-gitlens-extension
+    volumes:
+      - eamodio_gitlens_extension_cache:/opt/extensions/eamodio.gitlens
+    restart: unless-stopped
+
+  streetsidesoftware-code-spell-checker-extension:
+    build:
+      context: .
+      dockerfile: streetsidesoftware.code-spell-checker/Dockerfile
+    image: aspire/streetsidesoftware-code-spell-checker-extension:latest
+    container_name: aspire-streetsidesoftware-code-spell-checker-extension
+    volumes:
+      - streetsidesoftware_code_spell_checker_extension_cache:/opt/extensions/streetsidesoftware.code-spell-checker
+    restart: unless-stopped
+
+  editorconfig-editorconfig-extension:
+    build:
+      context: .
+      dockerfile: EditorConfig.EditorConfig/Dockerfile
+    image: aspire/editorconfig-editorconfig-extension:latest
+    container_name: aspire-editorconfig-editorconfig-extension
+    volumes:
+      - editorconfig_editorconfig_extension_cache:/opt/extensions/EditorConfig.EditorConfig
     restart: unless-stopped
 
 volumes:
-  windows_ai_studio_extension_cache:
-    name: aspire_windows_ai_studio_extension_cache
-  azure_github_copilot_extension_cache:
-    name: aspire_azure_github_copilot_extension_cache
+  ms_windows_ai_studio_windows_ai_studio_extension_cache:
+    name: aspire_ms_windows_ai_studio_windows_ai_studio_extension_cache
+  ms_azuretools_vscode_azure_github_copilot_extension_cache:
+    name: aspire_ms_azuretools_vscode_azure_github_copilot_extension_cache
+  ms_dotnettools_csharp_extension_cache:
+    name: aspire_ms_dotnettools_csharp_extension_cache
+  ms_dotnettools_csdevkit_extension_cache:
+    name: aspire_ms_dotnettools_csdevkit_extension_cache
+  ms_dotnettools_dotnet_interactive_vscode_extension_cache:
+    name: aspire_ms_dotnettools_dotnet_interactive_vscode_extension_cache
+  ms_azuretools_vscode_docker_extension_cache:
+    name: aspire_ms_azuretools_vscode_docker_extension_cache
+  github_copilot_extension_cache:
+    name: aspire_github_copilot_extension_cache
+  github_copilot_chat_extension_cache:
+    name: aspire_github_copilot_chat_extension_cache
+  github_vscode_pull_request_github_extension_cache:
+    name: aspire_github_vscode_pull_request_github_extension_cache
+  eamodio_gitlens_extension_cache:
+    name: aspire_eamodio_gitlens_extension_cache
+  streetsidesoftware_code_spell_checker_extension_cache:
+    name: aspire_streetsidesoftware_code_spell_checker_extension_cache
+  editorconfig_editorconfig_extension_cache:
+    name: aspire_editorconfig_editorconfig_extension_cache
