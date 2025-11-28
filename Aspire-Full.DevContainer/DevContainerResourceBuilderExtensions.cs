@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Aspire.Hosting;
-using Aspire.Hosting.ApplicationModel;
 
 namespace Aspire_Full.DevContainer;
 
@@ -10,7 +9,7 @@ namespace Aspire_Full.DevContainer;
 /// </summary>
 public static class DevContainerResourceBuilderExtensions
 {
-    public static IResourceBuilder<DockerfileResource> AddDevContainer(
+    public static void AddDevContainer(
         this IDistributedApplicationBuilder builder,
         string networkName,
         bool enableGpu = true)
@@ -33,6 +32,6 @@ public static class DevContainerResourceBuilderExtensions
         }
 
         var runtimeArgs = DevContainerDefaults.BuildRuntimeArguments(networkName, enableGpu);
-        return resource.WithContainerRuntimeArgs(runtimeArgs.ToArray());
+        resource.WithContainerRuntimeArgs(runtimeArgs.ToArray());
     }
 }

@@ -60,7 +60,7 @@ var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotn
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
-var devcontainer = builder.AddDevContainer(networkName);
+builder.AddDevContainer(networkName);
 
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search
