@@ -9,7 +9,6 @@ param(
     [switch]$AspireOnly,
     [switch]$Coverage,
     [switch]$Verbose,
-    [switch]$UseGpu,
     [switch]$NonInteractive,
     [string]$Filter = ""
 )
@@ -29,20 +28,20 @@ function Initialize-GpuEnvironment {
     $env:DOTNET_TieredCompilation = "1"
     $env:DOTNET_ReadyToRun = "1"
 
-    if ($gpuAvailable -and $UseGpu) {
-        Write-Host "GPU acceleration enabled" -ForegroundColor Magenta
-        $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
-        Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
-
-        $env:CUDA_VISIBLE_DEVICES = "0"
-        $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
-        $env:NVIDIA_VISIBLE_DEVICES = "all"
-        $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
-    } elseif ($UseGpu) {
-        Write-Host "GPU requested but nvidia-smi not found - using CPU SIMD" -ForegroundColor Yellow
-    } else {
-        Write-Host "CPU SIMD optimizations enabled (AVX2, SSE4.1)" -ForegroundColor Gray
+    if (-not $gpuAvailable) {
+        Write-Error "CUDA-capable NVIDIA GPU is required to run tests."
+        exit 1
     }
+
+    Write-Host "GPU acceleration enforced" -ForegroundColor Magenta
+    $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
+    Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+
+    $env:CUDA_VISIBLE_DEVICES = "all"
+    $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
+    $env:NVIDIA_VISIBLE_DEVICES = "all"
+    $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
+    $env:NVIDIA_REQUIRE_CUDA = "cuda>=12.4,driver>=535"
 }
 
 # Non-interactive mode for CI/CD and AI agents - always set for automation
