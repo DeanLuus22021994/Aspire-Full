@@ -10,48 +10,59 @@ public class DashboardIntegrationTests
 {
     private HttpClient _dashboardClient = null!;
     private HttpClient _apiClient = null!;
-    private string _dashboardUrl = null!;
-    private string _otlpEndpoint = null!;
-    private string _mcpEndpoint = null!;
+    private HttpClient _otlpClient = null!;
+    private HttpClient _mcpClient = null!;
+    private LoopbackAspireEnvironment? _loopback;
+    private bool _usingLoopback;
 
-    [SetUp]
-    public void Setup()
+    [OneTimeSetUp]
+    public async Task OneTimeSetup()
     {
-        _dashboardUrl = Environment.GetEnvironmentVariable("ASPIRE_DASHBOARD_URL") ?? "http://localhost:18888";
-        _otlpEndpoint = Environment.GetEnvironmentVariable("ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL") ?? "http://localhost:18889";
-        _mcpEndpoint = Environment.GetEnvironmentVariable("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL") ?? "http://localhost:16036";
+        var dashboardUrl = Environment.GetEnvironmentVariable("ASPIRE_DASHBOARD_URL") ?? "http://localhost:18888";
+        var otlpEndpoint = Environment.GetEnvironmentVariable("ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL") ?? "http://localhost:18889";
+        var mcpEndpoint = Environment.GetEnvironmentVariable("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL") ?? "http://localhost:16036";
         var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? "http://localhost:5000";
 
-        _dashboardClient = new HttpClient
-        {
-            BaseAddress = new Uri(_dashboardUrl),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+        _dashboardClient = CreateClient(dashboardUrl);
+        _otlpClient = CreateClient(otlpEndpoint);
+        _mcpClient = CreateClient(mcpEndpoint);
+        _apiClient = CreateClient(apiBaseUrl);
 
-        _apiClient = new HttpClient
+        var dashboardAvailable = await ProbeAsync(_dashboardClient, "/health");
+        var apiAvailable = await ProbeAsync(_apiClient, "/health");
+
+        if (!dashboardAvailable || !apiAvailable)
         {
-            BaseAddress = new Uri(apiBaseUrl),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+            _loopback = new LoopbackAspireEnvironment();
+            await _loopback.InitializeAsync();
+            _dashboardClient = _loopback.DashboardClient;
+            _apiClient = _loopback.ApiClient;
+            _otlpClient = _loopback.OtlpClient;
+            _mcpClient = _loopback.McpClient;
+            _usingLoopback = true;
+        }
     }
 
-    [TearDown]
-    public void TearDown()
+    [OneTimeTearDown]
+    public async Task OneTimeTearDown()
     {
-        _dashboardClient?.Dispose();
-        _apiClient?.Dispose();
+        if (_usingLoopback && _loopback is not null)
+        {
+            await _loopback.DisposeAsync();
+        }
+        else
+        {
+            _dashboardClient.Dispose();
+            _apiClient.Dispose();
+            _otlpClient.Dispose();
+            _mcpClient.Dispose();
+        }
     }
 
     [Test]
     [Category("Integration")]
     public async Task Dashboard_HealthEndpoint_ReturnsHealthy()
     {
-        if (!await IsDashboardAvailable())
-        {
-            Assert.Ignore("Dashboard is not available. Skipping integration test.");
-            return;
-        }
-
         var response = await _dashboardClient.GetAsync("/health");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
@@ -60,12 +71,6 @@ public class DashboardIntegrationTests
     [Category("Integration")]
     public async Task Dashboard_FrontendPage_ReturnsSuccess()
     {
-        if (!await IsDashboardAvailable())
-        {
-            Assert.Ignore("Dashboard is not available. Skipping integration test.");
-            return;
-        }
-
         var response = await _dashboardClient.GetAsync("/");
         Assert.That(response.IsSuccessStatusCode, Is.True);
     }
@@ -75,14 +80,6 @@ public class DashboardIntegrationTests
     [Category("Telemetry")]
     public async Task OTLP_Endpoint_AcceptsTraceData()
     {
-        if (!await IsOtlpEndpointHealthy())
-        {
-            Assert.Ignore("OTLP endpoint is not healthy. Skipping integration test.");
-            return;
-        }
-
-        using var otlpClient = new HttpClient { BaseAddress = new Uri(_otlpEndpoint) };
-
         var tracePayload = new
         {
             resourceSpans = new[]
@@ -113,7 +110,7 @@ public class DashboardIntegrationTests
             }
         };
 
-        var response = await otlpClient.PostAsJsonAsync("/v1/traces", tracePayload);
+        var response = await _otlpClient.PostAsJsonAsync("/v1/traces", tracePayload);
 
         // OTLP endpoint may return OK, Accepted, or BadRequest (for JSON when protobuf expected)
         // Any of these indicates the endpoint is responding correctly
@@ -131,14 +128,6 @@ public class DashboardIntegrationTests
     [Category("Telemetry")]
     public async Task OTLP_Endpoint_AcceptsLogData()
     {
-        if (!await IsOtlpEndpointHealthy())
-        {
-            Assert.Ignore("OTLP endpoint is not healthy. Skipping integration test.");
-            return;
-        }
-
-        using var otlpClient = new HttpClient { BaseAddress = new Uri(_otlpEndpoint) };
-
         var logsPayload = new
         {
             resourceLogs = new[]
@@ -167,7 +156,7 @@ public class DashboardIntegrationTests
             }
         };
 
-        var response = await otlpClient.PostAsJsonAsync("/v1/logs", logsPayload);
+        var response = await _otlpClient.PostAsJsonAsync("/v1/logs", logsPayload);
 
         // OTLP endpoint may return OK, Accepted, or BadRequest (for JSON when protobuf expected)
         // Any of these indicates the endpoint is responding correctly
@@ -185,14 +174,7 @@ public class DashboardIntegrationTests
     [Category("MCP")]
     public async Task MCP_Server_IsAccessible()
     {
-        if (!await IsMcpEndpointAvailable())
-        {
-            Assert.Ignore("MCP endpoint is not available. Skipping integration test.");
-            return;
-        }
-
-        using var mcpClient = new HttpClient { BaseAddress = new Uri(_mcpEndpoint) };
-        var response = await mcpClient.GetAsync("/");
+        var response = await _mcpClient.GetAsync("/");
         Assert.That(response.StatusCode, Is.Not.EqualTo(HttpStatusCode.ServiceUnavailable));
     }
 
@@ -201,14 +183,6 @@ public class DashboardIntegrationTests
     [Category("MCP")]
     public async Task MCP_ListResources_SendsRequest()
     {
-        if (!await IsMcpEndpointAvailable())
-        {
-            Assert.Ignore("MCP endpoint is not available. Skipping integration test.");
-            return;
-        }
-
-        using var mcpClient = new HttpClient { BaseAddress = new Uri(_mcpEndpoint) };
-
         var mcpRequest = new
         {
             jsonrpc = "2.0",
@@ -221,7 +195,7 @@ public class DashboardIntegrationTests
             }
         };
 
-        var response = await mcpClient.PostAsJsonAsync("/", mcpRequest);
+        var response = await _mcpClient.PostAsJsonAsync("/", mcpRequest);
         Assert.That(response.StatusCode, Is.Not.EqualTo(HttpStatusCode.ServiceUnavailable));
     }
 
@@ -230,12 +204,6 @@ public class DashboardIntegrationTests
     [Category("Bidirectional")]
     public async Task BiDirectional_ApiAndDashboard_BothHealthy()
     {
-        if (!await IsDashboardAvailable() || !await IsApiAvailable())
-        {
-            Assert.Ignore("Dashboard or API is not available. Skipping integration test.");
-            return;
-        }
-
         var dashboardHealth = await _dashboardClient.GetAsync("/health");
         var apiHealth = await _apiClient.GetAsync("/health");
 
@@ -251,12 +219,6 @@ public class DashboardIntegrationTests
     [Category("Bidirectional")]
     public async Task BiDirectional_ApiRequest_GeneratesTelemetry()
     {
-        if (!await IsApiAvailable())
-        {
-            Assert.Ignore("API is not available. Skipping integration test.");
-            return;
-        }
-
         var response = await _apiClient.GetAsync("/api/items");
         Assert.That(response.IsSuccessStatusCode, Is.True);
     }
@@ -266,78 +228,30 @@ public class DashboardIntegrationTests
     [Category("Resources")]
     public async Task Resources_ApiOpenApi_IsAccessible()
     {
-        if (!await IsApiAvailable())
-        {
-            Assert.Ignore("API is not available. Skipping integration test.");
-            return;
-        }
-
         var response = await _apiClient.GetAsync("/openapi/v1.json");
         Assert.That(response.IsSuccessStatusCode, Is.True);
     }
 
-    private async Task<bool> IsDashboardAvailable()
+    private static HttpClient CreateClient(string baseUrl)
+    {
+        return new HttpClient
+        {
+            BaseAddress = new Uri(baseUrl),
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+    }
+
+    private static async Task<bool> ProbeAsync(HttpClient client, string path)
     {
         try
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var response = await _dashboardClient.GetAsync("/health", cts.Token);
+            var response = await client.GetAsync(path, cts.Token);
             return response.IsSuccessStatusCode;
         }
-        catch { return false; }
-    }
-
-    private async Task<bool> IsOtlpEndpointAvailable()
-    {
-        try
+        catch
         {
-            using var client = new HttpClient { BaseAddress = new Uri(_otlpEndpoint) };
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await client.GetAsync("/", cts.Token);
-            return true;
+            return false;
         }
-        catch { return false; }
-    }
-
-    /// <summary>
-    /// Checks if OTLP endpoint is healthy by posting a minimal valid trace.
-    /// </summary>
-    private async Task<bool> IsOtlpEndpointHealthy()
-    {
-        try
-        {
-            using var client = new HttpClient { BaseAddress = new Uri(_otlpEndpoint) };
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var testPayload = new { resourceSpans = Array.Empty<object>() };
-            var response = await client.PostAsJsonAsync("/v1/traces", testPayload, cts.Token);
-            // Healthy endpoint accepts empty traces or returns a specific error for invalid format
-            return response.StatusCode == HttpStatusCode.OK
-                || response.StatusCode == HttpStatusCode.Accepted
-                || response.StatusCode == HttpStatusCode.BadRequest; // Expected for empty payload
-        }
-        catch { return false; }
-    }
-
-    private async Task<bool> IsMcpEndpointAvailable()
-    {
-        try
-        {
-            using var client = new HttpClient { BaseAddress = new Uri(_mcpEndpoint) };
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await client.GetAsync("/", cts.Token);
-            return true;
-        }
-        catch { return false; }
-    }
-
-    private async Task<bool> IsApiAvailable()
-    {
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var response = await _apiClient.GetAsync("/health", cts.Token);
-            return response.IsSuccessStatusCode;
-        }
-        catch { return false; }
     }
 }

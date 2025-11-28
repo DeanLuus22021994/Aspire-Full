@@ -31,6 +31,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: Aspire-Full.Web/package-lock.json
 
+      - name: Install GitHub MCP dependencies
+        working-directory: ./tools/github-mcp
+        run: npm ci
+
+      - name: Run GitHub MCP lint
+        working-directory: ./tools/github-mcp
+        run: npm run lint
+
       - name: Run canonical .NET pipeline
         run: dotnet run --project tools/PipelineRunner/PipelineRunner.csproj -- --skip-run --configuration Release
 

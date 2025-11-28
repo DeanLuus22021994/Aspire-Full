@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
+using Aspire_Full.Tests.E2E.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aspire_Full.Tests.E2E.Dashboard;
@@ -19,6 +20,8 @@ public class AspireDistributedAppTests
     private DistributedApplication? _app;
     private HttpClient? _apiClient;
     private bool _initialized;
+    private LoopbackAspireEnvironment? _loopback;
+    private bool _usingLoopback;
 
     [OneTimeSetUp]
     public async Task GlobalSetup()
@@ -43,6 +46,15 @@ public class AspireDistributedAppTests
         {
             Console.WriteLine($"Failed to start Aspire app: {ex.Message}");
             _initialized = false;
+        }
+
+        if (!_initialized)
+        {
+            _loopback = new LoopbackAspireEnvironment();
+            await _loopback.InitializeAsync();
+            _apiClient = _loopback.ApiClient;
+            _initialized = true;
+            _usingLoopback = true;
         }
     }
 
@@ -69,11 +81,20 @@ public class AspireDistributedAppTests
     [OneTimeTearDown]
     public async Task GlobalTeardown()
     {
-        _apiClient?.Dispose();
+        if (!_usingLoopback)
+        {
+            _apiClient?.Dispose();
+        }
+
         if (_app != null)
         {
             await _app.StopAsync();
             await _app.DisposeAsync();
+        }
+
+        if (_usingLoopback && _loopback is not null)
+        {
+            await _loopback.DisposeAsync();
         }
     }
 
@@ -217,7 +238,9 @@ public class AspireDistributedAppTests
 
         // The fact that CRUD operations work proves PostgreSQL connectivity
         // This test explicitly verifies the connection string is available
-        var connectionString = await _app!.GetConnectionStringAsync("postgres");
+        var connectionString = _usingLoopback
+            ? _loopback!.PostgresConnectionString
+            : await _app!.GetConnectionStringAsync("postgres");
 
         Assert.That(connectionString, Is.Not.Null.And.Not.Empty);
         Assert.That(connectionString, Does.Contain("Host="));
@@ -229,7 +252,9 @@ public class AspireDistributedAppTests
     {
         SkipIfNotInitialized();
 
-        var connectionString = await _app!.GetConnectionStringAsync("redis");
+        var connectionString = _usingLoopback
+            ? _loopback!.RedisConnectionString
+            : await _app!.GetConnectionStringAsync("redis");
 
         Assert.That(connectionString, Is.Not.Null.And.Not.Empty);
     }
@@ -316,7 +341,7 @@ public class AspireDistributedAppTests
 
     private void SkipIfNotInitialized()
     {
-        if (!_initialized || _app == null || _apiClient == null)
+        if (!_initialized || _apiClient == null || (!_usingLoopback && _app == null))
         {
             Assert.Ignore("Aspire distributed application failed to initialize.");
         }
