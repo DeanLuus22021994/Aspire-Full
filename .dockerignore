@@ -1,0 +1,30 @@
+# Keep Docker build contexts lean so MCP/Copilot images push and rebuild quickly.
+.git
+.gitmodules
+.github/
+
+# VS Code artifacts except the MCP + extension scaffolding
+.vscode/*
+!.vscode/mcp
+!.vscode/mcp/**
+!.vscode/extensions
+!.vscode/extensions/**
+
+# SDK + tooling outputs
+**/bin
+**/obj
+TestResults/
+.mypy_cache/
+.pytest_cache/
+**/__pycache__/
+
+# Language package directories
+**/node_modules
+**/.venv
+pip-wheel-metadata/
+
+# Misc. caches
+npm-debug.log*
+*.pyc
+*.pyo
+*.vsix
