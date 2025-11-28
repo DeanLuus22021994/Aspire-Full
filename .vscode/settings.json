@@ -9,6 +9,8 @@
     "**/bin": true,
     "**/obj": true
   },
+  "python.linting.ignorePatterns": ["**/.vscode/**", "**/.vscode-test/**"],
+  "python.analysis.exclude": ["**/.vscode/**", "**/.vscode-test/**"],
   "github.copilot.chat.codeGeneration.useReferencedFiles": true,
   "github.copilot.chat.codesearch.enabled": true,
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true
