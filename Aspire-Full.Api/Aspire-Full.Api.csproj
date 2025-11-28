@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using Aspire_Full.Api.Data;
+using Aspire_Full.DockerRegistry;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.AddRedisDistributedCache("redis");
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddDockerRegistryClient(builder.Configuration);
 
 // Add CORS for frontend
 builder.Services.AddCors(options =>

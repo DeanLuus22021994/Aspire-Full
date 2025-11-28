@@ -7,6 +7,7 @@
       "Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj",
       "Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj",
       "Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj",
+      "Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj",
       "Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj",
       "Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj",
       "Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj",
