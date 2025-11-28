@@ -99,6 +99,8 @@
 
   "containerEnv": {
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
-    "DOTNET_NOLOGO": "1"
+    "DOTNET_NOLOGO": "1",
+    "NVIDIA_VISIBLE_DEVICES": "all",
+    "NVIDIA_DRIVER_CAPABILITIES": "compute,utility"
   }
 }

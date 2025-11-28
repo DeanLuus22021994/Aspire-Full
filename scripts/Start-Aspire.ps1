@@ -10,12 +10,12 @@
 #   ./scripts/Start-Aspire.ps1 -Wait        # Start and wait (blocking)
 #   ./scripts/Start-Aspire.ps1 -Stop        # Stop running instance
 #   ./scripts/Start-Aspire.ps1 -Status      # Check status
-#   ./scripts/Start-Aspire.ps1 -UseGpu      # Enable GPU acceleration
+#   ./scripts/Start-Aspire.ps1 -CpuOnly     # Force CPU/SIMD only
 #
 # Environment:
 #   - Uses 'headless' launch profile (no browser, no interactive prompts)
 #   - Connects to aspire-network for low-latency container communication
-#   - Supports NVIDIA GPU acceleration via CUDA when -UseGpu is specified
+#   - Prefers NVIDIA GPU acceleration automatically when available
 # =============================================================================
 
 [CmdletBinding()]
@@ -23,7 +23,7 @@ param(
     [switch]$Wait,
     [switch]$Stop,
     [switch]$Status,
-    [switch]$UseGpu,
+    [switch]$CpuOnly,
     [int]$TimeoutSeconds = 60
 )
 
@@ -162,18 +162,23 @@ function Start-AspireApp {
     $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
     $env:DOTNET_NOLOGO = "1"
 
-    # GPU configuration if requested
+    # Prefer GPU acceleration when hardware is available unless explicitly disabled
     $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
-    if ($UseGpu -and $gpuAvailable) {
+    $gpuRequested = -not $CpuOnly
+    if ($gpuRequested -and $gpuAvailable) {
         Write-Host "GPU acceleration enabled (NVIDIA)" -ForegroundColor Magenta
         $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
-        Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+        if ($gpuInfo) {
+            Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+        }
         $env:CUDA_VISIBLE_DEVICES = "0"
         $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
         $env:NVIDIA_VISIBLE_DEVICES = "all"
         $env:NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
-    } elseif ($UseGpu) {
-        Write-Host "GPU requested but nvidia-smi not found - using CPU SIMD" -ForegroundColor Yellow
+    } elseif ($gpuRequested -and -not $gpuAvailable) {
+        Write-Warning "GPU acceleration requested but NVIDIA utilities are not available. Falling back to CPU SIMD."
+    } elseif ($CpuOnly) {
+        Write-Host "CPU-only mode requested; SIMD optimizations remain enabled." -ForegroundColor Yellow
     }
 
     # Full clean/restore/format/build pipeline handled by PipelineRunner

@@ -5,6 +5,14 @@ set -e
 
 echo "🚀 Running post-create setup..."
 
+# Surface GPU availability immediately so tensor workloads can fail fast when misconfigured
+if command -v nvidia-smi >/dev/null 2>&1; then
+    echo "🟢 NVIDIA GPU detected inside devcontainer"
+    nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv,noheader || true
+else
+    echo "⚠️ NVIDIA GPU utilities are not accessible in this container; tensor workloads will fall back to CPU." >&2
+fi
+
 # Ensure PATH includes dotnet tools
 export PATH="$PATH:/home/vscode/.dotnet/tools:/opt/aspire/bin"
 

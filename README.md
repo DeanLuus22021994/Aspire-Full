@@ -46,7 +46,10 @@ dotnet run --project Aspire-Full
 ./scripts/Start-Aspire.ps1          # start + detach
 ./scripts/Start-Aspire.ps1 -Status  # view PID / dashboard link
 ./scripts/Start-Aspire.ps1 -Stop    # stop background host
+./scripts/Start-Aspire.ps1 -CpuOnly # opt out of GPU usage when troubleshooting
 ```
+
+> Tensor acceleration is enabled automatically inside the devcontainer whenever NVIDIA hardware is exposed; the helper script only falls back to CPU when GPUs are missing or you pass `-CpuOnly`.
 
 The Aspire Dashboard will be available at `http://localhost:18888`
 

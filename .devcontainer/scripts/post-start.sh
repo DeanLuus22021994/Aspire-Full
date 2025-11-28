@@ -24,6 +24,11 @@ echo "   .NET SDK: $(dotnet --version)"
 echo "   Aspire CLI: $(aspire --version 2>/dev/null || echo 'not in PATH')"
 echo "   Docker: $(docker --version 2>/dev/null || echo 'not available')"
 echo "   gh CLI: $(gh --version 2>/dev/null | head -1 || echo 'not available')"
+if command -v nvidia-smi >/dev/null 2>&1; then
+    echo "   GPU: $(nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1)"
+else
+    echo "   GPU: not detected (tensor workloads will run on CPU)"
+fi
 echo ""
 echo "🌐 Services:"
 echo "   Aspire Dashboard:  http://localhost:18888"
