@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Aspire_Full.Subagents;
 
 public sealed record SubagentUpdate(
