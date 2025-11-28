@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.ML.OnnxRuntime;
@@ -14,6 +13,8 @@ namespace ArcFaceSandbox.EmbeddingService;
 /// </summary>
 internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
 {
+    private const string CudaProviderName = "cuda";
+
     private readonly ArcFaceEmbeddingOptions _options;
     private readonly ILogger<OnnxArcFaceInferenceRunner> _logger;
     private readonly InferenceSession _session;
@@ -31,9 +32,9 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
             VerifyModelChecksum(_options.ModelPath, _options.ExpectedSha256);
         }
 
-        var (sessionOptions, provider) = CreateSessionOptions(_options, logger);
+        var sessionOptions = CreateCudaSessionOptions(_options);
         _session = new InferenceSession(_options.ModelPath, sessionOptions);
-        _modelInfo = BuildModelInfo(_session, _options, provider);
+        _modelInfo = BuildModelInfo(_session, _options);
     }
 
     public ArcFaceModelInfo ModelInfo => _modelInfo;
@@ -86,12 +87,8 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
         }
     }
 
-    private static (SessionOptions Options, ArcFaceExecutionProvider Provider) CreateSessionOptions(ArcFaceEmbeddingOptions options, ILogger logger)
+    private static SessionOptions CreateCudaSessionOptions(ArcFaceEmbeddingOptions options)
     {
-        var provider = options.ExecutionProvider == ArcFaceExecutionProvider.Auto
-            ? DetectDefaultProvider()
-            : options.ExecutionProvider;
-
         var sessionOptions = new SessionOptions
         {
             LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING,
@@ -101,47 +98,26 @@ internal sealed class OnnxArcFaceInferenceRunner : IArcFaceInferenceRunner
 
         try
         {
-            switch (provider)
-            {
-                case ArcFaceExecutionProvider.Cuda:
-                    sessionOptions.AppendExecutionProvider_CUDA(options.CudaDeviceId);
-                    break;
-                case ArcFaceExecutionProvider.DirectMl:
-                    sessionOptions.AppendExecutionProvider_DML();
-                    break;
-                default:
-                    sessionOptions.AppendExecutionProvider_CPU();
-                    break;
-            }
+            sessionOptions.AppendExecutionProvider_CUDA(options.CudaDeviceId);
         }
         catch (OnnxRuntimeException ex)
         {
-            logger.LogWarning(ex, "Falling back to CPU execution provider for ArcFace embeddings.");
-            sessionOptions.AppendExecutionProvider_CPU();
-            provider = ArcFaceExecutionProvider.Cpu;
+            throw new InvalidOperationException(
+                "CUDA execution provider is required for ArcFace embeddings. Ensure NVIDIA drivers and CUDA libraries are installed.",
+                ex);
         }
 
-        return (sessionOptions, provider);
+        return sessionOptions;
     }
 
-    private static ArcFaceExecutionProvider DetectDefaultProvider()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return ArcFaceExecutionProvider.DirectMl;
-        }
-
-        return ArcFaceExecutionProvider.Cpu;
-    }
-
-    private static ArcFaceModelInfo BuildModelInfo(InferenceSession session, ArcFaceEmbeddingOptions options, ArcFaceExecutionProvider provider)
+    private static ArcFaceModelInfo BuildModelInfo(InferenceSession session, ArcFaceEmbeddingOptions options)
     {
         var metadata = session.ModelMetadata;
         var versionValue = metadata?.Version ?? 0;
         return new ArcFaceModelInfo(
             metadata?.GraphName ?? metadata?.GraphDescription ?? "arcface_r100_v1",
             versionValue > 0 ? versionValue.ToString(CultureInfo.InvariantCulture) : metadata?.ProducerName ?? "unknown",
-            provider.ToString().ToLowerInvariant(),
+            CudaProviderName,
             options.ExpectedSha256 ?? "n/a",
             DateTime.UtcNow);
     }
