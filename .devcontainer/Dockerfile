@@ -21,6 +21,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         python3-pip \
         python3-venv \
         sudo \
+        cmake \
+        build-essential \
+        gdb \
     && rm -rf /var/lib/apt/lists/*
 
 # Create the user

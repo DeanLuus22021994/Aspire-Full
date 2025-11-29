@@ -28,5 +28,7 @@
   },
   "cSpell.words": ["Instrumentor", "Serilog", "triaging"],
   "python.defaultInterpreterPath": "${workspaceFolder}/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
-  "cmake.sourceDirectory": "C:/Users/Dean/source/Aspire-Full - 1/Aspire-Full.Native"
+  "cmake.sourceDirectory": "C:/Users/Dean/source/Aspire-Full - 1/Aspire-Full.Native",
+  "nsight.server.connection.port": 4500,
+  "nsight.server.connection.host": "localhost"
 }
