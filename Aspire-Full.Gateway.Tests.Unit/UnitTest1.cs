@@ -1,4 +1,4 @@
-﻿using Aspire_Full.Gateway.Models;
+using Aspire_Full.Gateway.Models;
 
 namespace Aspire_Full.Gateway.Tests.Unit;
 

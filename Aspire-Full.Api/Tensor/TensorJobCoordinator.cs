@@ -367,9 +367,10 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         }
         catch (Exception ex)
         {
-             _logger.LogError(ex, "Error executing native tensor op.");
-             // Fallback
-             for (int i = 0; i < finalSize; i++) resultData[i] = seedData[i];
+            _logger.LogError(ex, "Error executing native tensor op.");
+            // Fallback
+            for (int i = 0; i < finalSize; i++)
+                resultData[i] = seedData[i];
         }
 
         return new ReadOnlyMemory<float>(resultData);

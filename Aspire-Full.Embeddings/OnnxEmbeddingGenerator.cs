@@ -61,7 +61,8 @@ public class OnnxEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<floa
         var result = new GeneratedEmbeddings<Embedding<float>>();
         var inputs = values.ToList();
 
-        if (inputs.Count == 0) return Task.FromResult(result);
+        if (inputs.Count == 0)
+            return Task.FromResult(result);
 
         // Batch processing
         // For simplicity in this implementation, we process the whole batch.

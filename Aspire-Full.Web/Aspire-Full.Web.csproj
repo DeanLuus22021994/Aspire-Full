@@ -1,15 +1,3 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="github-mcp\**\*" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
   <ItemGroup>
     <Content Include="..\Aspire-Full.Native\build\Release\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -20,5 +8,3 @@
       <Link>libAspireFullNative.so</Link>
     </Content>
   </ItemGroup>
-
-</Project>

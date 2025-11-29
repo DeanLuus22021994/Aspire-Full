@@ -14,4 +14,15 @@
     <PackageReference Include="Qdrant.Client" Version="1.15.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\Aspire-Full.Native\build\Release\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>AspireFullNative.dll</Link>
+    </Content>
+    <Content Include="..\Aspire-Full.Native\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libAspireFullNative.so</Link>
+    </Content>
+  </ItemGroup>
+
 </Project>

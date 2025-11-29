@@ -513,4 +513,4 @@ internal sealed class VectorStoreConnector : IVectorStoreConnector
         IReadOnlyDictionary<string, string> Metadata,
         bool Success,
         string? Error);
-    }
+}

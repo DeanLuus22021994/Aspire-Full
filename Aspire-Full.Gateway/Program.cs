@@ -105,7 +105,7 @@ class MockEmbeddingGenerator : Microsoft.Extensions.AI.IEmbeddingGenerator<strin
         return Task.FromResult(result);
     }
 
-    public void Dispose() {}
+    public void Dispose() { }
     public object? GetService(Type serviceType, object? serviceKey = null) => null;
 }
 

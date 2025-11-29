@@ -1,4 +1,4 @@
-﻿namespace Aspire_Full.Gateway.Tests.Engine;
+namespace Aspire_Full.Gateway.Tests.Engine;
 
 public class UnitTest1
 {

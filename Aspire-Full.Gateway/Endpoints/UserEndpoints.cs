@@ -94,7 +94,8 @@ public static class UserEndpoints
     static async Task<IResult> DownsertUser(int id, GatewayDbContext db, IVectorStoreService vectorStore)
     {
         var user = await db.Users.FindAsync(id);
-        if (user is null) return TypedResults.NotFound();
+        if (user is null)
+            return TypedResults.NotFound();
 
         user.IsActive = false;
         user.DeletedAt = DateTime.UtcNow;
@@ -110,7 +111,8 @@ public static class UserEndpoints
     static async Task<IResult> RecordLogin(int id, GatewayDbContext db)
     {
         var user = await db.Users.FindAsync(id);
-        if (user is null) return TypedResults.NotFound();
+        if (user is null)
+            return TypedResults.NotFound();
 
         user.LastLoginAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
