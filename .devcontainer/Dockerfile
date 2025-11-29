@@ -61,13 +61,29 @@ RUN curl -sSL https://aspire.dev/install.sh | bash \
     && mv /root/.aspire /opt/aspire \
     && chmod -R 755 /opt/aspire
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install Python 3.14 (free-threaded) and bake dependencies
+# We copy the pyproject.toml from the context (root) to install dependencies
+COPY Aspire-Full.Python/python-agents/pyproject.toml /tmp/python-agents/pyproject.toml
+RUN uv python install 3.14.0t \
+    && cd /tmp/python-agents \
+    && uv venv /opt/venv --python 3.14.0t \
+    && . /opt/venv/bin/activate \
+    && uv pip install -r pyproject.toml \
+    && uv pip install -e .[dev,tracing] || true \
+    && chmod -R 755 /opt/venv
+
 # Copy maintenance scripts
-COPY scripts /opt/devcontainer-scripts
+COPY .devcontainer/scripts /opt/devcontainer-scripts
 RUN chmod -R 755 /opt/devcontainer-scripts
 
 # Set environment variables for .NET and Docker-in-Docker
 ENV DOTNET_ROOT=/usr/share/dotnet
-ENV PATH="${PATH}:/usr/share/dotnet:/home/${USERNAME}/.dotnet/tools:/opt/aspire/bin"
+ENV PATH="/opt/venv/bin:${PATH}:/usr/share/dotnet:/home/${USERNAME}/.dotnet/tools:/opt/aspire/bin"
+ENV VIRTUAL_ENV="/opt/venv"
+ENV UV_CACHE_DIR="/home/${USERNAME}/.cache/uv"
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 ENV DOTNET_USE_POLLING_FILE_WATCHER=true
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
