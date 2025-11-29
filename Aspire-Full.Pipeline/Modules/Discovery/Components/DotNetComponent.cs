@@ -5,7 +5,7 @@ namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
 public class DotNetComponent : IDiscoveryComponent
 {
-    public async Task<DiscoveryResult> DiscoverAsync()
+    public async Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
         var details = new Dictionary<string, string>();
         var version = await ProcessUtils.RunAsync("dotnet", ["--version"]);
@@ -35,12 +35,12 @@ public class DotNetComponent : IDiscoveryComponent
             if (sdkList.Any()) details["Installed SDKs"] = string.Join(", ", sdkList);
         }
 
-        var yaml = $"dotnet:\n  sdk: \"{version.Output.Trim()}\"";
+        config.DotNet.Sdk = version.Output.Trim();
         if (details.ContainsKey("Installed SDKs") && details["Installed SDKs"].Contains("10.0"))
         {
-            yaml += "\n  preview: true";
+            config.DotNet.Preview = true;
         }
 
-        return new DiscoveryResult(".NET SDK", "Installed", version.Output.Trim(), details, yaml);
+        return new DiscoveryResult(".NET SDK", "Installed", version.Output.Trim(), details);
     }
 }

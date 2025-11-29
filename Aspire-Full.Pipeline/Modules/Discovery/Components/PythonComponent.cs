@@ -6,7 +6,7 @@ namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
 public class PythonComponent : IDiscoveryComponent
 {
-    public async Task<DiscoveryResult> DiscoverAsync()
+    public async Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
         string root;
         try { root = RepoComponent.LocateRepositoryRoot(); } catch { root = Directory.GetCurrentDirectory(); }
@@ -72,20 +72,19 @@ print(json.dumps(info))
                 if (details.TryGetValue("free_threading", out var ft) && ft.Equals("True", StringComparison.OrdinalIgnoreCase))
                     summary += " [Free-Threading]";
 
-                // Generate YAML
-                var yaml = $"python:\n  version: \"{details["version"]}\"\n  manager: \"uv\"";
+                config.Python.Version = details["version"];
+                config.Python.Manager = "uv";
+
                 if (details.TryGetValue("cuda_available", out var cuda) && cuda.Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    yaml += "\n  torch:\n    device: \"cuda\"";
+                    config.Python.Torch.Device = "cuda";
                 }
                 else
                 {
-                    // If torch is installed but CPU only, we might want to recommend CUDA if hardware supports it.
-                    // But we don't have hardware context here easily. We'll assume if it's missing, we default to cpu or auto.
-                    yaml += "\n  torch:\n    device: \"cpu\" # Warning: CUDA not detected in Python environment";
+                    config.Python.Torch.Device = "cpu";
                 }
 
-                return new DiscoveryResult("Python", "Found", summary, details, yaml);
+                return new DiscoveryResult("Python", "Found", summary, details);
             }
             catch (Exception ex)
             {

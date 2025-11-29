@@ -4,5 +4,5 @@ public record DiscoveryResult(string Category, string Status, string Summary, Di
 
 public interface IDiscoveryComponent
 {
-    Task<DiscoveryResult> DiscoverAsync();
+    Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config);
 }

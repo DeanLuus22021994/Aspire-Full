@@ -1,5 +1,7 @@
 using Aspire_Full.Pipeline.Modules.Discovery.Components;
 using Spectre.Console;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Aspire_Full.Pipeline.Modules.Discovery;
 
@@ -15,6 +17,7 @@ public class DiscoveryModule
             new DotNetComponent(),
             new PythonComponent(),
             new DockerComponent(),
+            new DockerImagesComponent(),
             new HardwareComponent()
         ];
     }
@@ -29,12 +32,11 @@ public class DiscoveryModule
         table.AddColumn("Summary");
 
         var tree = new Tree("[bold cyan]Detailed Inspection[/]");
-        var results = new List<DiscoveryResult>();
+        var config = new EnvironmentConfig();
 
         foreach (var component in _components)
         {
-            var result = await component.DiscoverAsync();
-            results.Add(result);
+            var result = await component.DiscoverAsync(config);
 
             var statusColor = result.Status switch
             {
@@ -63,17 +65,14 @@ public class DiscoveryModule
         AnsiConsole.MarkupLine("[bold cyan]Recommended Configuration (YAML)[/]");
         AnsiConsole.WriteLine("---");
 
-        var yamlBuilder = new System.Text.StringBuilder();
-        foreach (var result in results)
-        {
-            if (!string.IsNullOrWhiteSpace(result.RecommendedYaml))
-            {
-                AnsiConsole.WriteLine(result.RecommendedYaml);
-                yamlBuilder.AppendLine(result.RecommendedYaml);
-            }
-        }
+        var serializer = new SerializerBuilder()
+            .WithNamingConvention(UnderscoredNamingConvention.Instance)
+            .Build();
 
-        await SaveConfigurationAsync(yamlBuilder.ToString());
+        var yamlContent = serializer.Serialize(config);
+        AnsiConsole.WriteLine(yamlContent);
+
+        await SaveConfigurationAsync(yamlContent);
     }
 
     private async Task SaveConfigurationAsync(string yamlContent)

@@ -6,7 +6,7 @@ namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
 public class DockerComponent : IDiscoveryComponent
 {
-    public async Task<DiscoveryResult> DiscoverAsync()
+    public async Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
         var version = await ProcessUtils.RunAsync("docker", ["version", "--format", "{{json .}}"]);
         if (version.ExitCode != 0)
@@ -33,7 +33,9 @@ public class DockerComponent : IDiscoveryComponent
         var compose = await ProcessUtils.RunAsync("docker", ["compose", "version"]);
         if (compose.ExitCode == 0) details["Compose"] = compose.Output.Trim();
 
-        var yaml = "docker:\n  registry: \"localhost:5000\"\n  image_prefix: \"aspire-agents\"";
-        return new DiscoveryResult("Docker", "Running", details.GetValueOrDefault("Server Version", "Unknown"), details, yaml);
+        config.Docker.Registry = "localhost:5000";
+        config.Docker.ImagePrefix = "aspire-agents";
+
+        return new DiscoveryResult("Docker", "Running", details.GetValueOrDefault("Server Version", "Unknown"), details);
     }
 }

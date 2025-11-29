@@ -5,7 +5,7 @@ namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
 public class RepoComponent : IDiscoveryComponent
 {
-    public async Task<DiscoveryResult> DiscoverAsync()
+    public async Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
         string root;
         try
@@ -33,8 +33,10 @@ public class RepoComponent : IDiscoveryComponent
         }
         catch { /* Git might not be in path */ }
 
-        return new DiscoveryResult("Repository", "Found", root, details,
-            $"repository:\n  root: \"{root.Replace("\\", "/")}\"\n  branch: \"{details.GetValueOrDefault("Branch", "main")}\"");
+        config.Repository.Root = root.Replace("\\", "/");
+        config.Repository.Branch = details.GetValueOrDefault("Branch", "main");
+
+        return new DiscoveryResult("Repository", "Found", root, details);
     }
 
     public static string LocateRepositoryRoot()

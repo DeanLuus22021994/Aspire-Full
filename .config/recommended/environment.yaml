@@ -1,18 +1,24 @@
 repository:
-  root: "C:/Users/Dean/source/Aspire-Full - 1"
-  branch: "master"
+  root: C:/Users/Dean/source/Aspire-Full - 1
+  branch: master
 dotnet:
-  sdk: "10.0.100"
+  sdk: 10.0.100
   preview: true
 python:
-  version: "3.14.0"
-  manager: "uv"
+  version: 3.14.0
+  manager: uv
   torch:
-    device: "cpu" # Warning: CUDA not detected in Python environment
+    device: cpu
 docker:
-  registry: "localhost:5000"
-  image_prefix: "aspire-agents"
+  registry: localhost:5000
+  image_prefix: aspire-agents
+  images:
+    python:
+      free_threading:
+        bleeding_edge: python:3.14.0a1-slim
+        stable: python:3.13.0-slim
+        note: Requires --disable-gil build flag
 hardware:
   gpu:
     enabled: true
-    driver: "581.57"
+    driver: 581.57

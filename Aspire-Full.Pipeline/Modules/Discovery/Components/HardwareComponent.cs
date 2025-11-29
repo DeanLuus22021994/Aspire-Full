@@ -5,7 +5,7 @@ namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
 public class HardwareComponent : IDiscoveryComponent
 {
-    public async Task<DiscoveryResult> DiscoverAsync()
+    public async Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
         var details = new Dictionary<string, string>();
 
@@ -27,12 +27,16 @@ public class HardwareComponent : IDiscoveryComponent
                 {
                     details["GPU Raw"] = gpu.Output.Trim();
                 }
-                var yaml = $"hardware:\n  gpu:\n    enabled: true\n    driver: \"{details.GetValueOrDefault("Driver", "latest")}\"";
-                return new DiscoveryResult("Hardware", "GPU Available", details.GetValueOrDefault("GPU Name", "NVIDIA GPU"), details, yaml);
+
+                config.Hardware.Gpu.Enabled = true;
+                config.Hardware.Gpu.Driver = details.GetValueOrDefault("Driver", "latest");
+
+                return new DiscoveryResult("Hardware", "GPU Available", details.GetValueOrDefault("GPU Name", "NVIDIA GPU"), details);
             }
         }
         catch { }
 
-        return new DiscoveryResult("Hardware", "No GPU", "Standard CPU Environment", details, "hardware:\n  gpu:\n    enabled: false");
+        config.Hardware.Gpu.Enabled = false;
+        return new DiscoveryResult("Hardware", "No GPU", "Standard CPU Environment", details);
     }
 }
