@@ -2,8 +2,13 @@
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS native-build
 WORKDIR /src
 
-# Install CMake and build tools
-RUN apt-get update && apt-get install -y cmake build-essential
+# Install CMake 3.29 (required for C++20/CUDA support) and build tools
+RUN apt-get update && apt-get install -y build-essential wget && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.29.0/cmake-3.29.0-linux-x86_64.sh && \
+    chmod +x cmake-3.29.0-linux-x86_64.sh && \
+    ./cmake-3.29.0-linux-x86_64.sh --skip-license --prefix=/usr/local && \
+    rm cmake-3.29.0-linux-x86_64.sh && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy Native Project
 COPY ["Aspire-Full.Native/", "Aspire-Full.Native/"]
