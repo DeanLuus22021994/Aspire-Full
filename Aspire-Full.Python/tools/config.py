@@ -16,7 +16,8 @@ except ImportError as exc:  # pragma: no cover
         "PyYAML is required to load python-lint.yaml with anchors/tags"
     ) from exc
 
-# Aspire-Full.Python/tools/config.py -> parents[0]=tools, parents[1]=Aspire-Full.Python, parents[2]=Root
+# Aspire-Full.Python/tools/config.py -> parents[0]=tools, parents[1]=Aspire-Full.Python,
+# parents[2]=Root
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "python-config.yaml"

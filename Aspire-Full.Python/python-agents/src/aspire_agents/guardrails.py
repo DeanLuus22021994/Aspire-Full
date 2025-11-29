@@ -5,7 +5,7 @@ Leverages LocalComputeService for high-performance, GPU-accelerated checks.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Optional
 
 from .compute import get_compute_service
 
@@ -29,7 +29,7 @@ class ToolOutputGuardrailTripwireTriggered(Exception):
 
 
 class ToolGuardrailFunctionOutput:
-    def __init__(self, output_info: dict[str, Any], message: str = None):
+    def __init__(self, output_info: dict[str, Any], message: Optional[str] = None):
         self.output_info = output_info
         self.message = message
 

@@ -46,8 +46,12 @@ def get_contact_info(user_id: str) -> dict[str, str]:
 send_email.tool_input_guardrails = [semantic_input_guardrail(category="harmful")]  # type: ignore
 
 # "pii" category includes "social security number", "phone number", etc.
-get_user_data.tool_output_guardrails = [semantic_output_guardrail(category="pii")]  # type: ignore
-get_contact_info.tool_output_guardrails = [semantic_output_guardrail(category="pii")]  # type: ignore
+get_user_data.tool_output_guardrails = [  # type: ignore
+    semantic_output_guardrail(category="pii")
+]
+get_contact_info.tool_output_guardrails = [  # type: ignore
+    semantic_output_guardrail(category="pii")
+]
 
 agent = Agent(
     name="Secure Assistant",
@@ -81,7 +85,7 @@ async def main():
 
         if hasattr(send_email, "on_invoke_tool"):
             # on_invoke_tool is likely async and takes a string
-            res = await send_email.on_invoke_tool(args_json)
+            res = await send_email.on_invoke_tool(args_json)  # type: ignore
             print(f"✅ Result: {res}\n")
         else:
             print("❌ Error: Could not find invocation method.\n")
@@ -101,7 +105,7 @@ async def main():
         args_json = json.dumps(args)
 
         if hasattr(send_email, "on_invoke_tool"):
-            res = await send_email.on_invoke_tool(args_json)
+            res = await send_email.on_invoke_tool(args_json)  # type: ignore
 
             # If blocked, it returns the error message string directly in our implementation
             if "Input blocked" in str(res):
@@ -122,7 +126,7 @@ async def main():
         args_json = json.dumps(args)
 
         if hasattr(get_user_data, "on_invoke_tool"):
-            await get_user_data.on_invoke_tool(args_json)
+            await get_user_data.on_invoke_tool(args_json)  # type: ignore
             print("❌ Error: Should have raised exception!\n")
         else:
             print("❌ Error: Could not find invocation method.\n")
