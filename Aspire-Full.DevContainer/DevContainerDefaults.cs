@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Aspire_Full.Python;
 
 namespace Aspire_Full.DevContainer;
 
@@ -14,8 +15,8 @@ public static class DevContainerDefaults
     public const string DockerfileContext = "../.devcontainer";
     public const string SleepCommand = "sleep";
     public const string SleepForeverArgument = "infinity";
-    public const string PythonVersion = "3.14.0-free-threaded+gil";
-    public const string PythonRuntime = "cpython-free-threaded";
+    public const string PythonVersion = PythonDefaults.PythonVersion;
+    public const string PythonRuntime = PythonDefaults.PythonRuntime;
     public const string CudaRequirement = "cuda>=12.4,driver>=535";
 
     public static IReadOnlyList<(string Name, string Target)> VolumeMounts { get; } = new (string, string)[]
