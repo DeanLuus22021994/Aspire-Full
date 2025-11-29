@@ -19,6 +19,8 @@ This directory hosts self-contained Docker build contexts for VS Code extensions
 | streetsidesoftware.code-spell-checker | `streetsidesoftware.code-spell-checker/` | `aspire_streetsidesoftware_code_spell_checker_extension_cache` |
 | EditorConfig.EditorConfig | `EditorConfig.EditorConfig/` | `aspire_editorconfig_editorconfig_extension_cache` |
 
+> **GPU Support**: The `ms-windows-ai-studio` and `GitHub.copilot` containers are configured to use the NVIDIA runtime to support local inference and tensor operations. Ensure the NVIDIA Container Toolkit is installed on the host.
+
 ## Usage
 
 ```bash
