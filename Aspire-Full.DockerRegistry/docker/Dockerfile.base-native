@@ -1,4 +1,7 @@
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full Base Native Image"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Enable apt caching
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
