@@ -37,7 +37,9 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(f"Action must be one of {sorted(VALID_ACTIONS)}")
 
     context = get_context()
-    command = _build_command(action, context.service_name, context.compose_file)
+    command = _build_command(
+        action, context.service_name, context.compose_file
+    )
     command.extend(extra_args)
 
     env = os.environ.copy()
