@@ -1,5 +1,5 @@
 lint:
-  line_length: 100
+  line_length: 120
   vendor_globs: &o0
   - .vscode
   - .vscode/**

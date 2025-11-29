@@ -120,7 +120,7 @@ public class GpuConfig
 public class PythonLintConfig
 {
     [YamlMember(Alias = "line_length", ApplyNamingConventions = false)]
-    public int LineLength { get; set; } = 100;
+    public int LineLength { get; set; } = 120;
 
     [YamlMember(Alias = "vendor_globs", ApplyNamingConventions = false)]
     public List<string> VendorGlobs { get; set; } = new();

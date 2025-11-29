@@ -134,7 +134,7 @@ public class DiscoveryModule
         {
             Lint = new PythonLintConfig
             {
-                LineLength = 100,
+                LineLength = 120,
                 VendorGlobs = vendorGlobs,
                 Paths = new LintPathsConfig
                 {

@@ -110,7 +110,7 @@ def load_config() -> LintConfig:
     runner = raw.get("runner", {})
 
     return LintConfig(
-        line_length=int(raw.get("line_length", 100)),
+        line_length=int(raw.get("line_length", 120)),
         vendor_globs=vendor,
         paths=PathsConfig(
             roots=_as_tuple(paths.get("lint_roots")),
