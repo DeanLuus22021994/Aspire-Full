@@ -19,7 +19,7 @@ variable "ARCH" {
 }
 
 group "default" {
-  targets = ["api", "gateway", "web", "web-assembly", "python-agents"]
+  targets = ["api", "gateway", "web", "web-assembly", "python-agents", "tensor-compute"]
 }
 
 group "bootstrap" {
@@ -91,4 +91,12 @@ target "python-agents" {
   tags = ["${REGISTRY}/${NAMESPACE}/python-agents-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT},mode=max"]
+}
+
+target "tensor-compute" {
+  context = "."
+  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Tensor"
+  tags = ["${REGISTRY}/${NAMESPACE}/tensor-compute-${ENVIRONMENT}:${VERSION}-${ARCH}"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT}"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max"]
 }

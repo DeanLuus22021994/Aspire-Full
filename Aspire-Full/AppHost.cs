@@ -228,7 +228,7 @@ if (useBakedImages)
 }
 else
 {
-    pythonAgents = builder.AddDockerfile("python-agents", "../Aspire-Full.Python/python-agents", "Dockerfile.agent")
+    pythonAgents = builder.AddDockerfile("python-agents", "..", "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent")
         .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName)
         .WithExternalHttpEndpoints();

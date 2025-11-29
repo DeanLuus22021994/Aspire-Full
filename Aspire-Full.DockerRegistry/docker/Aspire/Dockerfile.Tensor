@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY pyproject.toml .
+COPY Aspire-Full.Python/python-agents/pyproject.toml .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir build && \
     pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu124 && \
@@ -69,8 +69,8 @@ RUN python -m compileall /usr/local/lib/python3.14/site-packages
 FROM python:3.14.0-slim-bookworm AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHON_GIL=0
+    PYTHONDONTWRITEBYTECODE=1
+    # PYTHON_GIL=0
 
 WORKDIR /app
 
@@ -89,7 +89,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
 
 # Copy application code
-COPY . .
+COPY Aspire-Full.Python/python-agents/ .
 
 # Precompile application code for instant startup
 RUN python -m compileall .
