@@ -55,6 +55,8 @@ dotnet run --project Aspire-Full
 
 > Tensor acceleration is mandatory. `Start-Aspire.ps1` validates CUDA Tensor Core hardware at startup and exits with an error if NVIDIA GPUs are unavailable.
 
+GPU utilization targets and development intent live in [.config/gpu-utilization.yaml](.config/gpu-utilization.yaml); keep workloads above the 80% "optimized" flag to hit the precision/high-throughput goal.
+
 The Aspire Dashboard will be available at `http://localhost:18888`
 
 ### Run Tests

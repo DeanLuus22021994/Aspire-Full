@@ -171,6 +171,29 @@ function Start-AspireApp {
     if ($gpuInfo) {
         Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
     }
+
+    $gpuSpecPath = Join-Path $script:ProjectRoot ".config/gpu-utilization.yaml"
+    if (Test-Path $gpuSpecPath) {
+        $canParseYaml = $null -ne (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)
+        if ($canParseYaml) {
+            try {
+                $gpuSpecContent = Get-Content -Path $gpuSpecPath -Raw
+                $gpuSpec = $gpuSpecContent | ConvertFrom-Yaml
+                $target = [double]$gpuSpec.telemetry.target_utilization
+                $measured = [double]$gpuSpec.telemetry.measured_utilization
+                $targetPct = ($target * 100).ToString('F0')
+                $measuredPct = ($measured * 100).ToString('F0')
+                Write-Host "GPU utilization target ${targetPct}% vs current ${measuredPct}% (spec: $gpuSpecPath)." -ForegroundColor Yellow
+            }
+            catch {
+                Write-Warning "Failed to parse GPU utilization spec at $gpuSpecPath. $_"
+            }
+        }
+        else {
+            Write-Host "GPU utilization spec available at $gpuSpecPath" -ForegroundColor Yellow
+        }
+    }
+
     $env:CUDA_VISIBLE_DEVICES = "all"
     $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
     $env:NVIDIA_VISIBLE_DEVICES = "all"
