@@ -1,5 +1,18 @@
 version: 1
 
+environment:
+  dotnet:
+    sdk: "10.0.100"
+    preview: true
+  python:
+    version: "3.14.0"
+    manager: "uv"
+    torch:
+      device: "cuda"
+  hardware:
+    gpu:
+      enabled: true
+
 contexts:
   python:
     lint:

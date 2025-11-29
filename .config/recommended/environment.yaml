@@ -1,0 +1,18 @@
+repository:
+  root: "C:/Users/Dean/source/Aspire-Full - 1"
+  branch: "master"
+dotnet:
+  sdk: "10.0.100"
+  preview: true
+python:
+  version: "3.14.0"
+  manager: "uv"
+  torch:
+    device: "cpu" # Warning: CUDA not detected in Python environment
+docker:
+  registry: "localhost:5000"
+  image_prefix: "aspire-agents"
+hardware:
+  gpu:
+    enabled: true
+    driver: "581.57"
