@@ -38,6 +38,7 @@ tracing = [
     "opentelemetry-sdk==1.34.1",
     "opentelemetry-exporter-otlp-proto-http==1.34.1",
     "opentelemetry-instrumentation-openai-v2==2.1b0",
+    "opentelemetry-instrumentation-fastapi>=0.43b0",
 ]
 
 [project.scripts]
