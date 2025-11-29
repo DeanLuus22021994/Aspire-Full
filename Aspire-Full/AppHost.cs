@@ -70,7 +70,6 @@ var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotn
     .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
     .WithHttpEndpoint(name: "ui", port: 18888, targetPort: 18888)
     .WithHttpEndpoint(name: "otlp", port: 18889, targetPort: 18889)
-    //.WithHttpEndpoint(name: "mcp", port: 16036, targetPort: 16036) // Removed to fix TargetPort error if not supported or conflicting
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
