@@ -1,15 +1,15 @@
 import asyncio
 import os
 
-from agents import (
+from agents import (  # type: ignore
     Agent,
     ModelSettings,
     OpenAIChatCompletionsModel,
     Runner,
     set_tracing_disabled,
 )
-from openai import AsyncOpenAI
-from openai.types.shared import Reasoning
+from openai import AsyncOpenAI  # type: ignore
+from openai.types.shared import Reasoning  # type: ignore
 
 set_tracing_disabled(True)
 
@@ -28,9 +28,7 @@ gpt_oss_model = OpenAIChatCompletionsModel(
 async def main() -> None:
     agent = Agent(
         name="Assistant",
-        instructions=(
-            "You're a helpful assistant. You provide a concise answer to the user's question."
-        ),
+        instructions=("You're a helpful assistant. You provide a concise answer to the user's question."),
         model=gpt_oss_model,
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="high", summary="detailed"),

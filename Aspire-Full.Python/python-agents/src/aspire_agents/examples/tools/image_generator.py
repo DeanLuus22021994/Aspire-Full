@@ -5,7 +5,7 @@ import subprocess
 import sys
 import tempfile
 
-from agents import Agent, ImageGenerationTool, Runner, trace  # type: ignore
+from agents import Agent, ImageGenerationTool, Runner, trace  # pyright: ignore
 
 
 def open_file(path: str) -> None:

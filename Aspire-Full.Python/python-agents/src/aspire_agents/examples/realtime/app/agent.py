@@ -1,8 +1,8 @@
 import asyncio
 
-from agents import function_tool  # type: ignore
-from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX  # type: ignore
-from agents.realtime import RealtimeAgent, realtime_handoff  # type: ignore
+from agents import function_tool  # pyright: ignore
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX  # pyright: ignore
+from agents.realtime import RealtimeAgent, realtime_handoff  # pyright: ignore
 
 """
 When running the UI example locally, you can edit this file to change the setup. THe server
@@ -89,9 +89,7 @@ seat_booking_agent = RealtimeAgent(
 
 triage_agent = RealtimeAgent(
     name="Triage Agent",
-    handoff_description=(
-        "A triage agent that can delegate a customer's request to the appropriate agent."
-    ),
+    handoff_description=("A triage agent that can delegate a customer's request to the appropriate agent."),
     instructions=(
         f"{RECOMMENDED_PROMPT_PREFIX} "
         "You are a helpful triaging agent. You can use your tools to delegate questions to "

@@ -14,11 +14,11 @@ import asyncio
 import os
 from typing import Any, cast
 
-from agents import ModelSettings
-from agents.models.interface import ModelTracing
-from agents.models.openai_provider import OpenAIProvider
-from openai.types.responses import ResponseOutputRefusal, ResponseOutputText
-from openai.types.shared.reasoning import Reasoning
+from agents import ModelSettings  # type: ignore
+from agents.models.interface import ModelTracing  # type: ignore
+from agents.models.openai_provider import OpenAIProvider  # type: ignore
+from openai.types.responses import ResponseOutputRefusal, ResponseOutputText  # type: ignore
+from openai.types.shared.reasoning import Reasoning  # type: ignore
 
 MODEL_NAME = os.getenv("EXAMPLE_MODEL_NAME") or "gpt-5"
 
@@ -41,9 +41,7 @@ async def stream_with_reasoning_content():
     async for event in model.stream_response(
         system_instructions="You are a helpful assistant that writes creative content.",
         input="Write a haiku about recursion in programming",
-        model_settings=ModelSettings(
-            reasoning=Reasoning(effort="medium", summary="detailed")
-        ),
+        model_settings=ModelSettings(reasoning=Reasoning(effort="medium", summary="detailed")),
         tools=[],
         output_schema=None,
         handoffs=[],
@@ -79,9 +77,7 @@ async def get_response_with_reasoning_content():
     response = await model.get_response(
         system_instructions="You are a helpful assistant that explains technical concepts clearly.",
         input="Explain the concept of recursion in programming",
-        model_settings=ModelSettings(
-            reasoning=Reasoning(effort="medium", summary="detailed")
-        ),
+        model_settings=ModelSettings(reasoning=Reasoning(effort="medium", summary="detailed")),
         tools=[],
         output_schema=None,
         handoffs=[],
