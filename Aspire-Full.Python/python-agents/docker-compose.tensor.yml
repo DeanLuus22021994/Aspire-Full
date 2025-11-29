@@ -23,6 +23,12 @@ services:
       - /tmp
     user: "1000:1000"
     command: ["python", "-m", "aspire_agents.cli", "run", "--config", "examples/basic/agent.yaml"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from aspire_agents.compute import get_compute_service; get_compute_service()"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 10s
 
 volumes:
   aspire-models:
