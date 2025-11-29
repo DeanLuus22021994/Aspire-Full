@@ -97,64 +97,148 @@ var qdrant = builder.AddQdrant("qdrant")
 // -----------------------------------------------------------------------------
 // API Service - RESTful backend with Entity Framework
 // -----------------------------------------------------------------------------
-var api = builder.AddProject<Projects.Aspire_Full_Api>("api")
-    .WithReference(database)
-    .WithReference(redis)
-    .WaitFor(database)
-    .WaitFor(redis);
+var useBakedImages = builder.Configuration.GetValue<bool>("USE_BAKED_IMAGES");
+var registryHost = "localhost:5001";
+var namespaceName = "aspire";
+var version = "1.0.0";
+var arch = "linux-x64";
+var envTag = "dev";
 
-var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>("gateway")
-    .WithReference(database)
-    .WithReference(qdrant)
-    .WaitFor(database)
-    .WaitFor(qdrant);
+IResourceBuilder<IResourceWithServiceDiscovery> api;
+if (useBakedImages)
+{
+    api = builder.AddContainer("api", $"{registryHost}/{namespaceName}/api-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: 5000, targetPort: 8080)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    api = builder.AddProject<Projects.Aspire_Full_Api>("api");
+}
+
+api.WithReference(database)
+   .WithReference(redis)
+   .WaitFor(database)
+   .WaitFor(redis);
+
+IResourceBuilder<IResourceWithServiceDiscovery> gateway;
+if (useBakedImages)
+{
+    gateway = builder.AddContainer("gateway", $"{registryHost}/{namespaceName}/gateway-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: 5001, targetPort: 8080)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    gateway = builder.AddProject<Projects.Aspire_Full_Gateway>("gateway");
+}
+
+gateway.WithReference(database)
+       .WithReference(qdrant)
+       .WaitFor(database)
+       .WaitFor(qdrant);
 
 // -----------------------------------------------------------------------------
 // Web Frontend - Semantic UI React application
 // -----------------------------------------------------------------------------
-var frontend = builder.AddJavaScriptApp("frontend", "../Aspire-Full.Web", "dev")
-    .WithReference(api)
-    .WaitFor(api)
-    .WithHttpEndpoint(env: "PORT")
-    .WithExternalHttpEndpoints();
+IResourceBuilder<IResourceWithServiceDiscovery> frontend;
+if (useBakedImages)
+{
+    frontend = builder.AddContainer("frontend", $"{registryHost}/{namespaceName}/web-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: 3000, targetPort: 80)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    frontend = builder.AddJavaScriptApp("frontend", "../Aspire-Full.Web", "dev")
+        .WithHttpEndpoint(env: "PORT")
+        .WithExternalHttpEndpoints();
+}
 
-var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-docs")
-    .WithReference(api)
-    .WaitFor(api)
-    .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "docs")
-    .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5175")
-    .WithHttpEndpoint(name: "docs", port: 5175, targetPort: 5175)
-    .WithExternalHttpEndpoints();
+frontend.WithReference(api)
+        .WaitFor(api);
 
-var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-uat")
-    .WithReference(api)
-    .WaitFor(api)
-    .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "uat")
-    .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5176")
-    .WithHttpEndpoint(name: "uat", port: 5176, targetPort: 5176)
-    .WithExternalHttpEndpoints();
+IResourceBuilder<IResourceWithServiceDiscovery> wasmDocs;
+if (useBakedImages)
+{
+    wasmDocs = builder.AddContainer("frontend-docs", $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "docs", port: 5175, targetPort: 80)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-docs")
+        .WithHttpEndpoint(name: "docs", port: 5175, targetPort: 5175)
+        .WithExternalHttpEndpoints();
+}
 
-var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-prod")
-    .WithReference(api)
-    .WaitFor(api)
-    .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "prod")
-    .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5177")
-    .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 5177)
-    .WithExternalHttpEndpoints();
+wasmDocs.WithReference(api)
+        .WaitFor(api)
+        .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "docs")
+        .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5175");
+
+IResourceBuilder<IResourceWithServiceDiscovery> wasmUat;
+if (useBakedImages)
+{
+    wasmUat = builder.AddContainer("frontend-uat", $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "uat", port: 5176, targetPort: 80)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-uat")
+        .WithHttpEndpoint(name: "uat", port: 5176, targetPort: 5176)
+        .WithExternalHttpEndpoints();
+}
+
+wasmUat.WithReference(api)
+       .WaitFor(api)
+       .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "uat")
+       .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5176");
+
+IResourceBuilder<IResourceWithServiceDiscovery> wasmProd;
+if (useBakedImages)
+{
+    wasmProd = builder.AddContainer("frontend-prod", $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 80)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-prod")
+        .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 5177)
+        .WithExternalHttpEndpoints();
+}
+
+wasmProd.WithReference(api)
+        .WaitFor(api)
+        .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "prod")
+        .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5177");
 
 // -----------------------------------------------------------------------------
 // Python Agents - Realtime API
 // -----------------------------------------------------------------------------
 // Automated build using Dockerfile.agent
-var pythonAgents = builder.AddDockerfile("python-agents", "../Aspire-Full.Python/python-agents", "Dockerfile.agent")
-    .WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
+IResourceBuilder<IResourceWithServiceDiscovery> pythonAgents;
+if (useBakedImages)
+{
+    pythonAgents = builder.AddContainer("python-agents", $"{registryHost}/{namespaceName}/python-agents-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
+        .WithContainerRuntimeArgs("--network", networkName);
+}
+else
+{
+    pythonAgents = builder.AddDockerfile("python-agents", "../Aspire-Full.Python/python-agents", "Dockerfile.agent")
+        .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
+        .WithContainerRuntimeArgs("--network", networkName)
+        .WithExternalHttpEndpoints();
+}
+
+pythonAgents.WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
     .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
     .WithEnvironment("OTEL_PYTHON_LOG_CORRELATION", "true")
     .WithEnvironment("CUDA_VISIBLE_DEVICES", "0")
-    .WithEnvironment("GPU_TARGET_UTILIZATION", runtimeConfig.Telemetry.Gpu.Snapshot.TargetUtilization.ToString())
-    .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
-    .WithContainerRuntimeArgs("--network", networkName)
-    .WithExternalHttpEndpoints();
+    .WithEnvironment("GPU_TARGET_UTILIZATION", runtimeConfig.Telemetry.Gpu.Snapshot.TargetUtilization.ToString());
 
 if (settings.Agents.Gpu)
 {
