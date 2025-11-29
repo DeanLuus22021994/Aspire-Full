@@ -1,4 +1,7 @@
 using Aspire_Full.DockerRegistry;
+using Aspire_Full.DockerRegistry.Models;
+using Aspire_Full.DockerRegistry.Abstractions;
+using Aspire_Full.DockerRegistry.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
