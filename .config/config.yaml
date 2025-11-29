@@ -90,6 +90,9 @@ telemetry:
     target_utilization: 0.80
     relative_to_target_pct: 37.5
     utilization_gap: 0.50
+    mode: active-development
+    implementation_ready: false
+    intent: "Accelerated computations to facilitate precision development and high throughput."
     notes:
       - "Actual utilization is calculated from live tensor computation workloads (not pinned)."
       - "Gap highlights the 30% actual vs 80% optimized expectation."
