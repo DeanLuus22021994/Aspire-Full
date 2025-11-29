@@ -18,6 +18,33 @@ $ErrorActionPreference = "Continue"
 # =============================================================================
 # GPU and SIMD Optimization - Always enable for maximum performance
 # =============================================================================
+function Show-GpuUtilizationSpec {
+    $projectRoot = Split-Path $PSScriptRoot -Parent
+    $gpuSpecPath = Join-Path $projectRoot ".config/gpu-utilization.yaml"
+    if (-not (Test-Path $gpuSpecPath)) {
+        return
+    }
+
+    $canParseYaml = $null -ne (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)
+    if (-not $canParseYaml) {
+        Write-Host "GPU utilization spec available at $gpuSpecPath" -ForegroundColor Yellow
+        return
+    }
+
+    try {
+        $gpuSpecContent = Get-Content -Path $gpuSpecPath -Raw
+        $gpuSpec = $gpuSpecContent | ConvertFrom-Yaml
+        $target = [double]$gpuSpec.telemetry.target_utilization
+        $measured = [double]$gpuSpec.telemetry.measured_utilization
+        $targetPct = ($target * 100).ToString('F0')
+        $measuredPct = ($measured * 100).ToString('F0')
+        Write-Host "GPU utilization target ${targetPct}% vs current ${measuredPct}% (spec: $gpuSpecPath)." -ForegroundColor Yellow
+    }
+    catch {
+        Write-Warning "Failed to parse GPU utilization spec at $gpuSpecPath. $_"
+    }
+}
+
 function Initialize-GpuEnvironment {
     $gpuAvailable = $null -ne (Get-Command nvidia-smi -ErrorAction SilentlyContinue)
 
@@ -36,6 +63,7 @@ function Initialize-GpuEnvironment {
     Write-Host "GPU acceleration enforced" -ForegroundColor Magenta
     $gpuInfo = nvidia-smi --query-gpu=name,memory.free,utilization.gpu --format=csv,noheader 2>$null
     Write-Host "GPU: $gpuInfo" -ForegroundColor Cyan
+    Show-GpuUtilizationSpec
 
     $env:CUDA_VISIBLE_DEVICES = "all"
     $env:TF_FORCE_GPU_ALLOW_GROWTH = "true"
