@@ -197,3 +197,58 @@ public class RunnerConfig
     [YamlMember(Alias = "pylint_disable", ApplyNamingConventions = false)]
     public List<string> PylintDisable { get; set; } = new();
 }
+
+public class PythonToolingConfig
+{
+    [YamlMember(Alias = "lint", ApplyNamingConventions = false)]
+    public PythonLintConfig Lint { get; set; } = new();
+
+    [YamlMember(Alias = "test", ApplyNamingConventions = false)]
+    public PythonTestConfig Test { get; set; } = new();
+}
+
+// Python Test Configuration Models
+public class PythonTestConfig
+{
+    [YamlMember(Alias = "vendor_globs", ApplyNamingConventions = false)]
+    public List<string> VendorGlobs { get; set; } = new();
+
+    [YamlMember(Alias = "paths", ApplyNamingConventions = false)]
+    public TestPathsConfig Paths { get; set; } = new();
+
+    [YamlMember(Alias = "pytest", ApplyNamingConventions = false)]
+    public PytestConfig Pytest { get; set; } = new();
+
+    [YamlMember(Alias = "runner", ApplyNamingConventions = false)]
+    public TestRunnerConfig Runner { get; set; } = new();
+}
+
+public class TestPathsConfig
+{
+    [YamlMember(Alias = "test_roots", ApplyNamingConventions = false)]
+    public List<string> TestRoots { get; set; } = new();
+
+    [YamlMember(Alias = "exclude_globs", ApplyNamingConventions = false)]
+    public List<string> ExcludeGlobs { get; set; } = new();
+}
+
+public class PytestConfig
+{
+    [YamlMember(Alias = "addopts", ApplyNamingConventions = false)]
+    public List<string> AddOpts { get; set; } = new();
+
+    [YamlMember(Alias = "markers", ApplyNamingConventions = false)]
+    public List<string> Markers { get; set; } = new();
+
+    [YamlMember(Alias = "filterwarnings", ApplyNamingConventions = false)]
+    public List<string> FilterWarnings { get; set; } = new();
+}
+
+public class TestRunnerConfig
+{
+    [YamlMember(Alias = "auto_targets", ApplyNamingConventions = false)]
+    public List<string> AutoTargets { get; set; } = new();
+
+    [YamlMember(Alias = "default_addopts", ApplyNamingConventions = false)]
+    public List<string> DefaultAddOpts { get; set; } = new();
+}
