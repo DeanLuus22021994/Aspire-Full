@@ -1,4 +1,7 @@
 using Aspire_Full.DockerRegistry;
+using Aspire_Full.DockerRegistry.Configuration;
+using Aspire_Full.DockerRegistry.Models;
+using Aspire_Full.DockerRegistry.Services;
 
 namespace Aspire_Full.Tests.Unit.DockerRegistry;
 
