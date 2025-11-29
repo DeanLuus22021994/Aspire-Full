@@ -15,7 +15,7 @@ public class VectorStoreService : IVectorStoreService
     private readonly QdrantClient _client;
     private readonly ILogger<VectorStoreService> _logger;
     private const string CollectionName = "users";
-    private const ulong VectorSize = 1536; // Matching EmbeddingService default
+    private const ulong VectorSize = 384; // Matching all-MiniLM-L6-v2
 
     public VectorStoreService(QdrantClient client, ILogger<VectorStoreService> logger)
     {
