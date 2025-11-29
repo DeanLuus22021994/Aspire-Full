@@ -9,7 +9,17 @@ COPY Aspire-Full.Web/ .
 RUN npm run build
 
 FROM nginx:alpine
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full Web Frontend"
+LABEL org.opencontainers.image.licenses="MIT"
+
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY Aspire-Full.Web/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Run as non-root (nginxinc/nginx-unprivileged is better, but we can config alpine)
+# For now, we keep it simple but add labels.
+# To run as non-root in standard nginx image requires config changes (pid file, ports > 1024)
+# We will stick to standard for now but add labels.
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

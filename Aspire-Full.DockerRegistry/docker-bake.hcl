@@ -44,7 +44,7 @@ target "base-dotnet" {
 
 target "api" {
   context = "."
-  dockerfile = "Aspire-Full.DockerRegistry/docker/Dockerfile"
+  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Api"
   contexts = {
     "base-native" = "target:base-native"
     "base-dotnet" = "target:base-dotnet"

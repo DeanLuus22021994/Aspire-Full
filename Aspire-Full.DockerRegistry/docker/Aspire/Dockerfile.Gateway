@@ -38,6 +38,10 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
 
 # Stage 3: Runtime
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS final
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full Gateway with Native Tensor Support"
+LABEL org.opencontainers.image.licenses="MIT"
+
 WORKDIR /app
 
 # Enable apt caching
@@ -46,16 +50,23 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 # Install .NET Runtime Dependencies (Self-contained app needs these)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y libicu-dev libssl-dev
+    apt-get update && apt-get install -y libicu-dev libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && \
+    chown -R appuser:appuser /app
 
 # Copy Native Library
-COPY --from=native-build /src/Aspire-Full.Native/libAspireFullNative.so /app/
+COPY --from=native-build --chown=appuser:appuser /src/Aspire-Full.Native/libAspireFullNative.so /app/
 
 # Copy Published Application
-COPY --from=dotnet-build /app/publish .
+COPY --from=dotnet-build --chown=appuser:appuser /app/publish .
 
 # Configure Environment
 ENV LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH"
 ENV ASPNETCORE_URLS="http://+:8080"
+
+USER appuser
 
 ENTRYPOINT ["./Aspire-Full.Gateway"]

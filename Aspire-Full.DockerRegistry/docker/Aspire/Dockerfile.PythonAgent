@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM python:3.14-rc-slim
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full Python Agents"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Enable Python 3.14 Free-Threading
 # ENV PYTHON_GIL=0
