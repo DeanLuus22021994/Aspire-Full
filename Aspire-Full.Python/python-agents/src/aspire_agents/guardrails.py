@@ -29,15 +29,16 @@ class ToolOutputGuardrailTripwireTriggered(Exception):
 
 
 class ToolGuardrailFunctionOutput:
-    def __init__(self, output_info: dict[str, Any]):
+    def __init__(self, output_info: dict[str, Any], message: str = None):
         self.output_info = output_info
+        self.message = message
 
     @classmethod
     def reject_content(
         cls, message: str, output_info: dict[str, Any]
     ) -> "ToolGuardrailFunctionOutput":
         # In a real implementation, this would signal rejection to the runner
-        return cls(output_info)
+        return cls(output_info, message=message)
 
     @classmethod
     def raise_exception(
