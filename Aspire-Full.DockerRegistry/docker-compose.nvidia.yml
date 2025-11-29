@@ -1,8 +1,8 @@
 services:
   aspire-full-api:
     build:
-      context: .
-      dockerfile: Aspire-Full.Api/Dockerfile
+      context: ..
+      dockerfile: Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Api
     image: aspire-full-api:native-nvidia
     deploy:
       resources:

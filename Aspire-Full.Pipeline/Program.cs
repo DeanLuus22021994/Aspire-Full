@@ -110,7 +110,7 @@ static async Task ProvisionAgentsAsync(string registryUrl, string imageName, str
     }
 
     AnsiConsole.MarkupLine("[green]Building Agent Image...[/]");
-    var buildArgs = new[] { "build", "-t", fullImageName, "-f", "Aspire-Full.Python/python-agents/Dockerfile.agent", "Aspire-Full.Python/python-agents" };
+    var buildArgs = new[] { "build", "-t", fullImageName, "-f", "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent", "." };
     if (await RunProcessWithOutputAsync("docker", buildArgs, root) != 0) return;
 
     AnsiConsole.MarkupLine("[green]Pushing to Internal Registry...[/]");
