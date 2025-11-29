@@ -69,7 +69,7 @@ class BatchComputeService:
             ) from e
 
         # Verify model is actually on GPU
-        if next(self.model.parameters()).device.type != "cuda":
+        if next(self.model.parameters()).device.type != "cuda":  # type: ignore
             raise TensorCoreUnavailableError(
                 "Model loaded on CPU despite strict GPU enforcement!"
             )
@@ -183,7 +183,7 @@ class BatchComputeService:
         future = loop.create_future()
 
         # We use a standard concurrent.futures.Future to bridge to the thread
-        thread_future = Future()
+        thread_future: Future = Future()
 
         def callback(f):
             try:
@@ -204,7 +204,7 @@ class BatchComputeService:
         """
         futures = []
         for text in texts:
-            f = Future()
+            f: Future = Future()
             self.queue.put((text, f))
             futures.append(f)
 

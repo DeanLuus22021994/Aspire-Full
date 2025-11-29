@@ -1,37 +1,18 @@
 using Aspire.Hosting;
 using Aspire.Hosting.Qdrant;
+using Aspire_Full.Configuration;
 using Aspire_Full.DevContainer;
 
 // =============================================================================
 // Aspire Full AppHost - Distributed Application Orchestrator
 // =============================================================================
-// This is the main entry point for the .NET Aspire application.
-// It configures and orchestrates all services in the distributed application.
-//
-// Architecture:
-//   - Aspire manages its own containers (PostgreSQL, Redis, Qdrant, devcontainer, admin UIs)
-//   - All containers join aspire-network for unified low-latency communication
-//   - Telemetry is sent to internal dashboard via OTLP (port 18889)
-//
-// Features:
-//   - Service discovery and configuration
-//   - Container orchestration with shared networking
-//   - OpenTelemetry integration with standalone dashboard
-//   - Health checks and monitoring
-//   - GPU acceleration support (NVIDIA CUDA/TensorRT)
-//
-// Environment Variables:
-//   - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL - OTLP endpoint for telemetry
-//   - ASPIRE_ALLOW_UNSECURED_TRANSPORT - Allow HTTP for development
-//   - OTEL_EXPORTER_OTLP_ENDPOINT - OpenTelemetry endpoint
-//   - CUDA_VISIBLE_DEVICES - GPU device selection
-//
-// Usage:
-//   dotnet run --project Aspire-Full --launch-profile headless
-//   ./scripts/Start-Aspire.ps1
-// =============================================================================
+// ... (header omitted) ...
 
 var builder = DistributedApplication.CreateBuilder(args);
+
+// Load Configuration
+var settings = ConfigLoader.LoadSettings(".aspire/settings.json");
+var runtimeConfig = ConfigLoader.LoadRuntimeConfig(".config/config.yaml");
 
 // External network for container-to-container communication
 const string networkName = "aspire-network";
@@ -73,8 +54,18 @@ var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotn
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
+// -----------------------------------------------------------------------------
+// Internal Docker Registry - Local artifact cache
+// -----------------------------------------------------------------------------
+var registry = builder.AddContainer("registry", "registry:2")
+    .WithVolume(settings.Registry.VolumeName, "/var/lib/registry")
+    .WithHttpEndpoint(name: "registry", port: settings.Registry.Port, targetPort: 5000)
+    .WithContainerRuntimeArgs("--network", networkName)
+    .WithLifetime(ContainerLifetime.Persistent);
+
 builder.AddDevContainer(networkName);
 
+// ... (Database, Cache, Vector DB omitted) ...
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search
 // -----------------------------------------------------------------------------
@@ -154,13 +145,21 @@ var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-pr
 // -----------------------------------------------------------------------------
 // Python Agents - Realtime API
 // -----------------------------------------------------------------------------
-var pythonAgents = builder.AddExecutable("python-agents", "uv", "../Aspire-Full.Python/python-agents", "run", "--extra", "tracing", "python", "src/aspire_agents/examples/realtime/app/server.py")
+// Automated build using Dockerfile.agent
+var pythonAgents = builder.AddDockerfile("python-agents", "../Aspire-Full.Python/python-agents", "Dockerfile.agent")
     .WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
-    .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:18889") // Use localhost for host process, or dashboard service name if in container
+    .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
     .WithEnvironment("OTEL_PYTHON_LOG_CORRELATION", "true")
     .WithEnvironment("CUDA_VISIBLE_DEVICES", "0")
+    .WithEnvironment("GPU_TARGET_UTILIZATION", runtimeConfig.Telemetry.Gpu.Snapshot.TargetUtilization.ToString())
     .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
+    .WithContainerRuntimeArgs("--network", networkName)
     .WithExternalHttpEndpoints();
+
+if (settings.Agents.Gpu)
+{
+    pythonAgents.WithContainerRuntimeArgs("--gpus", "all");
+}
 
 // Build and run the distributed application
 builder.Build().Run();

@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+FROM python:3.14-rc-slim
+
+# Enable Python 3.14 Free-Threading
+ENV PYTHON_GIL=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies for audio, video, and browser
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libportaudio2 \
+    libasound2-dev \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for fast package management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency files
+COPY pyproject.toml uv.lock* ./
+
+# Install dependencies
+# We use --system because we are in a container
+RUN uv pip install --system --no-cache-dir -e .[tracing]
+
+# Install Playwright browsers
+RUN uv run playwright install --with-deps chromium
+
+# Copy source code
+COPY . .
+
+# Pre-download models for instant readiness
+# This runs the script we just created to cache models in the image
+RUN python scripts/download_models.py
+
+# Expose port
+EXPOSE 8000
+
+# Run the server
+CMD ["python", "src/aspire_agents/examples/realtime/app/server.py"]
