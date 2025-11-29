@@ -12,4 +12,9 @@
   <Project Path="Aspire-Full.Subagents/Aspire-Full.Subagents.csproj" />
   <Project Path="Aspire-Full.Subagents.Agent/Aspire-Full.Subagents.Agent.csproj" />
   <Project Path="Aspire-Full/Aspire-Full.csproj" />
+  <Project Path="src/virtual/src/gateway/gateway.csproj" />
+  <Project Path="src/virtual/tests/business-tests/business-tests.csproj" />
+  <Project Path="src/virtual/tests/engine-tests/engine-tests.csproj" />
+  <Project Path="src/virtual/tests/gateway-tests/gateway-tests.csproj" />
+  <Project Path="src/virtual/tests/integration-tests/integration-tests.csproj" />
 </Solution>

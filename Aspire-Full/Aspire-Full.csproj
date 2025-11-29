@@ -27,6 +27,7 @@
       <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
     <ProjectReference Include="..\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
+    <ProjectReference Include="..\src\virtual\src\gateway\gateway.csproj" />
   </ItemGroup>
 
 </Project>
