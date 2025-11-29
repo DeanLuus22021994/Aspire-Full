@@ -5,6 +5,7 @@
       "includePath": [
         "${workspaceFolder}/**",
         "${env:CUDA_PATH}/include",
+        "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/include",
         "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/include",
         "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5/include",
         "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/include",

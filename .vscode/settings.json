@@ -30,5 +30,7 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
   "cmake.sourceDirectory": "C:/Users/Dean/source/Aspire-Full - 1/Aspire-Full.Native",
   "nsight.server.connection.port": 4500,
-  "nsight.server.connection.host": "localhost"
+  "nsight.server.connection.host": "localhost",
+  "nsight.compute.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2025.2.1\\host\\windows-desktop-win7-x64\\ncu-ui.exe",
+  "nsight.systems.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Systems 2025.6.1\\host-windows-x64\\nsys-ui.exe"
 }

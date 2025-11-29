@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/aspire-dashboard:latest AS source
 
 # Stage 2: Build the runtime image with NVIDIA support
-FROM nvidia/cuda:12.4.1-base-ubuntu22.04
+FROM nvidia/cuda:13.0.0-base-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Dashboard (MCP)"
 LABEL org.opencontainers.image.licenses="MIT"

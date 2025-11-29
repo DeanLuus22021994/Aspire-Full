@@ -18,7 +18,7 @@ public static class DevContainerDefaults
     public const string SleepForeverArgument = "infinity";
     public const string PythonVersion = PythonDefaults.PythonVersion;
     public const string PythonRuntime = PythonDefaults.PythonRuntime;
-    public const string CudaRequirement = "cuda>=12.4,driver>=535";
+    public const string CudaRequirement = "cuda>=13.0,driver>=580";
 
     public static IReadOnlyList<(string Name, string Target)> VolumeMounts { get; } = new (string, string)[]
     {
