@@ -16,6 +16,22 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import assert_never
 
+# OpenTelemetry Imports
+try:
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+    OTEL_AVAILABLE = True
+except ImportError:
+    OTEL_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "OpenTelemetry packages not found. Tracing will be disabled."
+    )
+
 # Import TwilioHandler class - handle both module and package use cases
 if TYPE_CHECKING:
     # For type checking, use the relative import
@@ -206,6 +222,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+if OTEL_AVAILABLE:
+    # Configure OpenTelemetry
+    resource = Resource.create(attributes={"service.name": "python-agents"})
+    trace.set_tracer_provider(TracerProvider(resource=resource))
+    tracer_provider = trace.get_tracer_provider()
+    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+    FastAPIInstrumentor.instrument_app(app)
+
+
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await manager.connect(websocket, session_id)
@@ -323,7 +348,8 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     prompt_text = buf["text"]
                     if data_url:
                         logger.info(
-                            "Forwarding chunked image (structured message) to Realtime API (len=%d).",
+                            "Forwarding chunked image (structured message) to Realtime API "
+                            "(len=%d).",
                             len(data_url),
                         )
                         user_msg2: RealtimeUserInputMessage = {
