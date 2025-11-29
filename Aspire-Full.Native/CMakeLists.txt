@@ -6,6 +6,13 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(NOT DEFINED CMAKE_CUDA_COMPILER)
+    set(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0")
+    if(EXISTS "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc.exe")
+        set(CMAKE_CUDA_COMPILER "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc.exe")
+    endif()
+endif()
+
 # Target NVIDIA GeForce RTX 3050 (Compute Capability 8.6)
 set(CMAKE_CUDA_ARCHITECTURES 86)
 

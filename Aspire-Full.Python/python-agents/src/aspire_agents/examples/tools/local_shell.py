@@ -21,7 +21,7 @@ def shell_executor(request: LocalShellCommandRequest) -> str:
 
     except subprocess.TimeoutExpired:
         return "Command execution timed out"
-    except Exception as e:
+    except (subprocess.SubprocessError, OSError) as e:
         return f"Error executing command: {str(e)}"
 
 
