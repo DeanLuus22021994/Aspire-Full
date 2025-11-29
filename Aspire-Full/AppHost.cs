@@ -50,7 +50,7 @@ var dockerDaemon = builder.AddContainer("docker", "docker:27-dind")
     .WithLifetime(ContainerLifetime.Persistent);
 
 var dockerDebugger = builder.AddContainer("docker-debugger", dockerDebuggerImage)
-    .WithReference(dockerDaemon)
+    .WaitFor(dockerDaemon)
     .WithVolume("aspire-docker-certs", "/certs")
     .WithEnvironment("DOCKER_HOST", "tcp://docker:2376")
     .WithEnvironment("DOCKER_TLS_VERIFY", "1")
@@ -113,7 +113,7 @@ var api = builder.AddProject<Projects.Aspire_Full_Api>("api")
     .WaitFor(database)
     .WaitFor(redis);
 
-var gateway = builder.AddProject<Projects.gateway>("gateway")
+var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>("gateway")
     .WithReference(database)
     .WithReference(qdrant)
     .WaitFor(database)

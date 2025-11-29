@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>integration_tests</RootNamespace>
+    <RootNamespace>gateway_tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\gateway\gateway.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
   </ItemGroup>
 
 </Project>

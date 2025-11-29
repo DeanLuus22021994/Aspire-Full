@@ -14,7 +14,12 @@
       "Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj",
       "Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj",
       "Aspire-Full.Subagents/Aspire-Full.Subagents.csproj",
-      "Aspire-Full.Subagents.Agent/Aspire-Full.Subagents.Agent.csproj"
+      "Aspire-Full.Subagents.Agent/Aspire-Full.Subagents.Agent.csproj",
+      "Aspire-Full.Gateway/Aspire-Full.Gateway.csproj",
+      "Aspire-Full.Gateway.Tests.Business/Aspire-Full.Gateway.Tests.Business.csproj",
+      "Aspire-Full.Gateway.Tests.Engine/Aspire-Full.Gateway.Tests.Engine.csproj",
+      "Aspire-Full.Gateway.Tests.Unit/Aspire-Full.Gateway.Tests.Unit.csproj",
+      "Aspire-Full.Gateway.Tests.Integration/Aspire-Full.Gateway.Tests.Integration.csproj"
     ]
   }
 }
