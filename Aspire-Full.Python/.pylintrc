@@ -9,4 +9,4 @@ extension-pkg-allow-list =
 disable = missing-docstring,invalid-name
 
 [FORMAT]
-max-line-length = 100
+max-line-length = 120
