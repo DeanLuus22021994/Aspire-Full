@@ -79,7 +79,19 @@ public class DiscoveryModule
         var lintConfig = GeneratePythonLintConfig(config.Repository.Root);
         var lintYaml = serializer.Serialize(lintConfig);
         // AnsiConsole.WriteLine(lintYaml); // Optional: Don't spam console
-        await SaveConfigurationAsync("python-lint.yaml", lintYaml);
+
+        // Save to Aspire-Full.Python project root
+        var pythonProjectRoot = Path.Combine(config.Repository.Root, "Aspire-Full.Python");
+        if (Directory.Exists(pythonProjectRoot))
+        {
+            var pythonConfigPath = Path.Combine(pythonProjectRoot, "python-lint.yaml");
+            await File.WriteAllTextAsync(pythonConfigPath, lintYaml);
+            AnsiConsole.MarkupLine($"\n[green]Python configuration saved to: {pythonConfigPath}[/]");
+        }
+        else
+        {
+             await SaveConfigurationAsync("python-lint.yaml", lintYaml);
+        }
     }
 
     private PythonLintConfig GeneratePythonLintConfig(string rootPath)
