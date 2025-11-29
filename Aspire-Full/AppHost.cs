@@ -113,6 +113,12 @@ var api = builder.AddProject<Projects.Aspire_Full_Api>("api")
     .WaitFor(database)
     .WaitFor(redis);
 
+var gateway = builder.AddProject<Projects.gateway>("gateway")
+    .WithReference(database)
+    .WithReference(qdrant)
+    .WaitFor(database)
+    .WaitFor(qdrant);
+
 // -----------------------------------------------------------------------------
 // Web Frontend - Semantic UI React application
 // -----------------------------------------------------------------------------
