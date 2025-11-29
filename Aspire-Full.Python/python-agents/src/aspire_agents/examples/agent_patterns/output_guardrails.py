@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 
-from pydantic import BaseModel, Field
-
 from agents import (
     Agent,
     GuardrailFunctionOutput,
@@ -13,6 +11,7 @@ from agents import (
     Runner,
     output_guardrail,
 )
+from pydantic import BaseModel, Field
 
 """
 This example shows how to use output guardrails.
@@ -29,9 +28,13 @@ a phone number.
 
 # The agent's output type
 class MessageOutput(BaseModel):
-    reasoning: str = Field(description="Thoughts on how to respond to the user's message")
+    reasoning: str = Field(
+        description="Thoughts on how to respond to the user's message"
+    )
     response: str = Field(description="The response to the user's message")
-    user_name: str | None = Field(description="The name of the user who sent the message, if known")
+    user_name: str | None = Field(
+        description="The name of the user who sent the message, if known"
+    )
 
 
 @output_guardrail
@@ -69,7 +72,8 @@ async def main():
             agent, "My phone number is 650-123-4567. Where do you think I live?"
         )
         print(
-            f"Guardrail didn't trip - this is unexpected. Output: {json.dumps(result.final_output.model_dump(), indent=2)}"
+            f"Guardrail didn't trip - this is unexpected. Output: "
+            f"{json.dumps(result.final_output.model_dump(), indent=2)}"
         )
 
     except OutputGuardrailTripwireTriggered as e:

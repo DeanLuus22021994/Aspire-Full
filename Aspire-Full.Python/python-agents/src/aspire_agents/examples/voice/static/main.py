@@ -1,8 +1,8 @@
 import asyncio
 import random
+from typing import Any, cast
 
 import numpy as np
-
 from agents import Agent, function_tool
 from agents.extensions.handoff_prompt import prompt_with_handoff_instructions
 from agents.voice import (
@@ -11,6 +11,8 @@ from agents.voice import (
     SingleAgentWorkflowCallbacks,
     VoicePipeline,
 )
+
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 from .util import AudioPlayer, record_audio
 
@@ -50,7 +52,8 @@ spanish_agent = Agent(
 agent = Agent(
     name="Assistant",
     instructions=prompt_with_handoff_instructions(
-        "You're speaking to a human, so be polite and concise. If the user speaks in Spanish, handoff to the spanish agent.",
+        "You're speaking to a human, so be polite and concise. "
+        "If the user speaks in Spanish, handoff to the spanish agent.",
     ),
     model="gpt-5-mini",
     handoffs=[spanish_agent],
@@ -64,6 +67,8 @@ class WorkflowCallbacks(SingleAgentWorkflowCallbacks):
 
 
 async def main():
+    ensure_tensor_core_gpu()
+
     pipeline = VoicePipeline(
         workflow=SingleAgentVoiceWorkflow(agent, callbacks=WorkflowCallbacks())
     )
@@ -75,7 +80,10 @@ async def main():
     with AudioPlayer() as player:
         async for event in result.stream():
             if event.type == "voice_stream_event_audio":
-                player.add_audio(event.data)
+                if event.data is not None:
+                    player.add_audio(
+                        cast(np.ndarray[Any, np.dtype[np.int16]], event.data)
+                    )
                 print("Received audio")
             elif event.type == "voice_stream_event_lifecycle":
                 print(f"Received lifecycle event: {event.event}")

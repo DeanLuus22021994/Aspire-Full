@@ -1,8 +1,6 @@
 import asyncio
 import base64
-from typing import Literal
-
-from playwright.async_api import Browser, Page, Playwright, async_playwright
+from typing import Any, Literal
 
 from agents import (
     Agent,
@@ -14,6 +12,15 @@ from agents import (
     Runner,
     trace,
 )
+
+try:
+    from playwright.async_api import Browser, Page, Playwright, async_playwright
+except ImportError:
+    # For type checking or if playwright is not installed
+    Browser = Any  # type: ignore
+    Page = Any  # type: ignore
+    Playwright = Any  # type: ignore
+    async_playwright = None  # type: ignore
 
 # Uncomment to see very verbose logs
 # import logging
@@ -76,7 +83,9 @@ class LocalPlaywrightComputer(AsyncComputer):
     async def _get_browser_and_page(self) -> tuple[Browser, Page]:
         width, height = self.dimensions
         launch_args = [f"--window-size={width},{height}"]
-        browser = await self.playwright.chromium.launch(headless=False, args=launch_args)
+        browser = await self.playwright.chromium.launch(
+            headless=False, args=launch_args
+        )
         page = await browser.new_page()
         await page.set_viewport_size({"width": width, "height": height})
         await page.goto("https://www.bing.com")
