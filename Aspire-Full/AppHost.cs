@@ -232,6 +232,10 @@ void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> a
     ((dynamic)wasmProd).WaitFor(api);
 
     wasmProd.WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "prod")
+            .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5177");
+}
+
+void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
 {
     pythonAgents.WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
         .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
