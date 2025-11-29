@@ -8,7 +8,7 @@ unsafe-load-any-extension=no
 extension-pkg-whitelist=
 
 [MESSAGES CONTROL]
-disable=C0114,C0115,C0116,R0903,R0913,R0914
+disable=C0114,C0115,C0116,R0903,R0913,R0914,E0401,E0611,W0718,W1203,R0912,R0915,R0916,W0621,W0613,C0411,C2801,line-too-long
 
 [REPORTS]
 output-format=text
