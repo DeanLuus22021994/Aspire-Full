@@ -16,6 +16,7 @@ def shell_executor(request: LocalShellCommandRequest) -> str:
             capture_output=True,
             text=True,
             timeout=(args.timeout_ms / 1000) if args.timeout_ms else None,
+            check=False,
         )
         return completed.stdout + completed.stderr
 

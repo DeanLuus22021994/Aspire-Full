@@ -152,7 +152,9 @@ class RealtimeWebSocketManager:
             async for event in session:
                 event_data = await self._serialize_event(event)
                 await websocket.send_text(json.dumps(event_data))
-        except Exception as e:
+        except (WebSocketDisconnect, ConnectionError) as e:
+            logger.warning("WebSocket disconnected for session %s: %s", session_id, e)
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(e)
             logger.error("Error processing events for session %s: %s", session_id, e)
 
