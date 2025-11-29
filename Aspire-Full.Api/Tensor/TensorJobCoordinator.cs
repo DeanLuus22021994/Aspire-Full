@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using Aspire_Full.Connectors;
 using Aspire_Full.Tensor;
+using Aspire_Full.Tensor.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -236,7 +237,10 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         var prompt = submission.Prompt.Trim();
         var targetProvider = ChooseExecutionProvider(submission, model);
         var embeddingSize = model.EmbeddingSize > 0 ? model.EmbeddingSize : 512;
-        var embedding = GenerateDeterministicEmbedding(prompt, embeddingSize, model.Id);
+
+        // Use Native CUDA Compute
+        var embedding = GenerateNativeEmbedding(prompt, embeddingSize, model.Id, out var metrics);
+
         var chunks = BuildChunks(prompt, targetProvider, embedding);
 
         var job = new TensorJobStatusDto
@@ -247,13 +251,18 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             Prompt = prompt,
             PromptPreview = BuildPromptPreview(prompt),
             InputImageUrl = submission.InputImageUrl,
-            ExecutionProvider = targetProvider,
+            ExecutionProvider = metrics.ActiveKernels > 0 ? "cuda" : targetProvider,
             CreatedAt = now,
             CompletedAt = now,
             VectorDocumentId = null,
             Output = chunks,
             Metadata = new Dictionary<string, string>(submission.Metadata, StringComparer.OrdinalIgnoreCase)
         };
+
+        // Add Real-time Metrics
+        job.Metadata["compute_time_ms"] = metrics.ComputeTimeMs.ToString("F4", CultureInfo.InvariantCulture);
+        job.Metadata["memory_usage_mb"] = metrics.MemoryUsageMb.ToString("F2", CultureInfo.InvariantCulture);
+        job.Metadata["active_kernels"] = metrics.ActiveKernels.ToString();
 
         if (submission.PersistToVectorStore)
         {
@@ -312,27 +321,58 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         };
     }
 
-    private static ReadOnlyMemory<float> GenerateDeterministicEmbedding(string prompt, int size, string modelId)
+    private ReadOnlyMemory<float> GenerateNativeEmbedding(string prompt, int size, string modelId, out TensorMetrics metrics)
     {
-        var data = new float[Math.Max(8, size)];
-        var utf8 = Encoding.UTF8.GetBytes($"{modelId}:{prompt}");
-        var buffer = new byte[32];
-        var cursor = 0;
+        var finalSize = Math.Max(8, size);
+        var seedData = new float[finalSize];
+        var weightData = new float[finalSize];
+        var resultData = new float[finalSize];
 
+        // Initialize input vectors deterministically based on prompt
+        var utf8 = Encoding.UTF8.GetBytes($"{modelId}:{prompt}");
         using var sha256 = SHA256.Create();
         var seed = utf8;
-        while (cursor < data.Length)
+        var cursor = 0;
+
+        // Fill seedData
+        while (cursor < finalSize)
         {
-            buffer = sha256.ComputeHash(seed);
+            var buffer = sha256.ComputeHash(seed);
             seed = buffer;
-            for (var index = 0; index < buffer.Length && cursor < data.Length; index += 4)
+            for (var index = 0; index < buffer.Length && cursor < finalSize; index += 4)
             {
                 var slice = BitConverter.ToUInt32(buffer, index);
-                data[cursor++] = (slice / (float)uint.MaxValue * 2f) - 1f;
+                seedData[cursor] = (slice / (float)uint.MaxValue); // 0..1
+                weightData[cursor] = (float)Math.Sin(cursor * 0.1f); // Simulated weights
+                cursor++;
             }
         }
 
-        return new ReadOnlyMemory<float>(data);
+        metrics = new TensorMetrics();
+        try
+        {
+            // Execute on GPU
+            NativeMethods.ComputeTensorOp(seedData, weightData, resultData, finalSize, ref metrics);
+        }
+        catch (DllNotFoundException)
+        {
+            // Fallback to CPU simulation if DLL is missing
+            _logger.LogWarning("AspireFull.Native.dll not found. Falling back to CPU simulation.");
+            for (int i = 0; i < finalSize; i++)
+            {
+                resultData[i] = seedData[i] + weightData[i];
+            }
+            metrics.ComputeTimeMs = 0;
+            metrics.ActiveKernels = 0;
+        }
+        catch (Exception ex)
+        {
+             _logger.LogError(ex, "Error executing native tensor op.");
+             // Fallback
+             for (int i = 0; i < finalSize; i++) resultData[i] = seedData[i];
+        }
+
+        return new ReadOnlyMemory<float>(resultData);
     }
 
     private static string BuildPromptPreview(string prompt)

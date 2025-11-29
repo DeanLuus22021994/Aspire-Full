@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Linq;
+using Aspire_Full.Tensor.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -25,11 +26,41 @@ public sealed class TensorRuntimeService(ILogger<TensorRuntimeService> logger, I
     public async Task<TensorCapabilityResponse> DetectCapabilitiesAsync(CancellationToken cancellationToken = default)
     {
         using var activity = TensorDiagnostics.ActivitySource.StartActivity("TensorRuntime.DetectCapabilities");
+
+        bool cudaAvailable = false;
+        int deviceCount = 0;
+        try
+        {
+            deviceCount = NativeMethods.InitTensorContext();
+            cudaAvailable = deviceCount > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to initialize native tensor context. Ensure AspireFull.Native.dll is available.");
+        }
+
         try
         {
             var response = await _jsRuntime.InvokeAsync<TensorCapabilityResponse>("AspireTensor.determineRuntime", cancellationToken);
+
+            if (cudaAvailable)
+            {
+                var newMetadata = new Dictionary<string, string>(response.Metadata ?? new Dictionary<string, string>())
+                {
+                    ["cuda_device_count"] = deviceCount.ToString(),
+                    ["native_backend"] = "AspireFull.Native"
+                };
+
+                response = response with
+                {
+                    RecommendedExecutionProvider = "cuda",
+                    Metadata = newMetadata
+                };
+            }
+
             activity?.SetStatus(ActivityStatusCode.Ok);
             activity?.SetTag("tensor.runtime.webgpu", response.SupportsWebGpu);
+            activity?.SetTag("tensor.runtime.cuda", cudaAvailable);
             activity?.SetTag("tensor.runtime.webgl2", response.SupportsWebGl2);
             activity?.SetTag("tensor.runtime.simd", response.SupportsSimd);
             activity?.SetTag("tensor.runtime.recommended_provider", response.RecommendedExecutionProvider);
