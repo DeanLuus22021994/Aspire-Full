@@ -28,7 +28,9 @@ gpt_oss_model = OpenAIChatCompletionsModel(
 async def main() -> None:
     agent = Agent(
         name="Assistant",
-        instructions="You're a helpful assistant. You provide a concise answer to the user's question.",
+        instructions=(
+            "You're a helpful assistant. You provide a concise answer to the user's question."
+        ),
         model=gpt_oss_model,
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="high", summary="detailed"),

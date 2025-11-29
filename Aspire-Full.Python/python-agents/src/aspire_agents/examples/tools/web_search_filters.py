@@ -1,10 +1,9 @@
 import asyncio
 from datetime import datetime
 
+from agents import Agent, ModelSettings, Runner, WebSearchTool, trace
 from openai.types.responses.web_search_tool import Filters
 from openai.types.shared.reasoning import Reasoning
-
-from agents import Agent, ModelSettings, Runner, WebSearchTool, trace
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -39,7 +38,10 @@ async def main():
 
     with trace("Web search example"):
         today = datetime.now().strftime("%Y-%m-%d")
-        query = f"Write a summary of the latest OpenAI Platform updates for developers in the last few weeks (today is {today})."
+        query = (
+            f"Write a summary of the latest OpenAI Platform updates for developers in the last few "
+            f"weeks (today is {today})."
+        )
         result = await Runner.run(agent, query)
 
         print()

@@ -2,7 +2,8 @@
 Example demonstrating how to use the reasoning content feature with models that support it.
 
 Some models, like gpt-5, provide a reasoning_content field in addition to the regular content.
-This example shows how to access and use this reasoning content from both streaming and non-streaming responses.
+This example shows how to access and use this reasoning content from both streaming and
+non-streaming responses.
 
 To run this example, you need to:
 1. Set your OPENAI_API_KEY environment variable
@@ -13,12 +14,11 @@ import asyncio
 import os
 from typing import Any, cast
 
-from openai.types.responses import ResponseOutputRefusal, ResponseOutputText
-from openai.types.shared.reasoning import Reasoning
-
 from agents import ModelSettings
 from agents.models.interface import ModelTracing
 from agents.models.openai_provider import OpenAIProvider
+from openai.types.responses import ResponseOutputRefusal, ResponseOutputText
+from openai.types.shared.reasoning import Reasoning
 
 MODEL_NAME = os.getenv("EXAMPLE_MODEL_NAME") or "gpt-5"
 
@@ -41,13 +41,14 @@ async def stream_with_reasoning_content():
     async for event in model.stream_response(
         system_instructions="You are a helpful assistant that writes creative content.",
         input="Write a haiku about recursion in programming",
-        model_settings=ModelSettings(reasoning=Reasoning(effort="medium", summary="detailed")),
+        model_settings=ModelSettings(
+            reasoning=Reasoning(effort="medium", summary="detailed")
+        ),
         tools=[],
         output_schema=None,
         handoffs=[],
         tracing=ModelTracing.DISABLED,
         previous_response_id=None,
-        conversation_id=None,
         prompt=None,
     ):
         if event.type == "response.reasoning_summary_text.delta":
@@ -78,13 +79,14 @@ async def get_response_with_reasoning_content():
     response = await model.get_response(
         system_instructions="You are a helpful assistant that explains technical concepts clearly.",
         input="Explain the concept of recursion in programming",
-        model_settings=ModelSettings(reasoning=Reasoning(effort="medium", summary="detailed")),
+        model_settings=ModelSettings(
+            reasoning=Reasoning(effort="medium", summary="detailed")
+        ),
         tools=[],
         output_schema=None,
         handoffs=[],
         tracing=ModelTracing.DISABLED,
         previous_response_id=None,
-        conversation_id=None,
         prompt=None,
     )
 

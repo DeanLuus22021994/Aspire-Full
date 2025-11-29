@@ -1,8 +1,7 @@
 import asyncio
 
-from openai import OpenAI
-
 from agents import Agent, FileSearchTool, Runner, trace
+from openai import OpenAI
 
 
 async def main():
@@ -12,7 +11,10 @@ async def main():
         print("### Preparing vector store:\n")
         # Create a new vector store and index a file
         client = OpenAI()
-        text = "Arrakis, the desert planet in Frank Herbert's 'Dune,' was inspired by the scarcity of water as a metaphor for oil and other finite resources."
+        text = (
+            "Arrakis, the desert planet in Frank Herbert's 'Dune,' was inspired by the scarcity "
+            "of water as a metaphor for oil and other finite resources."
+        )
         file_upload = client.files.create(
             file=("example.txt", text.encode("utf-8")),
             purpose="assistants",
@@ -31,8 +33,11 @@ async def main():
 
     # Create an agent that can search the vector store
     agent = Agent(
-        name="File searcher",
-        instructions="You are a helpful agent. You answer only based on the information in the vector store.",
+        name="FileSearch Agent",
+        instructions=(
+            "You are a helpful agent. You answer only based on the information in the vector store."
+        ),
+        model="gpt-4o",
         tools=[
             FileSearchTool(
                 max_num_results=3,
