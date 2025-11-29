@@ -15,6 +15,7 @@ from agents.realtime import (  # type: ignore
     RealtimeSessionEvent,
 )
 from agents.realtime.model import RealtimeModelConfig  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # Audio configuration
 CHUNK_LENGTH_S = 0.04  # 40ms aligns with realtime defaults
@@ -377,6 +378,7 @@ class NoUIDemo:
 
 
 if __name__ == "__main__":
+    ensure_tensor_core_gpu()
     demo = NoUIDemo()
     try:
         asyncio.run(demo.run())

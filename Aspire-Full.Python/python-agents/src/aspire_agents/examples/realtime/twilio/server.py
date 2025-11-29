@@ -1,6 +1,8 @@
 import os
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
+from aspire_agents.gpu import ensure_tensor_core_gpu
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
 
@@ -33,7 +35,15 @@ class TwilioWebSocketManager:
 
 
 manager = TwilioWebSocketManager()
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_tensor_core_gpu()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")

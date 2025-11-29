@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, CodeInterpreterTool, Runner, trace
+from agents import Agent, CodeInterpreterTool, Runner, trace  # type: ignore
 
 
 async def main():
@@ -19,7 +19,9 @@ async def main():
 
     with trace("Code interpreter example"):
         print("Solving math problem...")
-        result = Runner.run_streamed(agent, "What is the square root of273 * 312821 plus 1782?")
+        result = Runner.run_streamed(
+            agent, "What is the square root of273 * 312821 plus 1782?"
+        )
         async for event in result.stream_events():
             if (
                 event.type == "run_item_stream_event"

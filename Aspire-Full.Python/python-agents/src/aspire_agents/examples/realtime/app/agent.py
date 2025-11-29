@@ -1,8 +1,8 @@
 import asyncio
 
-from agents import function_tool
-from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
-from agents.realtime import RealtimeAgent, realtime_handoff
+from agents import function_tool  # type: ignore
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX  # type: ignore
+from agents.realtime import RealtimeAgent, realtime_handoff  # type: ignore
 
 """
 When running the UI example locally, you can edit this file to change the setup. THe server

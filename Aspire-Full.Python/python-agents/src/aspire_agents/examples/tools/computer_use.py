@@ -1,6 +1,6 @@
 import asyncio
 import base64
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from agents import (
     Agent,
@@ -13,14 +13,17 @@ from agents import (
     trace,
 )
 
-try:
+if TYPE_CHECKING:
     from playwright.async_api import Browser, Page, Playwright, async_playwright
-except ImportError:
-    # For type checking or if playwright is not installed
-    Browser = Any  # type: ignore
-    Page = Any  # type: ignore
-    Playwright = Any  # type: ignore
-    async_playwright = None  # type: ignore
+else:
+    try:
+        from playwright.async_api import Browser, Page, Playwright, async_playwright
+    except ImportError:
+        # For type checking or if playwright is not installed
+        Browser = Any
+        Page = Any
+        Playwright = Any
+        async_playwright = None
 
 # Uncomment to see very verbose logs
 # import logging
@@ -93,8 +96,9 @@ class LocalPlaywrightComputer(AsyncComputer):
 
     async def __aenter__(self):
         # Start Playwright and call the subclass hook for getting browser/page
-        self._playwright = await async_playwright().start()
-        self._browser, self._page = await self._get_browser_and_page()
+        if async_playwright:
+            self._playwright = await async_playwright().start()
+            self._browser, self._page = await self._get_browser_and_page()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
