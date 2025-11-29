@@ -16,14 +16,12 @@ class AppContext(BaseModel):
     )
 
 
-def french_spanish_enabled(
-    ctx: RunContextWrapper[AppContext], agent: AgentBase
-) -> bool:
+def french_spanish_enabled(ctx: RunContextWrapper[AppContext], agent: Agent) -> bool:
     """Enable for French+Spanish and European preferences."""
     return ctx.context.language_preference in ["french_spanish", "european"]
 
 
-def european_enabled(ctx: RunContextWrapper[AppContext], agent: AgentBase) -> bool:
+def european_enabled(ctx: RunContextWrapper[AppContext], agent: Agent) -> bool:
     """Only enable for European preference."""
     return ctx.context.language_preference == "european"
 
@@ -76,7 +74,8 @@ async def main():
     """Interactive demo with LLM interaction."""
     print("Agents-as-Tools with Conditional Enabling\n")
     print(
-        "This demonstrates how language response tools are dynamically enabled based on user preferences.\n"
+        "This demonstrates how language response tools are dynamically enabled based on "
+        "user preferences.\n"
     )
 
     print("Choose language preference:")
