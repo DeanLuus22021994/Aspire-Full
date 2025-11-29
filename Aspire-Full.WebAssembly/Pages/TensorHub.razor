@@ -33,6 +33,63 @@
 
     <section>
         <header class="section-header">
+            <div>
+                <h2>Job Inspector</h2>
+                <p class="muted">Select a job to hydrate the stream with archived output.</p>
+            </div>
+            <div class="section-actions">
+                <button class="refresh" disabled="@(_activeJob is null || _jobInspectorBusy)" @onclick="RefreshActiveJobAsync">
+                    @(!_jobInspectorBusy ? "Refresh Selected" : "Refreshing...")
+                </button>
+            </div>
+        </header>
+
+        @if (!string.IsNullOrWhiteSpace(_jobInspectorMessage))
+        {
+            <p class="status">@_jobInspectorMessage</p>
+        }
+
+        @if (_activeJob is null)
+        {
+            <p class="muted">No job selected. Use the table below to inspect a queued run.</p>
+        }
+        else
+        {
+            <div class="job-inspector">
+                <div>
+                    <label>Job Id</label>
+                    <code>@_activeJob.Id</code>
+                </div>
+                <div>
+                    <label>Status</label>
+                    <span>@_activeJob.Status</span>
+                </div>
+                <div>
+                    <label>Execution Provider</label>
+                    <span>@(_activeJob.ExecutionProvider ?? "-")</span>
+                </div>
+                <div>
+                    <label>Vector Document</label>
+                    <span>@(_activeJob.VectorDocumentId ?? "(not persisted)")</span>
+                </div>
+                <div>
+                    <label>Prompt Preview</label>
+                    <p>@(_activeJob.PromptPreview ?? _activeJob.Prompt)</p>
+                </div>
+                <div>
+                    <label>Created</label>
+                    <span>@_activeJob.CreatedAt.ToLocalTime().ToString("u")</span>
+                </div>
+                <div>
+                    <label>Completed</label>
+                    <span>@(_activeJob.CompletedAt?.ToLocalTime().ToString("u") ?? "in-progress")</span>
+                </div>
+            </div>
+        }
+    </section>
+
+    <section>
+        <header class="section-header">
             <h2>Model Catalog</h2>
             <button class="refresh" @onclick="RefreshCatalogAsync">Refresh</button>
         </header>
@@ -58,6 +115,7 @@
                         <th>Status</th>
                         <th>Provider</th>
                         <th>Created</th>
+                        <th>Inspect</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,6 +127,9 @@
                             <td>@job.Status</td>
                             <td>@job.ExecutionProvider</td>
                             <td>@job.CreatedAt.ToLocalTime().ToString("u")</td>
+                            <td>
+                                <button class="link" disabled="@_jobInspectorBusy" @onclick="async _ => await InspectJobAsync(job.Id)">Inspect</button>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -95,6 +156,8 @@
     private List<TensorInferenceChunk> _localChunks = new();
     private IReadOnlyList<double> _embeddingPreview = Array.Empty<double>();
     private string? _localExecutionProvider;
+    private bool _jobInspectorBusy;
+    private string? _jobInspectorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -268,6 +331,53 @@
         {
             _activeJob = refreshed;
         }
+    }
+
+    private async Task InspectJobAsync(Guid jobId)
+    {
+        if (jobId == Guid.Empty)
+        {
+            _jobInspectorMessage = "Invalid job id.";
+            return;
+        }
+
+        _jobInspectorBusy = true;
+        _jobInspectorMessage = "Loading job output...";
+        try
+        {
+            var job = await JobService.GetJobAsync(jobId).ConfigureAwait(false);
+            if (job is null)
+            {
+                _jobInspectorMessage = "Job not found.";
+                return;
+            }
+
+            _activeJob = job;
+            _remoteChunks = job.Output?.ToList() ?? new List<TensorInferenceChunk>();
+            _jobInspectorMessage = _remoteChunks.Count == 0
+                ? "Job loaded. Awaiting server output or refresh."
+                : $"Job loaded with {_remoteChunks.Count} streamed chunks.";
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            _jobInspectorMessage = "Unable to inspect job: " + ex.Message;
+        }
+        finally
+        {
+            _jobInspectorBusy = false;
+        }
+    }
+
+    private async Task RefreshActiveJobAsync()
+    {
+        if (_activeJob is null)
+        {
+            _jobInspectorMessage = "Select a job to refresh.";
+            return;
+        }
+
+        await InspectJobAsync(_activeJob.Id).ConfigureAwait(false);
     }
 
     private static IReadOnlyList<double> TryParseVectorPreview(IReadOnlyList<TensorInferenceChunk> chunks)
