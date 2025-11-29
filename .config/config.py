@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 try:
-    import yaml
+    import yaml  # type: ignore
 except ImportError as exc:
     raise RuntimeError("PyYAML is required to load config.yaml") from exc
 

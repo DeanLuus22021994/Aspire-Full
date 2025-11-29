@@ -1,6 +1,11 @@
+"""
+This module demonstrates how to use a remote PDF file as input to an agent.
+"""
+
 import asyncio
 
-from agents import Agent, Runner
+from agents import Agent, Runner  # type: ignore
+
 from aspire_agents.gpu import ensure_tensor_core_gpu
 
 URL = "https://www.berkshirehathaway.com/letters/2024ltr.pdf"

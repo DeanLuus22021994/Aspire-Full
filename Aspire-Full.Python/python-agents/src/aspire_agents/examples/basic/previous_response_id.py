@@ -1,6 +1,11 @@
+"""
+This module demonstrates using the previous_response_id to continue a conversation.
+"""
+
 import asyncio
 
-from agents import Agent, Runner
+from agents import Agent, Runner  # type: ignore
+
 from aspire_agents.gpu import ensure_tensor_core_gpu
 
 """This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
@@ -45,10 +50,7 @@ async def main_stream():
     result = Runner.run_streamed(agent, "What is the largest country in South America?")
 
     async for event in result.stream_events():
-        if (
-            event.type == "raw_response_event"
-            and event.data.type == "response.output_text.delta"
-        ):
+        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
             print(event.data.delta, end="", flush=True)
 
     print()
@@ -60,10 +62,7 @@ async def main_stream():
     )
 
     async for event in result.stream_events():
-        if (
-            event.type == "raw_response_event"
-            and event.data.type == "response.output_text.delta"
-        ):
+        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
             print(event.data.delta, end="", flush=True)
 
 

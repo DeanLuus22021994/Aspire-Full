@@ -34,16 +34,12 @@ class ToolGuardrailFunctionOutput:
         self.message = message
 
     @classmethod
-    def reject_content(
-        cls, message: str, output_info: dict[str, Any]
-    ) -> "ToolGuardrailFunctionOutput":
+    def reject_content(cls, message: str, output_info: dict[str, Any]) -> "ToolGuardrailFunctionOutput":
         # In a real implementation, this would signal rejection to the runner
         return cls(output_info, message=message)
 
     @classmethod
-    def raise_exception(
-        cls, output_info: dict[str, Any]
-    ) -> "ToolGuardrailFunctionOutput":
+    def raise_exception(cls, output_info: dict[str, Any]) -> "ToolGuardrailFunctionOutput":
         raise ToolOutputGuardrailTripwireTriggered(cls(output_info))
 
 
@@ -80,13 +76,9 @@ class GuardrailService:
         """Pre-compute embeddings for restricted concepts on the GPU."""
         for category, phrases in self.restricted_concepts.items():
             # Use sync method for initialization
-            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(
-                phrases
-            )
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrases)
 
-    async def check_semantic_similarity(
-        self, text: str, category: str, threshold: float = 0.4
-    ) -> bool:
+    async def check_semantic_similarity(self, text: str, category: str, threshold: float = 0.4) -> bool:
         """
         Check if text is semantically similar to a restricted category.
         Returns True if similarity exceeds threshold.
@@ -100,15 +92,16 @@ class GuardrailService:
         # Compute similarity against the category's pre-computed embeddings
         # (1, D) x (N, D)^T -> (1, N)
         # Note: Operations happen on CPU here, which is fast for final dot product
-        similarities = (
-            text_embedding.unsqueeze(0) @ self.concept_embeddings[category].t()
-        ).squeeze(0)
+        similarities = (text_embedding.unsqueeze(0) @ self.concept_embeddings[category].t()).squeeze(0)
 
         # Check if any phrase matches
         max_similarity = similarities.max().item()
         if max_similarity > threshold:
             logger.warning(
-                f"Guardrail triggered: '{text}' matched '{category}' (score: {max_similarity:.2f})"
+                "Guardrail triggered: '%s' matched '%s' (score: %.2f)",
+                text,
+                category,
+                max_similarity,
             )
             return True
 
@@ -139,10 +132,7 @@ def semantic_input_guardrail(
 
         if await service.check_semantic_similarity(args_str, category, threshold):
             return ToolGuardrailFunctionOutput.reject_content(
-                message=(
-                    f"Input blocked: content semantically similar to restricted "
-                    f"category '{category}'."
-                ),
+                message=(f"Input blocked: content semantically similar to restricted " f"category '{category}'."),
                 output_info={"blocked_category": category},
             )
 

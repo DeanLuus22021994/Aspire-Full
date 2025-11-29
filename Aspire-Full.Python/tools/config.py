@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 try:
-    import yaml
+    import yaml  # type: ignore
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError(
         "PyYAML is required to load python-lint.yaml with anchors/tags"

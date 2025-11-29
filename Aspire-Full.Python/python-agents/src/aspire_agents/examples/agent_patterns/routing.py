@@ -1,9 +1,14 @@
+"""
+This module demonstrates the handoffs/routing pattern.
+"""
+
 import asyncio
 import uuid
 
-from agents import Agent, RawResponsesStreamEvent, Runner, TResponseInputItem, trace
+from agents import Agent, RawResponsesStreamEvent, Runner, TResponseInputItem, trace  # type: ignore
+from openai.types.responses import ResponseContentPartDoneEvent, ResponseTextDeltaEvent  # type: ignore
+
 from aspire_agents.gpu import ensure_tensor_core_gpu
-from openai.types.responses import ResponseContentPartDoneEvent, ResponseTextDeltaEvent
 
 """
 This example shows the handoffs/routing pattern. The triage agent receives the first message, and

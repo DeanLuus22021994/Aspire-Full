@@ -5,9 +5,9 @@ import inspect
 import logging
 from typing import Any, Callable, cast
 
-from agents import Agent as OpenAIAgent
-from agents import Runner as OpenAIRunner
-from agents import function_tool as _original_function_tool
+from agents import Agent as OpenAIAgent  # type: ignore
+from agents import Runner as OpenAIRunner  # type: ignore
+from agents import function_tool as _original_function_tool  # type: ignore
 
 from .compute import get_compute_service
 from .guardrails import (
@@ -55,11 +55,13 @@ def function_tool(func: Callable) -> Callable:
                         result = await guardrail(input_data)
                         if result.message:
                             logger.warning(
-                                f"Input guardrail blocked call to {func.__name__}: {result.message}"
+                                "Input guardrail blocked call to %s: %s",
+                                func.__name__,
+                                result.message,
                             )
                             return result.message
-                    except Exception as e:
-                        logger.error(f"Error in input guardrail: {e}")
+                    except Exception as e:  # pylint: disable=broad-exception-caught
+                        logger.error("Error in input guardrail: %s", e)
                         raise
 
         # 2. Execute Tool
@@ -68,7 +70,7 @@ def function_tool(func: Callable) -> Callable:
                 result = await func(*args, **kwargs)
             else:
                 result = func(*args, **kwargs)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             raise e
 
         # 3. Output Guardrails

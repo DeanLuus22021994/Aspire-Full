@@ -9,7 +9,8 @@ from textwrap import dedent
 # Add src to path so we can import aspire_agents
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
-import pytest  # noqa: E402
+import pytest  # type: ignore # noqa: E402
+
 from aspire_agents.config import AgentConfig, ModelConfig  # noqa: E402
 
 

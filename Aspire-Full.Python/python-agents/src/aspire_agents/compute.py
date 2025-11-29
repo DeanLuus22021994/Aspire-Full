@@ -43,9 +43,7 @@ class BatchComputeService:
         self.queue: queue.Queue = queue.Queue()
         self.shutdown_event = threading.Event()
 
-        logger.info(
-            f"Initializing BatchComputeService on {self.device} with model {model_name}"
-        )
+        logger.info("Initializing BatchComputeService on %s with model %s", self.device, model_name)
 
         try:
             # Load tokenizer and model directly to GPU
@@ -57,29 +55,21 @@ class BatchComputeService:
             # Note: This requires a compatible backend. We try/except to be safe.
             try:
                 self.model = torch.compile(self.model)
-                logger.info(
-                    "Model compiled with torch.compile() for maximum efficiency."
-                )
-            except Exception as e:
-                logger.warning(f"Could not compile model: {e}. Running in eager mode.")
+                logger.info("Model compiled with torch.compile() for maximum efficiency.")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.warning("Could not compile model: %s. Running in eager mode.", e)
 
-        except Exception as e:
-            raise TensorCoreUnavailableError(
-                f"Failed to load model {model_name} on GPU: {e}"
-            ) from e
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            raise TensorCoreUnavailableError(f"Failed to load model {model_name} on GPU: {e}") from e
 
             # Verify model is actually on GPU (or CPU if fallback enabled)
         # Cast to nn.Module to satisfy type checker since torch.compile returns a callable
         param_device = next(cast(torch.nn.Module, self.model).parameters()).device
         if param_device.type != self.device.type:
-            raise TensorCoreUnavailableError(
-                f"Model loaded on {param_device} but expected {self.device}!"
-            )
+            raise TensorCoreUnavailableError(f"Model loaded on {param_device} but expected {self.device}!")
 
         # Start the worker thread
-        self.worker_thread = threading.Thread(
-            target=self._process_batches, name="TensorComputeWorker", daemon=True
-        )
+        self.worker_thread = threading.Thread(target=self._process_batches, name="TensorComputeWorker", daemon=True)
         self.worker_thread.start()
 
         logger.info("BatchComputeService initialized successfully on Tensor Cores.")
@@ -94,9 +84,7 @@ class BatchComputeService:
 
         ensure_tensor_core_gpu()
         if not torch.cuda.is_available():
-            raise TensorCoreUnavailableError(
-                "CUDA is not available. CPU fallback is strictly forbidden."
-            )
+            raise TensorCoreUnavailableError("CUDA is not available. CPU fallback is strictly forbidden.")
         return torch.device("cuda")
 
     def _process_batches(self):
@@ -136,8 +124,8 @@ class BatchComputeService:
 
             except queue.Empty:
                 continue
-            except Exception as e:
-                logger.error(f"Error in compute worker: {e}")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error("Error in compute worker: %s", e)
 
     def _execute_batch(self, texts: List[str], futures: List[Future]):
         """Run inference on a batch and resolve futures."""
@@ -153,9 +141,7 @@ class BatchComputeService:
             # Inference with mixed precision for Tensor Core utilization
             # Only use autocast if on CUDA
             if self.device.type == "cuda":
-                with torch.no_grad(), torch.amp.autocast(
-                    device_type="cuda", dtype=torch.float16
-                ):
+                with torch.no_grad(), torch.amp.autocast(device_type="cuda", dtype=torch.float16):
                     outputs = self.model(**inputs)
             else:
                 with torch.no_grad():
@@ -164,13 +150,11 @@ class BatchComputeService:
             # Mean pooling
             attention_mask = inputs["attention_mask"]
             token_embeddings = outputs.last_hidden_state
-            input_mask_expanded = (
-                attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            )
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
 
-            embeddings = torch.sum(
-                token_embeddings * input_mask_expanded, 1
-            ) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+            embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
+                input_mask_expanded.sum(1), min=1e-9
+            )
 
             # Normalize
             embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
@@ -182,7 +166,7 @@ class BatchComputeService:
                 if not future.cancelled():
                     future.set_result(embeddings_cpu[i])
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             for future in futures:
                 if not future.cancelled():
                     future.set_exception(e)
@@ -202,7 +186,7 @@ class BatchComputeService:
             try:
                 result = f.result()
                 loop.call_soon_threadsafe(future.set_result, result)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 loop.call_soon_threadsafe(future.set_exception, e)
 
         thread_future.add_done_callback(callback)
