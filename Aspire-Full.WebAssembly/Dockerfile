@@ -16,6 +16,7 @@ COPY ["NuGet.config", "."]
 
 COPY ["Aspire-Full.WebAssembly/", "Aspire-Full.WebAssembly/"]
 COPY ["Aspire-Full.ServiceDefaults/", "Aspire-Full.ServiceDefaults/"]
+COPY ["Aspire-Full.Tensor/", "Aspire-Full.Tensor/"]
 
 WORKDIR /src/Aspire-Full.WebAssembly
 RUN dotnet restore
