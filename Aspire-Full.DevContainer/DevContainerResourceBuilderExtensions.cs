@@ -17,7 +17,7 @@ public static class DevContainerResourceBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrEmpty(networkName);
 
-        var resource = builder.AddDockerfile(DevContainerDefaults.ResourceName, DevContainerDefaults.DockerfileContext)
+        var resource = builder.AddDockerfile(DevContainerDefaults.ResourceName, DevContainerDefaults.DockerfileContext, DevContainerDefaults.DockerfilePath)
             .WithArgs(DevContainerDefaults.SleepCommand, DevContainerDefaults.SleepForeverArgument)
             .WithLifetime(ContainerLifetime.Persistent);
 

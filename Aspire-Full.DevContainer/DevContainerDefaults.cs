@@ -12,7 +12,8 @@ namespace Aspire_Full.DevContainer;
 public static class DevContainerDefaults
 {
     public const string ResourceName = "devcontainer";
-    public const string DockerfileContext = "../.devcontainer";
+    public const string DockerfileContext = "..";
+    public const string DockerfilePath = "Aspire-Full.DockerRegistry/docker/Dev/Dockerfile.DevContainer";
     public const string SleepCommand = "sleep";
     public const string SleepForeverArgument = "infinity";
     public const string PythonVersion = PythonDefaults.PythonVersion;
