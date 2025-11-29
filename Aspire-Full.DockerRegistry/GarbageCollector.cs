@@ -35,11 +35,11 @@ public sealed class GarbageCollector : IGarbageCollector
 
                 if (repoInfo.Descriptor is null)
                 {
-                    _logger.LogWarning("Skipping garbage collection for unmatched repository: {Repository}", repoInfo.Name);
+                    _logger.LogWarning("Skipping garbage collection for unmatched repository: {Repository}", repoInfo.Repository);
                     continue;
                 }
 
-                await ProcessRepositoryAsync(repoInfo.Descriptor, cancellationToken);
+                await ProcessRepositoryAsync(repoInfo.Descriptor, repoInfo.Repository, cancellationToken);
             }
         }
         catch (Exception ex)
@@ -50,12 +50,12 @@ public sealed class GarbageCollector : IGarbageCollector
         _logger.LogInformation("Garbage collection completed.");
     }
 
-    private async Task ProcessRepositoryAsync(DockerImageDescriptor descriptor, CancellationToken cancellationToken)
+    private async Task ProcessRepositoryAsync(DockerImageDescriptor descriptor, string repositoryName, CancellationToken cancellationToken)
     {
         try
         {
             var tags = await _client.ListTagsAsync(descriptor, cancellationToken);
-            _logger.LogInformation("Found {Count} tags for {Repository}", tags.Count, descriptor.Repository);
+            _logger.LogInformation("Found {Count} tags for {Repository}", tags.Count, repositoryName);
 
             foreach (var tag in tags)
             {
@@ -68,7 +68,7 @@ public sealed class GarbageCollector : IGarbageCollector
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to fetch manifest for {Repository}:{Tag}. Skipping.", descriptor.Repository, tag);
+                    _logger.LogWarning(ex, "Failed to fetch manifest for {Repository}:{Tag}. Skipping.", repositoryName, tag);
                     continue;
                 }
 
@@ -87,14 +87,14 @@ public sealed class GarbageCollector : IGarbageCollector
 
                 if (shouldDelete)
                 {
-                    _logger.LogInformation("Deleting {Repository}@{Digest} (Tag: {Tag})", descriptor.Repository, manifest.Digest, tag);
+                    _logger.LogInformation("Deleting {Repository}@{Digest} (Tag: {Tag})", repositoryName, manifest.Digest, tag);
                     await _client.DeleteManifestAsync(descriptor, manifest.Digest, cancellationToken);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing repository {Repository}", descriptor.Repository);
+            _logger.LogError(ex, "Error processing repository {Repository}", repositoryName);
         }
     }
 }
