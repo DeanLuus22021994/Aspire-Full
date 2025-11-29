@@ -14,7 +14,12 @@ from agents import (
 )
 
 if TYPE_CHECKING:
-    from playwright.async_api import Browser, Page, Playwright, async_playwright
+    from playwright.async_api import (  # type: ignore
+        Browser,
+        Page,
+        Playwright,
+        async_playwright,
+    )
 else:
     try:
         from playwright.async_api import Browser, Page, Playwright, async_playwright
