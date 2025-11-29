@@ -2,10 +2,12 @@
   "solution": {
     "path": "Aspire-Full.slnx",
     "projects": [
-      "Aspire-Full/Aspire-Full.csproj",
+      "Aspire-Full\\Aspire-Full.csproj",
       "Aspire-Full.Api/Aspire-Full.Api.csproj",
       "Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj",
       "Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj",
+      "Aspire-Full.Github/Aspire-Full.Github.csproj",
+      "Aspire-Full.Python/Aspire-Full.Python.csproj",
       "Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj",
       "Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj",
       "Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj",
