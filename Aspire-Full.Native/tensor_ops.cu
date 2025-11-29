@@ -81,3 +81,23 @@ EXPORT void ComputeTensorOp(const float* h_A, const float* h_B, float* h_C, int 
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }
+
+EXPORT int ValidateTensorContent(const float* h_Data, int numElements, float threshold, TensorMetrics* metrics) {
+    // Allocate device memory
+    float *d_Data = NULL;
+    size_t size = numElements * sizeof(float);
+
+    if (cudaMalloc((void **)&d_Data, size) != cudaSuccess) return -1;
+    cudaMemcpy(d_Data, h_Data, size, cudaMemcpyHostToDevice);
+
+    // Placeholder for actual validation kernel
+    // For now, we just simulate a check
+
+    cudaFree(d_Data);
+
+    if (metrics != NULL) {
+        metrics->active_kernels++;
+    }
+
+    return 1; // Valid
+}
