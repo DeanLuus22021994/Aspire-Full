@@ -4,7 +4,7 @@ import json
 import logging
 import struct
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
 from agents.realtime import RealtimeRunner, RealtimeSession, RealtimeSessionEvent
 from agents.realtime.config import RealtimeUserInputMessage
@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 class RealtimeWebSocketManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_sessions: dict[str, RealtimeSession] = {}
         self.session_contexts: dict[str, Any] = {}
         self.websockets: dict[str, WebSocket] = {}
@@ -143,7 +143,7 @@ class RealtimeWebSocketManager:
 
     def _sanitize_history_item(self, item: RealtimeItem) -> dict[str, Any]:
         """Remove large binary payloads from history items while keeping transcripts."""
-        item_dict = item.model_dump()
+        item_dict: dict[str, Any] = item.model_dump()
         content = item_dict.get("content")
         if isinstance(content, list):
             sanitized_content: list[Any] = []
@@ -215,7 +215,7 @@ manager = RealtimeWebSocketManager()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
 
@@ -406,7 +406,7 @@ app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 
 @app.get("/")
-async def read_index():
+async def read_index() -> FileResponse:
     return FileResponse("static/index.html")
 
 

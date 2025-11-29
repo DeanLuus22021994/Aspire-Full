@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 from dataclasses import dataclass
+from typing import Any
 
 from rich.console import Console
 
@@ -15,7 +16,7 @@ from .kernel import build_kernel
 console = Console()
 
 
-def _create_prompt_template(config: AgentConfig):
+def _create_prompt_template(config: AgentConfig) -> Any:
     try:
         sk_prompt_module = importlib.import_module("semantic_kernel.prompt_template")
     except ImportError as exc:  # pragma: no cover
