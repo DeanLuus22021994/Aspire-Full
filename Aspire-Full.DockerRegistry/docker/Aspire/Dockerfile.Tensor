@@ -85,7 +85,7 @@ RUN python -c "from transformers import AutoTokenizer, AutoModel; \
 RUN python -m compileall /usr/local/lib/python3.11
 
 # Stage 2: Runtime (Minimal, GPU-optimized)
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
+FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Tensor Compute Service"
 LABEL org.opencontainers.image.licenses="MIT"
