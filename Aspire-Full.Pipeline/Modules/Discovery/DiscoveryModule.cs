@@ -75,26 +75,25 @@ public class DiscoveryModule
         AnsiConsole.WriteLine(envYaml);
         await SaveConfigurationAsync("environment.yaml", envYaml);
 
-        // 2. python-lint.yaml
-        var lintConfig = GeneratePythonLintConfig(config.Repository.Root);
-        var lintYaml = serializer.Serialize(lintConfig);
-        // AnsiConsole.WriteLine(lintYaml); // Optional: Don't spam console
+// 2. python-config.yaml
+        var toolingConfig = GeneratePythonToolingConfig(config.Repository.Root);
+        var toolingYaml = serializer.Serialize(toolingConfig);
 
         // Save to Aspire-Full.Python project root
         var pythonProjectRoot = Path.Combine(config.Repository.Root, "Aspire-Full.Python");
         if (Directory.Exists(pythonProjectRoot))
         {
-            var pythonConfigPath = Path.Combine(pythonProjectRoot, "python-lint.yaml");
-            await File.WriteAllTextAsync(pythonConfigPath, lintYaml);
+            var pythonConfigPath = Path.Combine(pythonProjectRoot, "python-config.yaml");
+            await File.WriteAllTextAsync(pythonConfigPath, toolingYaml);
             AnsiConsole.MarkupLine($"\n[green]Python configuration saved to: {pythonConfigPath}[/]");
         }
         else
         {
-             await SaveConfigurationAsync("python-lint.yaml", lintYaml);
+             await SaveConfigurationAsync("python-config.yaml", toolingYaml);
         }
     }
 
-    private PythonLintConfig GeneratePythonLintConfig(string rootPath)
+    private PythonToolingConfig GeneratePythonToolingConfig(string rootPath)
     {
         // Shared instances for anchors
         var vendorGlobs = new List<string>
@@ -123,39 +122,70 @@ public class DiscoveryModule
         if (Directory.Exists(Path.Combine(rootPath, "scripts"))) lintRoots.Add("scripts");
         if (Directory.Exists(Path.Combine(rootPath, "tools"))) lintRoots.Add("tools");
 
-        return new PythonLintConfig
+        // Discover test roots
+        var testRoots = new List<string>();
+        if (Directory.Exists(Path.Combine(rootPath, "Aspire-Full.Python", "python-agents", "tests"))) testRoots.Add("Aspire-Full.Python/python-agents/tests");
+        if (Directory.Exists(Path.Combine(rootPath, "sandboxes"))) testRoots.Add("sandboxes");
+        if (Directory.Exists(Path.Combine(rootPath, "scripts", "tests"))) testRoots.Add("scripts/tests");
+
+        var pytestAddOpts = new List<string> { "-q" };
+
+        return new PythonToolingConfig
         {
-            LineLength = 100,
-            VendorGlobs = vendorGlobs,
-            Paths = new LintPathsConfig
+            Lint = new PythonLintConfig
             {
-                LintRoots = lintRoots,
-                ExcludeGlobs = vendorGlobs // Anchor: *vendor_globs
+                LineLength = 100,
+                VendorGlobs = vendorGlobs,
+                Paths = new LintPathsConfig
+                {
+                    LintRoots = lintRoots,
+                    ExcludeGlobs = vendorGlobs // Anchor: *vendor_globs
+                },
+                Flake8 = new Flake8Config
+                {
+                    ExtendIgnore = flake8Ignore,
+                    Exclude = vendorGlobs // Anchor: *vendor_globs
+                },
+                PyCodeStyle = new PyCodeStyleConfig
+                {
+                    Ignore = flake8Ignore // Anchor: *flake8_ignore
+                },
+                Pylint = new PylintConfig
+                {
+                    Disable = pylintDisable,
+                    Ignore = new List<string> { ".vscode", ".vscode/extensions", ".vscode-test", ".vscode-debug", ".vscode-extensions" },
+                    IgnorePaths = pylintVendorRegex,
+                    IgnorePatterns = pylintVendorRegex // Anchor: *pylint_vendor_regex
+                },
+                Pyright = new PyrightConfig
+                {
+                    Exclude = vendorGlobs // Anchor: *vendor_globs
+                },
+                Runner = new RunnerConfig
+                {
+                    AutoTargets = lintRoots, // Anchor: *lint_roots
+                    PylintDisable = pylintDisable // Anchor: *pylint_disable
+                }
             },
-            Flake8 = new Flake8Config
+            Test = new PythonTestConfig
             {
-                ExtendIgnore = flake8Ignore,
-                Exclude = vendorGlobs // Anchor: *vendor_globs
-            },
-            PyCodeStyle = new PyCodeStyleConfig
-            {
-                Ignore = flake8Ignore // Anchor: *flake8_ignore
-            },
-            Pylint = new PylintConfig
-            {
-                Disable = pylintDisable,
-                Ignore = new List<string> { ".vscode", ".vscode/extensions", ".vscode-test", ".vscode-debug", ".vscode-extensions" },
-                IgnorePaths = pylintVendorRegex,
-                IgnorePatterns = pylintVendorRegex // Anchor: *pylint_vendor_regex
-            },
-            Pyright = new PyrightConfig
-            {
-                Exclude = vendorGlobs // Anchor: *vendor_globs
-            },
-            Runner = new RunnerConfig
-            {
-                AutoTargets = lintRoots, // Anchor: *lint_roots
-                PylintDisable = pylintDisable // Anchor: *pylint_disable
+                VendorGlobs = vendorGlobs, // Anchor: *vendor_globs
+                Paths = new TestPathsConfig
+                {
+                    TestRoots = testRoots,
+                    ExcludeGlobs = vendorGlobs // Anchor: *vendor_globs
+                },
+                Pytest = new PytestConfig
+                {
+                    AddOpts = pytestAddOpts,
+                    Markers = new List<string> { "slow: marks tests as slow", "gpu: requires NVIDIA GPU" },
+                    FilterWarnings = new List<string> { "ignore::DeprecationWarning" }
+                },
+                Runner = new TestRunnerConfig
+                {
+                    AutoTargets = testRoots, // Anchor: *test_roots
+                    DefaultAddOpts = pytestAddOpts // Anchor: *pytest_addopts
+                }
             }
         };
     }
