@@ -53,6 +53,10 @@ RUN curl -sSL https://aspire.dev/install.sh | bash \
     && mv /root/.aspire /opt/aspire \
     && chmod -R 755 /opt/aspire
 
+# Copy maintenance scripts
+COPY scripts /opt/devcontainer-scripts
+RUN chmod -R 755 /opt/devcontainer-scripts
+
 # Set environment variables for .NET and Docker-in-Docker
 ENV DOTNET_ROOT=/usr/share/dotnet
 ENV PATH="${PATH}:/usr/share/dotnet:/home/${USERNAME}/.dotnet/tools:/opt/aspire/bin"
