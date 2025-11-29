@@ -16,9 +16,9 @@ try:
 
     # ...existing code...
     try:
-        import opentelemetry
-        import opentelemetry.exporter.otlp.proto.http
-        import opentelemetry.sdk.trace
+        import opentelemetry  # type: ignore
+        import opentelemetry.exporter.otlp.proto.http  # type: ignore
+        import opentelemetry.sdk.trace  # type: ignore
 
         print(f"opentelemetry version: " f"{getattr(opentelemetry, '__version__', 'unknown')}")
         print("OpenTelemetry imports successful")

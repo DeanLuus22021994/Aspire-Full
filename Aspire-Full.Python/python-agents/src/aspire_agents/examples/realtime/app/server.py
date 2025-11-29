@@ -29,7 +29,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import assert_never
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
 # OpenTelemetry Imports
 try:
@@ -224,7 +224,7 @@ manager = RealtimeWebSocketManager()
 
 
 @asynccontextmanager
-async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     ensure_tensor_core_gpu()
     yield
 
