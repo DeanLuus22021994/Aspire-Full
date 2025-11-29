@@ -53,7 +53,7 @@ async def root():
 
 @app.post("/incoming-call")
 @app.get("/incoming-call")
-async def incoming_call(request: Request):
+async def incoming_call(request: Request) -> PlainTextResponse:
     """Handle incoming Twilio phone calls"""
     host = request.headers.get("Host")
 
@@ -68,7 +68,7 @@ async def incoming_call(request: Request):
 
 
 @app.websocket("/media-stream")
-async def media_stream_endpoint(websocket: WebSocket):
+async def media_stream_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for Twilio Media Streams"""
 
     try:

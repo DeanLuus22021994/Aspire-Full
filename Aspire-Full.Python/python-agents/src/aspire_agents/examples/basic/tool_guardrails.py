@@ -74,44 +74,58 @@ async def main():
     # Direct Test 1: Input Guardrail
     print("1. Direct Call: Sending safe email...")
     try:
-        print(f"DEBUG: Type: {type(send_email)}")
-        print(f"DEBUG: Dir: {dir(send_email)}")
+        import json
 
-        # Try calling .run() if it exists (FunctionTool object), otherwise call directly
-        if hasattr(send_email, "run"):
-            res = await send_email.run(to="john@example.com", subject="Hi", body="Hello")
+        args = {"to": "john@example.com", "subject": "Hi", "body": "Hello"}
+        args_json = json.dumps(args)
+
+        if hasattr(send_email, "on_invoke_tool"):
+            # on_invoke_tool is likely async and takes a string
+            res = await send_email.on_invoke_tool(args_json)
+            print(f"✅ Result: {res}\n")
         else:
-            res = await send_email(to="john@example.com", subject="Hi", body="Hello")
-        print(f"✅ Result: {res}\n")
+            print("❌ Error: Could not find invocation method.\n")
+
     except Exception as e:
         print(f"❌ Error: {e}\n")
 
     print("2. Direct Call: Sending harmful email...")
     try:
-        if hasattr(send_email, "run"):
-            res = await send_email.run(
-                to="john@example.com", subject="Exploit", body="Check out this exploit"
-            )
-        else:
-            res = await send_email(
-                to="john@example.com", subject="Exploit", body="Check out this exploit"
-            )
+        import json
 
-        # If blocked, it returns the error message string directly in our implementation
-        if "Input blocked" in str(res):
-            print(f"✅ Guardrail correctly blocked execution: {res}\n")
+        args = {
+            "to": "john@example.com",
+            "subject": "Exploit",
+            "body": "Check out this exploit",
+        }
+        args_json = json.dumps(args)
+
+        if hasattr(send_email, "on_invoke_tool"):
+            res = await send_email.on_invoke_tool(args_json)
+
+            # If blocked, it returns the error message string directly in our implementation
+            if "Input blocked" in str(res):
+                print(f"✅ Guardrail correctly blocked execution: {res}\n")
+            else:
+                print(f"❌ Warning: Should have been blocked but got: {res}\n")
         else:
-            print(f"❌ Warning: Should have been blocked but got: {res}\n")
+            print("❌ Error: Could not find invocation method.\n")
+
     except Exception as e:
         print(f"❌ Error: {e}\n")
 
     print("3. Direct Call: Getting sensitive data (Output Guardrail)...")
     try:
-        if hasattr(get_user_data, "run"):
-            await get_user_data.run(user_id="user123")
+        import json
+
+        args = {"user_id": "user123"}
+        args_json = json.dumps(args)
+
+        if hasattr(get_user_data, "on_invoke_tool"):
+            await get_user_data.on_invoke_tool(args_json)
+            print("❌ Error: Should have raised exception!\n")
         else:
-            await get_user_data(user_id="user123")
-        print("❌ Error: Should have raised exception!\n")
+            print("❌ Error: Could not find invocation method.\n")
     except ToolOutputGuardrailTripwireTriggered as e:
         print("✅ Guardrail correctly raised exception for PII.")
         print(f"   Details: {e.output.output_info}\n")
