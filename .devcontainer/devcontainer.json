@@ -2,7 +2,7 @@
   "name": "Aspire Full - .NET 10 + Docker",
   "dockerComposeFile": "./docker-compose.yml",
   "service": "devcontainer",
-  "workspaceFolder": "${containerWorkspaceFolder}",
+  "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
 
   "features": {
@@ -84,8 +84,8 @@
     }
   },
 
-  "postCreateCommand": "python3 .devcontainer/scripts/post_create.py",
-  "postStartCommand": "python3 .devcontainer/scripts/post_start.py",
+  "postCreateCommand": "python3 /workspace/.devcontainer/scripts/post_create.py",
+  "postStartCommand": "python3 /workspace/.devcontainer/scripts/post_start.py",
 
   "remoteEnv": {
     "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://aspire-dashboard:18889",
