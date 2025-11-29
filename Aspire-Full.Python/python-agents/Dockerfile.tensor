@@ -39,7 +39,22 @@ RUN pip install --upgrade pip && \
         websockets \
         python-dotenv \
         sounddevice \
-        textual
+        textual \
+        numpy \
+        pandas \
+        sqlalchemy \
+        psycopg2-binary \
+        redis \
+        azure-identity \
+        azure-keyvault-secrets \
+        dapr-ext-grpc \
+        dapr-ext-fastapi \
+        dapr-client \
+        twilio \
+        playwright
+
+# Install Playwright browsers (heavy operation, but required for computer use tools)
+RUN playwright install --with-deps chromium
 
 # Pre-download models to cache
 RUN python -c "from transformers import AutoTokenizer, AutoModel; \

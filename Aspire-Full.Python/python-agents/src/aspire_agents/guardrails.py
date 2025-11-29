@@ -5,7 +5,7 @@ Leverages LocalComputeService for high-performance, GPU-accelerated checks.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable
 
 from .compute import get_compute_service
 
@@ -78,9 +78,12 @@ class GuardrailService:
     def _precompute_embeddings(self):
         """Pre-compute embeddings for restricted concepts on the GPU."""
         for category, phrases in self.restricted_concepts.items():
-            self.concept_embeddings[category] = self.compute.compute_embeddings(phrases)
+            # Use sync method for initialization
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(
+                phrases
+            )
 
-    def check_semantic_similarity(
+    async def check_semantic_similarity(
         self, text: str, category: str, threshold: float = 0.4
     ) -> bool:
         """
@@ -90,14 +93,15 @@ class GuardrailService:
         if not text or category not in self.concept_embeddings:
             return False
 
-        # Compute embedding for the input text
-        text_embedding = self.compute.compute_embeddings([text])
+        # Compute embedding for the input text asynchronously
+        text_embedding = await self.compute.compute_embedding(text)
 
         # Compute similarity against the category's pre-computed embeddings
         # (1, D) x (N, D)^T -> (1, N)
-        similarities = (text_embedding @ self.concept_embeddings[category].t()).squeeze(
-            0
-        )
+        # Note: Operations happen on CPU here, which is fast for final dot product
+        similarities = (
+            text_embedding.unsqueeze(0) @ self.concept_embeddings[category].t()
+        ).squeeze(0)
 
         # Check if any phrase matches
         max_similarity = similarities.max().item()
@@ -123,16 +127,16 @@ def get_guardrail_service() -> GuardrailService:
 
 def semantic_input_guardrail(
     category: str = "harmful", threshold: float = 0.4
-) -> Callable[[ToolInputGuardrailData], ToolGuardrailFunctionOutput]:
+) -> Callable[[ToolInputGuardrailData], Awaitable[ToolGuardrailFunctionOutput]]:
     """
     Decorator factory for semantic input guardrails.
     """
 
-    def guardrail(data: ToolInputGuardrailData) -> ToolGuardrailFunctionOutput:
+    async def guardrail(data: ToolInputGuardrailData) -> ToolGuardrailFunctionOutput:
         service = get_guardrail_service()
         args_str = str(data.context.tool_arguments)
 
-        if service.check_semantic_similarity(args_str, category, threshold):
+        if await service.check_semantic_similarity(args_str, category, threshold):
             return ToolGuardrailFunctionOutput.reject_content(
                 message=(
                     f"Input blocked: content semantically similar to restricted "
@@ -148,16 +152,16 @@ def semantic_input_guardrail(
 
 def semantic_output_guardrail(
     category: str = "pii", threshold: float = 0.4
-) -> Callable[[ToolOutputGuardrailData], ToolGuardrailFunctionOutput]:
+) -> Callable[[ToolOutputGuardrailData], Awaitable[ToolGuardrailFunctionOutput]]:
     """
     Decorator factory for semantic output guardrails.
     """
 
-    def guardrail(data: ToolOutputGuardrailData) -> ToolGuardrailFunctionOutput:
+    async def guardrail(data: ToolOutputGuardrailData) -> ToolGuardrailFunctionOutput:
         service = get_guardrail_service()
         output_str = str(data.output)
 
-        if service.check_semantic_similarity(output_str, category, threshold):
+        if await service.check_semantic_similarity(output_str, category, threshold):
             # For PII/Output, we often want to raise an exception to stop the chain
             return ToolGuardrailFunctionOutput.raise_exception(
                 output_info={
