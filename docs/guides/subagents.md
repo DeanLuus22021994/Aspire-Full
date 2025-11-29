@@ -8,7 +8,7 @@
 - `SubagentSelfReviewService` for generating self-retrospectives
 - Delegation helpers that classify follow-up work by priority
 
-`Aspire-Full.Subagents.Agent` is a lightweight console companion that ingests a JSON update, produces a retrospective, and emits a delegation plan for hand-off to other automation.
+`Aspire-Full.Agents` is a lightweight console companion that ingests a JSON update, produces a retrospective, and emits a delegation plan for hand-off to other automation.
 
 ## JSON Workflow
 
@@ -27,7 +27,7 @@
 2. Run the agent:
 
 ```bash
-dotnet run --project Aspire-Full.Subagents.Agent -- --input subagents.update.json
+dotnet run --project Aspire-Full.Agents -- --input subagents.update.json
 ```
 
 3. Review the generated retrospective + delegation at `subagents.update.output.json` (or supply `--output`).

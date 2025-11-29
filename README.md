@@ -18,7 +18,7 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - **Observability** - OpenTelemetry with Aspire Dashboard
 - **Testing** - Unit tests (xUnit) and E2E tests (NUnit)
 - **DevContainer** - `Aspire-Full.DevContainer` project exposes `AddDevContainer()` so Aspire manages the Docker workspace + Python 3.14 free-threaded tooling
-- **Subagents** - `Aspire-Full.Subagents` keeps sandbox agent specs self-documented with a CLI (`Aspire-Full.Subagents.Agent`) that automates retrospectives + delegation
+- **Subagents** - `Aspire-Full.Subagents` keeps sandbox agent specs self-documented with a CLI (`Aspire-Full.Agents`) that automates retrospectives + delegation
 - **Docker Registry Patterns** - `Aspire-Full.DockerRegistry` provides a pattern-driven client and API surface for querying container repositories, tags, and manifests
 
 ## Quick Start
