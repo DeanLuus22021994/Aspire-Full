@@ -5,7 +5,7 @@ import subprocess
 import sys
 import tempfile
 
-from agents import Agent, ImageGenerationTool, Runner, trace
+from agents import Agent, ImageGenerationTool, Runner, trace  # type: ignore
 
 
 def open_file(path: str) -> None:
@@ -32,9 +32,7 @@ async def main():
 
     with trace("Image generation example"):
         print("Generating image, this may take a while...")
-        result = await Runner.run(
-            agent, "Create an image of a frog eating a pizza, comic book style."
-        )
+        result = await Runner.run(agent, "Create an image of a frog eating a pizza, comic book style.")
         print(result.final_output)
         for item in result.new_items:
             if (

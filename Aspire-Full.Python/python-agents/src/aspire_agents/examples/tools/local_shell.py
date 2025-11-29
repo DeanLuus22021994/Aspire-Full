@@ -2,7 +2,7 @@ import asyncio
 import os
 import subprocess
 
-from agents import Agent, LocalShellCommandRequest, LocalShellTool, Runner, trace
+from agents import Agent, LocalShellCommandRequest, LocalShellTool, Runner, trace  # type: ignore
 
 
 def shell_executor(request: LocalShellCommandRequest) -> str:

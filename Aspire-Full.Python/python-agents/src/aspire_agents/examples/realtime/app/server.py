@@ -15,11 +15,12 @@ from agents.realtime.config import RealtimeUserInputMessage  # type: ignore
 from agents.realtime.items import RealtimeItem  # type: ignore
 from agents.realtime.model import RealtimeModelConfig  # type: ignore
 from agents.realtime.model_inputs import RealtimeModelSendRawMessage  # type: ignore
-from aspire_agents.gpu import ensure_tensor_core_gpu
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import assert_never
+
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # OpenTelemetry Imports
 try:
@@ -39,9 +40,7 @@ except ImportError:
     TracerProvider = None  # type: ignore
     BatchSpanProcessor = None  # type: ignore
     OTEL_AVAILABLE = False
-    logging.getLogger(__name__).warning(
-        "OpenTelemetry packages not found. Tracing will be disabled."
-    )
+    logging.getLogger(__name__).warning("OpenTelemetry packages not found. Tracing will be disabled.")
 
 # Import TwilioHandler class - handle both module and package use cases
 if TYPE_CHECKING:
@@ -122,16 +121,12 @@ class RealtimeWebSocketManager:
             )
         )
 
-    async def send_user_message(
-        self, session_id: str, message: RealtimeUserInputMessage
-    ) -> None:
+    async def send_user_message(self, session_id: str, message: RealtimeUserInputMessage) -> None:
         """Send a structured user message via the higher-level API (supports input_image)."""
         session = self.active_sessions.get(session_id)
         if not session:
             return
-        await session.send_message(
-            message
-        )  # delegates to RealtimeModelSendUserInput path
+        await session.send_message(message)  # delegates to RealtimeModelSendUserInput path
 
     async def interrupt(self, session_id: str) -> None:
         """Interrupt current model playback/response for a session."""
@@ -193,9 +188,7 @@ class RealtimeWebSocketManager:
         elif event.type == "audio_end":
             pass
         elif event.type == "history_updated":
-            base_event["history"] = [
-                self._sanitize_history_item(item) for item in event.history
-            ]
+            base_event["history"] = [self._sanitize_history_item(item) for item in event.history]
         elif event.type == "history_added":
             # Provide the added item so the UI can render incrementally.
             try:
@@ -203,17 +196,13 @@ class RealtimeWebSocketManager:
             except Exception:
                 base_event["item"] = None
         elif event.type == "guardrail_tripped":
-            base_event["guardrail_results"] = [
-                {"name": result.guardrail.name} for result in event.guardrail_results
-            ]
+            base_event["guardrail_results"] = [{"name": result.guardrail.name} for result in event.guardrail_results]
         elif event.type == "raw_model_event":
             base_event["raw_model_event"] = {
                 "type": event.data.type,
             }
         elif event.type == "error":
-            base_event["error"] = (
-                str(event.error) if hasattr(event, "error") else "Unknown error"
-            )
+            base_event["error"] = str(event.error) if hasattr(event, "error") else "Unknown error"
         elif event.type == "input_audio_timeout_triggered":
             pass
         else:
@@ -226,7 +215,7 @@ manager = RealtimeWebSocketManager()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
     ensure_tensor_core_gpu()
     yield
 
@@ -272,9 +261,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                 audio_bytes = struct.pack(f"{len(int16_data)}h", *int16_data)
                 await manager.send_audio(session_id, audio_bytes)
             elif message["type"] == "image":
-                logger.info(
-                    "Received image message from client (session %s).", session_id
-                )
+                logger.info("Received image message from client (session %s).", session_id)
                 # Build a conversation.item.create with input_image (and optional input_text)
                 data_url = message.get("data_url")
                 prompt_text = message.get("text") or "Please describe this image."
@@ -327,20 +314,14 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                     )
             elif message["type"] == "commit_audio":
                 # Force close the current input audio turn
-                await manager.send_client_event(
-                    session_id, {"type": "input_audio_buffer.commit"}
-                )
+                await manager.send_client_event(session_id, {"type": "input_audio_buffer.commit"})
             elif message["type"] == "image_start":
                 img_id = str(message.get("id"))
                 image_buffers[img_id] = {
                     "text": message.get("text") or "Please describe this image.",
                     "chunks": [],
                 }
-                await websocket.send_text(
-                    json.dumps(
-                        {"type": "client_info", "info": "image_start_ack", "id": img_id}
-                    )
-                )
+                await websocket.send_text(json.dumps({"type": "client_info", "info": "image_start_ack", "id": img_id}))
             elif message["type"] == "image_chunk":
                 img_id = str(message.get("id"))
                 chunk = message.get("chunk", "")
@@ -374,8 +355,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                     prompt_text = buf["text"]
                     if data_url:
                         logger.info(
-                            "Forwarding chunked image (structured message) to Realtime API "
-                            "(len=%d).",
+                            "Forwarding chunked image (structured message) to Realtime API " "(len=%d).",
                             len(data_url),
                         )
                         user_msg2: RealtimeUserInputMessage = {
@@ -412,9 +392,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                             )
                         )
                     else:
-                        await websocket.send_text(
-                            json.dumps({"type": "error", "error": "Empty image."})
-                        )
+                        await websocket.send_text(json.dumps({"type": "error", "error": "Empty image."}))
             elif message["type"] == "interrupt":
                 await manager.interrupt(session_id)
 
