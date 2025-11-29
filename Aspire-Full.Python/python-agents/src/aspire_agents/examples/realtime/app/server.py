@@ -227,7 +227,8 @@ if OTEL_AVAILABLE:
     resource = Resource.create(attributes={"service.name": "python-agents"})
     trace.set_tracer_provider(TracerProvider(resource=resource))
     tracer_provider = trace.get_tracer_provider()
-    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+    if hasattr(tracer_provider, "add_span_processor"):
+        tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
     FastAPIInstrumentor.instrument_app(app)
 
 

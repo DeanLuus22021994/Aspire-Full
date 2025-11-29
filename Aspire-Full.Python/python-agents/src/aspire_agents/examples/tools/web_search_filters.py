@@ -17,20 +17,20 @@ async def main():
         tools=[
             WebSearchTool(
                 # https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses#domain-filtering
-                filters=Filters(
-                    allowed_domains=[
-                        "openai.com",
-                        "developer.openai.com",
-                        "platform.openai.com",
-                        "help.openai.com",
-                    ],
-                ),
+                # filters=Filters(
+                #     allowed_domains=[
+                #         "openai.com",
+                #         "developer.openai.com",
+                #         "platform.openai.com",
+                #         "help.openai.com",
+                #     ],
+                # ),
                 search_context_size="medium",
             )
         ],
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="low"),
-            verbosity="low",
+            # verbosity="low",
             # https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses#sources
             response_include=["web_search_call.action.sources"],
         ),

@@ -5,13 +5,12 @@ from typing import TYPE_CHECKING, override
 
 import numpy as np
 import sounddevice as sd
+from agents.voice import StreamedAudioInput, VoicePipeline
 from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.reactive import reactive
 from textual.widgets import Button, RichLog, Static
-
-from agents.voice import StreamedAudioInput, VoicePipeline
 
 # Import MyWorkflow class - handle both module and package use cases
 if TYPE_CHECKING:
@@ -37,7 +36,6 @@ class Header(Static):
 
     session_id = reactive("")
 
-    @override
     def render(self) -> str:
         return "Speak to the agent. When you stop speaking, it will respond."
 
@@ -47,7 +45,6 @@ class AudioStatusIndicator(Static):
 
     is_recording = reactive(False)
 
-    @override
     def render(self) -> str:
         status = (
             "🔴 Recording... (Press K to stop)"
@@ -137,11 +134,12 @@ class RealtimeApp(App[None]):
 
     def _on_transcription(self, transcription: str) -> None:
         try:
-            self.query_one("#bottom-pane", RichLog).write(f"Transcription: {transcription}")
+            self.query_one("#bottom-pane", RichLog).write(
+                f"Transcription: {transcription}"
+            )
         except Exception:
             pass
 
-    @override
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         with Container():
@@ -162,9 +160,8 @@ class RealtimeApp(App[None]):
                 bottom_pane = self.query_one("#bottom-pane", RichLog)
                 if event.type == "voice_stream_event_audio":
                     self.audio_player.write(event.data)
-                    bottom_pane.write(
-                        f"Received audio: {len(event.data) if event.data is not None else '0'} bytes"
-                    )
+                    msg = f"Received audio: {len(event.data) if event.data is not None else '0'} bytes"
+                    bottom_pane.write(msg)
                 elif event.type == "voice_stream_event_lifecycle":
                     bottom_pane.write(f"Lifecycle event: {event.event}")
         except Exception as e:
@@ -199,7 +196,9 @@ class RealtimeApp(App[None]):
 
                 data, _ = stream.read(read_size)
 
-                await self._audio_input.add_audio(data)
+                # Cast to Any to avoid mypy error about float64 vs int16
+                # sounddevice returns numpy array, but type inference is tricky
+                await self._audio_input.add_audio(data)  # type: ignore
                 await asyncio.sleep(0)
         except KeyboardInterrupt:
             pass
