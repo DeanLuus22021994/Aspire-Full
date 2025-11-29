@@ -1,13 +1,7 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM base-dotnet AS build
 WORKDIR /src
 
-# Install .NET 10 Preview SDK
-RUN apt-get update && apt-get install -y wget && \
-    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh && \
-    chmod +x dotnet-install.sh && \
-    ./dotnet-install.sh --channel 10.0 --quality preview --install-dir /usr/share/dotnet
-ENV PATH="/usr/share/dotnet:$PATH"
-
+# Copy Solution and Config Files
 COPY ["Aspire-Full.slnf", "."]
 COPY ["Aspire-Full.slnx", "."]
 COPY ["Directory.Build.props", "."]

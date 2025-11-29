@@ -1,0 +1,18 @@
+debug = true
+[worker.oci]
+  enabled = true
+  gc = true
+  gckeepstorage = 30000 # 30GB
+
+  [[worker.oci.gcpolicy]]
+    keepBytes = 15000000000 # 15GB
+    keepDuration = 604800 # 7 days
+    filters = ["type==source.local", "type==exec.cachemount", "type==source.git.checkout"]
+
+  [[worker.oci.gcpolicy]]
+    all = true
+    keepBytes = 30000000000 # 30GB
+
+[registry."host.docker.internal:5001"]
+  http = true
+  insecure = true

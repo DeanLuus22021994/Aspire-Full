@@ -2,7 +2,7 @@
 FROM python:3.14-rc-slim
 
 # Enable Python 3.14 Free-Threading
-ENV PYTHON_GIL=0
+# ENV PYTHON_GIL=0
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -27,7 +27,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml uv.lock* ./
+COPY Aspire-Full.Python/python-agents/pyproject.toml Aspire-Full.Python/python-agents/uv.lock* ./
 
 # Install dependencies
 # We use --system because we are in a container
@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/root/.cache/ms-playwright \
     uv run playwright install --with-deps chromium
 
 # Copy source code
-COPY . .
+COPY Aspire-Full.Python/python-agents/ .
 
 # Pre-download models for instant readiness
 # This runs the script we just created to cache models in the image

@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install .NET 10 Preview SDK
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y wget && \
+    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh && \
+    chmod +x dotnet-install.sh && \
+    ./dotnet-install.sh --channel 10.0 --quality preview --install-dir /usr/share/dotnet
+ENV PATH="/usr/share/dotnet:$PATH"

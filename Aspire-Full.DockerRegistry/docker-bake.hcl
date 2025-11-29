@@ -1,5 +1,5 @@
 variable "REGISTRY" {
-  default = "host.docker.internal:5001"
+  default = "localhost:5001"
 }
 
 variable "NAMESPACE" {
@@ -27,7 +27,7 @@ group "bootstrap" {
 }
 
 target "base-native" {
-  context = "Aspire-Full.DockerRegistry/docker"
+  context = "docker"
   dockerfile = "Dockerfile.base-native"
   tags = ["${REGISTRY}/${NAMESPACE}/base-native:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest"]
@@ -35,7 +35,7 @@ target "base-native" {
 }
 
 target "base-dotnet" {
-  context = "Aspire-Full.DockerRegistry/docker"
+  context = "docker"
   dockerfile = "Dockerfile.base-dotnet"
   tags = ["${REGISTRY}/${NAMESPACE}/base-dotnet:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest"]
@@ -44,7 +44,7 @@ target "base-dotnet" {
 
 target "api" {
   context = "."
-  dockerfile = "Aspire-Full.DockerRegistry/docker/Dockerfile"
+  dockerfile = "Aspire-Full.Api/Dockerfile"
   contexts = {
     "base-native" = "target:base-native"
     "base-dotnet" = "target:base-dotnet"
@@ -56,7 +56,7 @@ target "api" {
 
 target "gateway" {
   context = "."
-  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Gateway"
+  dockerfile = "Aspire-Full.Gateway/Dockerfile"
   contexts = {
     "base-native" = "target:base-native"
     "base-dotnet" = "target:base-dotnet"
@@ -67,8 +67,8 @@ target "gateway" {
 }
 
 target "web" {
-  context = "."
-  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Web"
+  context = "Aspire-Full.Web"
+  dockerfile = "Dockerfile"
   tags = ["${REGISTRY}/${NAMESPACE}/web-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/web-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/web-cache:${ENVIRONMENT},mode=max"]
@@ -76,7 +76,7 @@ target "web" {
 
 target "web-assembly" {
   context = "."
-  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.WebAssembly"
+  dockerfile = "Aspire-Full.WebAssembly/Dockerfile"
   contexts = {
     "base-dotnet" = "target:base-dotnet"
   }
@@ -86,8 +86,8 @@ target "web-assembly" {
 }
 
 target "python-agents" {
-  context = "."
-  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent"
+  context = "Aspire-Full.Python/python-agents"
+  dockerfile = "Dockerfile.agent"
   tags = ["${REGISTRY}/${NAMESPACE}/python-agents-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT},mode=max"]
