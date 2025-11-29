@@ -2,7 +2,7 @@ services:
   devcontainer:
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: Aspire-Full.DockerRegistry/docker/Dev/Dockerfile.DevContainer
     volumes:
       # Named volumes only - NO host mounts for complete isolation
       - aspire-nuget-cache:/home/vscode/.nuget
@@ -48,8 +48,8 @@ services:
   # Self-hosted GitHub Actions Runner
   github-runner:
     build:
-      context: .
-      dockerfile: Dockerfile.runner
+      context: ..
+      dockerfile: Aspire-Full.DockerRegistry/docker/Dev/Dockerfile.Runner
     container_name: aspire-github-runner
     volumes:
       # Named volumes for runner persistence
@@ -129,7 +129,7 @@ services:
   github-mcp:
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile.github-mcp
+      dockerfile: Aspire-Full.DockerRegistry/docker/Mcp/Dockerfile.GithubMcp.Cpu
     container_name: aspire-github-mcp
     runtime: nvidia
     deploy:

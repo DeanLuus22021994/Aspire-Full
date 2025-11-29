@@ -1,5 +1,8 @@
 # Self-hosted GitHub Actions Runner with .NET 10, Node.js 22, and Docker support
 FROM mcr.microsoft.com/devcontainers/base:bookworm
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full GitHub Actions Runner"
+LABEL org.opencontainers.image.licenses="MIT"
 
 ARG RUNNER_VERSION=2.321.0
 ARG TARGETARCH=x64

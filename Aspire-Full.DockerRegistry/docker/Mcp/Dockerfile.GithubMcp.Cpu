@@ -1,5 +1,9 @@
 # GitHub MCP server image with baked dependencies and telemetry tooling
 FROM node:22-slim AS base
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full GitHub MCP Server (CPU)"
+LABEL org.opencontainers.image.licenses="MIT"
+
 WORKDIR /workspace/tools/github-mcp
 
 COPY tools/github-mcp/package*.json ./
