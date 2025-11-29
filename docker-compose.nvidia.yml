@@ -1,0 +1,37 @@
+services:
+  aspire-full-api:
+    build:
+      context: .
+      dockerfile: Aspire-Full.Api/Dockerfile
+    image: aspire-full-api:native-nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__aspiredb=Host=postgres;Database=aspiredb;Username=postgres;Password=postgres
+      - ConnectionStrings__redis=redis:6379
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+      - redis
+      - registry
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=aspiredb
+
+  redis:
+    image: redis:latest
+
+  registry:
+    image: registry:2
+    ports:
+      - "5001:5000"
