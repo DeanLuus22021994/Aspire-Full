@@ -44,6 +44,9 @@ public static class ServiceCollectionExtensions
             };
         });
 
+        services.AddSingleton<IBuildxWorkerFactory, BuildxWorkerFactory>();
+        services.AddSingleton<IGarbageCollector, GarbageCollector>();
+
         return services;
     }
 

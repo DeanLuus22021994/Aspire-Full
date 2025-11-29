@@ -43,6 +43,16 @@ public sealed class DockerRegistryOptions
     /// Pattern configuration for repositories and tags.
     /// </summary>
     public DockerRegistryPatternOptions Patterns { get; set; } = new();
+
+    /// <summary>
+    /// Maximum number of concurrent buildx workers.
+    /// </summary>
+    public int MaxWorkerPoolSize { get; set; } = 5;
+
+    /// <summary>
+    /// Interval for garbage collection.
+    /// </summary>
+    public TimeSpan GarbageCollectionInterval { get; set; } = TimeSpan.FromHours(24);
 }
 
 public sealed class DockerRegistryCredentialOptions

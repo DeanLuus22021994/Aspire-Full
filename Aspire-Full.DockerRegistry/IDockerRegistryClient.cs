@@ -11,6 +11,23 @@ public interface IDockerRegistryClient
     DockerImageReference BuildReference(DockerImageDescriptor descriptor, string? tag = null);
 }
 
+public interface IBuildxWorkerFactory
+{
+    Task<IBuildxWorker> GetWorkerAsync(CancellationToken cancellationToken = default);
+    Task ReleaseWorkerAsync(IBuildxWorker worker);
+}
+
+public interface IBuildxWorker
+{
+    string Id { get; }
+    Task ExecuteCommandAsync(string command, CancellationToken cancellationToken = default);
+}
+
+public interface IGarbageCollector
+{
+    Task CollectAsync(CancellationToken cancellationToken = default);
+}
+
 public sealed record DockerManifest
 {
     public required string Repository { get; init; }
