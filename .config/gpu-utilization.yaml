@@ -1,0 +1,11 @@
+version: 1
+
+flags:
+  optimized: 0.80        # >=80% keeps tensor workloads fully saturated
+  warning: 0.60          # 60-79% indicates headroom remains
+  degraded: 0.45         # 45-59% likely blocked by data or IO
+  critical: 0.30         # <=30% shows GPU is mostly idle
+
+notes:
+  - "Optimized performance is expected at 80% utilization or better."
+  - "Thresholds follow sandbox guidance for CUDA-based ArcFace inference."

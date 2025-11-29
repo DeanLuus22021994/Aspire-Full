@@ -82,3 +82,14 @@ contexts:
       runner:
         auto_targets: *test_roots
         default_addopts: *pytest_addopts
+
+telemetry:
+  gpu:
+    flags_file: .config/gpu-utilization.yaml
+    measured_utilization: 0.30
+    target_utilization: 0.80
+    relative_to_target_pct: 37.5
+    utilization_gap: 0.50
+    notes:
+      - "Actual utilization is calculated from live tensor computation workloads (not pinned)."
+      - "Gap highlights the 30% actual vs 80% optimized expectation."
