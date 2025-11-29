@@ -65,6 +65,8 @@ public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IDisposable
     }
 }
 
+using System.Diagnostics;
+
 internal sealed class BuildxWorker : IBuildxWorker
 {
     private readonly ILogger _logger;
@@ -80,8 +82,35 @@ internal sealed class BuildxWorker : IBuildxWorker
     public async Task ExecuteCommandAsync(string command, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Worker {WorkerId} executing: {Command}", Id, command);
-        // Simulate execution or use Process.Start
-        await Task.Delay(100, cancellationToken);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "docker",
+            Arguments = $"buildx {command}",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
+
+        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+
+        await process.WaitForExitAsync(cancellationToken);
+
+        var output = await outputTask;
+        var error = await errorTask;
+
+        if (process.ExitCode != 0)
+        {
+            _logger.LogError("Worker {WorkerId} failed with exit code {ExitCode}. Error: {Error}", Id, process.ExitCode, error);
+            throw new DockerRegistryException(DockerRegistryErrorCode.BuildxError, $"Buildx command failed: {error}");
+        }
+
+        _logger.LogInformation("Worker {WorkerId} completed successfully. Output: {Output}", Id, output);
     }
 }
 
@@ -100,7 +129,35 @@ internal sealed class BuildxExporter : IBuildxExporter
     public async Task ExportAsync(string artifactId, string destination, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Exporter {ExporterId} exporting {ArtifactId} to {Destination}", Id, artifactId, destination);
-        // Simulate export
-        await Task.Delay(100, cancellationToken);
+
+        // Example: docker buildx imagetools create -t destination artifactId
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "docker",
+            Arguments = $"buildx imagetools create -t {destination} {artifactId}",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
+
+        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+
+        await process.WaitForExitAsync(cancellationToken);
+
+        var output = await outputTask;
+        var error = await errorTask;
+
+        if (process.ExitCode != 0)
+        {
+            _logger.LogError("Exporter {ExporterId} failed with exit code {ExitCode}. Error: {Error}", Id, process.ExitCode, error);
+            throw new DockerRegistryException(DockerRegistryErrorCode.BuildxError, $"Buildx export failed: {error}");
+        }
+
+        _logger.LogInformation("Exporter {ExporterId} completed successfully. Output: {Output}", Id, output);
     }
 }

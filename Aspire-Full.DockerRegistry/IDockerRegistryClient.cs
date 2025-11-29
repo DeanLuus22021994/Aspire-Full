@@ -8,6 +8,8 @@ public interface IDockerRegistryClient
 
     Task<DockerManifest?> GetManifestAsync(DockerImageDescriptor descriptor, string tag, CancellationToken cancellationToken = default);
 
+    Task DeleteManifestAsync(DockerImageDescriptor descriptor, string digest, CancellationToken cancellationToken = default);
+
     DockerImageReference BuildReference(DockerImageDescriptor descriptor, string? tag = null);
 }
 

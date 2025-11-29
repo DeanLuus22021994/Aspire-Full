@@ -11,6 +11,11 @@ public sealed record DockerImageDescriptor
     public string? Version { get; init; }
     public string? Variant { get; init; }
 
+    /// <summary>
+    /// Additional metadata for traceability and rotation (e.g., build ID, timestamp, git commit).
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
+
     public DockerImageDescriptor WithDefaults(DockerRegistryPatternOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
