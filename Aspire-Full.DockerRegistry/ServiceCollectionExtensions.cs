@@ -46,6 +46,8 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IBuildxWorkerFactory, BuildxWorkerFactory>();
         services.AddSingleton<IGarbageCollector, GarbageCollector>();
+        services.AddSingleton<IGarbageCollectionPolicy, MaxCountRetentionPolicy>();
+        services.AddHostedService<GarbageCollectorService>();
 
         return services;
     }

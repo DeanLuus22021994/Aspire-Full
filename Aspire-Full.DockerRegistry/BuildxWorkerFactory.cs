@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -64,8 +65,6 @@ public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IDisposable
         _exporterSemaphore.Dispose();
     }
 }
-
-using System.Diagnostics;
 
 internal sealed class BuildxWorker : IBuildxWorker
 {

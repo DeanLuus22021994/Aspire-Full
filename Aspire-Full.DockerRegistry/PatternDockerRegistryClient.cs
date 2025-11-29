@@ -163,6 +163,40 @@ public sealed class PatternDockerRegistryClient : IDockerRegistryClient
         }
     }
 
+    public async Task DeleteManifestAsync(DockerImageDescriptor descriptor, string digest, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+        if (string.IsNullOrWhiteSpace(digest))
+        {
+            throw new ArgumentException("Digest cannot be empty", nameof(digest));
+        }
+
+        var reference = BuildReference(descriptor);
+        // Note: Deleting by digest is required by the Docker Registry API v2
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"v2/{reference.Repository}/manifests/{digest}");
+
+        try
+        {
+            using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.NotFound)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                throw new DockerRegistryException($"Registry delete returned {(int)response.StatusCode}: {body}");
+            }
+
+            _logger.LogInformation("Successfully deleted manifest {Digest} for {Repository}", digest, reference.Repository);
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex))
+        {
+            _logger.LogWarning(ex, "Docker registry delete request failed for {Repository}@{Digest}", reference.Repository, digest);
+            if (!_options.EnableOfflineFallback)
+            {
+                throw new DockerRegistryException($"Unable to delete manifest for {reference.Repository}@{digest}", ex);
+            }
+            // In offline/fallback mode, we just swallow the error as we can't delete from a non-existent registry
+        }
+    }
+
     private IReadOnlyList<DockerRepositoryInfo> BuildSampleRepositories()
     {
         return _options.Patterns.SampleServices.Select(service =>
