@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-RUNNER = REPO_ROOT / "tools" / "python" / "lint" / "run.py"
+RUNNER = REPO_ROOT / "Aspire-Full.Python" / "tools" / "lint" / "run.py"
 
 
 def main() -> int:

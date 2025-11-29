@@ -17,7 +17,7 @@ contexts:
 
       paths:
         lint_roots: &lint_roots
-          - python-agents
+          - Aspire-Full.Python/python-agents
           - sandboxes
           - scripts
           - tools
@@ -54,7 +54,8 @@ contexts:
       pyright:
         exclude: *vendor_globs
         extra_paths:
-          - python-agents/src
+          - Aspire-Full.Python/python-agents/src
+          - Aspire-Full.Python/python-agents/.venv/Lib/site-packages
 
       runner:
         auto_targets: *lint_roots
@@ -65,7 +66,7 @@ contexts:
 
       paths:
         test_roots: &test_roots
-          - python-agents/tests
+          - Aspire-Full.Python/python-agents/tests
           - sandboxes
           - scripts/tests
         exclude_globs: *vendor_globs
