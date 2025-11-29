@@ -1,4 +1,8 @@
 import sys
+from pathlib import Path
+
+# Add src to path so we can import aspire_agents
+sys.path.append(str(Path(__file__).parent / "src"))
 
 try:
     import aspire_agents

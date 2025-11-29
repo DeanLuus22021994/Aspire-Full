@@ -1,6 +1,7 @@
 import asyncio
 
 from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 """This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
 The second run passes the previous response ID to the model, which allows it to continue the
@@ -15,6 +16,7 @@ you'll need to re-send the previous conversation history.
 
 
 async def main():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
         instructions="You are a helpful assistant. be VERY concise.",
@@ -34,6 +36,7 @@ async def main():
 
 
 async def main_stream():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
         instructions="You are a helpful assistant. be VERY concise.",
@@ -42,7 +45,10 @@ async def main_stream():
     result = Runner.run_streamed(agent, "What is the largest country in South America?")
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
+        if (
+            event.type == "raw_response_event"
+            and event.data.type == "response.output_text.delta"
+        ):
             print(event.data.delta, end="", flush=True)
 
     print()
@@ -54,7 +60,10 @@ async def main_stream():
     )
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
+        if (
+            event.type == "raw_response_event"
+            and event.data.type == "response.output_text.delta"
+        ):
             print(event.data.delta, end="", flush=True)
 
 

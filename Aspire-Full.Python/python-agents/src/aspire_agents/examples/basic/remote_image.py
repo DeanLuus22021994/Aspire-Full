@@ -1,11 +1,13 @@
 import asyncio
 
 from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 URL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
 
 
 async def main():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
         instructions="You are a helpful assistant.",
@@ -16,7 +18,9 @@ async def main():
         [
             {
                 "role": "user",
-                "content": [{"type": "input_image", "detail": "auto", "image_url": URL}],
+                "content": [
+                    {"type": "input_image", "detail": "auto", "image_url": URL}
+                ],
             },
             {
                 "role": "user",

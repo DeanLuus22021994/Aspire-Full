@@ -12,6 +12,7 @@ from agents import (
     Runner,
     trace,
 )
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
     from playwright.async_api import (  # type: ignore
@@ -37,6 +38,7 @@ else:
 
 
 async def main():
+    ensure_tensor_core_gpu()
     async with LocalPlaywrightComputer() as computer:
         with trace("Computer use example"):
             agent = Agent(

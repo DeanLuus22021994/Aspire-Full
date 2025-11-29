@@ -1,9 +1,11 @@
 import asyncio
 
 from agents import Agent, CodeInterpreterTool, Runner, trace  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 async def main():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Code interpreter",
         # Note that using gpt-5 model with streaming for this tool requires org verification

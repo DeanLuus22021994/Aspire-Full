@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from agents import Agent, AgentOutputSchema, AgentOutputSchemaBase, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 """This example demonstrates how to use an output type that is not in strict mode. Strict mode
 allows us to guarantee valid JSON output, but some schemas are not strict-compatible.
@@ -36,7 +37,9 @@ class CustomOutputSchema(AgentOutputSchemaBase):
     def json_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
-            "properties": {"jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}},
+            "properties": {
+                "jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}
+            },
         }
 
     def is_strict_json_schema(self) -> bool:
@@ -49,6 +52,7 @@ class CustomOutputSchema(AgentOutputSchemaBase):
 
 
 async def main():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
         instructions="You are a helpful assistant.",

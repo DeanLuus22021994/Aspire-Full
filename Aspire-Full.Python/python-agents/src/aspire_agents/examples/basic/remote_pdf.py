@@ -1,11 +1,13 @@
 import asyncio
 
 from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 URL = "https://www.berkshirehathaway.com/letters/2024ltr.pdf"
 
 
 async def main():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
         instructions="You are a helpful assistant.",

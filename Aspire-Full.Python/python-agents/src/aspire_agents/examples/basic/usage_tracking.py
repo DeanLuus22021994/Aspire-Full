@@ -1,8 +1,8 @@
 import asyncio
 
-from pydantic import BaseModel
-
 from agents import Agent, Runner, Usage, function_tool
+from aspire_agents.gpu import ensure_tensor_core_gpu
+from pydantic import BaseModel
 
 
 class Weather(BaseModel):
@@ -24,10 +24,13 @@ def print_usage(usage: Usage) -> None:
     print(f"Total tokens: {usage.total_tokens}")
     print(f"Requests: {usage.requests}")
     for i, request in enumerate(usage.request_usage_entries):
-        print(f"  {i + 1}: {request.input_tokens} input, {request.output_tokens} output")
+        print(
+            f"  {i + 1}: {request.input_tokens} input, {request.output_tokens} output"
+        )
 
 
 async def main() -> None:
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Usage Demo",
         instructions="You are a concise assistant. Use tools if needed.",

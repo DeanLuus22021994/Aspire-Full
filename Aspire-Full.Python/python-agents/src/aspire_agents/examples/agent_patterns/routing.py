@@ -1,9 +1,9 @@
 import asyncio
 import uuid
 
-from openai.types.responses import ResponseContentPartDoneEvent, ResponseTextDeltaEvent
-
 from agents import Agent, RawResponsesStreamEvent, Runner, TResponseInputItem, trace
+from aspire_agents.gpu import ensure_tensor_core_gpu
+from openai.types.responses import ResponseContentPartDoneEvent, ResponseTextDeltaEvent
 
 """
 This example shows the handoffs/routing pattern. The triage agent receives the first message, and
@@ -34,6 +34,7 @@ triage_agent = Agent(
 
 
 async def main():
+    ensure_tensor_core_gpu()
     # We'll create an ID for this conversation, so we can link each trace
     conversation_id = str(uuid.uuid4().hex[:16])
 

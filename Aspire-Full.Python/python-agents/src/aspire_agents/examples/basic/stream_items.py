@@ -2,6 +2,7 @@ import asyncio
 import random
 
 from agents import Agent, ItemHelpers, Runner, function_tool
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 @function_tool
@@ -11,6 +12,7 @@ def how_many_jokes() -> int:
 
 
 async def main():
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Joker",
         instructions="First call the `how_many_jokes` tool, then tell that many jokes.",
@@ -35,7 +37,9 @@ async def main():
             elif event.item.type == "tool_call_output_item":
                 print(f"-- Tool output: {event.item.output}")
             elif event.item.type == "message_output_item":
-                print(f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}")
+                print(
+                    f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}"
+                )
             else:
                 pass  # Ignore other event types
 

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import asyncio
 
+from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel, Field
-
-from agents import Agent, Runner
 
 """
 This example shows how to use guardrails as the model is streaming. Output guardrails run after the
@@ -52,6 +52,7 @@ async def check_guardrail(text: str) -> GuardrailOutput:
 
 
 async def main():
+    ensure_tensor_core_gpu()
     question = "What is a black hole, and how does it behave?"
     result = Runner.run_streamed(agent, question)
     current_text = ""
@@ -61,7 +62,9 @@ async def main():
     guardrail_task = None
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+        if event.type == "raw_response_event" and isinstance(
+            event.data, ResponseTextDeltaEvent
+        ):
             print(event.data.delta, end="", flush=True)
             current_text += event.data.delta
 

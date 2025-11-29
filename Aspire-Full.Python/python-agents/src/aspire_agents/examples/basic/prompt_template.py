@@ -3,6 +3,7 @@ import asyncio
 import random
 
 from agents import Agent, GenerateDynamicPromptData, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 """
 NOTE: This example will not work out of the box, because the default prompt ID will not be available
@@ -40,6 +41,7 @@ async def _get_dynamic_prompt(data: GenerateDynamicPromptData):
 
 
 async def dynamic_prompt(prompt_id: str):
+    ensure_tensor_core_gpu()
     context = DynamicContext(prompt_id)
 
     agent = Agent(
@@ -47,11 +49,14 @@ async def dynamic_prompt(prompt_id: str):
         prompt=_get_dynamic_prompt,
     )
 
-    result = await Runner.run(agent, "Tell me about recursion in programming.", context=context)
+    result = await Runner.run(
+        agent, "Tell me about recursion in programming.", context=context
+    )
     print(result.final_output)
 
 
 async def static_prompt(prompt_id: str):
+    ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
         prompt={

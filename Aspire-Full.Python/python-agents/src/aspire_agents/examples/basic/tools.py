@@ -1,9 +1,9 @@
 import asyncio
 from typing import Annotated
 
-from pydantic import BaseModel, Field
-
 from agents import Agent, Runner, function_tool
+from aspire_agents.gpu import ensure_tensor_core_gpu
+from pydantic import BaseModel, Field
 
 
 class Weather(BaseModel):
@@ -27,6 +27,7 @@ agent = Agent(
 
 
 async def main():
+    ensure_tensor_core_gpu()
     result = await Runner.run(agent, input="What's the weather in Tokyo?")
     print(result.final_output)
     # The weather in Tokyo is sunny.
