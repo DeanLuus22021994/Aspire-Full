@@ -33,12 +33,12 @@ from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
 # OpenTelemetry Imports
 try:
-    from opentelemetry import trace
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry import trace  # type: ignore
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter  # type: ignore
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
+    from opentelemetry.sdk.resources import Resource  # type: ignore
+    from opentelemetry.sdk.trace import TracerProvider  # type: ignore
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore
 
     OTEL_AVAILABLE = True
 except ImportError:
@@ -364,7 +364,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                     prompt_text = buf["text"]
                     if data_url:
                         logger.info(
-                            "Forwarding chunked image (structured message) to Realtime API " "(len=%d).",
+                            "Forwarding chunked image (structured message) to Realtime API (len=%d).",
                             len(data_url),
                         )
                         user_msg2: RealtimeUserInputMessage = {
