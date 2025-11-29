@@ -11,15 +11,13 @@ from types import ModuleType
 from typing import Any, Iterable, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CONFIG_MODULE_PATH = REPO_ROOT / ".config" / "config.py"
+CONFIG_MODULE_PATH = Path(__file__).resolve().parents[1] / "config.py"
 
 
 def _load_config_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location(
-        "workspace_dotconfig", CONFIG_MODULE_PATH
-    )
+    spec = importlib.util.spec_from_file_location("tools_config", CONFIG_MODULE_PATH)
     if spec is None or spec.loader is None:
-        raise RuntimeError("Unable to load .config/config.py module")
+        raise RuntimeError(f"Unable to load config module from {CONFIG_MODULE_PATH}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
@@ -105,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
 
     auto_targets = collect_existing_test_roots(config)
     if not auto_targets:
-        print("No pytest targets were found in test_roots from .config/config.yaml.")
+        print("No pytest targets were found in test_roots from python-config.yaml.")
         return 0
     command = _build_command(config, options, auto_targets, False)
     print("Running:", " ".join(command))

@@ -119,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     auto_targets = collect_existing_roots(config)
     if not auto_targets:
         print(
-            "No lint targets were found in lint_roots from .config/config.yaml.",
+            "No lint targets were found in lint_roots from python-config.yaml.",
             file=sys.stderr,
         )
         return 0
