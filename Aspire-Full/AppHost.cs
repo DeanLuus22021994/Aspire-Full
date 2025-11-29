@@ -151,5 +151,14 @@ var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-pr
     .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 5177)
     .WithExternalHttpEndpoints();
 
+// -----------------------------------------------------------------------------
+// Python Agents - Realtime API
+// -----------------------------------------------------------------------------
+var pythonAgents = builder.AddExecutable("python-agents", "uv", "../Aspire-Full.Python/python-agents", "run", "python", "src/aspire_agents/examples/realtime/app/server.py")
+    .WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
+    .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:18889") // Use localhost for host process, or dashboard service name if in container
+    .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
+    .WithExternalHttpEndpoints();
+
 // Build and run the distributed application
 builder.Build().Run();
