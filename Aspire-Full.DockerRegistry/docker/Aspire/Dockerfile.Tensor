@@ -1,28 +1,47 @@
 # Syntax=docker/dockerfile:1
 
 # Stage 1: Builder (Compile dependencies and models)
-FROM python:3.14.0-slim-bookworm AS builder
+# Use NVIDIA CUDA Devel image to ensure CUDA libraries are available for any source builds
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /build
 
-# Install system dependencies for building wheels
+# Install Python 3.11 and system dependencies
+# Python 3.11 is selected for maximum compatibility with PyTorch CUDA wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-dev \
+    python3.11-venv \
+    python3-pip \
     build-essential \
     git \
     libportaudio2 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.11 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+# Install pip
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 
 # Install Python dependencies
 COPY Aspire-Full.Python/python-agents/pyproject.toml .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir build && \
-    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu124 && \
-    pip install --no-cache-dir \
+
+# Install PyTorch with CUDA 12.4 support
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+RUN pip install --no-cache-dir \
         transformers \
         openai-agents \
         fastapi \
@@ -63,25 +82,34 @@ RUN python -c "from transformers import AutoTokenizer, AutoModel; \
     AutoModel.from_pretrained(model_name)"
 
 # Explicitly compile all installed packages for maximum startup performance
-RUN python -m compileall /usr/local/lib/python3.14/site-packages
+RUN python -m compileall /usr/local/lib/python3.11
 
 # Stage 2: Runtime (Minimal, GPU-optimized)
-FROM python:3.14.0-slim-bookworm AS runtime
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
-    # PYTHON_GIL=0
+    PYTHONDONTWRITEBYTECODE=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-# Install runtime system dependencies (if any needed for torch)
+# Install runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-venv \
     libgomp1 \
     libportaudio2 \
     && rm -rf /var/lib/apt/lists/*
 
+# Set Python 3.11 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy model cache (transformers default cache is usually ~/.cache/huggingface)
