@@ -20,6 +20,7 @@ dependencies = [
     "uvloop>=0.20.0; platform_system != 'Windows'",
     "torch>=2.5.1",
     "playwright>=1.48.0",
+    "openai-agents>=0.1.0",
 ]
 
 [project.optional-dependencies]
