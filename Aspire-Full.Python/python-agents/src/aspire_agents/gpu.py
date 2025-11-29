@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
@@ -10,6 +11,9 @@ try:  # pylint: disable=import-error
     import torch  # type: ignore
 except ImportError:  # pragma: no cover - torch not installed yet
     torch = None  # type: ignore[assignment]
+
+
+logger = logging.getLogger(__name__)
 
 
 class TensorCoreUnavailableError(RuntimeError):
@@ -76,9 +80,17 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
 
     _configure_torch_runtime(torch, device_index)
 
-    return TensorCoreInfo(
+    info = TensorCoreInfo(
         name=gpu_name,
         compute_capability=capability_str,
         total_memory_gb=_format_mem(total_memory),
         device_index=device_index,
     )
+
+    logger.info(
+        "Tensor Core GPU provisioned: %s (Compute %s, %s GB)",
+        info.name,
+        info.compute_capability,
+        info.total_memory_gb,
+    )
+    return info

@@ -157,6 +157,8 @@ var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-pr
 var pythonAgents = builder.AddExecutable("python-agents", "uv", "../Aspire-Full.Python/python-agents", "run", "--extra", "tracing", "python", "src/aspire_agents/examples/realtime/app/server.py")
     .WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
     .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:18889") // Use localhost for host process, or dashboard service name if in container
+    .WithEnvironment("OTEL_PYTHON_LOG_CORRELATION", "true")
+    .WithEnvironment("CUDA_VISIBLE_DEVICES", "0")
     .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
     .WithExternalHttpEndpoints();
 

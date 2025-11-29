@@ -199,7 +199,7 @@ class RealtimeApp(App[None]):
 
                 # Cast to Any to avoid mypy error about float64 vs int16
                 # sounddevice returns numpy array, but type inference is tricky
-                await self._audio_input.add_audio(data)
+                await self._audio_input.add_audio(data.astype(np.int16))
                 await asyncio.sleep(0)
         except KeyboardInterrupt:
             pass
