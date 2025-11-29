@@ -2,7 +2,6 @@ import asyncio
 from datetime import datetime
 
 from agents import Agent, ModelSettings, Runner, WebSearchTool, trace
-from openai.types.responses.web_search_tool import Filters
 from openai.types.shared.reasoning import Reasoning
 
 # import logging

@@ -51,7 +51,10 @@ orchestrator_agent = Agent(
 
 synthesizer_agent = Agent(
     name="synthesizer_agent",
-    instructions="You inspect translations, correct them if needed, and produce a final concatenated response.",
+    instructions=(
+        "You inspect translations, correct them if needed, and produce a final concatenated "
+        "response."
+    ),
 )
 
 

@@ -12,6 +12,8 @@ from textual.containers import Container
 from textual.reactive import reactive
 from textual.widgets import Button, RichLog, Static
 
+from aspire_agents.gpu import ensure_tensor_core_gpu
+
 # Import MyWorkflow class - handle both module and package use cases
 if TYPE_CHECKING:
     # For type checking, use the relative import
@@ -119,6 +121,7 @@ class RealtimeApp(App[None]):
 
     def __init__(self) -> None:
         super().__init__()
+        ensure_tensor_core_gpu()
         self.last_audio_item_id = None
         self.should_send_audio = asyncio.Event()
         self.connected = asyncio.Event()

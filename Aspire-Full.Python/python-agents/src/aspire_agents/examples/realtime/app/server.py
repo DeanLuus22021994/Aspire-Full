@@ -6,11 +6,16 @@ import struct
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, AsyncIterator
 
-from agents.realtime import RealtimeRunner, RealtimeSession, RealtimeSessionEvent
-from agents.realtime.config import RealtimeUserInputMessage
-from agents.realtime.items import RealtimeItem
-from agents.realtime.model import RealtimeModelConfig
-from agents.realtime.model_inputs import RealtimeModelSendRawMessage
+from agents.realtime import (  # type: ignore
+    RealtimeRunner,
+    RealtimeSession,
+    RealtimeSessionEvent,
+)
+from agents.realtime.config import RealtimeUserInputMessage  # type: ignore
+from agents.realtime.items import RealtimeItem  # type: ignore
+from agents.realtime.model import RealtimeModelConfig  # type: ignore
+from agents.realtime.model_inputs import RealtimeModelSendRawMessage  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -222,6 +227,7 @@ manager = RealtimeWebSocketManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    ensure_tensor_core_gpu()
     yield
 
 

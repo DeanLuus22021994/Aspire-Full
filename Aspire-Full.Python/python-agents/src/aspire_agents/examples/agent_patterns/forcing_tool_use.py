@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Literal
 
-from pydantic import BaseModel
-
 from agents import (
     Agent,
     FunctionToolResult,
@@ -15,10 +13,11 @@ from agents import (
     ToolsToFinalOutputResult,
     function_tool,
 )
+from pydantic import BaseModel
 
 """
-This example shows how to force the agent to use a tool. It uses `ModelSettings(tool_choice="required")`
-to force the agent to use any tool.
+This example shows how to force the agent to use a tool. It uses
+`ModelSettings(tool_choice="required")` to force the agent to use any tool.
 
 You can run it with 3 options:
 1. `default`: The default behavior, which is to send the tool output to the LLM. In this case,
@@ -57,11 +56,13 @@ async def custom_tool_use_behavior(
     )
 
 
-async def main(tool_use_behavior: Literal["default", "first_tool", "custom"] = "default"):
+async def main(
+    tool_use_behavior: Literal["default", "first_tool", "custom"] = "default",
+):
     if tool_use_behavior == "default":
-        behavior: Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction = (
-            "run_llm_again"
-        )
+        behavior: (
+            Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction
+        ) = "run_llm_again"
     elif tool_use_behavior == "first_tool":
         behavior = "stop_on_first_tool"
     elif tool_use_behavior == "custom":
@@ -91,9 +92,11 @@ if __name__ == "__main__":
         type=str,
         required=True,
         choices=["default", "first_tool", "custom"],
-        help="The behavior to use for tool use. Default will cause tool outputs to be sent to the model. "
-        "first_tool_result will cause the first tool result to be used as the final output. "
-        "custom will use a custom tool use behavior function.",
+        help=(
+            "The behavior to use for tool use. Default will cause tool outputs to be sent to "
+            "the model. first_tool_result will cause the first tool result to be used as the "
+            "final output. custom will use a custom tool use behavior function."
+        ),
     )
     args = parser.parse_args()
     asyncio.run(main(args.tool_use_behavior))

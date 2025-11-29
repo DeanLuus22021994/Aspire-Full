@@ -32,7 +32,8 @@ evaluator = Agent[None](
     instructions=(
         "You evaluate a story outline and decide if it's good enough. "
         "If it's not good enough, you provide feedback on what needs to be improved. "
-        "Never give it a pass on the first try. After 5 attempts, you can give it a pass if the story outline is good enough - do not go for perfection"
+        "Never give it a pass on the first try. After 5 attempts, you can give it a pass if "
+        "the story outline is good enough - do not go for perfection"
     ),
     output_type=EvaluationFeedback,
 )
@@ -53,7 +54,9 @@ async def main() -> None:
             )
 
             input_items = story_outline_result.to_input_list()
-            latest_outline = ItemHelpers.text_message_outputs(story_outline_result.new_items)
+            latest_outline = ItemHelpers.text_message_outputs(
+                story_outline_result.new_items
+            )
             print("Story outline generated")
 
             evaluator_result = await Runner.run(evaluator, input_items)
@@ -67,7 +70,9 @@ async def main() -> None:
 
             print("Re-running with feedback")
 
-            input_items.append({"content": f"Feedback: {result.feedback}", "role": "user"})
+            input_items.append(
+                {"content": f"Feedback: {result.feedback}", "role": "user"}
+            )
 
     print(f"Final story outline: {latest_outline}")
 
