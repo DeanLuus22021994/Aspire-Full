@@ -1,0 +1,20 @@
+FROM nvidia/cuda:13.0.0-devel-ubuntu24.04
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full NVIDIA CUDA 13.0 Development Image"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install basic build tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/bash"]

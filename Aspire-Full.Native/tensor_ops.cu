@@ -1,10 +1,39 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-#ifdef _WIN32
+#ifdef __INTELLISENSE__
+#ifndef __CUDACC__
+#define __global__
+#define __device__
+#define __host__
+typedef int cudaError_t;
+typedef int cudaEvent_t;
+#define cudaSuccess 0
+#define cudaMemcpyHostToDevice 1
+#define cudaMemcpyDeviceToHost 2
+struct dim3 { int x, y, z; };
+extern dim3 blockDim;
+extern dim3 blockIdx;
+extern dim3 threadIdx;
+extern "C" int cudaGetDeviceCount(int*);
+extern "C" int cudaMalloc(void**, size_t);
+extern "C" int cudaFree(void*);
+extern "C" int cudaMemcpy(void*, const void*, size_t, int);
+extern "C" int cudaEventCreate(cudaEvent_t*);
+extern "C" int cudaEventRecord(cudaEvent_t, int stream = 0);
+extern "C" int cudaEventSynchronize(cudaEvent_t);
+extern "C" int cudaEventElapsedTime(float*, cudaEvent_t, cudaEvent_t);
+extern "C" int cudaEventDestroy(cudaEvent_t);
+extern "C" int cudaMemGetInfo(size_t*, size_t*);
+#endif
+#endif
+
+#if defined(_WIN32) && !defined(__clang__)
 #define EXPORT extern "C" __declspec(dllexport)
+#elif defined(_WIN32) && defined(__clang__)
+#define EXPORT extern "C" __attribute__((dllexport))
 #else
-#define EXPORT extern "C"
+#define EXPORT extern "C" __attribute__((visibility("default")))
 #endif
 
 struct TensorMetrics {

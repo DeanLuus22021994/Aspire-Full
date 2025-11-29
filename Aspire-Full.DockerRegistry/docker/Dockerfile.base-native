@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+FROM nvidia/cuda:13.0.0-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Base Native Image"
 LABEL org.opencontainers.image.licenses="MIT"

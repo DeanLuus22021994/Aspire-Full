@@ -2,7 +2,7 @@
 
 # Stage 1: Builder (Compile dependencies and models)
 # Use NVIDIA CUDA Devel image to ensure CUDA libraries are available for any source builds
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS builder
+FROM nvidia/cuda:13.0.0-devel-ubuntu24.04 AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
