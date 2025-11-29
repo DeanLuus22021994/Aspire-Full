@@ -129,7 +129,7 @@ services:
   github-mcp:
     build:
       context: ..
-      dockerfile: Aspire-Full.DockerRegistry/docker/Mcp/Dockerfile.GithubMcp.Cpu
+      dockerfile: Aspire-Full.DockerRegistry/docker/Mcp/Dockerfile.GithubMcp.Cuda
     container_name: aspire-github-mcp
     runtime: nvidia
     deploy:
