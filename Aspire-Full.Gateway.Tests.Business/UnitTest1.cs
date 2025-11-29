@@ -1,4 +1,4 @@
-﻿namespace business_tests;
+﻿namespace Aspire_Full.Gateway.Tests.Business;
 
 public class UnitTest1
 {
