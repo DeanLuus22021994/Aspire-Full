@@ -27,11 +27,22 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=aspiredb
+    volumes:
+      - aspire-postgres-data:/var/lib/postgresql/data
 
   redis:
     image: redis:latest
+    volumes:
+      - aspire-redis-data:/data
 
   registry:
     image: registry:2
     ports:
       - "5001:5000"
+    volumes:
+      - aspire-registry-data:/var/lib/registry
+
+volumes:
+  aspire-postgres-data:
+  aspire-redis-data:
+  aspire-registry-data:

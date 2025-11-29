@@ -6,15 +6,19 @@ ENV PYTHON_GIL=0
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
 # Install system dependencies for audio, video, and browser
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     git \
     libportaudio2 \
     libasound2-dev \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    ffmpeg
 
 # Install uv for fast package management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
@@ -27,10 +31,12 @@ COPY pyproject.toml uv.lock* ./
 
 # Install dependencies
 # We use --system because we are in a container
-RUN uv pip install --system --no-cache-dir -e .[tracing]
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system --no-cache-dir -e .[tracing]
 
 # Install Playwright browsers
-RUN uv run playwright install --with-deps chromium
+RUN --mount=type=cache,target=/root/.cache/ms-playwright \
+    uv run playwright install --with-deps chromium
 
 # Copy source code
 COPY . .
