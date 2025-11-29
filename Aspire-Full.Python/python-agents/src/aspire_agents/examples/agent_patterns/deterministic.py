@@ -20,16 +20,17 @@ story_outline_agent = Agent(
 
 
 class OutlineCheckerOutput(BaseModel):
+    """
+    Output schema for the outline checker agent.
+    """
+
     good_quality: bool
     is_scifi: bool
 
 
 outline_checker_agent = Agent(
     name="outline_checker_agent",
-    instructions=(
-        "Read the given story outline, and judge the quality. Also, determine if it is a "
-        "scifi story."
-    ),
+    instructions=("Read the given story outline, and judge the quality. Also, determine if it is a " "scifi story."),
     output_type=OutlineCheckerOutput,
 )
 
@@ -40,7 +41,10 @@ story_agent = Agent(
 )
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the deterministic flow example.
+    """
     input_prompt = input("What kind of story do you want? ")
 
     # Ensure the entire workflow is a single trace
@@ -68,9 +72,7 @@ async def main():
             print("Outline is not a scifi story, so we stop here.")
             exit(0)
 
-        print(
-            "Outline is good quality and a scifi story, so we continue to write the story."
-        )
+        print("Outline is good quality and a scifi story, so we continue to write the story.")
 
         # 4. Write the story
         story_result = await Runner.run(

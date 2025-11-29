@@ -36,6 +36,10 @@ python examples/agent_patterns/forcing_tool_use.py -t custom
 
 
 class Weather(BaseModel):
+    """
+    Weather information for a city.
+    """
+
     city: str
     temperature_range: str
     conditions: str
@@ -43,6 +47,9 @@ class Weather(BaseModel):
 
 @function_tool
 def get_weather(city: str) -> Weather:
+    """
+    Get the weather for a city.
+    """
     print("[debug] get_weather called")
     return Weather(city=city, temperature_range="14-20C", conditions="Sunny with wind")
 
@@ -50,19 +57,21 @@ def get_weather(city: str) -> Weather:
 async def custom_tool_use_behavior(
     context: RunContextWrapper[Any], results: list[FunctionToolResult]
 ) -> ToolsToFinalOutputResult:
+    """
+    Custom tool use behavior function.
+    """
     weather: Weather = results[0].output
-    return ToolsToFinalOutputResult(
-        is_final_output=True, final_output=f"{weather.city} is {weather.conditions}."
-    )
+    return ToolsToFinalOutputResult(is_final_output=True, final_output=f"{weather.city} is {weather.conditions}.")
 
 
 async def main(
     tool_use_behavior: Literal["default", "first_tool", "custom"] = "default",
-):
+) -> None:
+    """
+    Main entry point for the forcing tool use example.
+    """
     if tool_use_behavior == "default":
-        behavior: (
-            Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction
-        ) = "run_llm_again"
+        behavior: Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction = "run_llm_again"
     elif tool_use_behavior == "first_tool":
         behavior = "stop_on_first_tool"
     elif tool_use_behavior == "custom":
@@ -73,9 +82,7 @@ async def main(
         instructions="You are a helpful agent.",
         tools=[get_weather],
         tool_use_behavior=behavior,
-        model_settings=ModelSettings(
-            tool_choice="required" if tool_use_behavior != "default" else None
-        ),
+        model_settings=ModelSettings(tool_choice="required" if tool_use_behavior != "default" else None),
     )
 
     result = await Runner.run(agent, input="What's the weather in Tokyo?")

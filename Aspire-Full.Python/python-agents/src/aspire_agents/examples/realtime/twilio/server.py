@@ -1,10 +1,15 @@
+"""
+This module implements a FastAPI server for handling Twilio Media Streams.
+"""
+
 import os
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, AsyncIterator
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
+
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # Import TwilioHandler class - handle both module and package use cases
 if TYPE_CHECKING:
@@ -21,7 +26,11 @@ else:
 
 
 class TwilioWebSocketManager:
-    def __init__(self):
+    """
+    Manages Twilio WebSocket connections.
+    """
+
+    def __init__(self) -> None:
         self.active_handlers: dict[str, TwilioHandler] = {}
 
     async def new_session(self, websocket: WebSocket) -> TwilioHandler:
@@ -38,7 +47,10 @@ manager = TwilioWebSocketManager()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """
+    Lifespan context manager for the FastAPI app.
+    """
     ensure_tensor_core_gpu()
     yield
 
@@ -47,7 +59,10 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
+    """
+    Root endpoint.
+    """
     return {"message": "Twilio Media Stream Server is running!"}
 
 

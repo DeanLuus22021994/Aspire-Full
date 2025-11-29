@@ -38,7 +38,10 @@ triage_agent = Agent(
 )
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the routing example.
+    """
     ensure_tensor_core_gpu()
     # We'll create an ID for this conversation, so we can link each trace
     conversation_id = str(uuid.uuid4().hex[:16])

@@ -1,10 +1,17 @@
+"""
+This module demonstrates the usage of the FileSearchTool with an Agent.
+"""
+
 import asyncio
 
 from agents import Agent, FileSearchTool, Runner, trace
 from openai import OpenAI
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the file search example.
+    """
     vector_store_id: str | None = None
 
     if vector_store_id is None:
@@ -34,9 +41,7 @@ async def main():
     # Create an agent that can search the vector store
     agent = Agent(
         name="FileSearch Agent",
-        instructions=(
-            "You are a helpful agent. You answer only based on the information in the vector store."
-        ),
+        instructions=("You are a helpful agent. You answer only based on the information in the vector store."),
         model="gpt-4o",
         tools=[
             FileSearchTool(
@@ -48,9 +53,7 @@ async def main():
     )
 
     with trace("File search example"):
-        result = await Runner.run(
-            agent, "Be concise, and tell me 1 sentence about Arrakis I might not know."
-        )
+        result = await Runner.run(agent, "Be concise, and tell me 1 sentence about Arrakis I might not know.")
 
         print("\n### Final output:\n")
         print(result.final_output)

@@ -20,7 +20,10 @@ you'll need to re-send the previous conversation history.
 """
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the previous response ID example.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
@@ -40,7 +43,10 @@ async def main():
     # Brasilia
 
 
-async def main_stream():
+async def main_stream() -> None:
+    """
+    Main entry point for the previous response ID example (streaming).
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",

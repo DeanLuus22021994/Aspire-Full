@@ -5,6 +5,7 @@ This module demonstrates the use of dynamic prompt templates.
 import argparse
 import asyncio
 import random
+from typing import Any
 
 from agents import Agent, GenerateDynamicPromptData, Runner  # type: ignore
 
@@ -28,13 +29,20 @@ DEFAULT_PROMPT_ID = "pmpt_6850729e8ba481939fd439e058c69ee004afaa19c520b78b"
 
 
 class DynamicContext:
+    """
+    Context for dynamic prompt generation.
+    """
+
     def __init__(self, prompt_id: str):
         self.prompt_id = prompt_id
         self.poem_style = random.choice(["limerick", "haiku", "ballad"])
         print(f"[debug] DynamicContext initialized with poem_style: {self.poem_style}")
 
 
-async def _get_dynamic_prompt(data: GenerateDynamicPromptData):
+async def _get_dynamic_prompt(data: GenerateDynamicPromptData) -> dict[str, Any]:
+    """
+    Generate a dynamic prompt based on the context.
+    """
     ctx: DynamicContext = data.context.context
     return {
         "id": ctx.prompt_id,
@@ -45,7 +53,10 @@ async def _get_dynamic_prompt(data: GenerateDynamicPromptData):
     }
 
 
-async def dynamic_prompt(prompt_id: str):
+async def dynamic_prompt(prompt_id: str) -> None:
+    """
+    Run the agent with a dynamic prompt.
+    """
     ensure_tensor_core_gpu()
     context = DynamicContext(prompt_id)
 
@@ -58,7 +69,10 @@ async def dynamic_prompt(prompt_id: str):
     print(result.final_output)
 
 
-async def static_prompt(prompt_id: str):
+async def static_prompt(prompt_id: str) -> None:
+    """
+    Run the agent with a static prompt.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",

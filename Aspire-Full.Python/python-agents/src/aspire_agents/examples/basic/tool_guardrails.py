@@ -64,11 +64,17 @@ agent = Agent(
 )
 
 
-async def check_api_key():
+async def check_api_key() -> bool:
+    """
+    Check if the OPENAI_API_KEY environment variable is set.
+    """
     return "OPENAI_API_KEY" in os.environ
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the tool guardrails example.
+    """
     # Note: ensure_tensor_core_gpu is called automatically by Agent.__init__
     # For direct tool testing, we ensure it's initialized:
     from aspire_agents.compute import get_compute_service

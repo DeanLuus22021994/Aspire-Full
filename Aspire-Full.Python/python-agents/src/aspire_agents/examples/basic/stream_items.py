@@ -16,7 +16,10 @@ def how_many_jokes() -> int:
     return random.randint(1, 10)
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the stream items example.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Joker",

@@ -1,3 +1,7 @@
+"""
+This module implements a FastAPI server for the Realtime Agent app.
+"""
+
 import asyncio
 import base64
 import json
@@ -70,12 +74,19 @@ logger = logging.getLogger(__name__)
 
 
 class RealtimeWebSocketManager:
+    """
+    Manages WebSocket connections for the Realtime Agent app.
+    """
+
     def __init__(self) -> None:
         self.active_sessions: dict[str, RealtimeSession] = {}
         self.session_contexts: dict[str, Any] = {}
         self.websockets: dict[str, WebSocket] = {}
 
     async def connect(self, websocket: WebSocket, session_id: str) -> None:
+        """
+        Connect a WebSocket to a session.
+        """
         await websocket.accept()
         self.websockets[session_id] = websocket
 
@@ -104,6 +115,9 @@ class RealtimeWebSocketManager:
         asyncio.create_task(self._process_events(session_id))
 
     async def disconnect(self, session_id: str) -> None:
+        """
+        Disconnect a session.
+        """
         if session_id in self.session_contexts:
             await self.session_contexts[session_id].__aexit__(None, None, None)
             del self.session_contexts[session_id]
@@ -113,6 +127,9 @@ class RealtimeWebSocketManager:
             del self.websockets[session_id]
 
     async def send_audio(self, session_id: str, audio_bytes: bytes) -> None:
+        """
+        Send audio data to a session.
+        """
         if session_id in self.active_sessions:
             await self.active_sessions[session_id].send_audio(audio_bytes)
 
@@ -145,6 +162,9 @@ class RealtimeWebSocketManager:
         await session.interrupt()
 
     async def _process_events(self, session_id: str) -> None:
+        """
+        Process events from a session and send them to the WebSocket.
+        """
         try:
             session = self.active_sessions[session_id]
             websocket = self.websockets[session_id]
@@ -176,6 +196,9 @@ class RealtimeWebSocketManager:
         return item_dict
 
     async def _serialize_event(self, event: RealtimeSessionEvent) -> dict[str, Any]:
+        """
+        Serialize a RealtimeSessionEvent to a dictionary.
+        """
         base_event: dict[str, Any] = {
             "type": event.type,
         }
@@ -227,6 +250,9 @@ manager = RealtimeWebSocketManager()
 
 @asynccontextmanager
 async def lifespan(_fastapi_app: FastAPI) -> AsyncIterator[None]:
+    """
+    Lifespan context manager for the FastAPI app.
+    """
     ensure_tensor_core_gpu()
     yield
 
@@ -259,6 +285,9 @@ if (
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
+    """
+    WebSocket endpoint for the Realtime Agent app.
+    """
     await manager.connect(websocket, session_id)
     image_buffers: dict[str, dict[str, Any]] = {}
     try:
@@ -416,6 +445,9 @@ app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.get("/")
 async def read_index() -> FileResponse:
+    """
+    Serve the index.html file.
+    """
     return FileResponse("static/index.html")
 
 

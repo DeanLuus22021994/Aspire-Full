@@ -12,6 +12,10 @@ from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 class Weather(BaseModel):
+    """
+    Weather information for a city.
+    """
+
     city: str = Field(description="The city name")
     temperature_range: str = Field(description="The temperature range in Celsius")
     conditions: str = Field(description="The weather conditions")
@@ -31,7 +35,10 @@ agent = Agent(
 )
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the tools example.
+    """
     ensure_tensor_core_gpu()
     result = await Runner.run(agent, input="What's the weather in Tokyo?")
     print(result.final_output)

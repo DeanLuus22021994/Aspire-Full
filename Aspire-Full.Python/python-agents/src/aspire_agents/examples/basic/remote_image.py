@@ -1,12 +1,20 @@
+"""
+This module demonstrates how to use a remote image as input to an agent.
+"""
+
 import asyncio
 
 from agents import Agent, Runner
+
 from aspire_agents.gpu import ensure_tensor_core_gpu
 
 URL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the remote image example.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",
@@ -18,9 +26,7 @@ async def main():
         [
             {
                 "role": "user",
-                "content": [
-                    {"type": "input_image", "detail": "auto", "image_url": URL}
-                ],
+                "content": [{"type": "input_image", "detail": "auto", "image_url": URL}],
             },
             {
                 "role": "user",

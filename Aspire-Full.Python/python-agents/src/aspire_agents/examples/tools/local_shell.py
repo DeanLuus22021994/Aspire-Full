@@ -1,3 +1,7 @@
+"""
+This module demonstrates the usage of the LocalShellTool with an Agent.
+"""
+
 import asyncio
 import os
 import subprocess
@@ -6,6 +10,9 @@ from agents import Agent, LocalShellCommandRequest, LocalShellTool, Runner, trac
 
 
 def shell_executor(request: LocalShellCommandRequest) -> str:
+    """
+    Execute a shell command locally.
+    """
     args = request.data.action
 
     try:
@@ -26,7 +33,10 @@ def shell_executor(request: LocalShellCommandRequest) -> str:
         return f"Error executing command: {str(e)}"
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the local shell example.
+    """
     agent = Agent(
         name="Shell Assistant",
         instructions="You are a helpful assistant that can execute shell commands.",

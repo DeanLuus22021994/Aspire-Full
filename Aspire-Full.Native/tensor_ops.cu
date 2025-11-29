@@ -1,3 +1,12 @@
+/**
+ * @file tensor_ops.cu
+ * @brief CUDA implementation of tensor operations for the Aspire-Full Native library.
+ *
+ * This file contains CUDA kernels and host wrapper functions to perform
+ * tensor computations, including initialization, vector addition, and validation.
+ * It exports C-compatible functions for interoperability with other languages.
+ */
+
 #include <cuda_runtime.h>
 #include <stdio.h>
 
@@ -42,7 +51,17 @@ struct TensorMetrics {
     int active_kernels;
 };
 
-// CUDA Kernel for vector addition (simulating a tensor op)
+/**
+ * @brief CUDA Kernel for vector addition.
+ *
+ * Performs element-wise addition of two vectors A and B into C.
+ * Simulates heavy computation with a loop.
+ *
+ * @param A Input vector A
+ * @param B Input vector B
+ * @param C Output vector C
+ * @param numElements Number of elements in the vectors
+ */
 __global__ void vectorAdd(const float *A, const float *B, float *C, int numElements) {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < numElements) {
@@ -55,6 +74,13 @@ __global__ void vectorAdd(const float *A, const float *B, float *C, int numEleme
     }
 }
 
+/**
+ * @brief Initializes the tensor context.
+ *
+ * Checks for available CUDA devices.
+ *
+ * @return Number of CUDA devices found, or -1 on error.
+ */
 EXPORT int InitTensorContext() {
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
@@ -62,6 +88,18 @@ EXPORT int InitTensorContext() {
     return deviceCount;
 }
 
+/**
+ * @brief Computes a tensor operation (Vector Addition).
+ *
+ * Allocates device memory, copies data, executes the kernel, and retrieves results.
+ * Also captures performance metrics.
+ *
+ * @param h_A Host input array A
+ * @param h_B Host input array B
+ * @param h_C Host output array C
+ * @param numElements Number of elements
+ * @param metrics Pointer to TensorMetrics structure to populate
+ */
 EXPORT void ComputeTensorOp(const float* h_A, const float* h_B, float* h_C, int numElements, TensorMetrics* metrics) {
     // Allocate device memory
     float *d_A = NULL, *d_B = NULL, *d_C = NULL;
@@ -111,6 +149,17 @@ EXPORT void ComputeTensorOp(const float* h_A, const float* h_B, float* h_C, int 
     cudaEventDestroy(stop);
 }
 
+/**
+ * @brief Validates tensor content.
+ *
+ * Simulates a validation step on the GPU.
+ *
+ * @param h_Data Host data array to validate
+ * @param numElements Number of elements
+ * @param threshold Validation threshold
+ * @param metrics Pointer to TensorMetrics structure to update
+ * @return 1 if valid, -1 on error
+ */
 EXPORT int ValidateTensorContent(const float* h_Data, int numElements, float threshold, TensorMetrics* metrics) {
     // Allocate device memory
     float *d_Data = NULL;

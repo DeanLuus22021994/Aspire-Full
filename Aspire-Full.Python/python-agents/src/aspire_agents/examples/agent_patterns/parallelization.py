@@ -18,7 +18,10 @@ translation_picker = Agent(
 )
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the parallelization example.
+    """
     msg = input("Hi! Enter a message, and we'll translate it to Spanish.\n\n")
 
     # Ensure the entire workflow is a single trace

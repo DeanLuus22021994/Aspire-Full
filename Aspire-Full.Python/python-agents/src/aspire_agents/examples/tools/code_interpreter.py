@@ -1,10 +1,18 @@
+"""
+This module demonstrates the usage of the CodeInterpreterTool with an Agent.
+"""
+
 import asyncio
 
 from agents import Agent, CodeInterpreterTool, Runner, trace  # type: ignore
+
 from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the code interpreter example.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Code interpreter",
@@ -21,9 +29,7 @@ async def main():
 
     with trace("Code interpreter example"):
         print("Solving math problem...")
-        result = Runner.run_streamed(
-            agent, "What is the square root of273 * 312821 plus 1782?"
-        )
+        result = Runner.run_streamed(agent, "What is the square root of273 * 312821 plus 1782?")
         async for event in result.stream_events():
             if (
                 event.type == "run_item_stream_event"

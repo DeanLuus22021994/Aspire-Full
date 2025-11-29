@@ -1,3 +1,7 @@
+"""
+This module defines the agents and tools for the Realtime Agent app.
+"""
+
 import asyncio
 
 from agents import function_tool  # pyright: ignore
@@ -16,6 +20,9 @@ will use the agent returned from get_starting_agent() as the starting agent."""
     description_override="Lookup frequently asked questions.",
 )
 async def faq_lookup_tool(question: str) -> str:
+    """
+    Lookup frequently asked questions.
+    """
     print("faq_lookup_tool called with question:", question)
 
     # Simulate a slow API call
@@ -103,4 +110,7 @@ seat_booking_agent.handoffs.append(triage_agent)
 
 
 def get_starting_agent() -> RealtimeAgent:
+    """
+    Get the starting agent for the conversation.
+    """
     return triage_agent

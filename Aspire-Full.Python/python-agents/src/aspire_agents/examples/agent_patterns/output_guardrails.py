@@ -28,19 +28,22 @@ a phone number.
 
 # The agent's output type
 class MessageOutput(BaseModel):
-    reasoning: str = Field(
-        description="Thoughts on how to respond to the user's message"
-    )
+    """
+    Output schema for the agent.
+    """
+
+    reasoning: str = Field(description="Thoughts on how to respond to the user's message")
     response: str = Field(description="The response to the user's message")
-    user_name: str | None = Field(
-        description="The name of the user who sent the message, if known"
-    )
+    user_name: str | None = Field(description="The name of the user who sent the message, if known")
 
 
 @output_guardrail
 async def sensitive_data_check(
     context: RunContextWrapper, agent: Agent, output: MessageOutput
 ) -> GuardrailFunctionOutput:
+    """
+    Check if the output contains sensitive data.
+    """
     phone_number_in_response = "650" in output.response
     phone_number_in_reasoning = "650" in output.reasoning
 
@@ -61,16 +64,17 @@ agent = Agent(
 )
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the output guardrails example.
+    """
     # This should be ok
     await Runner.run(agent, "What's the capital of California?")
     print("First message passed")
 
     # This should trip the guardrail
     try:
-        result = await Runner.run(
-            agent, "My phone number is 650-123-4567. Where do you think I live?"
-        )
+        result = await Runner.run(agent, "My phone number is 650-123-4567. Where do you think I live?")
         print(
             f"Guardrail didn't trip - this is unexpected. Output: "
             f"{json.dumps(result.final_output.model_dump(), indent=2)}"

@@ -12,7 +12,7 @@ from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 @function_tool
-def write_file(filename: Annotated[str, "Name of the file"], content: str) -> str:
+def write_file(filename: Annotated[str, "Name of the file"], content: str) -> str:  # pylint: disable=unused-argument
     """Write content to a file."""
     return f"File {filename} written successfully"
 
@@ -24,6 +24,7 @@ def create_config(
     dependencies: Annotated[Optional[list[str]], "Dependencies (list of packages)"],
 ) -> str:
     """Generate a project configuration file."""
+    # pylint: disable=unused-argument
     return f"Config for {project_name} v{version} created"
 
 

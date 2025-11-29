@@ -1,3 +1,7 @@
+"""
+This module demonstrates the usage of the OpenAIChatCompletionsModel with reasoning content.
+"""
+
 import asyncio
 import os
 
@@ -26,6 +30,9 @@ gpt_oss_model = OpenAIChatCompletionsModel(
 
 
 async def main() -> None:
+    """
+    Main entry point for the GPT OSS stream example.
+    """
     agent = Agent(
         name="Assistant",
         instructions=("You're a helpful assistant. You provide a concise answer to the user's question."),

@@ -29,6 +29,10 @@ homework. If the guardrail trips, we'll respond with a refusal message.
 
 # 1. An agent-based guardrail that is triggered if the user is asking to do math homework
 class MathHomeworkOutput(BaseModel):
+    """
+    Output schema for the math homework guardrail.
+    """
+
     reasoning: str
     is_math_homework: bool
 
@@ -43,13 +47,13 @@ guardrail_agent = Agent(
 @input_guardrail
 async def math_guardrail(
     context: RunContextWrapper[None],
-    agent: Agent,
-    input: str | list[TResponseInputItem],
+    _agent: Agent,
+    input_data: str | list[TResponseInputItem],
 ) -> GuardrailFunctionOutput:
     """This is an input guardrail function, which happens to call an agent to check if the input
     is a math homework question.
     """
-    result = await Runner.run(guardrail_agent, input, context=context.context)
+    result = await Runner.run(guardrail_agent, input_data, context=context.context)
     final_output = result.final_output_as(MathHomeworkOutput)
 
     return GuardrailFunctionOutput(
@@ -61,7 +65,10 @@ async def math_guardrail(
 # 2. The run loop
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the input guardrails example.
+    """
     agent = Agent(
         name="Customer support agent",
         instructions="You are a customer support agent. You help customers with their questions.",

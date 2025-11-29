@@ -19,7 +19,10 @@ def open_file(path: str) -> None:
         print(f"Don't know how to open files on this platform: {sys.platform}")
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the image generation example.
+    """
     agent = Agent(
         name="Image generator",
         instructions="You are a helpful agent.",

@@ -1,14 +1,21 @@
+"""
+This module demonstrates the usage of the WebSearchTool with filters and an Agent.
+"""
+
 import asyncio
 from datetime import datetime
 
-from agents import Agent, ModelSettings, Runner, WebSearchTool, trace
-from openai.types.shared.reasoning import Reasoning
+from agents import Agent, ModelSettings, Runner, WebSearchTool, trace  # type: ignore
+from openai.types.shared.reasoning import Reasoning  # type: ignore
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 
 
 async def main() -> None:
+    """
+    Main entry point for the web search filters example.
+    """
     agent = Agent(
         name="WebOAI website searcher",
         model="gpt-5-nano",

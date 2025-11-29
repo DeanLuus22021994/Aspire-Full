@@ -11,7 +11,10 @@ from aspire_agents.gpu import ensure_tensor_core_gpu
 URL = "https://www.berkshirehathaway.com/letters/2024ltr.pdf"
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the remote PDF example.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",

@@ -26,6 +26,10 @@ https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#su
 
 @dataclass
 class OutputType:
+    """
+    Output type for the agent.
+    """
+
     jokes: dict[int, str]
     """A list of jokes, indexed by joke number."""
 
@@ -34,27 +38,45 @@ class CustomOutputSchema(AgentOutputSchemaBase):
     """A demonstration of a custom output schema."""
 
     def is_plain_text(self) -> bool:
+        """
+        Check if the output is plain text.
+        """
         return False
 
     def name(self) -> str:
+        """
+        Get the name of the schema.
+        """
         return "CustomOutputSchema"
 
     def json_schema(self) -> dict[str, Any]:
+        """
+        Get the JSON schema.
+        """
         return {
             "type": "object",
             "properties": {"jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}},
         }
 
     def is_strict_json_schema(self) -> bool:
+        """
+        Check if the schema is strict JSON.
+        """
         return False
 
     def validate_json(self, json_str: str) -> Any:
+        """
+        Validate the JSON string.
+        """
         json_obj = json.loads(json_str)
         # Just for demonstration, we'll return a list.
         return list(json_obj["jokes"].values())
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the non-strict output type example.
+    """
     ensure_tensor_core_gpu()
     agent = Agent(
         name="Assistant",

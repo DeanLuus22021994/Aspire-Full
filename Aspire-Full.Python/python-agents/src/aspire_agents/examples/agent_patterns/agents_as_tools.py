@@ -51,14 +51,14 @@ orchestrator_agent = Agent(
 
 synthesizer_agent = Agent(
     name="synthesizer_agent",
-    instructions=(
-        "You inspect translations, correct them if needed, and produce a final concatenated "
-        "response."
-    ),
+    instructions=("You inspect translations, correct them if needed, and produce a final concatenated " "response."),
 )
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the agents-as-tools example.
+    """
     msg = input("Hi! What would you like translated, and to which languages? ")
 
     # Run the entire orchestration in a single trace
@@ -71,9 +71,7 @@ async def main():
                 if text:
                     print(f"  - Translation step: {text}")
 
-        synthesizer_result = await Runner.run(
-            synthesizer_agent, orchestrator_result.to_input_list()
-        )
+        synthesizer_result = await Runner.run(synthesizer_agent, orchestrator_result.to_input_list())
 
     print(f"\n\nFinal response:\n{synthesizer_result.final_output}")
 

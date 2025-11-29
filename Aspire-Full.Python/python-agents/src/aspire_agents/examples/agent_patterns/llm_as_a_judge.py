@@ -23,6 +23,10 @@ story_outline_generator = Agent(
 
 @dataclass
 class EvaluationFeedback:
+    """
+    Feedback from the evaluator.
+    """
+
     feedback: str
     score: Literal["pass", "needs_improvement", "fail"]
 
@@ -40,6 +44,9 @@ evaluator = Agent[None](
 
 
 async def main() -> None:
+    """
+    Main entry point for the LLM as a judge example.
+    """
     msg = input("What kind of story would you like to hear? ")
     input_items: list[TResponseInputItem] = [{"content": msg, "role": "user"}]
 
@@ -54,9 +61,7 @@ async def main() -> None:
             )
 
             input_items = story_outline_result.to_input_list()
-            latest_outline = ItemHelpers.text_message_outputs(
-                story_outline_result.new_items
-            )
+            latest_outline = ItemHelpers.text_message_outputs(story_outline_result.new_items)
             print("Story outline generated")
 
             evaluator_result = await Runner.run(evaluator, input_items)
@@ -70,9 +75,7 @@ async def main() -> None:
 
             print("Re-running with feedback")
 
-            input_items.append(
-                {"content": f"Feedback: {result.feedback}", "role": "user"}
-            )
+            input_items.append({"content": f"Feedback: {result.feedback}", "role": "user"})
 
     print(f"Final story outline: {latest_outline}")
 

@@ -109,7 +109,10 @@ async def get_response_with_reasoning_content():
     print("\n")
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the reasoning content example.
+    """
     try:
         await stream_with_reasoning_content()
         await get_response_with_reasoning_content()

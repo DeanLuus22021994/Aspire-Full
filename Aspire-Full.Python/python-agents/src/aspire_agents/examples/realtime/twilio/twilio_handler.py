@@ -1,3 +1,7 @@
+"""
+This module contains the TwilioHandler class for handling Twilio WebSocket connections.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -42,7 +46,17 @@ agent = RealtimeAgent(
 
 
 class TwilioHandler:
-    def __init__(self, twilio_websocket: WebSocket):
+    """
+    Handles Twilio WebSocket connections and bridges them to the Realtime Agent.
+    """
+
+    def __init__(self, twilio_websocket: WebSocket) -> None:
+        """
+        Initialize the TwilioHandler.
+
+        Args:
+            twilio_websocket: The WebSocket connection from Twilio.
+        """
         self.twilio_websocket = twilio_websocket
         self._message_loop_task: asyncio.Task[None] | None = None
         self.session: RealtimeSession | None = None
@@ -51,9 +65,7 @@ class TwilioHandler:
         # Audio buffering configuration (matching CLI demo)
         self.CHUNK_LENGTH_S = 0.05  # 50ms chunks like CLI demo
         self.SAMPLE_RATE = 8000  # Twilio uses 8kHz for g711_ulaw
-        self.BUFFER_SIZE_BYTES = int(
-            self.SAMPLE_RATE * self.CHUNK_LENGTH_S
-        )  # 50ms worth of audio
+        self.BUFFER_SIZE_BYTES = int(self.SAMPLE_RATE * self.CHUNK_LENGTH_S)  # 50ms worth of audio
 
         self._stream_sid: str | None = None
         self._audio_buffer: bytearray = bytearray()
@@ -61,9 +73,7 @@ class TwilioHandler:
 
         # Mark event tracking for playback
         self._mark_counter = 0
-        self._mark_data: dict[
-            str, tuple[str, int, int]
-        ] = {}  # mark_id -> (item_id, content_index, byte_count)
+        self._mark_data: dict[str, tuple[str, int, int]] = {}  # mark_id -> (item_id, content_index, byte_count)
 
     async def start(self) -> None:
         """Start the session."""
@@ -88,7 +98,8 @@ class TwilioHandler:
             }
         )
 
-        await self.session.enter()
+        if self.session:
+            await self.session.enter()
 
         await self.twilio_websocket.accept()
         print("Twilio WebSocket connection accepted")
@@ -158,9 +169,7 @@ class TwilioHandler:
 
         elif event.type == "audio_interrupted":
             print("Sending audio interrupted to Twilio")
-            await self.twilio_websocket.send_text(
-                json.dumps({"event": "clear", "streamSid": self._stream_sid})
-            )
+            await self.twilio_websocket.send_text(json.dumps({"event": "clear", "streamSid": self._stream_sid}))
         elif event.type == "audio_end":
             print("Audio end")
         elif event.type == "raw_model_event":
@@ -222,13 +231,8 @@ class TwilioHandler:
                 audio_bytes = b"\x00" * byte_count  # Placeholder bytes
 
                 # Update playback tracker
-                self.playback_tracker.on_play_bytes(
-                    item_id, item_content_index, audio_bytes
-                )
-                print(
-                    f"Playback tracker updated: {item_id}, index {item_content_index}, "
-                    f"{byte_count} bytes"
-                )
+                self.playback_tracker.on_play_bytes(item_id, item_content_index, audio_bytes)
+                print(f"Playback tracker updated: {item_id}, index {item_content_index}, " f"{byte_count} bytes")
 
                 # Clean up the stored data
                 del self._mark_data[mark_id]
@@ -261,11 +265,7 @@ class TwilioHandler:
 
                 # If buffer has data and it's been too long since last send, flush it
                 current_time = time.time()
-                if (
-                    self._audio_buffer
-                    and current_time - self._last_buffer_send_time
-                    > self.CHUNK_LENGTH_S * 2
-                ):
+                if self._audio_buffer and current_time - self._last_buffer_send_time > self.CHUNK_LENGTH_S * 2:
                     await self._flush_audio_buffer()
 
         except Exception as e:
