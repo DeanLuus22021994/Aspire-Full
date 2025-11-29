@@ -2,6 +2,7 @@ using Aspire.Hosting;
 using Aspire.Hosting.Qdrant;
 using Aspire_Full.Configuration;
 using Aspire_Full.DevContainer;
+using Microsoft.Extensions.Configuration;
 
 // =============================================================================
 // Aspire Full AppHost - Distributed Application Orchestrator
