@@ -65,6 +65,8 @@ strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
+mypy_path = "src, .venv/Lib/site-packages"
+
 
 [tool.pytest.ini_options]
 addopts = "-ra"
