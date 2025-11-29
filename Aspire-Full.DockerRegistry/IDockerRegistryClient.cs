@@ -15,12 +15,21 @@ public interface IBuildxWorkerFactory
 {
     Task<IBuildxWorker> GetWorkerAsync(CancellationToken cancellationToken = default);
     Task ReleaseWorkerAsync(IBuildxWorker worker);
+
+    Task<IBuildxExporter> GetExporterAsync(CancellationToken cancellationToken = default);
+    Task ReleaseExporterAsync(IBuildxExporter exporter);
 }
 
 public interface IBuildxWorker
 {
     string Id { get; }
     Task ExecuteCommandAsync(string command, CancellationToken cancellationToken = default);
+}
+
+public interface IBuildxExporter
+{
+    string Id { get; }
+    Task ExportAsync(string artifactId, string destination, CancellationToken cancellationToken = default);
 }
 
 public interface IGarbageCollector
