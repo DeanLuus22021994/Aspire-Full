@@ -9,7 +9,7 @@ from openai.types.shared.reasoning import Reasoning
 # logging.basicConfig(level=logging.DEBUG)
 
 
-async def main():
+async def main() -> None:
     agent = Agent(
         name="WebOAI website searcher",
         model="gpt-5-nano",

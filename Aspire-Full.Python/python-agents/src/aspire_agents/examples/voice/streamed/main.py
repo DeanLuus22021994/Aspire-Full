@@ -125,7 +125,7 @@ class RealtimeApp(App[None]):
         self.pipeline = VoicePipeline(
             workflow=MyWorkflow(secret_word="dog", on_start=self._on_transcription)
         )
-        self._audio_input = StreamedAudioInput()
+        self._audio_input = StreamedAudioInput()  # type: ignore [no-untyped-call]
         self.audio_player = sd.OutputStream(
             samplerate=SAMPLE_RATE,
             channels=CHANNELS,
