@@ -1,46 +1,13 @@
 import asyncio
-import json
 
-from agents import Agent, Runner, function_tool
-from aspire_agents.gpu import ensure_tensor_core_gpu
-
-
-# Mock classes for when guardrails are not available in the agents package
-class ToolGuardrailFunctionOutput:
-    def __init__(self, output_info):
-        self.output_info = output_info
-
-    @classmethod
-    def reject_content(cls, message, output_info):
-        return cls(output_info)
-
-    @classmethod
-    def raise_exception(cls, output_info):
-        raise ToolOutputGuardrailTripwireTriggered(cls(output_info))
-
-
-class ToolInputGuardrailData:
-    def __init__(self, context):
-        self.context = context
-
-
-class ToolOutputGuardrailData:
-    def __init__(self, output, context):
-        self.output = output
-        self.context = context
-
-
-class ToolOutputGuardrailTripwireTriggered(Exception):
-    def __init__(self, output):
-        self.output = output
-
-
-def tool_input_guardrail(func):
-    return func
-
-
-def tool_output_guardrail(func):
-    return func
+from aspire_agents.core import (
+    Agent,
+    Runner,
+    function_tool,
+    semantic_input_guardrail,
+    semantic_output_guardrail,
+)
+from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered
 
 
 @function_tool
@@ -73,72 +40,13 @@ def get_contact_info(user_id: str) -> dict[str, str]:
     }
 
 
-@tool_input_guardrail
-def reject_sensitive_words(data: ToolInputGuardrailData) -> ToolGuardrailFunctionOutput:
-    """Reject tool calls that contain sensitive words in arguments."""
-    try:
-        args = (
-            json.loads(data.context.tool_arguments)
-            if data.context.tool_arguments
-            else {}
-        )
-    except json.JSONDecodeError:
-        return ToolGuardrailFunctionOutput(output_info="Invalid JSON arguments")
+# Apply semantic guardrails
+# "harmful" category includes words like "hack", "exploit", "malware"
+send_email.tool_input_guardrails = [semantic_input_guardrail(category="harmful")]  # type: ignore
 
-    # Check for suspicious content
-    sensitive_words = [
-        "password",
-        "hack",
-        "exploit",
-        "malware",
-        "ACME",
-    ]
-    for key, value in args.items():
-        value_str = str(value).lower()
-        for word in sensitive_words:
-            if word.lower() in value_str:
-                # Reject tool call and inform the model the function was not called
-                return ToolGuardrailFunctionOutput.reject_content(
-                    message=f"🚨 Tool call blocked: contains '{word}'",
-                    output_info={"blocked_word": word, "argument": key},
-                )
-
-    return ToolGuardrailFunctionOutput(output_info="Input validated")
-
-
-@tool_output_guardrail
-def block_sensitive_output(
-    data: ToolOutputGuardrailData,
-) -> ToolGuardrailFunctionOutput:
-    """Block tool outputs that contain sensitive data."""
-    output_str = str(data.output).lower()
-
-    # Check for sensitive data patterns
-    if "ssn" in output_str or "123-45-6789" in output_str:
-        # Use raise_exception to halt execution completely for sensitive data
-        return ToolGuardrailFunctionOutput.raise_exception(
-            output_info={"blocked_pattern": "SSN", "tool": data.context.tool_name},
-        )
-
-    return ToolGuardrailFunctionOutput(output_info="Output validated")
-
-
-@tool_output_guardrail
-def reject_phone_numbers(data: ToolOutputGuardrailData) -> ToolGuardrailFunctionOutput:
-    """Reject function output containing phone numbers."""
-    output_str = str(data.output)
-    if "555-1234" in output_str:
-        return ToolGuardrailFunctionOutput.reject_content(
-            message="User data not retrieved as it contains a phone number which is restricted.",
-            output_info={"redacted": "phone_number"},
-        )
-    return ToolGuardrailFunctionOutput(output_info="Phone number check passed")
-
-
-# Apply guardrails to tools
-send_email.tool_input_guardrails = [reject_sensitive_words]  # type: ignore
-get_user_data.tool_output_guardrails = [block_sensitive_output]  # type: ignore
-get_contact_info.tool_output_guardrails = [reject_phone_numbers]  # type: ignore
+# "pii" category includes "social security number", "phone number", etc.
+get_user_data.tool_output_guardrails = [semantic_output_guardrail(category="pii")]  # type: ignore
+get_contact_info.tool_output_guardrails = [semantic_output_guardrail(category="pii")]  # type: ignore
 
 agent = Agent(
     name="Secure Assistant",
@@ -148,8 +56,8 @@ agent = Agent(
 
 
 async def main():
-    ensure_tensor_core_gpu()
-    print("=== Tool Guardrails Example ===\n")
+    # Note: ensure_tensor_core_gpu is called automatically by Agent.__init__
+    print("=== Tool Guardrails Example (Tensor Native) ===\n")
 
     try:
         # Example 1: Normal operation - should work fine
@@ -157,12 +65,11 @@ async def main():
         result = await Runner.run(agent, "Send a welcome email to john@example.com")
         print(f"✅ Successful tool execution: {result.final_output}\n")
 
-        # Example 2: Input guardrail triggers - function tool call is rejected but execution
-        # continues
-        print("2. Attempting to send email with suspicious content:")
+        # Example 2: Input guardrail triggers - function tool call is rejected
+        print("2. Attempting to send email with suspicious content (exploit):")
         result = await Runner.run(
             agent,
-            "Send an email to john@example.com introducing the company ACME corp.",
+            "Send an email to john@example.com about a new exploit we found.",
         )
         print(f"❌ Guardrail rejected function tool call: {result.final_output}\n")
     except Exception as e:
@@ -178,8 +85,7 @@ async def main():
         print(f"Details: {e.output.output_info}\n")
 
     try:
-        # Example 4: Output guardrail triggers - reject returning function tool output but
-        # continue execution
+        # Example 4: Output guardrail triggers - reject returning function tool output
         print("4. Rejecting function tool output containing phone numbers:")
         result = await Runner.run(agent, "Get contact info for user456")
         print(f"❌ Guardrail rejected function tool output: {result.final_output}\n")
@@ -189,6 +95,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 """
 Example output:

@@ -1,0 +1,73 @@
+# Syntax=docker/dockerfile:1
+
+# Stage 1: Builder (Compile dependencies and models)
+FROM python:3.14.0-slim-bookworm AS builder
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /build
+
+# Install system dependencies for building wheels
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY pyproject.toml .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir build && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu124 && \
+    pip install --no-cache-dir transformers openai-agents fastapi uvicorn uvloop
+
+# Pre-download models to cache
+RUN python -c "from transformers import AutoTokenizer, AutoModel; \
+    model_name = 'sentence-transformers/all-MiniLM-L6-v2'; \
+    AutoTokenizer.from_pretrained(model_name); \
+    AutoModel.from_pretrained(model_name)"
+
+# Stage 2: Runtime (Minimal, GPU-optimized)
+FROM python:3.14.0-slim-bookworm AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHON_GIL=0
+
+WORKDIR /app
+
+# Install runtime system dependencies (if any needed for torch)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy model cache (transformers default cache is usually ~/.cache/huggingface)
+# We'll move it to a shared volume location in entrypoint or just bake it in
+COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
+
+# Copy application code
+COPY . .
+
+# Precompile application code for instant startup
+RUN python -m compileall .
+
+# Create non-root user
+RUN useradd -m -u 1000 aspire
+USER aspire
+
+# Environment variables for strict GPU usage
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+# Entrypoint script to verify environment and start
+COPY --chown=aspire:aspire scripts/run_agent.ps1 /app/scripts/run_agent.ps1
+
+# Default command (can be overridden)
+CMD ["python", "-m", "aspire_agents.cli", "--help"]

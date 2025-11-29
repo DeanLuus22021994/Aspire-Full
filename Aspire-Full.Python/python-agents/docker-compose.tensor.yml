@@ -1,0 +1,31 @@
+services:
+  aspire-agent-tensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.tensor
+    image: aspire-agent-tensor:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+    volumes:
+      - aspire-models:/root/.cache/huggingface
+      - aspire-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "1000:1000"
+    command: ["python", "-m", "aspire_agents.cli", "run", "--config", "examples/basic/agent.yaml"]
+
+volumes:
+  aspire-models:
+    name: aspire-models-cache
+  aspire-data:
+    name: aspire-agent-data
