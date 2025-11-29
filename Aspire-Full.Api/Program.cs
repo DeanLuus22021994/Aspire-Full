@@ -2,6 +2,7 @@ using Aspire_Full.Api.Data;
 using Aspire_Full.Api.Tensor;
 using Aspire_Full.Connectors;
 using Aspire_Full.DockerRegistry;
+using Aspire_Full.DockerRegistry.Configuration;
 using Aspire_Full.Qdrant;
 using Aspire_Full.Tensor;
 using Aspire_Full.VectorStore;
