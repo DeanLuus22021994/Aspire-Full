@@ -1,0 +1,47 @@
+line_length: 100
+vendor_globs: &o0
+- .vscode
+- .vscode/**
+- .vscode-test
+- .vscode-test/**
+- .vscode-*
+- .vscode-*/**
+- node_modules
+- node_modules/**
+paths:
+  lint_roots: &o3
+  - Aspire-Full.Python/python-agents
+  - sandboxes
+  - scripts
+  - tools
+  exclude_globs: *o0
+flake8:
+  extend_ignore: &o1
+  - E203
+  - W503
+  exclude: *o0
+pycodestyle:
+  ignore: *o1
+pylint:
+  disable: &o4
+  - missing-docstring
+  - invalid-name
+  ignore:
+  - .vscode
+  - .vscode/extensions
+  - .vscode-test
+  - .vscode-debug
+  - .vscode-extensions
+  ignore_paths: &o2
+  - .*/\.vscode/.*
+  - .*\\.vscode\\.*
+  - .*/\.vscode-test/.*
+  - .*\\.vscode-test\\.*
+  - .*/\.vscode-.*
+  - .*\\.vscode-.*
+  ignore_patterns: *o2
+pyright:
+  exclude: *o0
+runner:
+  auto_targets: *o3
+  pylint_disable: *o4
