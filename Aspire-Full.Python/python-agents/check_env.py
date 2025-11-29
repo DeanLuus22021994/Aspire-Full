@@ -5,12 +5,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 try:
-    import aspire_agents
     import openai
     import pydantic
 
-    print(f"aspire_agents version: "
-          f"{getattr(aspire_agents, '__version__', 'unknown')}")
+    import aspire_agents
+
+    print(f"aspire_agents version: " f"{getattr(aspire_agents, '__version__', 'unknown')}")
     print(f"openai version: {getattr(openai, '__version__', 'unknown')}")
     print(f"pydantic version: {getattr(pydantic, '__version__', 'unknown')}")
 
@@ -20,9 +20,7 @@ try:
         import opentelemetry.exporter.otlp.proto.http
         import opentelemetry.sdk.trace
 
-        print(
-            f"opentelemetry version: {getattr(opentelemetry, '__version__', 'unknown')}"
-        )
+        print(f"opentelemetry version: " f"{getattr(opentelemetry, '__version__', 'unknown')}")
         print("OpenTelemetry imports successful")
     except ImportError:
         print("OpenTelemetry not found (optional)")

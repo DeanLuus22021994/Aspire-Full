@@ -12,7 +12,6 @@ disable=C0114,C0115,C0116,R0903,R0913,R0914
 
 [REPORTS]
 output-format=text
-files-output=no
 reports=no
 score=no
 
