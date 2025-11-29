@@ -85,14 +85,25 @@ contexts:
 
 telemetry:
   gpu:
-    flags_file: .config/gpu-utilization.yaml
-    measured_utilization: 0.30
-    target_utilization: 0.80
-    relative_to_target_pct: 37.5
-    utilization_gap: 0.50
-    mode: active-development
-    implementation_ready: false
-    intent: "Accelerated computations to facilitate precision development and high throughput."
+    spec_file: .config/gpu-utilization.yaml
+    snapshot:
+      measured_utilization: 0.30
+      target_utilization: 0.80
+      relative_to_target_pct: 37.5
+      utilization_gap: 0.50
+    intent:
+      mode: active-development
+      implementation_ready: false
+      description: "Accelerated computations to facilitate precision development and high throughput."
+    propagation_refs:
+      connectors:
+        tags:
+          - connector.metric.gpu_only
+      scripts:
+        - scripts/Start-Aspire.ps1
+        - scripts/run-tests.ps1
+      docs:
+        - README.md
     notes:
       - "Actual utilization is calculated from live tensor computation workloads (not pinned)."
       - "Gap highlights the 30% actual vs 80% optimized expectation."

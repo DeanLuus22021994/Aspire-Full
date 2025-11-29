@@ -1,10 +1,42 @@
 version: 1
 
+intent:
+  mode: active-development
+  implementation_ready: false
+  description: >-
+    Accelerated computations to facilitate precision development and high throughput
+    before the production rollout path is finalized.
+
+telemetry:
+  sampling:
+    method: "nvidia-smi --query-gpu=utilization.gpu"
+    source: "Actual tensor computations (non-pinned workloads)."
+    sampled_at: 2025-11-29T00:00:00Z
+  target_utilization: 0.80
+  measured_utilization: 0.30
+  utilization_gap: 0.50
+  relative_to_target_pct: 37.5
+
 flags:
   optimized: 0.80        # >=80% keeps tensor workloads fully saturated
   warning: 0.60          # 60-79% indicates headroom remains
   degraded: 0.45         # 45-59% likely blocked by data or IO
   critical: 0.30         # <=30% shows GPU is mostly idle
+
+propagation:
+  connectors:
+    tags:
+      - connector.metric.gpu_only
+    description: "Connector diagnostics consume these thresholds when emitting GPU-only alerts."
+  scripts:
+    references:
+      - scripts/Start-Aspire.ps1
+      - scripts/run-tests.ps1
+    description: "Startup helpers echo current vs target utilization for operators."
+  docs:
+    references:
+      - README.md
+    description: "Communicates the 80% optimized expectation to contributors."
 
 notes:
   - "Optimized performance is expected at 80% utilization or better."
