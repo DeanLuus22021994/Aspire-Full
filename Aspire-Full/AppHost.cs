@@ -178,7 +178,7 @@ else
     ConfigurePythonAgents(pythonAgents);
 }
 
-void ConfigureApi<T>(IResourceBuilder<T> api) where T : IResourceWithServiceDiscovery
+void ConfigureApi<T>(IResourceBuilder<T> api) where T : IResourceWithEnvironment, IResourceWithWaitSupport
 {
     api.WithReference(database)
        .WithReference(redis)
@@ -186,7 +186,7 @@ void ConfigureApi<T>(IResourceBuilder<T> api) where T : IResourceWithServiceDisc
        .WaitFor(redis);
 }
 
-void ConfigureGateway<T>(IResourceBuilder<T> gateway) where T : IResourceWithServiceDiscovery
+void ConfigureGateway<T>(IResourceBuilder<T> gateway) where T : IResourceWithEnvironment, IResourceWithWaitSupport
 {
     gateway.WithReference(database)
            .WithReference(qdrant)
@@ -195,44 +195,44 @@ void ConfigureGateway<T>(IResourceBuilder<T> gateway) where T : IResourceWithSer
 }
 
 void ConfigureFrontend<T, U>(IResourceBuilder<T> frontend, IResourceBuilder<U> api)
-    where T : IResourceWithServiceDiscovery
-    where U : IResourceWithServiceDiscovery
+    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+    where U : IResourceWithEndpoints
 {
-    frontend.WithReference(api)
+    frontend.WithReference(api.GetEndpoint("http"))
             .WaitFor(api);
 }
 
 void ConfigureWasmDocs<T, U>(IResourceBuilder<T> wasmDocs, IResourceBuilder<U> api)
-    where T : IResourceWithServiceDiscovery
-    where U : IResourceWithServiceDiscovery
+    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+    where U : IResourceWithEndpoints
 {
-    wasmDocs.WithReference(api)
+    wasmDocs.WithReference(api.GetEndpoint("http"))
             .WaitFor(api)
             .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "docs")
             .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5175");
 }
 
 void ConfigureWasmUat<T, U>(IResourceBuilder<T> wasmUat, IResourceBuilder<U> api)
-    where T : IResourceWithServiceDiscovery
-    where U : IResourceWithServiceDiscovery
+    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+    where U : IResourceWithEndpoints
 {
-    wasmUat.WithReference(api)
+    wasmUat.WithReference(api.GetEndpoint("http"))
            .WaitFor(api)
            .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "uat")
            .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5176");
 }
 
 void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> api)
-    where T : IResourceWithServiceDiscovery
-    where U : IResourceWithServiceDiscovery
+    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+    where U : IResourceWithEndpoints
 {
-    wasmProd.WithReference(api)
+    wasmProd.WithReference(api.GetEndpoint("http"))
             .WaitFor(api)
             .WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "prod")
             .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5177");
 }
 
-void ConfigurePythonAgents<T>(IResourceBuilder<T> pythonAgents) where T : IResourceWithServiceDiscovery
+void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
 {
     pythonAgents.WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
         .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
