@@ -19,4 +19,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
+  </ItemGroup>
+
 </Project>

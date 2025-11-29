@@ -36,10 +36,33 @@ builder.Services.AddSingleton<IVectorStoreService, VectorStoreService>();
 // I'll stick to the structure.
 
 builder.Services.AddSingleton<IEmbeddingService, EmbeddingService>();
-// We need IEmbeddingGenerator<string, Embedding<float>>.
-// I'll add a simple implementation here to satisfy DI.
-builder.Services.AddSingleton<Microsoft.Extensions.AI.IEmbeddingGenerator<string, Microsoft.Extensions.AI.Embedding<float>>>(
-    new MockEmbeddingGenerator());
+
+// Register OnnxEmbeddingGenerator with GPU support
+builder.Services.AddSingleton<Microsoft.Extensions.AI.IEmbeddingGenerator<string, Microsoft.Extensions.AI.Embedding<float>>>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<OnnxEmbeddingGenerator>>();
+    var modelPath = Path.Combine(AppContext.BaseDirectory, "models", "all-MiniLM-L6-v2.onnx");
+    var vocabPath = Path.Combine(AppContext.BaseDirectory, "models", "vocab.txt");
+
+    // Ensure models directory exists
+    var modelDir = Path.GetDirectoryName(modelPath);
+    if (!Directory.Exists(modelDir))
+    {
+        Directory.CreateDirectory(modelDir!);
+    }
+
+    // Check if model exists, if not, we might need to download it or fail gracefully.
+    // For "autonomous completion", we'll assume it's there or provide a placeholder if missing to avoid crash loop,
+    // but log a critical error.
+    if (!File.Exists(modelPath) || !File.Exists(vocabPath))
+    {
+        logger.LogCritical("ONNX Model or Vocab not found at {ModelPath}. Please download 'all-MiniLM-L6-v2.onnx' and 'vocab.txt' to this location.", modelPath);
+        // Fallback to mock to keep the app running for other services, but this won't use GPU.
+        return new MockEmbeddingGenerator();
+    }
+
+    return new OnnxEmbeddingGenerator(modelPath, vocabPath, logger);
+});
 
 var app = builder.Build();
 
@@ -74,8 +97,8 @@ class MockEmbeddingGenerator : Microsoft.Extensions.AI.IEmbeddingGenerator<strin
         var result = new Microsoft.Extensions.AI.GeneratedEmbeddings<Microsoft.Extensions.AI.Embedding<float>>();
         foreach (var val in values)
         {
-            // Return random 1536-dim vector
-            var vector = new float[1536];
+            // Return random 384-dim vector (matching all-MiniLM-L6-v2)
+            var vector = new float[384];
             Random.Shared.NextBytes(System.Runtime.InteropServices.MemoryMarshal.AsBytes(vector.AsSpan()));
             result.Add(new Microsoft.Extensions.AI.Embedding<float>(vector));
         }

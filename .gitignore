@@ -60,3 +60,6 @@ __pycache__/
 .pytest_cache/
 
 .fake
+
+# Models
+*.onnx
