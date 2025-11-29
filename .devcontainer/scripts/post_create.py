@@ -124,6 +124,19 @@ def _install_gh_extensions() -> None:
         _run(["gh", "extension", "install", extension], allow_failure=True)
 
 
+def _install_python_package_editable() -> None:
+    _log("🐍 Installing python-agents in editable mode...")
+    python_agents_path = WORKSPACE / "Aspire-Full.Python" / "python-agents"
+    if python_agents_path.exists():
+        _run(
+            ["uv", "pip", "install", "-e", ".[dev,tracing]"],
+            cwd=python_agents_path,
+            allow_failure=True,
+        )
+    else:
+        _warn(f"⚠️ Could not find python-agents at {python_agents_path}")
+
+
 def main() -> None:
     """Execute the VS Code post-create automation sequence."""
     _log("🚀 Running post-create setup...")
@@ -134,6 +147,7 @@ def main() -> None:
     _update_dotnet_tools()
     _configure_git_safe_directory()
     _install_gh_extensions()
+    _install_python_package_editable()
 
     _log("")
     _log("📋 Self-hosted runner info:")

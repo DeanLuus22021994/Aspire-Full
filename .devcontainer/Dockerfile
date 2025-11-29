@@ -67,7 +67,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Install Python 3.14 (free-threaded) and bake dependencies
 # We copy the pyproject.toml from the context (root) to install dependencies
 COPY Aspire-Full.Python/python-agents/pyproject.toml /tmp/python-agents/pyproject.toml
-# Create a dummy README to satisfy pip install -e .
+# Create a dummy README to satisfy build
 RUN touch /tmp/python-agents/README.md \
     && mkdir -p /tmp/python-agents/src/aspire_agents \
     && touch /tmp/python-agents/src/aspire_agents/__init__.py
@@ -76,7 +76,8 @@ RUN uv python install 3.14.0t \
     && cd /tmp/python-agents \
     && uv venv /opt/venv --python 3.14.0t \
     && . /opt/venv/bin/activate \
-    && uv pip install .[dev,tracing] \
+    && uv pip compile pyproject.toml -o requirements.txt --all-extras \
+    && uv pip install -r requirements.txt \
     && chmod -R 755 /opt/venv
 
 # Copy maintenance scripts
