@@ -19,6 +19,7 @@ class MCPContext:
 def get_context() -> MCPContext:
     """Return compose metadata for the Aspire Dashboard MCP service."""
     root = Path(__file__).resolve().parents[1]
+    # Ensure we are pointing to the correct compose file that defines the volume and nvidia runtime
     return MCPContext(
         service_name="aspire-dashboard",
         compose_file=root / "docker-compose.mcp.yml",

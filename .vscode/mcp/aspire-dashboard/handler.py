@@ -44,6 +44,12 @@ def main(argv: list[str] | None = None) -> None:
     env.setdefault("PYTHON_GIL", "0")
     env["MCP_SERVICE"] = context.service_name
 
+    # Ensure the data volume directory exists if mapped locally (optional, but good practice)
+    # Docker compose usually handles named volumes, but if bind mounts are used:
+    # data_dir = context.project_root / "data"
+    # data_dir.mkdir(exist_ok=True)
+
+    print(f"Executing: {' '.join(command)}")
     subprocess.run(  # noqa: S603
         command,
         check=True,
