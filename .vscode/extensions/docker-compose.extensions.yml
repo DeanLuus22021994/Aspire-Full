@@ -17,7 +17,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: ms-windows-ai-studio.windows-ai-studio/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.ms-windows-ai-studio.windows-ai-studio
     image: aspire/ms-windows-ai-studio-extension:latest
     container_name: aspire-ms-windows-ai-studio-extension
     runtime: nvidia
@@ -35,7 +35,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: ms-azuretools.vscode-azure-github-copilot/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.ms-azuretools.vscode-azure-github-copilot
     image: aspire/ms-azuretools-vscode-azure-github-copilot-extension:latest
     container_name: aspire-ms-azuretools-vscode-azure-github-copilot-extension
     volumes:
@@ -45,7 +45,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: ms-dotnettools.csharp/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.ms-dotnettools.csharp
     image: aspire/ms-dotnettools-csharp-extension:latest
     container_name: aspire-ms-dotnettools-csharp-extension
     volumes:
@@ -55,7 +55,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: ms-dotnettools.csdevkit/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.ms-dotnettools.csdevkit
     image: aspire/ms-dotnettools-csdevkit-extension:latest
     container_name: aspire-ms-dotnettools-csdevkit-extension
     volumes:
@@ -65,7 +65,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: ms-dotnettools.dotnet-interactive-vscode/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.ms-dotnettools.dotnet-interactive-vscode
     image: aspire/ms-dotnettools-dotnet-interactive-vscode-extension:latest
     container_name: aspire-ms-dotnettools-dotnet-interactive-vscode-extension
     volumes:
@@ -75,7 +75,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: ms-azuretools.vscode-docker/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.ms-azuretools.vscode-docker
     image: aspire/ms-azuretools-vscode-docker-extension:latest
     container_name: aspire-ms-azuretools-vscode-docker-extension
     volumes:
@@ -85,7 +85,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: GitHub.copilot/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.GitHub.copilot
     image: aspire/github-copilot-extension:latest
     container_name: aspire-github-copilot-extension
     runtime: nvidia
@@ -103,7 +103,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: GitHub.copilot-chat/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.GitHub.copilot-chat
     image: aspire/github-copilot-chat-extension:latest
     container_name: aspire-github-copilot-chat-extension
     volumes:
@@ -113,7 +113,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: GitHub.vscode-pull-request-github/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.GitHub.vscode-pull-request-github
     image: aspire/github-vscode-pull-request-github-extension:latest
     container_name: aspire-github-vscode-pull-request-github-extension
     volumes:
@@ -123,7 +123,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: eamodio.gitlens/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.eamodio.gitlens
     image: aspire/eamodio-gitlens-extension:latest
     container_name: aspire-eamodio-gitlens-extension
     volumes:
@@ -133,7 +133,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: streetsidesoftware.code-spell-checker/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.streetsidesoftware.code-spell-checker
     image: aspire/streetsidesoftware-code-spell-checker-extension:latest
     container_name: aspire-streetsidesoftware-code-spell-checker-extension
     volumes:
@@ -143,7 +143,7 @@ services:
     <<: *extension-service
     build:
       <<: *extension-build
-      dockerfile: EditorConfig.EditorConfig/Dockerfile
+      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Extensions/Dockerfile.EditorConfig.EditorConfig
     image: aspire/editorconfig-editorconfig-extension:latest
     container_name: aspire-editorconfig-editorconfig-extension
     volumes:
