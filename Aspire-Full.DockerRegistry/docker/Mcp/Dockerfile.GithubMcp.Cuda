@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 COPY tools/github-mcp .
 RUN npm run build && npm prune --omit=dev
 
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
+FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full GitHub MCP Server (CUDA)"
 LABEL org.opencontainers.image.licenses="MIT"
