@@ -10,6 +10,8 @@
     "node_modules/**"
   ],
   "extraPaths": [
-    "python-agents/src"
-  ]
+    "Aspire-Full.Python/python-agents/src",
+    "Aspire-Full.Python/python-agents/.venv/Lib/site-packages"
+  ],
+  "typeCheckingMode": "basic"
 }

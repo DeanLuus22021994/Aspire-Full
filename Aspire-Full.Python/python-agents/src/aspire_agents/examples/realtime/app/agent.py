@@ -8,11 +8,12 @@ from agents.realtime import RealtimeAgent, realtime_handoff
 When running the UI example locally, you can edit this file to change the setup. THe server
 will use the agent returned from get_starting_agent() as the starting agent."""
 
-### TOOLS
+# TOOLS
 
 
 @function_tool(
-    name_override="faq_lookup_tool", description_override="Lookup frequently asked questions."
+    name_override="faq_lookup_tool",
+    description_override="Lookup frequently asked questions.",
 )
 async def faq_lookup_tool(question: str) -> str:
     print("faq_lookup_tool called with question:", question)
@@ -60,7 +61,8 @@ faq_agent = RealtimeAgent(
     name="FAQ Agent",
     handoff_description="A helpful agent that can answer questions about the airline.",
     instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
-    You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
+    You are an FAQ agent. If you are speaking to a customer, you probably were transferred to
+    from the triage agent.
     Use the following routine to support the customer.
     # Routine
     1. Identify the last question asked by the customer.
@@ -73,22 +75,27 @@ seat_booking_agent = RealtimeAgent(
     name="Seat Booking Agent",
     handoff_description="A helpful agent that can update a seat on a flight.",
     instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
-    You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
+    You are a seat booking agent. If you are speaking to a customer, you probably were transferred
+    to from the triage agent.
     Use the following routine to support the customer.
     # Routine
     1. Ask for their confirmation number.
     2. Ask the customer what their desired seat number is.
     3. Use the update seat tool to update the seat on the flight.
-    If the customer asks a question that is not related to the routine, transfer back to the triage agent. """,
+    If the customer asks a question that is not related to the routine, transfer back to the
+    triage agent. """,
     tools=[update_seat],
 )
 
 triage_agent = RealtimeAgent(
     name="Triage Agent",
-    handoff_description="A triage agent that can delegate a customer's request to the appropriate agent.",
+    handoff_description=(
+        "A triage agent that can delegate a customer's request to the appropriate agent."
+    ),
     instructions=(
         f"{RECOMMENDED_PROMPT_PREFIX} "
-        "You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents."
+        "You are a helpful triaging agent. You can use your tools to delegate questions to "
+        "other appropriate agents."
     ),
     handoffs=[faq_agent, realtime_handoff(seat_booking_agent)],
 )

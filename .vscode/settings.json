@@ -26,5 +26,6 @@
   "files.associations": {
     ".pycodestyle": "ini"
   },
-  "cSpell.words": ["Serilog"]
+  "cSpell.words": ["Serilog"],
+  "python.defaultInterpreterPath": "${workspaceFolder}/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe"
 }
