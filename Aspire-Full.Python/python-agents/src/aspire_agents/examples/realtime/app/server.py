@@ -27,6 +27,12 @@ try:
 
     OTEL_AVAILABLE = True
 except ImportError:
+    trace = None  # type: ignore
+    OTLPSpanExporter = None  # type: ignore
+    FastAPIInstrumentor = None  # type: ignore
+    Resource = None  # type: ignore
+    TracerProvider = None  # type: ignore
+    BatchSpanProcessor = None  # type: ignore
     OTEL_AVAILABLE = False
     logging.getLogger(__name__).warning(
         "OpenTelemetry packages not found. Tracing will be disabled."
@@ -222,19 +228,27 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(lifespan=lifespan)
 
 
-if OTEL_AVAILABLE:
+if (
+    OTEL_AVAILABLE
+    and Resource
+    and TracerProvider
+    and trace
+    and BatchSpanProcessor
+    and OTLPSpanExporter
+    and FastAPIInstrumentor
+):
     # Configure OpenTelemetry
-    resource = Resource.create(attributes={"service.name": "python-agents"})
-    provider = TracerProvider(resource=resource)
-    trace.set_tracer_provider(provider)
+    resource = Resource.create(attributes={"service.name": "python-agents"})  # type: ignore
+    provider = TracerProvider(resource=resource)  # type: ignore
+    trace.set_tracer_provider(provider)  # type: ignore
 
     # Cast to Any to avoid mypy issues with add_span_processor
     # The type stub for TracerProvider might be missing this method in some versions
     provider_any: Any = provider
     if hasattr(provider_any, "add_span_processor"):
-        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))  # type: ignore
 
-    FastAPIInstrumentor.instrument_app(app)
+    FastAPIInstrumentor.instrument_app(app)  # type: ignore
 
 
 @app.websocket("/ws/{session_id}")

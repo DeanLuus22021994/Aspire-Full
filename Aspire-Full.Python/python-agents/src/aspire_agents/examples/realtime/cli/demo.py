@@ -6,16 +6,15 @@ from typing import Any
 
 import numpy as np
 import sounddevice as sd
-
 from agents import function_tool
-from agents.realtime import (
+from agents.realtime import (  # type: ignore
     RealtimeAgent,
     RealtimePlaybackTracker,
     RealtimeRunner,
     RealtimeSession,
     RealtimeSessionEvent,
 )
-from agents.realtime.model import RealtimeModelConfig
+from agents.realtime.model import RealtimeModelConfig  # type: ignore
 
 # Audio configuration
 CHUNK_LENGTH_S = 0.04  # 40ms aligns with realtime defaults
@@ -67,7 +66,9 @@ class NoUIDemo:
         # Use an unbounded queue to avoid drops that sound like skipped words.
         self.output_queue: queue.Queue[Any] = queue.Queue(maxsize=0)
         self.interrupt_event = threading.Event()
-        self.current_audio_chunk: tuple[np.ndarray[Any, np.dtype[Any]], str, int] | None = None
+        self.current_audio_chunk: (
+            tuple[np.ndarray[Any, np.dtype[Any]], str, int] | None
+        ) = None
         self.chunk_position = 0
         self.bytes_per_sample = np.dtype(FORMAT).itemsize
 
@@ -103,19 +104,26 @@ class NoUIDemo:
                 self.fading = True
                 self.fade_done_samples = 0
                 # Remaining samples in the current chunk
-                remaining_in_chunk = len(self.current_audio_chunk[0]) - self.chunk_position
-                self.fade_total_samples = min(self.fade_samples, max(0, remaining_in_chunk))
+                remaining_in_chunk = (
+                    len(self.current_audio_chunk[0]) - self.chunk_position
+                )
+                self.fade_total_samples = min(
+                    self.fade_samples, max(0, remaining_in_chunk)
+                )
 
             samples, item_id, content_index = self.current_audio_chunk
             samples_filled = 0
             while (
-                samples_filled < len(outdata) and self.fade_done_samples < self.fade_total_samples
+                samples_filled < len(outdata)
+                and self.fade_done_samples < self.fade_total_samples
             ):
                 remaining_output = len(outdata) - samples_filled
                 remaining_fade = self.fade_total_samples - self.fade_done_samples
                 n = min(remaining_output, remaining_fade)
 
-                src = samples[self.chunk_position : self.chunk_position + n].astype(np.float32)
+                src = samples[self.chunk_position : self.chunk_position + n].astype(
+                    np.float32
+                )
                 # Linear ramp from current level down to 0 across remaining fade samples
                 idx = np.arange(
                     self.fade_done_samples, self.fade_done_samples + n, dtype=np.float32
@@ -127,7 +135,9 @@ class NoUIDemo:
                 # Optionally report played bytes (ramped) to playback tracker
                 try:
                     self.playback_tracker.on_play_bytes(
-                        item_id=item_id, item_content_index=content_index, bytes=ramped.tobytes()
+                        item_id=item_id,
+                        item_content_index=content_index,
+                        bytes=ramped.tobytes(),
                     )
                 except Exception:
                     pass
@@ -180,9 +190,13 @@ class NoUIDemo:
             samples_to_copy = min(remaining_output, remaining_chunk)
 
             if samples_to_copy > 0:
-                chunk_data = samples[self.chunk_position : self.chunk_position + samples_to_copy]
+                chunk_data = samples[
+                    self.chunk_position : self.chunk_position + samples_to_copy
+                ]
                 # More efficient: direct assignment for mono audio instead of reshape
-                outdata[samples_filled : samples_filled + samples_to_copy, 0] = chunk_data
+                outdata[samples_filled : samples_filled + samples_to_copy, 0] = (
+                    chunk_data
+                )
                 samples_filled += samples_to_copy
                 self.chunk_position += samples_to_copy
 
@@ -234,7 +248,9 @@ class NoUIDemo:
 
                 # Start audio recording
                 await self.start_audio_recording()
-                print("Audio recording started. You can start speaking - expect lots of logs!")
+                print(
+                    "Audio recording started. You can start speaking - expect lots of logs!"
+                )
 
                 # Process session events
                 async for event in session:
@@ -295,7 +311,8 @@ class NoUIDemo:
 
                 # Smart barge‑in: if assistant audio is playing, send only if mic has speech.
                 assistant_playing = (
-                    self.current_audio_chunk is not None or not self.output_queue.empty()
+                    self.current_audio_chunk is not None
+                    or not self.output_queue.empty()
                 )
                 if assistant_playing:
                     # Compute RMS energy to detect speech while assistant is talking
@@ -337,7 +354,9 @@ class NoUIDemo:
                 # Enqueue audio for callback-based playback with metadata
                 np_audio = np.frombuffer(event.audio.data, dtype=np.int16)
                 # Non-blocking put; queue is unbounded, so drops won’t occur.
-                self.output_queue.put_nowait((np_audio, event.item_id, event.content_index))
+                self.output_queue.put_nowait(
+                    (np_audio, event.item_id, event.content_index)
+                )
             elif event.type == "audio_interrupted":
                 print("Audio interrupted")
                 # Begin graceful fade + flush in the audio callback and rebuild jitter buffer.

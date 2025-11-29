@@ -8,16 +8,15 @@ import time
 from datetime import datetime
 from typing import Any
 
-from fastapi import WebSocket
-
 from agents import function_tool
-from agents.realtime import (
+from agents.realtime import (  # type: ignore
     RealtimeAgent,
     RealtimePlaybackTracker,
     RealtimeRunner,
     RealtimeSession,
     RealtimeSessionEvent,
 )
+from fastapi import WebSocket
 
 
 @function_tool
@@ -34,7 +33,10 @@ def get_current_time() -> str:
 
 agent = RealtimeAgent(
     name="Twilio Assistant",
-    instructions="You are a helpful assistant that starts every conversation with a creative greeting. Keep responses concise and friendly since this is a phone conversation.",
+    instructions=(
+        "You are a helpful assistant that starts every conversation with a creative greeting. "
+        "Keep responses concise and friendly since this is a phone conversation."
+    ),
     tools=[get_weather, get_current_time],
 )
 
@@ -49,7 +51,9 @@ class TwilioHandler:
         # Audio buffering configuration (matching CLI demo)
         self.CHUNK_LENGTH_S = 0.05  # 50ms chunks like CLI demo
         self.SAMPLE_RATE = 8000  # Twilio uses 8kHz for g711_ulaw
-        self.BUFFER_SIZE_BYTES = int(self.SAMPLE_RATE * self.CHUNK_LENGTH_S)  # 50ms worth of audio
+        self.BUFFER_SIZE_BYTES = int(
+            self.SAMPLE_RATE * self.CHUNK_LENGTH_S
+        )  # 50ms worth of audio
 
         self._stream_sid: str | None = None
         self._audio_buffer: bytearray = bytearray()
@@ -218,9 +222,12 @@ class TwilioHandler:
                 audio_bytes = b"\x00" * byte_count  # Placeholder bytes
 
                 # Update playback tracker
-                self.playback_tracker.on_play_bytes(item_id, item_content_index, audio_bytes)
+                self.playback_tracker.on_play_bytes(
+                    item_id, item_content_index, audio_bytes
+                )
                 print(
-                    f"Playback tracker updated: {item_id}, index {item_content_index}, {byte_count} bytes"
+                    f"Playback tracker updated: {item_id}, index {item_content_index}, "
+                    f"{byte_count} bytes"
                 )
 
                 # Clean up the stored data
@@ -256,7 +263,8 @@ class TwilioHandler:
                 current_time = time.time()
                 if (
                     self._audio_buffer
-                    and current_time - self._last_buffer_send_time > self.CHUNK_LENGTH_S * 2
+                    and current_time - self._last_buffer_send_time
+                    > self.CHUNK_LENGTH_S * 2
                 ):
                     await self._flush_audio_buffer()
 

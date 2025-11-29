@@ -70,7 +70,7 @@ orchestrator = Agent(
 )
 
 
-async def main():
+async def main() -> None:
     """Interactive demo with LLM interaction."""
     print("Agents-as-Tools with Conditional Enabling\n")
     print(
