@@ -6,15 +6,24 @@ import struct
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, AsyncIterator
 
-from agents.realtime import (  # type: ignore
-    RealtimeRunner,
-    RealtimeSession,
-    RealtimeSessionEvent,
-)
-from agents.realtime.config import RealtimeUserInputMessage  # type: ignore
-from agents.realtime.items import RealtimeItem  # type: ignore
-from agents.realtime.model import RealtimeModelConfig  # type: ignore
-from agents.realtime.model_inputs import RealtimeModelSendRawMessage  # type: ignore
+try:
+    from agents.realtime import (  # type: ignore
+        RealtimeRunner,
+        RealtimeSession,
+        RealtimeSessionEvent,
+    )
+    from agents.realtime.config import RealtimeUserInputMessage  # type: ignore
+    from agents.realtime.items import RealtimeItem  # type: ignore
+    from agents.realtime.model import RealtimeModelConfig  # type: ignore
+    from agents.realtime.model_inputs import RealtimeModelSendRawMessage  # type: ignore
+except ImportError:
+    RealtimeRunner = None  # type: ignore
+    RealtimeSession = None  # type: ignore
+    RealtimeSessionEvent = None  # type: ignore
+    RealtimeUserInputMessage = None  # type: ignore
+    RealtimeItem = None  # type: ignore
+    RealtimeModelConfig = None  # type: ignore
+    RealtimeModelSendRawMessage = None  # type: ignore
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles

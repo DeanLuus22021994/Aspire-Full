@@ -5,10 +5,10 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 try:
-    import openai
+    import openai  # type: ignore
     import pydantic
 
-    import aspire_agents
+    import aspire_agents  # type: ignore
 
     print(f"aspire_agents version: {getattr(aspire_agents, '__version__', 'unknown')}")
     print(f"openai version: {getattr(openai, '__version__', 'unknown')}")
