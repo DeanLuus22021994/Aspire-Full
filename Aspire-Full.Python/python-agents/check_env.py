@@ -9,7 +9,8 @@ try:
     import openai
     import pydantic
 
-    print(f"aspire_agents version: {getattr(aspire_agents, '__version__', 'unknown')}")
+    print(f"aspire_agents version: "
+          f"{getattr(aspire_agents, '__version__', 'unknown')}")
     print(f"openai version: {getattr(openai, '__version__', 'unknown')}")
     print(f"pydantic version: {getattr(pydantic, '__version__', 'unknown')}")
 
