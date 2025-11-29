@@ -56,7 +56,7 @@ class RealtimeWebSocketManager:
         self.session_contexts: dict[str, Any] = {}
         self.websockets: dict[str, WebSocket] = {}
 
-    async def connect(self, websocket: WebSocket, session_id: str):
+    async def connect(self, websocket: WebSocket, session_id: str) -> None:
         await websocket.accept()
         self.websockets[session_id] = websocket
 
@@ -84,7 +84,7 @@ class RealtimeWebSocketManager:
         # Start event processing task
         asyncio.create_task(self._process_events(session_id))
 
-    async def disconnect(self, session_id: str):
+    async def disconnect(self, session_id: str) -> None:
         if session_id in self.session_contexts:
             await self.session_contexts[session_id].__aexit__(None, None, None)
             del self.session_contexts[session_id]
@@ -93,11 +93,11 @@ class RealtimeWebSocketManager:
         if session_id in self.websockets:
             del self.websockets[session_id]
 
-    async def send_audio(self, session_id: str, audio_bytes: bytes):
+    async def send_audio(self, session_id: str, audio_bytes: bytes) -> None:
         if session_id in self.active_sessions:
             await self.active_sessions[session_id].send_audio(audio_bytes)
 
-    async def send_client_event(self, session_id: str, event: dict[str, Any]):
+    async def send_client_event(self, session_id: str, event: dict[str, Any]) -> None:
         """Send a raw client event to the underlying realtime model."""
         session = self.active_sessions.get(session_id)
         if not session:
@@ -113,7 +113,7 @@ class RealtimeWebSocketManager:
 
     async def send_user_message(
         self, session_id: str, message: RealtimeUserInputMessage
-    ):
+    ) -> None:
         """Send a structured user message via the higher-level API (supports input_image)."""
         session = self.active_sessions.get(session_id)
         if not session:
@@ -129,7 +129,7 @@ class RealtimeWebSocketManager:
             return
         await session.interrupt()
 
-    async def _process_events(self, session_id: str):
+    async def _process_events(self, session_id: str) -> None:
         try:
             session = self.active_sessions[session_id]
             websocket = self.websockets[session_id]
@@ -238,7 +238,7 @@ if OTEL_AVAILABLE:
 
 
 @app.websocket("/ws/{session_id}")
-async def websocket_endpoint(websocket: WebSocket, session_id: str):
+async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
     await manager.connect(websocket, session_id)
     image_buffers: dict[str, dict[str, Any]] = {}
     try:

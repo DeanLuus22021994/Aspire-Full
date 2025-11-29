@@ -53,7 +53,7 @@ class ModelConfig:
 
         return cls(
             provider=data.get("provider", "openai"),
-            name=data.get("name", data.get("deployment", "gpt-4.1-mini")),
+            name=str(data.get("name", data.get("deployment", "gpt-4.1-mini"))),
             deployment=data.get("deployment"),
             endpoint=data.get("endpoint"),
         )
