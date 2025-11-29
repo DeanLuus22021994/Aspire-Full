@@ -7,6 +7,14 @@ services:
       dockerfile: .vscode/mcp/aspire-dashboard/Dockerfile
     image: aspire/mcp-aspire-dashboard:latest
     container_name: aspire-mcp-dashboard
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu", "utility"]
     ports:
       - "18888:18888"
       - "18889:18889"

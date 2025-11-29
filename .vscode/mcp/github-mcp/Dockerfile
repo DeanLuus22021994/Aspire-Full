@@ -36,5 +36,7 @@ COPY tools/github-mcp/README.md ./README.md
 
 USER node
 EXPOSE 17071
+VOLUME ["/opt/github-mcp/data", "/var/log/github-mcp", "/home/node/.cache/github-mcp"]
+
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "dist/server.js"]

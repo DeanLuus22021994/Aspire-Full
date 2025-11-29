@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> None:
     env.setdefault("PYTHON_GIL", "0")
     env["MCP_SERVICE"] = context.service_name
 
+    print(f"Executing: {' '.join(command)}")
     subprocess.run(  # noqa: S603
         command,
         check=True,

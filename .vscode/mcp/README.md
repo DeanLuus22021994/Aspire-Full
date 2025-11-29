@@ -9,7 +9,7 @@ Local Docker build contexts and a compose file for the MCP servers declared in `
 | Aspire Dashboard | `aspire-dashboard/` | 18888, 18889, 16036 | `aspire_mcp_dashboard_data` |
 | GitHub MCP | `github-mcp/` | 17071 | `aspire_mcp_github_data`, `aspire_mcp_github_logs`, `aspire_mcp_github_cache` |
 
-> **GPU requirement:** The GitHub MCP container now uses the NVIDIA CUDA 12.4 runtime image, requests every available GPU, and exports `NVIDIA_VISIBLE_DEVICES`, `NVIDIA_DRIVER_CAPABILITIES`, and `NVIDIA_REQUIRE_CUDA`. Start Docker with the NVIDIA Container Toolkit so Copilot can access Tensor Cores for embedding-heavy prompts.
+> **GPU requirement:** Both the GitHub MCP and Aspire Dashboard containers now use the NVIDIA CUDA 12.4 runtime image, request every available GPU, and export `NVIDIA_VISIBLE_DEVICES`, `NVIDIA_DRIVER_CAPABILITIES`, and `NVIDIA_REQUIRE_CUDA`. Start Docker with the NVIDIA Container Toolkit so Copilot can access Tensor Cores for embedding-heavy prompts and real-time dashboard metrics.
 
 ## Usage
 

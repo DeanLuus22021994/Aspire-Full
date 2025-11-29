@@ -19,6 +19,7 @@ class MCPContext:
 def get_context() -> MCPContext:
     """Return compose metadata for the GitHub MCP service."""
     root = Path(__file__).resolve().parents[1]
+    # Ensure we are pointing to the correct compose file that defines the volumes and nvidia runtime
     return MCPContext(
         service_name="github-mcp",
         compose_file=root / "docker-compose.mcp.yml",
