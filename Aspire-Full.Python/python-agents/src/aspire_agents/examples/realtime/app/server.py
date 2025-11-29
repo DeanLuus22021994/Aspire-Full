@@ -225,10 +225,15 @@ app = FastAPI(lifespan=lifespan)
 if OTEL_AVAILABLE:
     # Configure OpenTelemetry
     resource = Resource.create(attributes={"service.name": "python-agents"})
-    trace.set_tracer_provider(TracerProvider(resource=resource))
-    tracer_provider = trace.get_tracer_provider()
-    if hasattr(tracer_provider, "add_span_processor"):
-        tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+    provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(provider)
+
+    # Cast to Any to avoid mypy issues with add_span_processor
+    # The type stub for TracerProvider might be missing this method in some versions
+    provider_any: Any = provider
+    if hasattr(provider_any, "add_span_processor"):
+        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+
     FastAPIInstrumentor.instrument_app(app)
 
 

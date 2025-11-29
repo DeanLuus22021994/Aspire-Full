@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
 
 import numpy as np
 import sounddevice as sd
@@ -160,7 +160,8 @@ class RealtimeApp(App[None]):
                 bottom_pane = self.query_one("#bottom-pane", RichLog)
                 if event.type == "voice_stream_event_audio":
                     self.audio_player.write(event.data)
-                    msg = f"Received audio: {len(event.data) if event.data is not None else '0'} bytes"
+                    data_len = len(event.data) if event.data is not None else 0
+                    msg = f"Received audio: {data_len} bytes"
                     bottom_pane.write(msg)
                 elif event.type == "voice_stream_event_lifecycle":
                     bottom_pane.write(f"Lifecycle event: {event.event}")
@@ -198,7 +199,7 @@ class RealtimeApp(App[None]):
 
                 # Cast to Any to avoid mypy error about float64 vs int16
                 # sounddevice returns numpy array, but type inference is tricky
-                await self._audio_input.add_audio(data)  # type: ignore
+                await self._audio_input.add_audio(data)
                 await asyncio.sleep(0)
         except KeyboardInterrupt:
             pass
