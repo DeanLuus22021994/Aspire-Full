@@ -6,7 +6,7 @@ import queue
 import threading
 import time
 from concurrent.futures import Future
-from typing import List
+from typing import List, cast
 
 import torch
 from transformers import AutoModel, AutoTokenizer  # type: ignore
@@ -68,10 +68,12 @@ class BatchComputeService:
                 f"Failed to load model {model_name} on GPU: {e}"
             ) from e
 
-        # Verify model is actually on GPU
-        if next(self.model.parameters()).device.type != "cuda":  # type: ignore
+            # Verify model is actually on GPU (or CPU if fallback enabled)
+        # Cast to nn.Module to satisfy type checker since torch.compile returns a callable
+        param_device = next(cast(torch.nn.Module, self.model).parameters()).device
+        if param_device.type != self.device.type:
             raise TensorCoreUnavailableError(
-                "Model loaded on CPU despite strict GPU enforcement!"
+                f"Model loaded on {param_device} but expected {self.device}!"
             )
 
         # Start the worker thread
@@ -84,6 +86,12 @@ class BatchComputeService:
 
     def _enforce_gpu(self) -> torch.device:
         """Ensure a Tensor Core GPU is available and return the device."""
+        import os
+
+        if os.environ.get("ASPIRE_ALLOW_CPU_FALLBACK", "").lower() in ("1", "true"):
+            logger.warning("CPU fallback enabled via ASPIRE_ALLOW_CPU_FALLBACK.")
+            return torch.device("cpu")
+
         ensure_tensor_core_gpu()
         if not torch.cuda.is_available():
             raise TensorCoreUnavailableError(
@@ -96,8 +104,8 @@ class BatchComputeService:
         Worker loop that consumes requests from the queue, forms batches,
         and executes inference on the GPU.
         """
-        batch_texts = []
-        batch_futures = []
+        batch_texts: List[str] = []
+        batch_futures: List[Future] = []
 
         while not self.shutdown_event.is_set():
             try:
@@ -143,10 +151,15 @@ class BatchComputeService:
             ).to(self.device)
 
             # Inference with mixed precision for Tensor Core utilization
-            with torch.no_grad(), torch.amp.autocast(
-                device_type="cuda", dtype=torch.float16
-            ):
-                outputs = self.model(**inputs)
+            # Only use autocast if on CUDA
+            if self.device.type == "cuda":
+                with torch.no_grad(), torch.amp.autocast(
+                    device_type="cuda", dtype=torch.float16
+                ):
+                    outputs = self.model(**inputs)
+            else:
+                with torch.no_grad():
+                    outputs = self.model(**inputs)
 
             # Mean pooling
             attention_mask = inputs["attention_mask"]

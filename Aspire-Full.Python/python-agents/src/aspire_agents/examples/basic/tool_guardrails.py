@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from aspire_agents.core import (
     Agent,
@@ -55,9 +56,73 @@ agent = Agent(
 )
 
 
+async def check_api_key():
+    return "OPENAI_API_KEY" in os.environ
+
+
 async def main():
     # Note: ensure_tensor_core_gpu is called automatically by Agent.__init__
+    # For direct tool testing, we ensure it's initialized:
+    from aspire_agents.compute import get_compute_service
+
+    get_compute_service()
+
     print("=== Tool Guardrails Example (Tensor Native) ===\n")
+
+    print("--- Direct Tool Invocation (No LLM required) ---\n")
+
+    # Direct Test 1: Input Guardrail
+    print("1. Direct Call: Sending safe email...")
+    try:
+        print(f"DEBUG: Type: {type(send_email)}")
+        print(f"DEBUG: Dir: {dir(send_email)}")
+
+        # Try calling .run() if it exists (FunctionTool object), otherwise call directly
+        if hasattr(send_email, "run"):
+            res = await send_email.run(to="john@example.com", subject="Hi", body="Hello")
+        else:
+            res = await send_email(to="john@example.com", subject="Hi", body="Hello")
+        print(f"✅ Result: {res}\n")
+    except Exception as e:
+        print(f"❌ Error: {e}\n")
+
+    print("2. Direct Call: Sending harmful email...")
+    try:
+        if hasattr(send_email, "run"):
+            res = await send_email.run(
+                to="john@example.com", subject="Exploit", body="Check out this exploit"
+            )
+        else:
+            res = await send_email(
+                to="john@example.com", subject="Exploit", body="Check out this exploit"
+            )
+
+        # If blocked, it returns the error message string directly in our implementation
+        if "Input blocked" in str(res):
+            print(f"✅ Guardrail correctly blocked execution: {res}\n")
+        else:
+            print(f"❌ Warning: Should have been blocked but got: {res}\n")
+    except Exception as e:
+        print(f"❌ Error: {e}\n")
+
+    print("3. Direct Call: Getting sensitive data (Output Guardrail)...")
+    try:
+        if hasattr(get_user_data, "run"):
+            await get_user_data.run(user_id="user123")
+        else:
+            await get_user_data(user_id="user123")
+        print("❌ Error: Should have raised exception!\n")
+    except ToolOutputGuardrailTripwireTriggered as e:
+        print("✅ Guardrail correctly raised exception for PII.")
+        print(f"   Details: {e.output.output_info}\n")
+    except Exception as e:
+        print(f"❌ Unexpected Error: {e}\n")
+
+    print("--- Agent Execution (Requires OPENAI_API_KEY) ---\n")
+
+    if not await check_api_key():
+        print("Skipping Agent tests (OPENAI_API_KEY not set).")
+        return
 
     try:
         # Example 1: Normal operation - should work fine
