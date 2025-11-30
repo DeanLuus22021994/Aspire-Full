@@ -73,7 +73,7 @@ async def static_prompt(prompt_id: str) -> None:
     Run the agent with a static prompt.
     """
     ensure_tensor_core_gpu()
-    agent = Agent(
+    agent = Agent(  # type: ignore
         name="Assistant",
         prompt={
             "id": prompt_id,
