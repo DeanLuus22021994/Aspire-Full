@@ -119,7 +119,8 @@ class RealtimeWebSocketManager:
         Disconnect a session.
         """
         if session_id in self.session_contexts:
-            await self.session_contexts[session_id].__aexit__(None, None, None)  # pylint: disable=unnecessary-dunder-call
+            # pylint: disable=unnecessary-dunder-call
+            await self.session_contexts[session_id].__aexit__(None, None, None)
             del self.session_contexts[session_id]
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
