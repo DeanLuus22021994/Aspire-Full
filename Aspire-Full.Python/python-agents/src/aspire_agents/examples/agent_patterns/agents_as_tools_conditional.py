@@ -43,13 +43,15 @@ italian_agent = Agent(
 )
 
 # Create orchestrator with conditional tools
+ORCHESTRATOR_INSTRUCTIONS = (
+    "You are a multilingual assistant. You use the tools given to you to respond to users. "
+    + "You must call ALL available tools to provide responses in different languages. "
+    + "You never respond in languages yourself, you always use the provided tools."
+)
+
 orchestrator = Agent(
     name="orchestrator",
-    instructions=(
-        "You are a multilingual assistant. You use the tools given to you to respond to users. "
-        "You must call ALL available tools to provide responses in different languages. "
-        "You never respond in languages yourself, you always use the provided tools."
-    ),
+    instructions=ORCHESTRATOR_INSTRUCTIONS,
     tools=[
         spanish_agent.as_tool(
             tool_name="respond_spanish",
@@ -73,7 +75,7 @@ orchestrator = Agent(
 async def main() -> None:
     """Interactive demo with LLM interaction."""
     print("Agents-as-Tools with Conditional Enabling\n")
-    print("This demonstrates how language response tools are dynamically enabled " "based on user preferences.\n")
+    print("Demonstrates dynamic enabling of language response tools based on user preferences.\n")
 
     print("Choose language preference:")
     print("1. Spanish only (1 tool)")
