@@ -2,8 +2,8 @@
 This module defines the search agent for the research bot.
 """
 
-from agents import Agent, WebSearchTool  # type: ignore
-from agents.model_settings import ModelSettings  # type: ignore
+from agents import Agent, WebSearchTool  # type: ignore # pylint: disable=import-error
+from agents.model_settings import ModelSettings  # type: ignore # pylint: disable=import-error
 
 INSTRUCTIONS = (
     "You are a research assistant. Given a search term, you search the web for that term and "
@@ -14,7 +14,7 @@ INSTRUCTIONS = (
     "commentary other than the summary itself."
 )
 
-search_agent = Agent(
+search_agent = Agent(  # type: ignore
     name="Search agent",
     model="gpt-4.1",
     instructions=INSTRUCTIONS,

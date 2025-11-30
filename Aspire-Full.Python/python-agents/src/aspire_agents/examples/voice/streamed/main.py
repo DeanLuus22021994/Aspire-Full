@@ -8,13 +8,13 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import sounddevice as sd
-from agents.voice import StreamedAudioInput, VoicePipeline  # type: ignore
-from textual import events
-from textual.app import App, ComposeResult
-from textual.containers import Container
-from textual.reactive import reactive
-from textual.widgets import Button, RichLog, Static
+import sounddevice as sd  # type: ignore # pylint: disable=import-error
+from agents.voice import StreamedAudioInput, VoicePipeline  # type: ignore # pylint: disable=import-error
+from textual import events  # type: ignore # pylint: disable=import-error
+from textual.app import App, ComposeResult  # type: ignore # pylint: disable=import-error
+from textual.containers import Container  # type: ignore # pylint: disable=import-error
+from textual.reactive import reactive  # type: ignore # pylint: disable=import-error
+from textual.widgets import Button, RichLog, Static  # type: ignore # pylint: disable=import-error
 
 from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 

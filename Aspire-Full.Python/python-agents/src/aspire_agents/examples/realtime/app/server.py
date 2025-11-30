@@ -79,7 +79,7 @@ class RealtimeWebSocketManager:
     """
 
     def __init__(self) -> None:
-        self.active_sessions: dict[str, RealtimeSession] = {}
+        self.active_sessions: dict[str, RealtimeSession] = {}  # type: ignore
         self.session_contexts: dict[str, Any] = {}
         self.websockets: dict[str, WebSocket] = {}
 
@@ -91,11 +91,11 @@ class RealtimeWebSocketManager:
         self.websockets[session_id] = websocket
 
         agent = get_starting_agent()
-        runner = RealtimeRunner(agent)
+        runner = RealtimeRunner(agent)  # type: ignore
         # If you want to customize the runner behavior, you can pass options:
         # runner_config = RealtimeRunConfig(async_tool_calls=False)
         # runner = RealtimeRunner(agent, config=runner_config)
-        model_config: RealtimeModelConfig = {
+        model_config: RealtimeModelConfig = {  # type: ignore
             "initial_model_settings": {
                 "turn_detection": {
                     "type": "server_vad",
@@ -139,7 +139,7 @@ class RealtimeWebSocketManager:
         if not session:
             return
         await session.model.send_event(
-            RealtimeModelSendRawMessage(
+            RealtimeModelSendRawMessage(  # type: ignore
                 message={
                     "type": event["type"],
                     "other_data": {k: v for k, v in event.items() if k != "type"},
@@ -147,7 +147,7 @@ class RealtimeWebSocketManager:
             )
         )
 
-    async def send_user_message(self, session_id: str, message: RealtimeUserInputMessage) -> None:
+    async def send_user_message(self, session_id: str, message: RealtimeUserInputMessage) -> None:  # type: ignore
         """Send a structured user message via the higher-level API (supports input_image)."""
         session = self.active_sessions.get(session_id)
         if not session:
@@ -178,7 +178,7 @@ class RealtimeWebSocketManager:
             print(e)
             logger.error("Error processing events for session %s: %s", session_id, e)
 
-    def _sanitize_history_item(self, item: RealtimeItem) -> dict[str, Any]:
+    def _sanitize_history_item(self, item: RealtimeItem) -> dict[str, Any]:  # type: ignore
         """Remove large binary payloads from history items while keeping transcripts."""
         item_dict: dict[str, Any] = item.model_dump()
         content = item_dict.get("content")
@@ -195,7 +195,7 @@ class RealtimeWebSocketManager:
             item_dict["content"] = sanitized_content
         return item_dict
 
-    async def _serialize_event(self, event: RealtimeSessionEvent) -> dict[str, Any]:
+    async def _serialize_event(self, event: RealtimeSessionEvent) -> dict[str, Any]:  # type: ignore
         """
         Serialize a RealtimeSessionEvent to a dictionary.
         """
@@ -310,7 +310,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                         "Forwarding image (structured message) to Realtime API (len=%d).",
                         len(data_url),
                     )
-                    user_msg: RealtimeUserInputMessage = {
+                    user_msg: RealtimeUserInputMessage = {  # type: ignore
                         "type": "message",
                         "role": "user",
                         "content": (
@@ -398,7 +398,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                             "Forwarding chunked image (structured message) to Realtime API (len=%d).",
                             len(data_url),
                         )
-                        user_msg2: RealtimeUserInputMessage = {
+                        user_msg2: RealtimeUserInputMessage = {  # type: ignore
                             "type": "message",
                             "role": "user",
                             "content": (

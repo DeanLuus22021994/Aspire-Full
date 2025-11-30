@@ -7,9 +7,11 @@ import random
 from typing import Any, cast
 
 import numpy as np
-from agents import Agent, function_tool  # type: ignore
-from agents.extensions.handoff_prompt import prompt_with_handoff_instructions  # type: ignore
-from agents.voice import (  # type: ignore
+from agents import Agent, function_tool  # type: ignore # pylint: disable=import-error
+from agents.extensions.handoff_prompt import (  # type: ignore # pylint: disable=import-error
+    prompt_with_handoff_instructions,
+)
+from agents.voice import (  # type: ignore # pylint: disable=import-error
     AudioInput,
     SingleAgentVoiceWorkflow,
     SingleAgentWorkflowCallbacks,
@@ -42,7 +44,7 @@ def get_weather(city: str) -> str:
     return f"The weather in {city} is {random.choice(choices)}."
 
 
-spanish_agent = Agent(
+spanish_agent = Agent(  # type: ignore
     name="Spanish",
     handoff_description="A spanish speaking agent.",
     instructions=prompt_with_handoff_instructions(
@@ -51,7 +53,7 @@ spanish_agent = Agent(
     model="gpt-5-mini",
 )
 
-agent = Agent(
+agent = Agent(  # type: ignore
     name="Assistant",
     instructions=prompt_with_handoff_instructions(
         "You're speaking to a human, so be polite and concise. "
@@ -68,7 +70,7 @@ class WorkflowCallbacks(SingleAgentWorkflowCallbacks):
     Callbacks for the workflow.
     """
 
-    def on_run(self, _workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:
+    def on_run(self, workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:  # pylint: disable=unused-argument
         """Callback for when the workflow runs."""
         print(f"[debug] on_run called with transcription: {transcription}")
 
