@@ -9,18 +9,18 @@ import threading
 from typing import Any
 
 import numpy as np
-import sounddevice as sd
-from agents import function_tool
-from agents.realtime import (  # type: ignore
+import sounddevice as sd  # type: ignore # pylint: disable=import-error
+from agents import function_tool  # type: ignore # pylint: disable=import-error
+from agents.realtime import (  # type: ignore # pylint: disable=import-error
     RealtimeAgent,
     RealtimePlaybackTracker,
     RealtimeRunner,
     RealtimeSession,
     RealtimeSessionEvent,
 )
-from agents.realtime.model import RealtimeModelConfig  # type: ignore
+from agents.realtime.model import RealtimeModelConfig  # type: ignore # pylint: disable=import-error
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # pylint: disable=import-error
 
 # Audio configuration
 CHUNK_LENGTH_S = 0.04  # 40ms aligns with realtime defaults
@@ -91,7 +91,7 @@ class NoUIDemo:
         self.fade_done_samples = 0
         self.fade_samples = int(SAMPLE_RATE * (FADE_OUT_MS / 1000.0))
 
-    def _output_callback(self, outdata, frames: int, time, status) -> None:
+    def _output_callback(self, outdata, _frames: int, _time, status) -> None:
         """Callback for audio output - handles continuous audio stream from server."""
         if status:
             print(f"Output callback status: {status}")
@@ -129,7 +129,7 @@ class NoUIDemo:
                 # Linear ramp from current level down to 0 across remaining fade samples
                 idx = np.arange(self.fade_done_samples, self.fade_done_samples + n, dtype=np.float32)
                 gain = 1.0 - (idx / float(self.fade_total_samples))  # type: ignore
-                ramped = np.clip(src * gain, -32768.0, 32767.0).astype(np.int16)
+                ramped = np.clip(src * gain, -32768.0, 32767.0).astype(np.int16)  # type: ignore
                 outdata[samples_filled : samples_filled + n, 0] = ramped
 
                 # Optionally report played bytes (ramped) to playback tracker
@@ -139,7 +139,7 @@ class NoUIDemo:
                         item_content_index=content_index,
                         bytes=ramped.tobytes(),
                     )
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     pass
 
                 samples_filled += n
@@ -182,6 +182,8 @@ class NoUIDemo:
 
             # Copy data from current chunk to output buffer
             remaining_output = len(outdata) - samples_filled
+            if self.current_audio_chunk is None:
+                break
             samples, item_id, content_index = self.current_audio_chunk
             remaining_chunk = len(samples) - self.chunk_position
             samples_to_copy = min(remaining_output, remaining_chunk)
@@ -200,7 +202,7 @@ class NoUIDemo:
                         item_content_index=content_index,
                         bytes=chunk_data.tobytes(),
                     )
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     pass
 
                 # If we've used up the entire chunk, reset for next iteration
@@ -289,7 +291,7 @@ class NoUIDemo:
                     return 0.0
                 # Normalize int16 to [-1, 1]
                 x = samples.astype(np.float32) / 32768.0  # type: ignore
-                return float(np.sqrt(np.mean(x * x)))
+                return float(np.sqrt(np.mean(x * x)))  # type: ignore
 
             while self.recording:
                 # Check if there's enough data to read
@@ -318,7 +320,7 @@ class NoUIDemo:
                 # Yield control back to event loop
                 await asyncio.sleep(0)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Audio capture error: {e}")
         finally:
             if self.audio_stream and self.audio_stream.active:
@@ -361,7 +363,7 @@ class NoUIDemo:
                 print(f"Raw model event: {_truncate_str(str(event.data), 200)}")
             else:
                 print(f"Unknown event type: {event.type}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error processing event: {_truncate_str(str(e), 200)}")
 
 

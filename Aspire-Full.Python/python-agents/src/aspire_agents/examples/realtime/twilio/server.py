@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, AsyncIterator
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # pylint: disable=import-error
 
 # Import TwilioHandler class - handle both module and package use cases
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ manager = TwilioWebSocketManager()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """
     Lifespan context manager for the FastAPI app.
     """
@@ -94,12 +94,12 @@ async def media_stream_endpoint(websocket: WebSocket) -> None:
 
     except WebSocketDisconnect:
         print("WebSocket disconnected")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"WebSocket error: {e}")
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.getenv("PORT", 8000))
+    port = int(os.getenv("PORT", "8000"))
     uvicorn.run(app, host="0.0.0.0", port=port)

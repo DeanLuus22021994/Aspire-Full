@@ -5,15 +5,15 @@ This module demonstrates the usage of the OpenAIChatCompletionsModel with reason
 import asyncio
 import os
 
-from agents import (  # type: ignore
+from agents import (  # type: ignore # pylint: disable=import-error
     Agent,
     ModelSettings,
     OpenAIChatCompletionsModel,
     Runner,
     set_tracing_disabled,
 )
-from openai import AsyncOpenAI  # type: ignore
-from openai.types.shared import Reasoning  # type: ignore
+from openai import AsyncOpenAI  # type: ignore # pylint: disable=import-error
+from openai.types.shared import Reasoning  # type: ignore # pylint: disable=import-error
 
 set_tracing_disabled(True)
 

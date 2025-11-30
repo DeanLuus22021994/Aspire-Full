@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, RunContextWrapper, Runner, trace  # type: ignore
+from agents import Agent, RunContextWrapper, Runner, trace  # type: ignore # pylint: disable=import-error
 from pydantic import BaseModel
 
 # This example demonstrates the agents-as-tools pattern with conditional tool enabling.
@@ -73,7 +73,7 @@ orchestrator = Agent(
 async def main() -> None:
     """Interactive demo with LLM interaction."""
     print("Agents-as-Tools with Conditional Enabling\n")
-    print("This demonstrates how language response tools are dynamically enabled based on " "user preferences.\n")
+    print("This demonstrates how language response tools are dynamically enabled based on user preferences.\n")
 
     print("Choose language preference:")
     print("1. Spanish only (1 tool)")

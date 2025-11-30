@@ -33,7 +33,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import assert_never
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 # OpenTelemetry Imports
 try:

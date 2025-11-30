@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, Runner, trace  # type: ignore
+from agents import Agent, Runner, trace  # type: ignore # pylint: disable=import-error
 from pydantic import BaseModel
 
 # This example demonstrates a deterministic flow, where each step is performed by an agent.
@@ -28,7 +28,7 @@ class OutlineCheckerOutput(BaseModel):
 
 outline_checker_agent = Agent(
     name="outline_checker_agent",
-    instructions=("Read the given story outline, and judge the quality. Also, determine if it is a " "scifi story."),
+    instructions=("Read the given story outline, and judge the quality. Also, determine if it is a scifi story."),
     output_type=OutlineCheckerOutput,
 )
 

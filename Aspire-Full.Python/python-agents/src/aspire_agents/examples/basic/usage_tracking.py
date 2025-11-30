@@ -4,10 +4,10 @@ This module demonstrates how to track usage (tokens, requests) for an Agent.
 
 import asyncio
 
-from agents import Agent, Runner, Usage, function_tool
+from agents import Agent, Runner, Usage, function_tool  # type: ignore # pylint: disable=import-error
 from pydantic import BaseModel
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # pylint: disable=import-error
 
 
 class Weather(BaseModel):

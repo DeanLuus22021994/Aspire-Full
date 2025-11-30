@@ -12,8 +12,8 @@ import time
 from datetime import datetime
 from typing import Any
 
-from agents import function_tool
-from agents.realtime import (  # type: ignore
+from agents import function_tool  # type: ignore # pylint: disable=import-error
+from agents.realtime import (  # type: ignore # pylint: disable=import-error
     RealtimeAgent,
     RealtimePlaybackTracker,
     RealtimeRunner,
@@ -75,6 +75,9 @@ class TwilioHandler:
         self._mark_counter = 0
         self._mark_data: dict[str, tuple[str, int, int]] = {}  # mark_id -> (item_id, content_index, byte_count)
 
+        self._realtime_session_task: asyncio.Task[None] | None = None
+        self._buffer_flush_task: asyncio.Task[None] | None = None
+
     async def start(self) -> None:
         """Start the session."""
         runner = RealtimeRunner(agent)
@@ -119,7 +122,7 @@ class TwilioHandler:
         try:
             async for event in self.session:
                 await self._handle_realtime_event(event)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error in realtime session loop: {e}")
 
     async def _twilio_message_loop(self) -> None:
@@ -131,7 +134,7 @@ class TwilioHandler:
                 await self._handle_twilio_message(message)
         except json.JSONDecodeError as e:
             print(f"Failed to parse Twilio message as JSON: {e}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error in Twilio message loop: {e}")
 
     async def _handle_realtime_event(self, event: RealtimeSessionEvent) -> None:
@@ -194,7 +197,7 @@ class TwilioHandler:
                 await self._handle_mark_event(message)
             elif event == "stop":
                 print("Media stream stopped")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error handling Twilio message: {e}")
 
     async def _handle_media_event(self, message: dict[str, Any]) -> None:
@@ -214,7 +217,7 @@ class TwilioHandler:
                 if len(self._audio_buffer) >= self.BUFFER_SIZE_BYTES:
                     await self._flush_audio_buffer()
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"Error processing audio from Twilio: {e}")
 
     async def _handle_mark_event(self, message: dict[str, Any]) -> None:
@@ -237,7 +240,7 @@ class TwilioHandler:
                 # Clean up the stored data
                 del self._mark_data[mark_id]
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error handling mark event: {e}")
 
     async def _flush_audio_buffer(self) -> None:
@@ -254,7 +257,7 @@ class TwilioHandler:
             self._audio_buffer.clear()
             self._last_buffer_send_time = time.time()
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error sending buffered audio to OpenAI: {e}")
 
     async def _buffer_flush_loop(self) -> None:
@@ -268,5 +271,5 @@ class TwilioHandler:
                 if self._audio_buffer and current_time - self._last_buffer_send_time > self.CHUNK_LENGTH_S * 2:
                     await self._flush_audio_buffer()
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error in buffer flush loop: {e}")
