@@ -2,9 +2,15 @@ import asyncio
 import random
 from typing import Any
 
+from agents import (  # type: ignore # pylint: disable=import-error
+    Agent,
+    AgentHooks,
+    RunContextWrapper,
+    Runner,
+    Tool,
+    function_tool,
+)
 from pydantic import BaseModel
-
-from agents import Agent, AgentHooks, RunContextWrapper, Runner, Tool, function_tool
 
 
 class CustomAgentHooks(AgentHooks):
@@ -18,15 +24,11 @@ class CustomAgentHooks(AgentHooks):
 
     async def on_end(self, context: RunContextWrapper, agent: Agent, output: Any) -> None:
         self.event_counter += 1
-        print(
-            f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} ended with output {output}"
-        )
+        print(f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} ended with output {output}")
 
     async def on_handoff(self, context: RunContextWrapper, agent: Agent, source: Agent) -> None:
         self.event_counter += 1
-        print(
-            f"### ({self.display_name}) {self.event_counter}: Agent {source.name} handed off to {agent.name}"
-        )
+        print(f"### ({self.display_name}) {self.event_counter}: Agent {source.name} handed off to {agent.name}")
 
     # Note: The on_tool_start and on_tool_end hooks apply only to local tools.
     # They do not include hosted tools that run on the OpenAI server side,
@@ -34,16 +36,14 @@ class CustomAgentHooks(AgentHooks):
     # or other built-in hosted tools.
     async def on_tool_start(self, context: RunContextWrapper, agent: Agent, tool: Tool) -> None:
         self.event_counter += 1
-        print(
-            f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} started tool {tool.name}"
-        )
+        print(f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} started tool {tool.name}")
 
-    async def on_tool_end(
-        self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str
-    ) -> None:
+    async def on_tool_end(self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str) -> None:
+        # pylint: disable=unused-argument
         self.event_counter += 1
         print(
-            f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} ended tool {tool.name} with result {result}"
+            f"### ({self.display_name}) {self.event_counter}: "
+            f"Agent {agent.name} ended tool {tool.name} with result {result}"
         )
 
 
@@ -51,11 +51,11 @@ class CustomAgentHooks(AgentHooks):
 
 
 @function_tool
-def random_number(max: int) -> int:
+def random_number(max_val: int) -> int:
     """
     Generate a random number from 0 to max (inclusive).
     """
-    return random.randint(0, max)
+    return random.randint(0, max_val)
 
 
 @function_tool
@@ -103,17 +103,17 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-"""
-$ python examples/basic/agent_lifecycle_example.py
-
-Enter a max number: 250
-### (Start Agent) 1: Agent Start Agent started
-### (Start Agent) 2: Agent Start Agent started tool random_number
-### (Start Agent) 3: Agent Start Agent ended tool random_number with result 37
-### (Start Agent) 4: Agent Start Agent handed off to Multiply Agent
-### (Multiply Agent) 1: Agent Multiply Agent started
-### (Multiply Agent) 2: Agent Multiply Agent started tool multiply_by_two
-### (Multiply Agent) 3: Agent Multiply Agent ended tool multiply_by_two with result 74
-### (Multiply Agent) 4: Agent Multiply Agent ended with output number=74
-Done!
-"""
+# """
+# $ python examples/basic/agent_lifecycle_example.py
+#
+# Enter a max number: 250
+# ### (Start Agent) 1: Agent Start Agent started
+# ### (Start Agent) 2: Agent Start Agent started tool random_number
+# ### (Start Agent) 3: Agent Start Agent ended tool random_number with result 37
+# ### (Start Agent) 4: Agent Start Agent handed off to Multiply Agent
+# ### (Multiply Agent) 1: Agent Multiply Agent started
+# ### (Multiply Agent) 2: Agent Multiply Agent started tool multiply_by_two
+# ### (Multiply Agent) 3: Agent Multiply Agent ended tool multiply_by_two with result 74
+# ### (Multiply Agent) 4: Agent Multiply Agent ended with output number=74
+# Done!
+# """
