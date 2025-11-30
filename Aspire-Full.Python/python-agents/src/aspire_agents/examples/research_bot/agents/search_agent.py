@@ -1,5 +1,9 @@
-from agents import Agent, WebSearchTool
-from agents.model_settings import ModelSettings
+"""
+This module defines the search agent for the research bot.
+"""
+
+from agents import Agent, WebSearchTool  # type: ignore
+from agents.model_settings import ModelSettings  # type: ignore
 
 INSTRUCTIONS = (
     "You are a research assistant. Given a search term, you search the web for that term and "

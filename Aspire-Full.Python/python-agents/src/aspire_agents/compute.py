@@ -76,7 +76,7 @@ class BatchComputeService:
 
     def _enforce_gpu(self) -> torch.device:
         """Ensure a Tensor Core GPU is available and return the device."""
-        import os
+        import os  # pylint: disable=import-outside-toplevel
 
         if os.environ.get("ASPIRE_ALLOW_CPU_FALLBACK", "").lower() in ("1", "true"):
             logger.warning("CPU fallback enabled via ASPIRE_ALLOW_CPU_FALLBACK.")
@@ -211,7 +211,7 @@ class BatchComputeService:
 
 def get_compute_service() -> BatchComputeService:
     """Get or initialize the singleton BatchComputeService."""
-    global _COMPUTE_SERVICE
+    global _COMPUTE_SERVICE  # pylint: disable=global-statement
     if _COMPUTE_SERVICE is None:
         with _INIT_LOCK:
             if _COMPUTE_SERVICE is None:

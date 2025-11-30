@@ -8,7 +8,7 @@ from typing import Annotated
 from agents import Agent, Runner, function_tool  # type: ignore
 from pydantic import BaseModel, Field
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
 
 class Weather(BaseModel):

@@ -6,18 +6,17 @@ import asyncio
 
 from agents import Agent, Runner  # type: ignore
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
-"""This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
-The second run passes the previous response ID to the model, which allows it to continue the
-conversation without re-sending the previous messages.
-
-Notes:
-1. This only applies to the OpenAI Responses API. Other models will ignore this parameter.
-2. Responses are only stored for 30 days as of this writing, so in production you should
-store the response ID along with an expiration date; if the response is no longer valid,
-you'll need to re-send the previous conversation history.
-"""
+# This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
+# The second run passes the previous response ID to the model, which allows it to continue the
+# conversation without re-sending the previous messages.
+#
+# Notes:
+# 1. This only applies to the OpenAI Responses API. Other models will ignore this parameter.
+# 2. Responses are only stored for 30 days as of this writing, so in production you should
+# store the response ID along with an expiration date; if the response is no longer valid,
+# you'll need to re-send the previous conversation history.
 
 
 async def main() -> None:

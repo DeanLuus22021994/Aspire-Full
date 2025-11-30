@@ -9,9 +9,12 @@ from textwrap import dedent
 # Add src to path so we can import aspire_agents
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
-import pytest  # type: ignore # noqa: E402
+import pytest  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position
 
-from aspire_agents.config import AgentConfig, ModelConfig  # noqa: E402
+from aspire_agents.config import (  # noqa: E402 # pylint: disable=wrong-import-position
+    AgentConfig,
+    ModelConfig,
+)
 
 
 def test_model_config_from_string_defaults() -> None:

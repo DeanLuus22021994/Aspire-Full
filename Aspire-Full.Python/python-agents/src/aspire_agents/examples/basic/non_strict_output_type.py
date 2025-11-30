@@ -9,19 +9,18 @@ from typing import Any
 
 from agents import Agent, AgentOutputSchema, AgentOutputSchemaBase, Runner  # type: ignore
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
-"""This example demonstrates how to use an output type that is not in strict mode. Strict mode
-allows us to guarantee valid JSON output, but some schemas are not strict-compatible.
-
-In this example, we define an output type that is not strict-compatible, and then we run the
-agent with strict_json_schema=False.
-
-We also demonstrate a custom output type.
-
-To understand which schemas are strict-compatible, see:
-https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#supported-schemas
-"""
+# This example demonstrates how to use an output type that is not in strict mode. Strict mode
+# allows us to guarantee valid JSON output, but some schemas are not strict-compatible.
+#
+# In this example, we define an output type that is not strict-compatible, and then we run the
+# agent with strict_json_schema=False.
+#
+# We also demonstrate a custom output type.
+#
+# To understand which schemas are strict-compatible, see:
+# https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#supported-schemas
 
 
 @dataclass

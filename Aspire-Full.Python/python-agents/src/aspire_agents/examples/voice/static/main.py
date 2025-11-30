@@ -1,35 +1,37 @@
+"""
+This module implements a static voice agent example.
+"""
+
 import asyncio
 import random
 from typing import Any, cast
 
 import numpy as np
-from agents import Agent, function_tool
-from agents.extensions.handoff_prompt import prompt_with_handoff_instructions
-from agents.voice import (
+from agents import Agent, function_tool  # type: ignore
+from agents.extensions.handoff_prompt import prompt_with_handoff_instructions  # type: ignore
+from agents.voice import (  # type: ignore
     AudioInput,
     SingleAgentVoiceWorkflow,
     SingleAgentWorkflowCallbacks,
     VoicePipeline,
 )
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
 from .util import AudioPlayer, record_audio
 
-"""
-This is a simple example that uses a recorded audio buffer. Run it via:
-`python -m examples.voice.static.main`
-
-1. You can record an audio clip in the terminal.
-2. The pipeline automatically transcribes the audio.
-3. The agent workflow is a simple one that starts at the Assistant agent.
-4. The output of the agent is streamed to the audio player.
-
-Try examples like:
-- Tell me a joke (will respond with a joke)
-- What's the weather in Tokyo? (will call the `get_weather` tool and then speak)
-- Hola, como estas? (will handoff to the spanish agent)
-"""
+# This is a simple example that uses a recorded audio buffer. Run it via:
+# `python -m examples.voice.static.main`
+#
+# 1. You can record an audio clip in the terminal.
+# 2. The pipeline automatically transcribes the audio.
+# 3. The agent workflow is a simple one that starts at the Assistant agent.
+# 4. The output of the agent is streamed to the audio player.
+#
+# Try examples like:
+# - Tell me a joke (will respond with a joke)
+# - What's the weather in Tokyo? (will call the `get_weather` tool and then speak)
+# - Hola, como estas? (will handoff to the spanish agent)
 
 
 @function_tool
@@ -62,16 +64,22 @@ agent = Agent(
 
 
 class WorkflowCallbacks(SingleAgentWorkflowCallbacks):
-    def on_run(self, workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:
+    """
+    Callbacks for the workflow.
+    """
+
+    def on_run(self, _workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:
+        """Callback for when the workflow runs."""
         print(f"[debug] on_run called with transcription: {transcription}")
 
 
-async def main():
+async def main() -> None:
+    """
+    Main entry point for the static voice agent example.
+    """
     ensure_tensor_core_gpu()
 
-    pipeline = VoicePipeline(
-        workflow=SingleAgentVoiceWorkflow(agent, callbacks=WorkflowCallbacks())
-    )
+    pipeline = VoicePipeline(workflow=SingleAgentVoiceWorkflow(agent, callbacks=WorkflowCallbacks()))
 
     audio_input = AudioInput(buffer=record_audio())
 
@@ -81,9 +89,7 @@ async def main():
         async for event in result.stream():
             if event.type == "voice_stream_event_audio":
                 if event.data is not None:
-                    player.add_audio(
-                        cast(np.ndarray[Any, np.dtype[np.int16]], event.data)
-                    )
+                    player.add_audio(cast(np.ndarray[Any, np.dtype[np.int16]], event.data))
                 print("Received audio")
             elif event.type == "voice_stream_event_lifecycle":
                 print(f"Received lifecycle event: {event.event}")

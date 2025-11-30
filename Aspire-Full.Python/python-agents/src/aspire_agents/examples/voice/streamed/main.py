@@ -1,18 +1,22 @@
+"""
+This module implements a streamed voice agent example using Textual.
+"""
+
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import sounddevice as sd
-from agents.voice import StreamedAudioInput, VoicePipeline
+from agents.voice import StreamedAudioInput, VoicePipeline  # type: ignore
 from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.reactive import reactive
 from textual.widgets import Button, RichLog, Static
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
 # Import MyWorkflow class - handle both module and package use cases
 if TYPE_CHECKING:
@@ -49,14 +53,16 @@ class AudioStatusIndicator(Static):
 
     def render(self) -> str:
         status = (
-            "🔴 Recording... (Press K to stop)"
-            if self.is_recording
-            else "⚪ Press K to start recording (Q to quit)"
+            "🔴 Recording... (Press K to stop)" if self.is_recording else "⚪ Press K to start recording (Q to quit)"
         )
         return status
 
 
 class RealtimeApp(App[None]):
+    """
+    A Textual app for the Realtime Agent.
+    """
+
     CSS = """
         Screen {
             background: #1a1b26;  /* Dark blue-grey background */
@@ -118,6 +124,7 @@ class RealtimeApp(App[None]):
     audio_player: sd.OutputStream
     last_audio_item_id: str | None
     connected: asyncio.Event
+    result: Any
 
     def __init__(self) -> None:
         super().__init__()
@@ -125,9 +132,8 @@ class RealtimeApp(App[None]):
         self.last_audio_item_id = None
         self.should_send_audio = asyncio.Event()
         self.connected = asyncio.Event()
-        self.pipeline = VoicePipeline(
-            workflow=MyWorkflow(secret_word="dog", on_start=self._on_transcription)
-        )
+        self.result = None
+        self.pipeline = VoicePipeline(workflow=MyWorkflow(secret_word="dog", on_start=self._on_transcription))
         self._audio_input = StreamedAudioInput()  # type: ignore [no-untyped-call]
         self.audio_player = sd.OutputStream(
             samplerate=SAMPLE_RATE,
@@ -136,11 +142,10 @@ class RealtimeApp(App[None]):
         )
 
     def _on_transcription(self, transcription: str) -> None:
+        """Callback for when transcription is received."""
         try:
-            self.query_one("#bottom-pane", RichLog).write(
-                f"Transcription: {transcription}"
-            )
-        except Exception:
+            self.query_one("#bottom-pane", RichLog).write(f"Transcription: {transcription}")
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
     def compose(self) -> ComposeResult:
@@ -151,10 +156,12 @@ class RealtimeApp(App[None]):
             yield RichLog(id="bottom-pane", wrap=True, highlight=True, markup=True)
 
     async def on_mount(self) -> None:
+        """Handle app mount event."""
         self.run_worker(self.start_voice_pipeline())
         self.run_worker(self.send_mic_audio())
 
     async def start_voice_pipeline(self) -> None:
+        """Start the voice pipeline."""
         try:
             self.audio_player.start()
             self.result = await self.pipeline.run(self._audio_input)
@@ -168,13 +175,14 @@ class RealtimeApp(App[None]):
                     bottom_pane.write(msg)
                 elif event.type == "voice_stream_event_lifecycle":
                     bottom_pane.write(f"Lifecycle event: {event.event}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             bottom_pane = self.query_one("#bottom-pane", RichLog)
             bottom_pane.write(f"Error: {e}")
         finally:
             self.audio_player.close()
 
     async def send_mic_audio(self) -> None:
+        """Send microphone audio to the pipeline."""
         device_info = sd.query_devices()
         print(device_info)
 

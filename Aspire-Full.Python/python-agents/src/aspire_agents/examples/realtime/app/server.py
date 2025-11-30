@@ -107,7 +107,7 @@ class RealtimeWebSocketManager:
             },
         }
         session_context = await runner.run(model_config=model_config)
-        session = await session_context.__aenter__()
+        session = await session_context.__aenter__()  # pylint: disable=unnecessary-dunder-call
         self.active_sessions[session_id] = session
         self.session_contexts[session_id] = session_context
 
@@ -119,7 +119,7 @@ class RealtimeWebSocketManager:
         Disconnect a session.
         """
         if session_id in self.session_contexts:
-            await self.session_contexts[session_id].__aexit__(None, None, None)
+            await self.session_contexts[session_id].__aexit__(None, None, None)  # pylint: disable=unnecessary-dunder-call
             del self.session_contexts[session_id]
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
@@ -227,7 +227,7 @@ class RealtimeWebSocketManager:
             # Provide the added item so the UI can render incrementally.
             try:
                 base_event["item"] = self._sanitize_history_item(event.item)
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 base_event["item"] = None
         elif event.type == "guardrail_tripped":
             base_event["guardrail_results"] = [{"name": result.guardrail.name} for result in event.guardrail_results]

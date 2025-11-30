@@ -2,20 +2,18 @@ from __future__ import annotations
 
 import asyncio
 
-from agents import Agent, Runner
+from agents import Agent, Runner  # type: ignore
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel, Field
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
-"""
-This example shows how to use guardrails as the model is streaming. Output guardrails run after the
-final output has been generated; this example runs guardails every N tokens, allowing for early
-termination if bad output is detected.
-
-The expected output is that you'll see a bunch of tokens stream in, then the guardrail will trigger
-and stop the streaming.
-"""
+# This example shows how to use guardrails as the model is streaming. Output guardrails run after the
+# final output has been generated; this example runs guardails every N tokens, allowing for early
+# termination if bad output is detected.
+#
+# The expected output is that you'll see a bunch of tokens stream in, then the guardrail will trigger
+# and stop the streaming.
 
 
 agent = Agent(

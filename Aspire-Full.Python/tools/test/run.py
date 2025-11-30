@@ -15,6 +15,7 @@ CONFIG_MODULE_PATH = Path(__file__).resolve().parents[1] / "config.py"
 
 
 def _load_config_module() -> ModuleType:
+    """Load the config module."""
     spec = importlib.util.spec_from_file_location("tools_config", CONFIG_MODULE_PATH)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load config module from {CONFIG_MODULE_PATH}")
@@ -36,6 +37,7 @@ if CONFIG_REPO_ROOT != REPO_ROOT:
 
 
 def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
+    """Partition arguments into options and targets."""
     options: list[str] = []
     targets: list[str] = []
     after_double_dash = False
@@ -56,6 +58,7 @@ def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
 def _filter_vendor_targets(
     targets: Iterable[str], config: TestConfigType
 ) -> tuple[list[str], list[str]]:
+    """Filter out vendor targets."""
     kept: list[str] = []
     dropped: list[str] = []
     for target in targets:
@@ -72,6 +75,7 @@ def _build_command(
     targets: list[str],
     append_double_dash: bool,
 ) -> list[str]:
+    """Build the pytest command."""
     command = [
         sys.executable,
         "-m",
@@ -88,6 +92,7 @@ def _build_command(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Main entry point."""
     config = load_test_config()
     args = argv if argv is not None else sys.argv[1:]
     options, targets, saw_double_dash = _partition_args(args)

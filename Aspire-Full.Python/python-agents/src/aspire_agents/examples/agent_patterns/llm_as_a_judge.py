@@ -4,13 +4,11 @@ import asyncio
 from dataclasses import dataclass
 from typing import Literal
 
-from agents import Agent, ItemHelpers, Runner, TResponseInputItem, trace
+from agents import Agent, ItemHelpers, Runner, TResponseInputItem, trace  # type: ignore
 
-"""
-This example shows the LLM as a judge pattern. The first agent generates an outline for a story.
-The second agent judges the outline and provides feedback. We loop until the judge is satisfied
-with the outline.
-"""
+# This example shows the LLM as a judge pattern. The first agent generates an outline for a story.
+# The second agent judges the outline and provides feedback. We loop until the judge is satisfied
+# with the outline.
 
 story_outline_generator = Agent(
     name="story_outline_generator",

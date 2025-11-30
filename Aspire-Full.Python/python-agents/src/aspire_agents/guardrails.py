@@ -113,7 +113,7 @@ _GUARDRAIL_SERVICE = None
 
 
 def get_guardrail_service() -> GuardrailService:
-    global _GUARDRAIL_SERVICE
+    global _GUARDRAIL_SERVICE  # pylint: disable=global-statement
     if _GUARDRAIL_SERVICE is None:
         _GUARDRAIL_SERVICE = GuardrailService()
     return _GUARDRAIL_SERVICE

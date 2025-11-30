@@ -107,4 +107,3 @@ class Runner(OpenAIRunner):
     """
 
     # We can add custom logic here if needed, e.g. logging or tracing
-    pass

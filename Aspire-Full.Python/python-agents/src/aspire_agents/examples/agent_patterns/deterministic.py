@@ -1,17 +1,15 @@
 import asyncio
 
-from agents import Agent, Runner, trace
+from agents import Agent, Runner, trace  # type: ignore
 from pydantic import BaseModel
 
-"""
-This example demonstrates a deterministic flow, where each step is performed by an agent.
-1. The first agent generates a story outline
-2. We feed the outline into the second agent
-3. The second agent checks if the outline is good quality and if it is a scifi story
-4. If the outline is not good quality or not a scifi story, we stop here
-5. If the outline is good quality and a scifi story, we feed the outline into the third agent
-6. The third agent writes the story
-"""
+# This example demonstrates a deterministic flow, where each step is performed by an agent.
+# 1. The first agent generates a story outline
+# 2. We feed the outline into the second agent
+# 3. The second agent checks if the outline is good quality and if it is a scifi story
+# 4. If the outline is not good quality or not a scifi story, we stop here
+# 5. If the outline is good quality and a scifi story, we feed the outline into the third agent
+# 6. The third agent writes the story
 
 story_outline_agent = Agent(
     name="story_outline_agent",

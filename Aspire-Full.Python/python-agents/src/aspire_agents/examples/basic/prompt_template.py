@@ -9,21 +9,20 @@ from typing import Any
 
 from agents import Agent, GenerateDynamicPromptData, Runner  # type: ignore
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
-"""
-NOTE: This example will not work out of the box, because the default prompt ID will not be available
-in your project.
+# NOTE: This example will not work out of the box, because the default prompt ID will not be available
+# in your project.
+#
+# To use it, please:
+# 1. Go to https://platform.openai.com/playground/prompts
+# 2. Create a new prompt variable, `poem_style`.
+# 3. Create a system prompt with the content:
+# ```
+# Write a poem in {{poem_style}}
+# ```
+# 4. Run the example with the `--prompt-id` flag.
 
-To use it, please:
-1. Go to https://platform.openai.com/playground/prompts
-2. Create a new prompt variable, `poem_style`.
-3. Create a system prompt with the content:
-```
-Write a poem in {{poem_style}}
-```
-4. Run the example with the `--prompt-id` flag.
-"""
 
 DEFAULT_PROMPT_ID = "pmpt_6850729e8ba481939fd439e058c69ee004afaa19c520b78b"
 

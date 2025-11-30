@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Literal
 
-from agents import (
+from agents import (  # type: ignore
     Agent,
     FunctionToolResult,
     ModelSettings,
@@ -15,24 +15,22 @@ from agents import (
 )
 from pydantic import BaseModel
 
-"""
-This example shows how to force the agent to use a tool. It uses
-`ModelSettings(tool_choice="required")` to force the agent to use any tool.
-
-You can run it with 3 options:
-1. `default`: The default behavior, which is to send the tool output to the LLM. In this case,
-    `tool_choice` is not set, because otherwise it would result in an infinite loop - the LLM would
-    call the tool, the tool would run and send the results to the LLM, and that would repeat
-    (because the model is forced to use a tool every time.)
-2. `first_tool_result`: The first tool result is used as the final output.
-3. `custom`: A custom tool use behavior function is used. The custom function receives all the tool
-    results, and chooses to use the first tool result to generate the final output.
-
-Usage:
-python examples/agent_patterns/forcing_tool_use.py -t default
-python examples/agent_patterns/forcing_tool_use.py -t first_tool
-python examples/agent_patterns/forcing_tool_use.py -t custom
-"""
+# This example shows how to force the agent to use a tool. It uses
+# `ModelSettings(tool_choice="required")` to force the agent to use any tool.
+#
+# You can run it with 3 options:
+# 1. `default`: The default behavior, which is to send the tool output to the LLM. In this case,
+#     `tool_choice` is not set, because otherwise it would result in an infinite loop - the LLM would
+#     call the tool, the tool would run and send the results to the LLM, and that would repeat
+#     (because the model is forced to use a tool every time.)
+# 2. `first_tool_result`: The first tool result is used as the final output.
+# 3. `custom`: A custom tool use behavior function is used. The custom function receives all the tool
+#     results, and chooses to use the first tool result to generate the final output.
+#
+# Usage:
+# python examples/agent_patterns/forcing_tool_use.py -t default
+# python examples/agent_patterns/forcing_tool_use.py -t first_tool
+# python examples/agent_patterns/forcing_tool_use.py -t custom
 
 
 class Weather(BaseModel):
@@ -55,7 +53,7 @@ def get_weather(city: str) -> Weather:
 
 
 async def custom_tool_use_behavior(
-    context: RunContextWrapper[Any], results: list[FunctionToolResult]
+    _context: RunContextWrapper[Any], results: list[FunctionToolResult]
 ) -> ToolsToFinalOutputResult:
     """
     Custom tool use behavior function.
@@ -70,8 +68,9 @@ async def main(
     """
     Main entry point for the forcing tool use example.
     """
+    behavior: Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction = "run_llm_again"
     if tool_use_behavior == "default":
-        behavior: Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction = "run_llm_again"
+        behavior = "run_llm_again"
     elif tool_use_behavior == "first_tool":
         behavior = "stop_on_first_tool"
     elif tool_use_behavior == "custom":

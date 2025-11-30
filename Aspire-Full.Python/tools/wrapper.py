@@ -14,6 +14,7 @@ RUNNER = REPO_ROOT / "Aspire-Full.Python" / "tools" / "lint" / "run.py"
 
 
 def main() -> int:
+    """Main entry point."""
     command = [sys.executable, str(RUNNER), *sys.argv[1:]]
     completed = subprocess.run(command, check=False)
     return completed.returncode

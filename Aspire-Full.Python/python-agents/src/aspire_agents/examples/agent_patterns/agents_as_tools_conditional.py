@@ -1,13 +1,11 @@
 import asyncio
 
-from agents import Agent, RunContextWrapper, Runner, trace
+from agents import Agent, RunContextWrapper, Runner, trace  # type: ignore
 from pydantic import BaseModel
 
-"""
-This example demonstrates the agents-as-tools pattern with conditional tool enabling.
-Agent tools are dynamically enabled/disabled based on user access levels using the
-is_enabled parameter.
-"""
+# This example demonstrates the agents-as-tools pattern with conditional tool enabling.
+# Agent tools are dynamically enabled/disabled based on user access levels using the
+# is_enabled parameter.
 
 
 class AppContext(BaseModel):
@@ -18,12 +16,12 @@ class AppContext(BaseModel):
     language_preference: str = "spanish_only"  # "spanish_only", "french_spanish", "european"
 
 
-def french_spanish_enabled(ctx: RunContextWrapper[AppContext], agent: Agent) -> bool:
+def french_spanish_enabled(ctx: RunContextWrapper[AppContext], _agent: Agent) -> bool:
     """Enable for French+Spanish and European preferences."""
     return ctx.context.language_preference in ["french_spanish", "european"]
 
 
-def european_enabled(ctx: RunContextWrapper[AppContext], agent: Agent) -> bool:
+def european_enabled(ctx: RunContextWrapper[AppContext], _agent: Agent) -> bool:
     """Only enable for European preference."""
     return ctx.context.language_preference == "european"
 

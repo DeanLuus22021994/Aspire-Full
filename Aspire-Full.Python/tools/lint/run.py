@@ -15,6 +15,7 @@ CONFIG_MODULE_PATH = Path(__file__).resolve().parents[1] / "config.py"
 
 
 def _load_config_module() -> ModuleType:
+    """Load the config module."""
     spec = importlib.util.spec_from_file_location("tools_config", CONFIG_MODULE_PATH)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load config module from {CONFIG_MODULE_PATH}")
@@ -37,6 +38,7 @@ if CONFIG_REPO_ROOT != REPO_ROOT:
 
 
 def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
+    """Partition arguments into options and targets."""
     options: list[str] = []
     targets: list[str] = []
     after_double_dash = False
@@ -57,6 +59,7 @@ def _partition_args(args: Iterable[str]) -> Tuple[list[str], list[str], bool]:
 def _filter_vendor_targets(
     targets: Iterable[str], config: LintConfigType
 ) -> tuple[list[str], list[str]]:
+    """Filter out vendor targets."""
     kept: list[str] = []
     dropped: list[str] = []
     for target in targets:
@@ -68,6 +71,7 @@ def _filter_vendor_targets(
 
 
 def _invoke(command: list[str]) -> int:
+    """Invoke the command."""
     completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
     return completed.returncode
 
@@ -78,6 +82,7 @@ def _build_command(
     targets: list[str],
     append_double_dash: bool,
 ) -> list[str]:
+    """Build the pylint command."""
     command = [sys.executable, "-m", "pylint", *_apply_default_disable(options, config)]
     if targets:
         if append_double_dash:
@@ -87,6 +92,7 @@ def _build_command(
 
 
 def _apply_default_disable(options: list[str], config: LintConfigType) -> list[str]:
+    """Apply default disable flags."""
     if not config.runner.pylint_disable:
         return options
     if _has_disable_flag(options):
@@ -96,6 +102,7 @@ def _apply_default_disable(options: list[str], config: LintConfigType) -> list[s
 
 
 def _has_disable_flag(options: Iterable[str]) -> bool:
+    """Check if disable flag is present."""
     for opt in options:
         if opt.startswith("--disable") or opt.startswith("-d"):
             return True
@@ -103,6 +110,7 @@ def _has_disable_flag(options: Iterable[str]) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Main entry point."""
     config = load_config()
     args = argv if argv is not None else sys.argv[1:]
     options, targets, saw_double_dash = _partition_args(args)

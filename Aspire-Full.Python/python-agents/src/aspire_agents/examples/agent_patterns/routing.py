@@ -8,13 +8,12 @@ import uuid
 from agents import Agent, RawResponsesStreamEvent, Runner, TResponseInputItem, trace  # type: ignore
 from openai.types.responses import ResponseContentPartDoneEvent, ResponseTextDeltaEvent  # type: ignore
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
-"""
-This example shows the handoffs/routing pattern. The triage agent receives the first message, and
-then hands off to the appropriate agent based on the language of the request. Responses are
-streamed to the user.
-"""
+# This example shows the handoffs/routing pattern. The triage agent receives the first message, and
+# then hands off to the appropriate agent based on the language of the request. Responses are
+# streamed to the user.
+
 
 french_agent = Agent(
     name="french_agent",

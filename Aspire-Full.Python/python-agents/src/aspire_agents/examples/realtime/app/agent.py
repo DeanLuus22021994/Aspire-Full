@@ -4,13 +4,12 @@ This module defines the agents and tools for the Realtime Agent app.
 
 import asyncio
 
-from agents import function_tool  # pyright: ignore
-from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX  # pyright: ignore
-from agents.realtime import RealtimeAgent, realtime_handoff  # pyright: ignore
+from agents import function_tool  # pyright: ignore # type: ignore
+from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX  # pyright: ignore # type: ignore
+from agents.realtime import RealtimeAgent, realtime_handoff  # pyright: ignore # type: ignore
 
-"""
-When running the UI example locally, you can edit this file to change the setup. THe server
-will use the agent returned from get_starting_agent() as the starting agent."""
+# When running the UI example locally, you can edit this file to change the setup. THe server
+# will use the agent returned from get_starting_agent() as the starting agent.
 
 # TOOLS
 

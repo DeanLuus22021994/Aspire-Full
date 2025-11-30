@@ -3,16 +3,17 @@ This module demonstrates the use of guardrails with tools.
 """
 
 import asyncio
+import json
 import os
 
-from aspire_agents.core import (
+from aspire_agents.core import (  # type: ignore
     Agent,
     Runner,
     function_tool,
     semantic_input_guardrail,
     semantic_output_guardrail,
 )
-from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered
+from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered  # type: ignore
 
 
 @function_tool
@@ -77,7 +78,9 @@ async def main() -> None:
     """
     # Note: ensure_tensor_core_gpu is called automatically by Agent.__init__
     # For direct tool testing, we ensure it's initialized:
-    from aspire_agents.compute import get_compute_service
+    from aspire_agents.compute import (  # pylint: disable=import-outside-toplevel
+        get_compute_service,
+    )
 
     get_compute_service()
 
@@ -88,8 +91,6 @@ async def main() -> None:
     # Direct Test 1: Input Guardrail
     print("1. Direct Call: Sending safe email...")
     try:
-        import json
-
         args = {"to": "john@example.com", "subject": "Hi", "body": "Hello"}
         args_json = json.dumps(args)
 
@@ -105,8 +106,6 @@ async def main() -> None:
 
     print("2. Direct Call: Sending harmful email...")
     try:
-        import json
-
         args = {
             "to": "john@example.com",
             "subject": "Exploit",
@@ -130,8 +129,6 @@ async def main() -> None:
 
     print("3. Direct Call: Getting sensitive data (Output Guardrail)...")
     try:
-        import json
-
         args = {"user_id": "user123"}
         args_json = json.dumps(args)
 
@@ -190,24 +187,22 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 
-"""
-Example output:
-
-=== Tool Guardrails Example ===
-
-1. Normal email sending:
-✅ Successful tool execution: I've sent a welcome email to john@example.com with an
-appropriate subject and greeting message.
-
-2. Attempting to send email with suspicious content:
-❌ Guardrail rejected function tool call: I'm unable to send the email as mentioning ACME
-Corp. is restricted.
-
-3. Attempting to get user data (contains SSN). Execution blocked:
-🚨 Output guardrail triggered: Execution halted for sensitive data
-   Details: {'blocked_pattern': 'SSN', 'tool': 'get_user_data'}
-
-4. Rejecting function tool output containing sensitive data:
-❌ Guardrail rejected function tool output: I'm unable to retrieve the contact info for
-user456 because it contains restricted information.
-"""
+# Example output:
+#
+# === Tool Guardrails Example ===
+#
+# 1. Normal email sending:
+# ✅ Successful tool execution: I've sent a welcome email to john@example.com with an
+# appropriate subject and greeting message.
+#
+# 2. Attempting to send email with suspicious content:
+# ❌ Guardrail rejected function tool call: I'm unable to send the email as mentioning ACME
+# Corp. is restricted.
+#
+# 3. Attempting to get user data (contains SSN). Execution blocked:
+# 🚨 Output guardrail triggered: Execution halted for sensitive data
+#    Details: {'blocked_pattern': 'SSN', 'tool': 'get_user_data'}
+#
+# 4. Rejecting function tool output containing sensitive data:
+# ❌ Guardrail rejected function tool output: I'm unable to retrieve the contact info for
+# user456 because it contains restricted information.

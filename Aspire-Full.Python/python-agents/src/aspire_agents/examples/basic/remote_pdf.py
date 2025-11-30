@@ -6,7 +6,7 @@ import asyncio
 
 from agents import Agent, Runner  # type: ignore
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
 
 URL = "https://www.berkshirehathaway.com/letters/2024ltr.pdf"
 

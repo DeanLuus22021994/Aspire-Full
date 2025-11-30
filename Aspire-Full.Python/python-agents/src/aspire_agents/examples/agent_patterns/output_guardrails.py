@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 
-from agents import (
+from agents import (  # type: ignore
     Agent,
     GuardrailFunctionOutput,
     OutputGuardrailTripwireTriggered,
@@ -13,17 +13,15 @@ from agents import (
 )
 from pydantic import BaseModel, Field
 
-"""
-This example shows how to use output guardrails.
-
-Output guardrails are checks that run on the final output of an agent.
-They can be used to do things like:
-- Check if the output contains sensitive data
-- Check if the output is a valid response to the user's message
-
-In this example, we'll use a (contrived) example where we check if the agent's response contains
-a phone number.
-"""
+# This example shows how to use output guardrails.
+#
+# Output guardrails are checks that run on the final output of an agent.
+# They can be used to do things like:
+# - Check if the output contains sensitive data
+# - Check if the output is a valid response to the user's message
+#
+# In this example, we'll use a (contrived) example where we check if the agent's response contains
+# a phone number.
 
 
 # The agent's output type
@@ -39,7 +37,7 @@ class MessageOutput(BaseModel):
 
 @output_guardrail
 async def sensitive_data_check(
-    context: RunContextWrapper, agent: Agent, output: MessageOutput
+    _context: RunContextWrapper, _agent: Agent, output: MessageOutput
 ) -> GuardrailFunctionOutput:
     """
     Check if the output contains sensitive data.
