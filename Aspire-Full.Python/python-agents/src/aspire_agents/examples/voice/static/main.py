@@ -70,7 +70,9 @@ class WorkflowCallbacks(SingleAgentWorkflowCallbacks):
     Callbacks for the workflow.
     """
 
-    def on_run(self, workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:  # pylint: disable=unused-argument
+    def on_run(  # pylint: disable=unused-argument
+        self, workflow: SingleAgentVoiceWorkflow, transcription: str
+    ) -> None:
         """Callback for when the workflow runs."""
         print(f"[debug] on_run called with transcription: {transcription}")
 
