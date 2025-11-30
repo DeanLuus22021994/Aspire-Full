@@ -6,7 +6,8 @@ import asyncio
 import base64
 from typing import TYPE_CHECKING, Any, Literal
 
-from agents import (
+# pylint: disable=import-error
+from agents import (  # type: ignore
     Agent,
     AsyncComputer,
     Button,
@@ -17,7 +18,7 @@ from agents import (
     trace,
 )
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 if TYPE_CHECKING:
     from playwright.async_api import (  # type: ignore

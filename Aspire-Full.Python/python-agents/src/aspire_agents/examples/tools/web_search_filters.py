@@ -5,8 +5,8 @@ This module demonstrates the usage of the WebSearchTool with filters and an Agen
 import asyncio
 from datetime import datetime
 
-from agents import Agent, ModelSettings, Runner, WebSearchTool, trace  # type: ignore
-from openai.types.shared.reasoning import Reasoning  # type: ignore
+from agents import Agent, ModelSettings, Runner, WebSearchTool, trace  # type: ignore # pylint: disable=import-error
+from openai.types.shared.reasoning import Reasoning  # type: ignore # pylint: disable=import-error
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)

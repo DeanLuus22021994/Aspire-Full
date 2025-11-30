@@ -14,11 +14,14 @@ import asyncio
 import os
 from typing import Any, cast
 
-from agents import ModelSettings  # type: ignore
-from agents.models.interface import ModelTracing  # type: ignore
-from agents.models.openai_provider import OpenAIProvider  # type: ignore
-from openai.types.responses import ResponseOutputRefusal, ResponseOutputText  # type: ignore
-from openai.types.shared.reasoning import Reasoning  # type: ignore
+from agents import ModelSettings  # type: ignore # pylint: disable=import-error
+from agents.models.interface import ModelTracing  # type: ignore # pylint: disable=import-error
+from agents.models.openai_provider import OpenAIProvider  # type: ignore # pylint: disable=import-error
+from openai.types.responses import (  # type: ignore # pylint: disable=import-error
+    ResponseOutputRefusal,
+    ResponseOutputText,
+)
+from openai.types.shared.reasoning import Reasoning  # type: ignore # pylint: disable=import-error
 
 MODEL_NAME = os.getenv("EXAMPLE_MODEL_NAME") or "gpt-5"
 
@@ -116,7 +119,7 @@ async def main() -> None:
     try:
         await stream_with_reasoning_content()
         await get_response_with_reasoning_content()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
         print("\nNote: This example requires a model that supports reasoning content.")
         print("You may need to use a specific model like gpt-5 or similar.")

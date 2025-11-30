@@ -1,11 +1,11 @@
 import asyncio
 
-from agents import Agent, ItemHelpers, Runner, trace
+from agents import Agent, ItemHelpers, Runner, trace  # type: ignore # pylint: disable=import-error
 
-"""
-This example shows the parallelization pattern. We run the agent three times in parallel, and pick
-the best result.
-"""
+# """
+# This example shows the parallelization pattern. We run the agent three times in parallel, and pick
+# the best result.
+# """
 
 spanish_agent = Agent(
     name="spanish_agent",

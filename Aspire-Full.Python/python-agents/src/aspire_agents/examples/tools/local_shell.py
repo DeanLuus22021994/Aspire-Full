@@ -6,7 +6,13 @@ import asyncio
 import os
 import subprocess
 
-from agents import Agent, LocalShellCommandRequest, LocalShellTool, Runner, trace  # type: ignore
+from agents import (  # type: ignore # pylint: disable=import-error
+    Agent,
+    LocalShellCommandRequest,
+    LocalShellTool,
+    Runner,
+    trace,
+)
 
 
 def shell_executor(request: LocalShellCommandRequest) -> str:

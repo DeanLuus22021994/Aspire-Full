@@ -5,7 +5,7 @@ import subprocess
 import sys
 import tempfile
 
-from agents import Agent, ImageGenerationTool, Runner, trace  # pyright: ignore
+from agents import Agent, ImageGenerationTool, Runner, trace  # type: ignore # pylint: disable=import-error
 
 
 def open_file(path: str) -> None:

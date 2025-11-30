@@ -4,8 +4,8 @@ This module demonstrates the usage of the FileSearchTool with an Agent.
 
 import asyncio
 
-from agents import Agent, FileSearchTool, Runner, trace
-from openai import OpenAI
+from agents import Agent, FileSearchTool, Runner, trace  # type: ignore # pylint: disable=import-error
+from openai import OpenAI  # type: ignore # pylint: disable=import-error
 
 
 async def main() -> None:
@@ -57,16 +57,16 @@ async def main() -> None:
 
         print("\n### Final output:\n")
         print(result.final_output)
-        """
-        Arrakis, the desert planet in Frank Herbert's "Dune," was inspired by the scarcity of water
-        as a metaphor for oil and other finite resources.
-        """
+        # """
+        # Arrakis, the desert planet in Frank Herbert's "Dune," was inspired by the scarcity of water
+        # as a metaphor for oil and other finite resources.
+        # """
 
         print("\n### Output items:\n")
         print("\n".join([str(out.raw_item) + "\n" for out in result.new_items]))
-        """
-        {"id":"...", "queries":["Arrakis"], "results":[...]}
-        """
+        # """
+        # {"id":"...", "queries":["Arrakis"], "results":[...]}
+        # """
 
 
 if __name__ == "__main__":
