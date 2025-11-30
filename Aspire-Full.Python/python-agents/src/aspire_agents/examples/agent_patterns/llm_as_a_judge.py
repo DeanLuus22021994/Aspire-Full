@@ -4,7 +4,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Literal
 
-from agents import Agent, ItemHelpers, Runner, TResponseInputItem, trace  # type: ignore
+from agents import Agent, ItemHelpers, Runner, TResponseInputItem, trace  # type: ignore # pylint: disable=import-error
 
 # This example shows the LLM as a judge pattern. The first agent generates an outline for a story.
 # The second agent judges the outline and provides feedback. We loop until the judge is satisfied

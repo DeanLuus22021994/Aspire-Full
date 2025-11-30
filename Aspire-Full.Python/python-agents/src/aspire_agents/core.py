@@ -5,9 +5,9 @@ import inspect
 import logging
 from typing import Any, Callable, cast
 
-from agents import Agent as OpenAIAgent  # type: ignore
-from agents import Runner as OpenAIRunner  # type: ignore
-from agents import function_tool as _original_function_tool  # type: ignore
+from agents import Agent as OpenAIAgent  # type: ignore # pylint: disable=import-error
+from agents import Runner as OpenAIRunner  # type: ignore # pylint: disable=import-error
+from agents import function_tool as _original_function_tool  # type: ignore # pylint: disable=import-error
 
 from .compute import get_compute_service
 from .guardrails import (

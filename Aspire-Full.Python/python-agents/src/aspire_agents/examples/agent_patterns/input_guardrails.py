@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from agents import (  # type: ignore
+from agents import (  # type: ignore # pylint: disable=import-error
     Agent,
     GuardrailFunctionOutput,
     InputGuardrailTripwireTriggered,
