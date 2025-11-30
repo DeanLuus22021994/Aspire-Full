@@ -19,7 +19,7 @@ from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: d
 agent = Agent(
     name="Assistant",
     instructions=(
-        "You are a helpful assistant. You ALWAYS write long responses, making sure to be verbose " "and detailed."
+        "You are a helpful assistant. You ALWAYS write long responses, " "making sure to be verbose and detailed."
     ),
 )
 
@@ -36,7 +36,8 @@ class GuardrailOutput(BaseModel):
 guardrail_agent = Agent(
     name="Checker",
     instructions=(
-        "You will be given a question and a response. Your goal is to judge whether the response "
+        "You will be given a question and a response. "
+        "Your goal is to judge whether the response "
         "is simple enough to be understood by a ten year old."
     ),
     output_type=GuardrailOutput,
