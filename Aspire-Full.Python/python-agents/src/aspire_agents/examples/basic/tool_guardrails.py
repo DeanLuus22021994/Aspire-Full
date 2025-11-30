@@ -6,14 +6,14 @@ import asyncio
 import json
 import os
 
-from aspire_agents.core import (  # type: ignore
+from aspire_agents.core import (  # type: ignore # pylint: disable=import-error
     Agent,
     Runner,
     function_tool,
     semantic_input_guardrail,
     semantic_output_guardrail,
 )
-from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered  # type: ignore
+from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered  # type: ignore # pylint: disable=import-error
 
 
 @function_tool
@@ -78,7 +78,7 @@ async def main() -> None:
     """
     # Note: ensure_tensor_core_gpu is called automatically by Agent.__init__
     # For direct tool testing, we ensure it's initialized:
-    from aspire_agents.compute import (  # pylint: disable=import-outside-toplevel
+    from aspire_agents.compute import (  # pylint: disable=import-outside-toplevel, import-error
         get_compute_service,
     )
 

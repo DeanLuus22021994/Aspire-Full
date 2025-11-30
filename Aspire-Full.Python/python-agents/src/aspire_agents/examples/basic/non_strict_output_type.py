@@ -7,9 +7,14 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from agents import Agent, AgentOutputSchema, AgentOutputSchemaBase, Runner  # type: ignore
+from agents import (  # type: ignore # pylint: disable=import-error
+    Agent,
+    AgentOutputSchema,
+    AgentOutputSchemaBase,
+    Runner,
+)
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 # This example demonstrates how to use an output type that is not in strict mode. Strict mode
 # allows us to guarantee valid JSON output, but some schemas are not strict-compatible.
@@ -77,7 +82,7 @@ async def main() -> None:
     Main entry point for the non-strict output type example.
     """
     ensure_tensor_core_gpu()
-    agent = Agent(
+    agent = Agent(  # type: ignore
         name="Assistant",
         instructions="You are a helpful assistant.",
         output_type=OutputType,

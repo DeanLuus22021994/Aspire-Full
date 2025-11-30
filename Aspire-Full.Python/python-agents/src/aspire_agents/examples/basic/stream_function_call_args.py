@@ -5,10 +5,12 @@ This module demonstrates streaming function call arguments.
 import asyncio
 from typing import Annotated, Any, Optional
 
-from agents import Agent, Runner, function_tool  # type: ignore
-from openai.types.responses import ResponseFunctionCallArgumentsDeltaEvent  # type: ignore
+from agents import Agent, Runner, function_tool  # type: ignore # pylint: disable=import-error
+from openai.types.responses import (  # type: ignore # pylint: disable=import-error
+    ResponseFunctionCallArgumentsDeltaEvent,
+)
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 
 @function_tool

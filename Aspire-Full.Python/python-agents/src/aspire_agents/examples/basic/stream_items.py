@@ -5,9 +5,9 @@ This module demonstrates streaming items from an agent run.
 import asyncio
 import random
 
-from agents import Agent, ItemHelpers, Runner, function_tool  # type: ignore
+from agents import Agent, ItemHelpers, Runner, function_tool  # type: ignore # pylint: disable=import-error
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 
 @function_tool

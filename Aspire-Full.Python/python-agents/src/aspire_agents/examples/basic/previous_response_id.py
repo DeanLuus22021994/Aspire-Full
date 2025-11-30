@@ -4,9 +4,9 @@ This module demonstrates using the previous_response_id to continue a conversati
 
 import asyncio
 
-from agents import Agent, Runner  # type: ignore
+from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 # This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
 # The second run passes the previous response ID to the model, which allows it to continue the

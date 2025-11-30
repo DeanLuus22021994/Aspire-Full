@@ -4,9 +4,9 @@ This module demonstrates how to use a remote image as input to an agent.
 
 import asyncio
 
-from agents import Agent, Runner  # type: ignore
+from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 URL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
 
