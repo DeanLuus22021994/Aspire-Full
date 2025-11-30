@@ -1,8 +1,7 @@
 import asyncio
 
-from openai.types.shared import Reasoning
-
-from agents import Agent, ModelSettings, Runner
+from agents import Agent, ModelSettings, Runner  # type: ignore # pylint: disable=import-error
+from openai.types.shared import Reasoning  # type: ignore # pylint: disable=import-error
 
 # If you have a certain reason to use Chat Completions, you can configure the model this way,
 # and then you can pass the chat_completions_model to the Agent constructor.
@@ -19,7 +18,7 @@ async def main():
         model="gpt-5",
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="minimal"),  # "minimal", "low", "medium", "high"
-            verbosity="low",  # "low", "medium", "high"
+            # verbosity="low",  # "low", "medium", "high"
         ),
     )
     result = await Runner.run(agent, "Tell me something about recursion in programming.")

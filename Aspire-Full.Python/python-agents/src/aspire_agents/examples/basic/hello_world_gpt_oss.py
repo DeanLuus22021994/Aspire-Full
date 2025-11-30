@@ -1,9 +1,13 @@
 import asyncio
 import logging
 
-from openai import AsyncOpenAI
-
-from agents import Agent, OpenAIChatCompletionsModel, Runner, set_tracing_disabled
+from agents import (  # type: ignore # pylint: disable=import-error
+    Agent,
+    OpenAIChatCompletionsModel,
+    Runner,
+    set_tracing_disabled,
+)
+from openai import AsyncOpenAI  # type: ignore # pylint: disable=import-error
 
 set_tracing_disabled(True)
 logging.basicConfig(level=logging.DEBUG)

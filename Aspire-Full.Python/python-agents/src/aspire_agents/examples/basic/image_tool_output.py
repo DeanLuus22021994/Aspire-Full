@@ -1,6 +1,12 @@
 import asyncio
 
-from agents import Agent, Runner, ToolOutputImage, ToolOutputImageDict, function_tool
+from agents import (  # type: ignore # pylint: disable=import-error
+    Agent,
+    Runner,
+    ToolOutputImage,
+    ToolOutputImageDict,
+    function_tool,
+)
 
 return_typed_dict = True
 
@@ -35,8 +41,8 @@ async def main():
         input="Fetch an image using the random_image tool, then describe it",
     )
     print(result.final_output)
-    """The image shows the iconic Golden Gate Bridge, a large suspension bridge painted in a
-    bright reddish-orange color..."""
+    # """The image shows the iconic Golden Gate Bridge, a large suspension bridge painted in a
+    # bright reddish-orange color..."""
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ import random
 from dataclasses import dataclass
 from typing import Literal
 
-from agents import Agent, RunContextWrapper, Runner
+from agents import Agent, RunContextWrapper, Runner  # type: ignore # pylint: disable=import-error
 
 
 @dataclass
@@ -11,9 +11,7 @@ class CustomContext:
     style: Literal["haiku", "pirate", "robot"]
 
 
-def custom_instructions(
-    run_context: RunContextWrapper[CustomContext], agent: Agent[CustomContext]
-) -> str:
+def custom_instructions(run_context: RunContextWrapper[CustomContext], _agent: Agent[CustomContext]) -> str:
     context = run_context.context
     if context.style == "haiku":
         return "Only respond in haikus."
@@ -44,27 +42,27 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 
-"""
-$ python examples/basic/dynamic_system_prompt.py
-
-Using style: haiku
-
-User: Tell me a joke.
-Assistant: Why don't eggs tell jokes?
-They might crack each other's shells,
-leaving yolk on face.
-
-$ python examples/basic/dynamic_system_prompt.py
-Using style: robot
-
-User: Tell me a joke.
-Assistant: Beep boop! Why was the robot so bad at soccer? Beep boop... because it kept kicking up a debug! Beep boop!
-
-$ python examples/basic/dynamic_system_prompt.py
-Using style: pirate
-
-User: Tell me a joke.
-Assistant: Why did the pirate go to school?
-
-To improve his arrr-ticulation! Har har har! 🏴‍☠️
-"""
+# """
+# $ python examples/basic/dynamic_system_prompt.py
+#
+# Using style: haiku
+#
+# User: Tell me a joke.
+# Assistant: Why don't eggs tell jokes?
+# They might crack each other's shells,
+# leaving yolk on face.
+#
+# $ python examples/basic/dynamic_system_prompt.py
+# Using style: robot
+#
+# User: Tell me a joke.
+# Assistant: Beep boop! Why was the robot so bad at soccer? Beep boop... because it kept kicking up a debug! Beep boop!
+#
+# $ python examples/basic/dynamic_system_prompt.py
+# Using style: pirate
+#
+# User: Tell me a joke.
+# Assistant: Why did the pirate go to school?
+#
+# To improve his arrr-ticulation! Har har har! 🏴‍☠️
+# """
