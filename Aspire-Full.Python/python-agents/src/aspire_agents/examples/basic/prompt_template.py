@@ -59,7 +59,7 @@ async def dynamic_prompt(prompt_id: str) -> None:
     ensure_tensor_core_gpu()
     context = DynamicContext(prompt_id)
 
-    agent = Agent(
+    agent = Agent(  # type: ignore
         name="Assistant",
         prompt=_get_dynamic_prompt,  # type: ignore
     )

@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 import pytest  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position
 
-from aspire_agents.config import (  # noqa: E402 # pylint: disable=wrong-import-position, import-error
+from aspire_agents.config import (  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position, import-error
     AgentConfig,
     ModelConfig,
 )
