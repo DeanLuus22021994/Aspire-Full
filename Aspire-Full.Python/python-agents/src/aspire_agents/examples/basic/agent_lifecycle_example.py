@@ -19,24 +19,28 @@ class CustomAgentHooks(AgentHooks):
         self.display_name = display_name
 
     async def on_start(self, context: RunContextWrapper, agent: Agent) -> None:
+        # pylint: disable=unused-argument
         self.event_counter += 1
         print(f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} started")
 
     async def on_end(self, context: RunContextWrapper, agent: Agent, output: Any) -> None:
+        # pylint: disable=unused-argument
         self.event_counter += 1
-        print(f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} ended with output {output}")
+        print(f"### ({self.display_name}) {self.event_counter}: " f"Agent {agent.name} ended with output {output}")
 
     async def on_handoff(self, context: RunContextWrapper, agent: Agent, source: Agent) -> None:
+        # pylint: disable=unused-argument
         self.event_counter += 1
-        print(f"### ({self.display_name}) {self.event_counter}: Agent {source.name} handed off to {agent.name}")
+        print(f"### ({self.display_name}) {self.event_counter}: " f"Agent {source.name} handed off to {agent.name}")
 
     # Note: The on_tool_start and on_tool_end hooks apply only to local tools.
     # They do not include hosted tools that run on the OpenAI server side,
     # such as WebSearchTool, FileSearchTool, CodeInterpreterTool, HostedMCPTool,
     # or other built-in hosted tools.
     async def on_tool_start(self, context: RunContextWrapper, agent: Agent, tool: Tool) -> None:
+        # pylint: disable=unused-argument
         self.event_counter += 1
-        print(f"### ({self.display_name}) {self.event_counter}: Agent {agent.name} started tool {tool.name}")
+        print(f"### ({self.display_name}) {self.event_counter}: " f"Agent {agent.name} started tool {tool.name}")
 
     async def on_tool_end(self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str) -> None:
         # pylint: disable=unused-argument
@@ -78,7 +82,7 @@ multiply_agent = Agent(
 
 start_agent = Agent(
     name="Start Agent",
-    instructions="Generate a random number. If it's even, stop. If it's odd, hand off to the multiply agent.",
+    instructions=("Generate a random number. If it's even, stop. " "If it's odd, hand off to the multiply agent."),
     tools=[random_number],
     output_type=FinalResult,
     handoffs=[multiply_agent],

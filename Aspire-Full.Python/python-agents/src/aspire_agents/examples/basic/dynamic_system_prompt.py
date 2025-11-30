@@ -56,7 +56,8 @@ if __name__ == "__main__":
 # Using style: robot
 #
 # User: Tell me a joke.
-# Assistant: Beep boop! Why was the robot so bad at soccer? Beep boop... because it kept kicking up a debug! Beep boop!
+# Assistant: Beep boop! Why was the robot so bad at soccer? Beep boop... because it kept kicking up a debug!
+# Beep boop!
 #
 # $ python examples/basic/dynamic_system_prompt.py
 # Using style: pirate

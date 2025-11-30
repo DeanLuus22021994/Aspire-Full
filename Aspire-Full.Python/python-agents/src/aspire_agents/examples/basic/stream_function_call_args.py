@@ -41,7 +41,7 @@ async def main():
     agent = Agent(
         name="CodeGenerator",
         instructions=(
-            "You are a helpful coding assistant. Use the provided tools to create files and " "configurations."
+            "You are a helpful coding assistant. " "Use the provided tools to create files and configurations."
         ),
         tools=[write_file, create_config],
     )
@@ -51,7 +51,7 @@ async def main():
     result = Runner.run_streamed(
         agent,
         input=(
-            "Create a Python web project called 'my-app' with FastAPI. Version 1.0.0, " "dependencies: fastapi, uvicorn"
+            "Create a Python web project called 'my-app' with FastAPI. " "Version 1.0.0, dependencies: fastapi, uvicorn"
         ),
     )
 

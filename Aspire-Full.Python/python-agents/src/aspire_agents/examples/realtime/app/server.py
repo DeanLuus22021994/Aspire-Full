@@ -38,7 +38,9 @@ from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: d
 # OpenTelemetry Imports
 try:
     from opentelemetry import trace  # type: ignore
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter  # type: ignore
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # type: ignore
+        OTLPSpanExporter,
+    )
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
     from opentelemetry.sdk.resources import Resource  # type: ignore
     from opentelemetry.sdk.trace import TracerProvider  # type: ignore

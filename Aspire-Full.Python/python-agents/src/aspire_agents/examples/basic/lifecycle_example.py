@@ -60,12 +60,12 @@ class ExampleHooks(RunHooks):
     ) -> None:
         # pylint: disable=unused-argument
         self.event_counter += 1
-        print(f"### {self.event_counter}: LLM started. Usage: {self._usage_to_str(context.usage)}")
+        print(f"### {self.event_counter}: LLM started. " f"Usage: {self._usage_to_str(context.usage)}")
 
     async def on_llm_end(self, context: RunContextWrapper, agent: Agent, response: ModelResponse) -> None:
         # pylint: disable=unused-argument
         self.event_counter += 1
-        print(f"### {self.event_counter}: LLM ended. Usage: {self._usage_to_str(context.usage)}")
+        print(f"### {self.event_counter}: LLM ended. " f"Usage: {self._usage_to_str(context.usage)}")
 
     async def on_agent_end(self, context: RunContextWrapper, agent: Agent, output: Any) -> None:
         # pylint: disable=unused-argument
@@ -147,7 +147,7 @@ multiply_agent = Agent(
 
 start_agent = Agent(
     name="Start Agent",
-    instructions="Generate a random number. If it's even, stop. If it's odd, hand off to the multiplier agent.",
+    instructions=("Generate a random number. If it's even, stop. " "If it's odd, hand off to the multiplier agent."),
     tools=[random_number],
     output_type=FinalResult,
     handoffs=[multiply_agent],

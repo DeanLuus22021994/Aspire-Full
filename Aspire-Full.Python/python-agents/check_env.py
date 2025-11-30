@@ -1,3 +1,7 @@
+"""
+Check the environment for required packages.
+"""
+
 import sys
 from pathlib import Path
 

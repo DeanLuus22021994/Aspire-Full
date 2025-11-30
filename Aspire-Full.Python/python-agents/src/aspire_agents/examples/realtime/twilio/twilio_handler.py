@@ -65,7 +65,8 @@ class TwilioHandler:
         # Audio buffering configuration (matching CLI demo)
         self.CHUNK_LENGTH_S = 0.05  # 50ms chunks like CLI demo
         self.SAMPLE_RATE = 8000  # Twilio uses 8kHz for g711_ulaw
-        self.BUFFER_SIZE_BYTES = int(self.SAMPLE_RATE * self.CHUNK_LENGTH_S)  # 50ms worth of audio
+        # 50ms worth of audio
+        self.BUFFER_SIZE_BYTES = int(self.SAMPLE_RATE * self.CHUNK_LENGTH_S)
 
         self._stream_sid: str | None = None
         self._audio_buffer: bytearray = bytearray()
@@ -73,7 +74,8 @@ class TwilioHandler:
 
         # Mark event tracking for playback
         self._mark_counter = 0
-        self._mark_data: dict[str, tuple[str, int, int]] = {}  # mark_id -> (item_id, content_index, byte_count)
+        # mark_id -> (item_id, content_index, byte_count)
+        self._mark_data: dict[str, tuple[str, int, int]] = {}
 
         self._realtime_session_task: asyncio.Task[None] | None = None
         self._buffer_flush_task: asyncio.Task[None] | None = None

@@ -28,7 +28,7 @@ class OutlineCheckerOutput(BaseModel):
 
 outline_checker_agent = Agent(
     name="outline_checker_agent",
-    instructions=("Read the given story outline, and judge the quality. Also, determine if it is a scifi story."),
+    instructions=("Read the given story outline, and judge the quality. " "Also, determine if it is a scifi story."),
     output_type=OutlineCheckerOutput,
 )
 

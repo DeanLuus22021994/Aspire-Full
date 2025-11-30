@@ -14,7 +14,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 # This is an example of how to use gpt-oss with Ollama.
 # Refer to https://cookbook.openai.com/articles/gpt-oss/run-locally-ollama for more details.
-# If you prefer using LM Studio, refer to https://cookbook.openai.com/articles/gpt-oss/run-locally-lmstudio
+# If you prefer using LM Studio,
+# refer to https://cookbook.openai.com/articles/gpt-oss/run-locally-lmstudio
 gpt_oss_model = OpenAIChatCompletionsModel(
     model="gpt-oss:20b",
     openai_client=AsyncOpenAI(
@@ -30,7 +31,7 @@ async def main():
     # See also: https://github.com/openai/openai-agents-python/issues/1414
     agent = Agent(
         name="Assistant",
-        instructions="You're a helpful assistant. You provide a concise answer to the user's question.",
+        instructions=("You're a helpful assistant. You provide a concise answer to the user's question."),
         model=gpt_oss_model,
     )
 

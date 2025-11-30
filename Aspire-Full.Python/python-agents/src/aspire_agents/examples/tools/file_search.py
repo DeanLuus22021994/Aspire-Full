@@ -41,7 +41,7 @@ async def main() -> None:
     # Create an agent that can search the vector store
     agent = Agent(
         name="FileSearch Agent",
-        instructions=("You are a helpful agent. You answer only based on the information in the vector store."),
+        instructions=("You are a helpful agent. " "You answer only based on the information in the vector store."),
         model="gpt-4o",
         tools=[
             FileSearchTool(

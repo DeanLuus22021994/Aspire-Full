@@ -2,7 +2,7 @@ import asyncio
 import base64
 import os
 
-from agents import Agent, Runner
+from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
 
 FILEPATH = os.path.join(os.path.dirname(__file__), "media/image_bison.jpg")
 
