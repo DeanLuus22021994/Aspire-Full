@@ -1,8 +1,8 @@
 services:
   aspire-agent-tensor:
     build:
-      context: .
-      dockerfile: ../../Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.TensorAgent
+      context: ../../..
+      dockerfile: Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent
     image: aspire-agent-tensor:latest
     deploy:
       resources:

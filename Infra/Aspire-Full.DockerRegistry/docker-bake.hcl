@@ -23,7 +23,7 @@ group "default" {
 }
 
 group "bootstrap" {
-  targets = ["base-native", "base-dotnet"]
+  targets = ["base-native", "base-dotnet", "base-python"]
 }
 
 target "base-native" {
@@ -40,6 +40,14 @@ target "base-dotnet" {
   tags = ["${REGISTRY}/${NAMESPACE}/base-dotnet:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest,mode=max"]
+}
+
+target "base-python" {
+  context = "Infra/Aspire-Full.DockerRegistry/docker"
+  dockerfile = "Dockerfile.base-python"
+  tags = ["${REGISTRY}/${NAMESPACE}/base-python:latest"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest,mode=max"]
 }
 
 target "native-lib" {
@@ -101,6 +109,9 @@ target "web-assembly" {
 target "python-agents" {
   context = "."
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent"
+  contexts = {
+    "base-python" = "target:base-python"
+  }
   tags = ["${REGISTRY}/${NAMESPACE}/python-agents-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT},mode=max"]
