@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\Aspire-Full.Native\build\Release\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Native\build\Release\AspireFullNative.dll')">
