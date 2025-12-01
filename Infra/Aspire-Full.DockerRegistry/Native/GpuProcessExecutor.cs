@@ -195,11 +195,34 @@ public sealed class GpuProcessExecutor : IAsyncDisposable
         }
 
         var startTime = Stopwatch.GetTimestamp();
+        s_bytesProcessed.Add(fileInfo.Length);
 
+        // Process synchronously with GPU, then send telemetry async
+        var result = ProcessArtifactSync(filePath, fileInfo.Length, startTime);
+
+        // Send telemetry outside unsafe context
+        if (result.GpuAccelerated)
+        {
+            await _telemetryChannel.Writer.WriteAsync(new GpuTelemetryEvent
+            {
+                Timestamp = DateTime.UtcNow,
+                EventType = GpuTelemetryEventType.ArtifactProcessed,
+                BytesProcessed = fileInfo.Length,
+                DurationMs = result.DurationMs,
+                GpuEnabled = true,
+                GpuComputeTimeMs = result.GpuMetrics.compute_time_ms,
+                GpuMemoryUsageMb = result.GpuMetrics.memory_usage_mb
+            }, cancellationToken);
+        }
+
+        return result;
+    }
+
+    private ArtifactProcessResult ProcessArtifactSync(string filePath, long fileLength, long startTime)
+    {
         using var mmf = MemoryMappedFile.CreateFromFile(filePath, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
-        using var accessor = mmf.CreateViewAccessor(0, fileInfo.Length, MemoryMappedFileAccess.Read);
+        using var accessor = mmf.CreateViewAccessor(0, fileLength, MemoryMappedFileAccess.Read);
 
-        // Get raw pointer for GPU processing
         unsafe
         {
             byte* ptr = null;
@@ -207,10 +230,8 @@ public sealed class GpuProcessExecutor : IAsyncDisposable
 
             try
             {
-                var dataSpan = new ReadOnlySpan<byte>(ptr, (int)fileInfo.Length);
-                s_bytesProcessed.Add(fileInfo.Length);
+                var dataSpan = new ReadOnlySpan<byte>(ptr, (int)fileLength);
 
-                // Process with GPU if available
                 if (NativeTensorContext.IsGpuAvailable)
                 {
                     var metrics = new NativeTensorContext.TensorMetrics();
@@ -218,43 +239,28 @@ public sealed class GpuProcessExecutor : IAsyncDisposable
 
                     NativeTensorContext.HashTensorContent(
                         (nint)ptr,
-                        (nuint)fileInfo.Length,
+                        (nuint)fileLength,
                         hashBuffer,
                         ref metrics);
-
-                    var duration = Stopwatch.GetElapsedTime(startTime);
-
-                    await _telemetryChannel.Writer.WriteAsync(new GpuTelemetryEvent
-                    {
-                        Timestamp = DateTime.UtcNow,
-                        EventType = GpuTelemetryEventType.ArtifactProcessed,
-                        BytesProcessed = fileInfo.Length,
-                        DurationMs = duration.TotalMilliseconds,
-                        GpuEnabled = true,
-                        GpuComputeTimeMs = metrics.compute_time_ms,
-                        GpuMemoryUsageMb = metrics.memory_usage_mb
-                    }, cancellationToken);
 
                     return new ArtifactProcessResult
                     {
                         Hash = Convert.ToHexString(hashBuffer),
-                        Size = fileInfo.Length,
-                        DurationMs = duration.TotalMilliseconds,
+                        Size = fileLength,
+                        DurationMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds,
                         GpuAccelerated = true,
                         GpuMetrics = metrics
                     };
                 }
                 else
                 {
-                    // CPU fallback using System.IO.Hashing
                     var hash = System.IO.Hashing.XxHash128.Hash(dataSpan);
-                    var duration = Stopwatch.GetElapsedTime(startTime);
 
                     return new ArtifactProcessResult
                     {
                         Hash = Convert.ToHexString(hash),
-                        Size = fileInfo.Length,
-                        DurationMs = duration.TotalMilliseconds,
+                        Size = fileLength,
+                        DurationMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds,
                         GpuAccelerated = false
                     };
                 }
@@ -316,24 +322,24 @@ public sealed class GpuProcessExecutor : IAsyncDisposable
         }
     }
 
-    private async Task CopyToBufferWithPoolAsync(
+    private static async Task CopyToBufferWithPoolAsync(
         Stream source,
         Stream destination,
         CancellationToken cancellationToken)
     {
-        var buffer = _memoryPool.Rent(64 * 1024); // 64KB chunks
+        const int bufferSize = 64 * 1024; // 64KB chunks
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
         try
         {
-            var span = buffer.AsSpan();
             int bytesRead;
-            while ((bytesRead = await source.ReadAsync(span.Slice(0, Math.Min(span.Length, 64 * 1024)), cancellationToken)) > 0)
+            while ((bytesRead = await source.ReadAsync(buffer.AsMemory(0, bufferSize), cancellationToken)) > 0)
             {
-                await destination.WriteAsync(span.Slice(0, bytesRead), cancellationToken);
+                await destination.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
             }
         }
         finally
         {
-            _memoryPool.Return(buffer);
+            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 

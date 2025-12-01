@@ -196,6 +196,20 @@ public sealed class GpuBuffer : IDisposable
     }
 
     /// <summary>
+    /// Gets a memory over the host-mapped memory for async operations.
+    /// Note: For GPU buffers, this creates a managed copy. For CPU buffers, it wraps the pinned array.
+    /// </summary>
+    public Memory<byte> AsMemory()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        // Create a managed array copy for Memory<T> compatibility with async methods
+        // This is less efficient than Span but necessary for async I/O
+        var array = new byte[(int)_size];
+        AsSpan().CopyTo(array);
+        return array;
+    }
+
+    /// <summary>
     /// Gets a span of the specified type over host-mapped memory.
     /// </summary>
     public unsafe Span<T> AsSpan<T>() where T : unmanaged

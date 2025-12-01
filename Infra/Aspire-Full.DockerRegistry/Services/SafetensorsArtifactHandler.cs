@@ -244,7 +244,7 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
         }
     }
 
-    private async Task<TensorChunk> ProcessChunkAsync(
+    private Task<TensorChunk> ProcessChunkAsync(
         MemoryMappedViewAccessor accessor,
         long offset,
         long size,
@@ -253,6 +253,18 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
     {
         var startTime = Stopwatch.GetTimestamp();
 
+        // Process synchronously inside unsafe block, return Task wrapper
+        var result = ProcessChunkSync(accessor, offset, size, index, startTime);
+        return Task.FromResult(result);
+    }
+
+    private TensorChunk ProcessChunkSync(
+        MemoryMappedViewAccessor accessor,
+        long offset,
+        long size,
+        int index,
+        long startTime)
+    {
         unsafe
         {
             byte* ptr = null;
@@ -262,7 +274,6 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
             {
                 var dataSpan = new ReadOnlySpan<byte>(ptr, (int)size);
 
-                // Compute hash
                 string hash;
                 bool gpuUsed = false;
 
@@ -283,8 +294,6 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
                 var duration = Stopwatch.GetElapsedTime(startTime);
                 s_chunkDuration.Record(duration.TotalMilliseconds);
 
-                await Task.CompletedTask; // Yield point
-
                 return new TensorChunk
                 {
                     Index = index,
@@ -302,13 +311,13 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
         }
     }
 
-    private async Task ProcessBufferWithGpuAsync(
+    private Task ProcessBufferWithGpuAsync(
         ReadOnlySequence<byte> buffer,
         CancellationToken cancellationToken)
     {
         if (buffer.IsSingleSegment)
         {
-            await ProcessSingleSegmentAsync(buffer.FirstSpan, cancellationToken);
+            ProcessSingleSegmentSync(buffer.FirstSpan);
         }
         else
         {
@@ -317,16 +326,18 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
             try
             {
                 buffer.CopyTo(gpuBuffer.AsSpan());
-                await ProcessSingleSegmentAsync(gpuBuffer.AsSpan().Slice(0, (int)buffer.Length), cancellationToken);
+                ProcessSingleSegmentSync(gpuBuffer.AsSpan().Slice(0, (int)buffer.Length));
             }
             finally
             {
                 _memoryPool.Return(gpuBuffer);
             }
         }
+
+        return Task.CompletedTask;
     }
 
-    private async Task ProcessSingleSegmentAsync(ReadOnlySpan<byte> segment, CancellationToken cancellationToken)
+    private void ProcessSingleSegmentSync(ReadOnlySpan<byte> segment)
     {
         s_bytesProcessed.Add(segment.Length);
 
@@ -353,15 +364,14 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
             _ = System.IO.Hashing.XxHash128.Hash(segment);
             _logger.LogDebug("CPU processed {Size} bytes", segment.Length);
         }
-
-        await Task.CompletedTask;
     }
 
-    private async Task<TensorValidationInfo> ValidateWithGpuAsync(
+    private Task<TensorValidationInfo> ValidateWithGpuAsync(
         ReadOnlyMemory<byte> data,
         CancellationToken cancellationToken)
     {
         var startTime = Stopwatch.GetTimestamp();
+        TensorValidationInfo result;
 
         unsafe
         {
@@ -373,9 +383,7 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
 
             NativeTensorContext.HashTensorContent((nint)ptr, (nuint)data.Length, hashBuffer, ref metrics);
 
-            await Task.CompletedTask;
-
-            return new TensorValidationInfo
+            result = new TensorValidationInfo
             {
                 IsValid = true,
                 Hash = Convert.ToHexString(hashBuffer),
@@ -384,6 +392,8 @@ public sealed class SafetensorsArtifactHandler : IAsyncDisposable
                 Size = data.Length
             };
         }
+
+        return Task.FromResult(result);
     }
 
     private TensorValidationInfo ValidateWithCpu(ReadOnlySpan<byte> data)

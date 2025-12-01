@@ -53,6 +53,11 @@
     <PackageVersion Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.20.1" />
     <PackageVersion Include="Microsoft.ML.Tokenizers" Version="1.0.0" />
 
+    <!-- Tensor and High-Performance -->
+    <PackageVersion Include="System.Numerics.Tensors" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="System.IO.Hashing" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="System.IO.Pipelines" Version="10.0.0-rtm.25513.102" />
+
     <!-- Qdrant -->
     <PackageVersion Include="Aspire.Qdrant.Client" Version="13.0.1" />
     <PackageVersion Include="Qdrant.Client" Version="1.15.1" />

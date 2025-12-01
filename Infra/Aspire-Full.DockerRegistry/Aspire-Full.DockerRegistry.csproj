@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
     <ProjectReference Include="..\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
   </ItemGroup>
 
