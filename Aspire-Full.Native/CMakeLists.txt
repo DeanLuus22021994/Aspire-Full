@@ -25,7 +25,10 @@ include_directories(include)
 add_compile_definitions(ASPIRE_NATIVE_BUILD)
 
 # Add library with source from src/
-add_library(AspireFullNative SHARED src/tensor_ops.cu)
+add_library(AspireFullNative SHARED src/tensor_ops.cpp)
+
+# Force CMake to treat the .cpp file as CUDA source so nvcc is used
+set_source_files_properties(src/tensor_ops.cpp PROPERTIES LANGUAGE CUDA)
 
 set_target_properties(AspireFullNative PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
