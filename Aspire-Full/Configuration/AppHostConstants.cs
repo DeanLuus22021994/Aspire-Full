@@ -56,4 +56,44 @@ public static class AppHostConstants
         public const int WasmProd = 5177;
         public const int PythonAgents = 8000;
     }
+
+    public static class Configuration
+    {
+        public const string RegistryHost = "localhost:5001";
+        public const string Namespace = "aspire";
+        public const string Version = "1.0.0";
+        public const string Architecture = "linux-x64";
+        public const string EnvironmentTag = "dev";
+    }
+
+    public static class EnvironmentVariables
+    {
+        public const string DockerTlsCertDir = "DOCKER_TLS_CERTDIR";
+        public const string DockerHost = "DOCKER_HOST";
+        public const string DockerTlsVerify = "DOCKER_TLS_VERIFY";
+        public const string DockerCertPath = "DOCKER_CERT_PATH";
+        public const string DockerDebuggerTargetNetwork = "DOCKER_DEBUGGER_TARGET_NETWORK";
+        public const string DotnetDashboardUnsecuredAllowAnonymous = "DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS";
+        public const string DashboardOtlpAuthMode = "DASHBOARD__OTLP__AUTHMODE";
+        public const string DashboardFrontendAuthMode = "DASHBOARD__FRONTEND__AUTHMODE";
+        public const string DashboardResourceServiceAuthMode = "DASHBOARD__RESOURCESERVICE__AUTHMODE";
+        public const string AspireDashboardMcpEndpointUrl = "ASPIRE_DASHBOARD_MCP_ENDPOINT_URL";
+        public const string AspireAllowUnsecuredTransport = "ASPIRE_ALLOW_UNSECURED_TRANSPORT";
+        public const string FrontendEnvironmentKey = "FRONTEND_ENVIRONMENT_KEY";
+        public const string AspNetCoreUrls = "ASPNETCORE_URLS";
+        public const string OtelServiceName = "OTEL_SERVICE_NAME";
+        public const string OtelExporterOtlpEndpoint = "OTEL_EXPORTER_OTLP_ENDPOINT";
+        public const string OtelPythonLogCorrelation = "OTEL_PYTHON_LOG_CORRELATION";
+        public const string CudaVisibleDevices = "CUDA_VISIBLE_DEVICES";
+        public const string GpuTargetUtilization = "GPU_TARGET_UTILIZATION";
+    }
+
+    public static class Paths
+    {
+        public const string DockerLib = "/var/lib/docker";
+        public const string Certs = "/certs";
+        public const string CertsClient = "/certs/client";
+        public const string DashboardData = "/app/data";
+        public const string RegistryData = "/var/lib/registry";
+    }
 }
