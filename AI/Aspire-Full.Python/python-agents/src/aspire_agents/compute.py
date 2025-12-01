@@ -9,7 +9,12 @@ from concurrent.futures import Future
 from typing import List, cast
 
 import torch
-from transformers import AutoModel, AutoTokenizer  # type: ignore
+from transformers import (  # type: ignore
+    AutoModel,
+    AutoTokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizerBase,
+)
 
 from .gpu import ensure_tensor_core_gpu
 
@@ -17,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Global lock for thread safety during initialization
 _INIT_LOCK = threading.Lock()
-_COMPUTE_SERVICE = None
+_compute_service: "BatchComputeService | None" = None
 
 
 class TensorCoreUnavailableError(RuntimeError):
@@ -52,8 +57,12 @@ class BatchComputeService:
         try:
             # Load tokenizer and model directly to GPU
             # type: ignore[no-untyped-call]
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModel.from_pretrained(model_name).to(self.device)
+            self.tokenizer = cast(
+                PreTrainedTokenizerBase, AutoTokenizer.from_pretrained(model_name)
+            )
+            self.model = cast(
+                PreTrainedModel, AutoModel.from_pretrained(model_name).to(self.device)
+            )
             self.model.eval()
 
             # Optimize model with torch.compile for Python 3.14+ performance
@@ -155,7 +164,7 @@ class BatchComputeService:
                         batch_futures = []
                         last_batch_time = time.time()
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Error in tensor compute worker: %s", e)
                 # Fail all pending futures
                 for f in batch_futures:
@@ -187,7 +196,7 @@ class BatchComputeService:
                     outputs = self.model(**inputs)
 
             # Mean pooling
-            attention_mask = inputs["attention_mask"]
+            attention_mask = cast(torch.Tensor, inputs["attention_mask"])
             token_embeddings = outputs.last_hidden_state
             input_mask_expanded = (
                 attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -223,7 +232,7 @@ class BatchComputeService:
         # We use a standard concurrent.futures.Future to bridge to the thread
         thread_future: Future[torch.Tensor] = Future()
 
-        def callback(f):
+        def callback(f: Future[torch.Tensor]):
             try:
                 result = f.result()
                 loop.call_soon_threadsafe(future.set_result, result)
@@ -252,9 +261,9 @@ class BatchComputeService:
 
 def get_compute_service() -> BatchComputeService:
     """Get or initialize the singleton BatchComputeService."""
-    global _COMPUTE_SERVICE  # pylint: disable=global-statement
-    if _COMPUTE_SERVICE is None:
+    global _compute_service  # pylint: disable=global-statement
+    if _compute_service is None:
         with _INIT_LOCK:
-            if _COMPUTE_SERVICE is None:
-                _COMPUTE_SERVICE = BatchComputeService()
-    return _COMPUTE_SERVICE
+            if _compute_service is None:
+                _compute_service = BatchComputeService()
+    return _compute_service
