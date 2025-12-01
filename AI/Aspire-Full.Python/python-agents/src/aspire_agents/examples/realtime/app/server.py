@@ -40,27 +40,27 @@ else:
         RealtimeItem = Any
         RealtimeModelSendRawMessage = Any
 
-try:
-    from aspire_agents.gpu import ensure_tensor_core_gpu
-except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        pass
-
-
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import assert_never
 
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+        """Ensure that the tensor core GPU is available."""
+
+
 # OpenTelemetry Imports
 if TYPE_CHECKING:
     from opentelemetry import trace  # type: ignore
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # type: ignore
-        OTLPSpanExporter,
+        OTLPSpanExporter,  # type: ignore
     )
     from opentelemetry.instrumentation.fastapi import (  # type: ignore
-        FastAPIInstrumentor,
+        FastAPIInstrumentor,  # type: ignore
     )
     from opentelemetry.sdk.resources import Resource  # type: ignore
     from opentelemetry.sdk.trace import TracerProvider  # type: ignore
@@ -97,7 +97,7 @@ try:
     from .agent import get_starting_agent
 except ImportError:
     # Fall back to direct import (when run as a script)
-    from agent import get_starting_agent  # type: ignore[no-redef]
+    from agent import get_starting_agent  # type: ignore
 
 
 logging.basicConfig(level=logging.INFO)
@@ -319,7 +319,7 @@ if (
 
     # Cast to Any to avoid mypy issues with add_span_processor
     # The type stub for TracerProvider might be missing this method in some versions
-    provider_any: Any = provider  # type: ignore
+    provider_any = cast(Any, provider)
     if hasattr(provider_any, "add_span_processor"):
         provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))  # type: ignore
 

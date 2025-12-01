@@ -15,7 +15,11 @@ if TYPE_CHECKING:
     T = TypeVar("T")
 
     class sd:
+        """SoundDevice stub."""
+
         class OutputStream:
+            """OutputStream stub."""
+
             def __init__(self, samplerate: int, channels: int, dtype: Any) -> None:
                 _ = (samplerate, channels, dtype)
 
@@ -29,6 +33,8 @@ if TYPE_CHECKING:
                 pass
 
         class InputStream:
+            """InputStream stub."""
+
             def __init__(self, channels: int, samplerate: int, dtype: str) -> None:
                 _ = (channels, samplerate, dtype)
 
@@ -52,10 +58,14 @@ if TYPE_CHECKING:
             return None
 
     class StreamedAudioInput:
+        """StreamedAudioInput stub."""
+
         async def add_audio(self, audio: Any) -> None:
             _ = audio
 
     class VoicePipeline:
+        """VoicePipeline stub."""
+
         def __init__(self, workflow: Any) -> None:
             _ = workflow
 
@@ -64,10 +74,16 @@ if TYPE_CHECKING:
             return None
 
     class events:
+        """Events stub."""
+
         class Key:
+            """Key stub."""
+
             key: str
 
     class App(Generic[T]):
+        """App stub."""
+
         def run(self) -> None:
             pass
 
@@ -84,6 +100,8 @@ if TYPE_CHECKING:
     ComposeResult = Iterator[Any]
 
     class Container:
+        """Container stub."""
+
         def __enter__(self) -> None:
             pass
 
@@ -94,16 +112,22 @@ if TYPE_CHECKING:
         return default
 
     class Button:
+        """Button stub."""
+
         def press(self) -> None:
             pass
 
     class Static:
+        """Static stub."""
+
         id: str | None
 
         def __init__(self, widget_id: str | None = None, **kwargs: Any) -> None:
             _ = (widget_id, kwargs)
 
     class RichLog(Static):
+        """RichLog stub."""
+
         def __init__(
             self,
             widget_id: str | None = None,
@@ -150,7 +174,7 @@ try:
 except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        pass
+        """Ensure that the tensor core GPU is available."""
 
 
 # Import MyWorkflow class - handle both module and package use cases
@@ -290,7 +314,7 @@ class RealtimeApp(App[None]):
             if TYPE_CHECKING:
                 assert isinstance(log_widget, RichLog)
             log_widget.write(f"Transcription: {transcription}")
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
     def compose(self) -> ComposeResult:
@@ -324,7 +348,7 @@ class RealtimeApp(App[None]):
                     bottom_pane.write(msg)
                 elif event.type == "voice_stream_event_lifecycle":
                     bottom_pane.write(f"Lifecycle event: {event.event}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             bottom_pane = self.query_one("#bottom-pane", RichLog)
             if TYPE_CHECKING:
                 assert isinstance(bottom_pane, RichLog)

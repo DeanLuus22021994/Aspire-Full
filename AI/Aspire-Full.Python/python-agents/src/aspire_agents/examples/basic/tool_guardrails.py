@@ -138,7 +138,7 @@ async def main() -> None:
         else:
             print("❌ Error: Could not find invocation method.\n")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"❌ Error: {e}\n")
 
     print("2. Direct Call: Sending harmful email...")
@@ -161,7 +161,7 @@ async def main() -> None:
         else:
             print("❌ Error: Could not find invocation method.\n")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"❌ Error: {e}\n")
 
     print("3. Direct Call: Getting sensitive data (Output Guardrail)...")
@@ -177,7 +177,7 @@ async def main() -> None:
     except ToolOutputGuardrailTripwireTriggered as e:
         print("✅ Guardrail correctly raised exception for PII.")
         print(f"   Details: {e.output.output_info}\n")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"❌ Unexpected Error: {e}\n")
 
     print("--- Agent Execution (Requires OPENAI_API_KEY) ---\n")
@@ -199,7 +199,7 @@ async def main() -> None:
             "Send an email to john@example.com about a new exploit we found.",
         )
         print(f"❌ Guardrail rejected function tool call: {result.final_output}\n")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}\n")
 
     try:
@@ -216,7 +216,7 @@ async def main() -> None:
         print("4. Rejecting function tool output containing phone numbers:")
         result = await Runner.run(agent, "Get contact info for user456")
         print(f"❌ Guardrail rejected function tool output: {result.final_output}\n")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}\n")
 
 

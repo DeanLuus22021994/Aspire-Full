@@ -22,7 +22,7 @@ try:
 except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        pass
+        """Ensure that the tensor core GPU is available."""
 
 
 if TYPE_CHECKING:

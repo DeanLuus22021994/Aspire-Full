@@ -24,7 +24,7 @@ try:
 except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        pass
+        """Ensure that the tensor core GPU is available."""
 
 
 if TYPE_CHECKING:
@@ -189,7 +189,7 @@ class NoUIDemo:
                         item_content_index=content_index,
                         bytes=ramped.tobytes(),
                     )
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     pass
 
                 samples_filled += n
@@ -259,7 +259,7 @@ class NoUIDemo:
                         item_content_index=content_index,
                         bytes=chunk_data.tobytes(),
                     )
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     pass
 
                 # If we've used up the entire chunk, reset for next iteration
@@ -388,7 +388,7 @@ class NoUIDemo:
                 # Yield control back to event loop
                 await asyncio.sleep(0)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Audio capture error: {e}")
         finally:
             if self.audio_stream and self.audio_stream.active:
@@ -433,7 +433,7 @@ class NoUIDemo:
                 print(f"Raw model event: {_truncate_str(str(event.data), 200)}")
             else:
                 print(f"Unknown event type: {event.type}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error processing event: {_truncate_str(str(e), 200)}")
 
 
