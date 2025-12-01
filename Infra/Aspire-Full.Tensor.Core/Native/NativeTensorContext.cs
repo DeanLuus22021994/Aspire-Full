@@ -15,6 +15,14 @@ public static partial class NativeTensorContext
     private static int s_gpuDeviceCount = -1;
     private static readonly object s_initLock = new();
 
+    /// <summary>
+    /// Static constructor ensures NativeLibraryResolver is initialized before any P/Invoke calls.
+    /// </summary>
+    static NativeTensorContext()
+    {
+        NativeLibraryResolver.Initialize();
+    }
+
     #region Structs
 
     /// <summary>

@@ -8,6 +8,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
     <Description>Core GPU tensor compute infrastructure providing unified native interop, memory pooling, and portable SIMD fallback operations.</Description>
+
+    <!-- Enable source generators for LibraryImport -->
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,22 +31,73 @@
     <None Include="..\..\AI\Aspire-Full.Tensor\Native\CMakeLists.txt" Link="Native\CMakeLists.txt" />
   </ItemGroup>
 
-  <!-- Native Library Content - built via docker-bake.hcl native-lib target -->
+  <!--
+    Native Library Content - built via docker-bake.hcl native-lib target
+    Search order: runtimes/{rid}/native/ -> build/ -> application directory
+  -->
   <ItemGroup>
-    <!-- Linux / Docker -->
-    <Content Include="build\libAspireFullNative.so" Condition="Exists('build\libAspireFullNative.so')">
+    <!-- Linux x64 (Docker/Container) -->
+    <Content Include="runtimes\linux-x64\native\libAspireFullNative.so" Condition="Exists('runtimes\linux-x64\native\libAspireFullNative.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
+      <Link>runtimes/linux-x64/native/libAspireFullNative.so</Link>
       <Visible>false</Visible>
       <PackagePath>runtimes/linux-x64/native/</PackagePath>
     </Content>
 
-    <!-- Windows -->
-    <Content Include="build\AspireFullNative.dll" Condition="Exists('build\AspireFullNative.dll')">
+    <!-- Linux x64 fallback from build directory -->
+    <Content Include="build\libAspireFullNative.so" Condition="Exists('build\libAspireFullNative.so') And !Exists('runtimes\linux-x64\native\libAspireFullNative.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
+      <Link>runtimes/linux-x64/native/libAspireFullNative.so</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/linux-x64/native/</PackagePath>
+    </Content>
+
+    <!-- Linux ARM64 (Apple Silicon / Graviton) -->
+    <Content Include="runtimes\linux-arm64\native\libAspireFullNative.so" Condition="Exists('runtimes\linux-arm64\native\libAspireFullNative.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>runtimes/linux-arm64/native/libAspireFullNative.so</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/linux-arm64/native/</PackagePath>
+    </Content>
+
+    <!-- Windows x64 -->
+    <Content Include="runtimes\win-x64\native\AspireFullNative.dll" Condition="Exists('runtimes\win-x64\native\AspireFullNative.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>runtimes/win-x64/native/AspireFullNative.dll</Link>
       <Visible>false</Visible>
       <PackagePath>runtimes/win-x64/native/</PackagePath>
+    </Content>
+
+    <!-- Windows x64 fallback from build directory -->
+    <Content Include="build\AspireFullNative.dll" Condition="Exists('build\AspireFullNative.dll') And !Exists('runtimes\win-x64\native\AspireFullNative.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>runtimes/win-x64/native/AspireFullNative.dll</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/win-x64/native/</PackagePath>
+    </Content>
+
+    <!-- Windows ARM64 -->
+    <Content Include="runtimes\win-arm64\native\AspireFullNative.dll" Condition="Exists('runtimes\win-arm64\native\AspireFullNative.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>runtimes/win-arm64/native/AspireFullNative.dll</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/win-arm64/native/</PackagePath>
+    </Content>
+
+    <!-- macOS x64 (Intel) -->
+    <Content Include="runtimes\osx-x64\native\libAspireFullNative.dylib" Condition="Exists('runtimes\osx-x64\native\libAspireFullNative.dylib')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>runtimes/osx-x64/native/libAspireFullNative.dylib</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/osx-x64/native/</PackagePath>
+    </Content>
+
+    <!-- macOS ARM64 (Apple Silicon) -->
+    <Content Include="runtimes\osx-arm64\native\libAspireFullNative.dylib" Condition="Exists('runtimes\osx-arm64\native\libAspireFullNative.dylib')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>runtimes/osx-arm64/native/libAspireFullNative.dylib</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/osx-arm64/native/</PackagePath>
     </Content>
   </ItemGroup>
 

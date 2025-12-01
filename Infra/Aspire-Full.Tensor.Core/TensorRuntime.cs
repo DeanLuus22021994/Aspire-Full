@@ -40,6 +40,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                 {
                     _totalMemory = deviceInfo.Value.total_memory;
                     _allocatedMemory = _totalMemory - deviceInfo.Value.free_memory;
+                    _currentUtilization = _totalMemory > 0
+                        ? (int)((double)_allocatedMemory / _totalMemory * 100)
+                        : 0;
                 }
             }
             catch (Exception ex)
@@ -233,6 +236,10 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
             {
                 _totalMemory = info.Value.total_memory;
                 _allocatedMemory = _totalMemory - info.Value.free_memory;
+                // Estimate utilization from memory usage (NVML would provide accurate utilization)
+                _currentUtilization = _totalMemory > 0
+                    ? (int)((double)_allocatedMemory / _totalMemory * 100)
+                    : 0;
             }
         }
     }

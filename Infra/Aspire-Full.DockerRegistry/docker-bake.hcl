@@ -18,6 +18,11 @@ variable "ARCH" {
   default = "linux-x64"
 }
 
+variable "TARGET_PLATFORMS" {
+  # Multi-arch support: linux/amd64,linux/arm64
+  default = "linux/amd64"
+}
+
 # =============================================================================
 # Build Groups
 # =============================================================================
@@ -34,6 +39,10 @@ group "cuda-bootstrap" {
   targets = ["cuda-bootstrap-devel", "cuda-bootstrap-runtime"]
 }
 
+group "native-libs" {
+  targets = ["native-lib-linux-x64", "native-lib-linux-arm64"]
+}
+
 # =============================================================================
 # CUDA Bootstrap Targets - Root of all TensorCore images
 # =============================================================================
@@ -43,6 +52,7 @@ target "cuda-bootstrap-devel" {
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Nvidia/Dockerfile.cuda-bootstrap"
   target = "cuda-bootstrap-devel"
   tags = ["${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel:latest"]
+  platforms = [TARGET_PLATFORMS]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest,mode=max"]
   args = {
@@ -55,6 +65,7 @@ target "cuda-bootstrap-runtime" {
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Nvidia/Dockerfile.cuda-bootstrap"
   target = "cuda-bootstrap-runtime"
   tags = ["${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime:latest"]
+  platforms = [TARGET_PLATFORMS]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest,mode=max"]
   args = {
@@ -111,6 +122,31 @@ target "native-lib" {
   output = ["type=local,dest=Infra/Aspire-Full.Tensor.Core/build/"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest,mode=max"]
+}
+
+# Architecture-specific native library builds for NuGet package
+target "native-lib-linux-x64" {
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Native"
+  contexts = {
+    "base-native" = "target:base-native"
+  }
+  platforms = ["linux/amd64"]
+  output = ["type=local,dest=Infra/Aspire-Full.Tensor.Core/runtimes/linux-x64/native/"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-x64"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-x64,mode=max"]
+}
+
+target "native-lib-linux-arm64" {
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Native"
+  contexts = {
+    "base-native" = "target:base-native"
+  }
+  platforms = ["linux/arm64"]
+  output = ["type=local,dest=Infra/Aspire-Full.Tensor.Core/runtimes/linux-arm64/native/"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-arm64"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-arm64,mode=max"]
 }
 
 target "api" {
