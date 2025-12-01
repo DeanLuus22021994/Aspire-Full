@@ -4,21 +4,26 @@ namespace Aspire_Full.Pipeline.Utils;
 
 public static class ProcessUtils
 {
-    public static async Task<(int ExitCode, string Output)> RunAsync(string fileName, string[] args, string workingDirectory = "", bool silent = true)
+    public static async Task<(int ExitCode, string Output)> RunAsync(string command, string arguments, string? workingDirectory = null, bool silent = true, Dictionary<string, string>? envVars = null)
     {
-        if (string.IsNullOrEmpty(workingDirectory))
-            workingDirectory = Directory.GetCurrentDirectory();
-
-        var startInfo = new ProcessStartInfo(fileName)
+        var startInfo = new ProcessStartInfo
         {
-            WorkingDirectory = workingDirectory,
+            FileName = command,
+            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory()
         };
 
-        foreach (var arg in args) startInfo.ArgumentList.Add(arg);
+        if (envVars != null)
+        {
+            foreach (var kvp in envVars)
+            {
+                startInfo.Environment[kvp.Key] = kvp.Value;
+            }
+        }
 
         using var process = new Process { StartInfo = startInfo };
 
