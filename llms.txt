@@ -1,115 +1,60 @@
-# Aspire-Full
+# Aspire-Full Knowledge Graph
 
-> .NET Aspire Full AppHost with bleeding-edge tooling for AI-assisted development
+> A comprehensive map of the Aspire-Full solution for AI Agents.
 
-## Overview
+## Core Architecture
 
-This project demonstrates a complete .NET Aspire distributed application setup with:
-- .NET 10 SDK (LTS)
-- Aspire 13.0.1 (stable)
-- Entity Framework Core with PostgreSQL
-- Docker-based devcontainer with named volumes
-- GitHub CLI tooling with AI extensions
-- AI-optimized documentation
+| Project | Description |
+|---------|-------------|
+| **Aspire-Full** | The AppHost orchestrator. Defines the distributed application model. |
+| **Aspire-Full.ServiceDefaults** | Shared configuration for OpenTelemetry, HealthChecks, and Service Discovery. |
+| **Aspire-Full.Shared** | **CRITICAL**: Contains all DTOs, Enums, and shared business logic. All data contracts live here. |
+| **Aspire-Full.Api** | The primary backend API. Uses EF Core 10 and PostgreSQL. |
+| **Aspire-Full.Web** | The React 19 frontend application. |
+| **Aspire-Full.Gateway** | YARP-based API Gateway. Handles routing and load balancing. |
 
-## Documentation
+## AI & Compute
 
-- [Getting Started](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/getting-started.md): Setup and run the application
-- [Architecture](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/architecture.md): System architecture and design
-- [API Reference](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/api/index.md): REST API documentation
-- [DevContainer](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/devcontainer.md): Development environment setup
-- [GitHub Tooling](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/docs/guides/github-tooling.md): CLI tools and extensions
+| Project | Description |
+|---------|-------------|
+| **Aspire-Full.Agents** | Orchestration layer for AI Agents. |
+| **Aspire-Full.Subagents** | Specialized sub-agents for specific tasks. |
+| **Aspire-Full.Tensor** | **High-Performance**: Hybrid C#/.NET 10 + CUDA C++ for tensor operations. |
+| **Aspire-Full.Embeddings** | Service for generating vector embeddings (ONNX/Torch). |
+| **Aspire-Full.VectorStore** | Abstraction layer for vector databases. |
+| **Aspire-Full.Qdrant** | Qdrant implementation of the VectorStore. |
+| **Aspire-Full.Python** | Python interop layer for running Python scripts/models. |
 
-## Quick Start
+## Infrastructure & Tooling
 
-```bash
-# Clone the repository
-git clone https://github.com/DeanLuus22021994/Aspire-Full.git
-cd Aspire-Full
+| Project | Description |
+|---------|-------------|
+| **Aspire-Full.DevContainer** | Configuration for the development container environment. |
+| **Aspire-Full.DockerRegistry** | Manages local Docker registry and image builds. |
+| **Aspire-Full.Github** | GitHub API integration and tooling. |
+| **Aspire-Full.Pipeline** | CI/CD pipeline definitions and automation. |
+| **Aspire-Full.WebAssembly** | Blazor WebAssembly components (if applicable). |
 
-# Run with Aspire CLI
-aspire run
+## Testing
 
-# Or with dotnet
-dotnet run --project Aspire-Full
-```
+| Project | Description |
+|---------|-------------|
+| **Aspire-Full.Tests.Unit** | xUnit tests for core logic. |
+| **Aspire-Full.Tests.E2E** | End-to-End tests using Playwright/Aspire Test Host. |
+| **Aspire-Full.Gateway.Tests.*** | Specialized tests for the Gateway (Unit, Integration, Engine). |
 
 ## Key Technologies
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| .NET SDK | 10.0.100 | Runtime and build |
-| Aspire | 13.0.1 | Distributed app orchestration |
-| EF Core | 10.0.0-preview | ORM with PostgreSQL |
-| Docker | 28.x | Containerization |
-| React | 19.x | Frontend SPA |
-| CUDA | 12.x | GPU Acceleration |
+- **.NET 10**: The runtime for all managed code.
+- **Aspire 13.0.1**: Orchestration.
+- **CUDA 12+**: GPU acceleration for `Aspire-Full.Tensor`.
+- **PostgreSQL**: Primary relational database.
+- **Qdrant**: Vector database.
+- **React 19**: Frontend framework.
 
-## Project Structure
+## Development Rules
 
-```
-Aspire-Full/
-├── .devcontainer/          # Docker devcontainer config
-├── .github/workflows/      # CI/CD pipelines
-├── Aspire-Full/            # AppHost project
-├── Aspire-Full.Api/        # REST API with EF Core
-├── Aspire-Full.Tensor/     # High-performance Tensor operations (C# + CUDA)
-│   ├── Native/             # C++ CUDA kernels and CMake build
-│   └── Services/           # Managed GpuTensor<T> wrappers
-├── Aspire-Full.Web/        # React frontend
-├── Aspire-Full.Tests.Unit/ # Unit tests (xUnit)
-├── Aspire-Full.Tests.E2E/  # E2E tests (NUnit)
-├── docs/                   # Documentation
-├── scripts/                # Automation scripts
-└── llms.txt                # AI documentation index
-```
+1.  **DTOs**: Always check `Aspire-Full.Shared` before creating new models.
+2.  **Native Code**: `Aspire-Full.Tensor/Native` contains C++ CUDA code. Build with `docker buildx bake`.
+3.  **Documentation**: All public APIs must have XML documentation.
 
-## Tensor Operations (Aspire-Full.Tensor)
-
-The `Aspire-Full.Tensor` project provides high-performance GPU-accelerated tensor operations using a hybrid C#/.NET 10 and C++/CUDA architecture.
-
-### Key Components
-- **GpuTensor<T>**: A generic RAII wrapper for GPU memory management. Supports `float` and `long`.
-- **TensorComputeService**: High-level service for executing operations like Matrix Multiplication, Mean Pooling, and ReLU.
-- **Native Build**: Uses `docker buildx bake` to compile CUDA kernels (`.cpp` files) into a shared library (`.so`/`.dll`) which is P/Invoked by the managed layer.
-
-### API Endpoints
-
-### Items API
-- `GET /api/items` - List items
-- `POST /api/items` - Create item
-- `PUT /api/items/{id}` - Update item
-- `DELETE /api/items/{id}` - Delete item
-
-### Users API (Upsert/Downsert)
-- `GET /api/users` - List active users
-- `POST /api/users` - Upsert: Create or reactivate
-- `DELETE /api/users/{id}` - Downsert: Soft delete
-- `POST /api/users/{id}/login` - Record login
-
-### Admin API
-- `GET /api/admin/users` - All users (including deleted)
-- `POST /api/admin/users/{id}/promote` - Promote to Admin
-- `POST /api/admin/users/{id}/reactivate` - Reactivate user
-- `DELETE /api/admin/users/{id}/permanent` - Hard delete
-- `GET /api/admin/stats` - Admin statistics
-
-## Database Schema
-
-```
-Users (soft-delete enabled)
-├── Id, Email (unique), DisplayName
-├── Role (User/Admin), IsActive
-├── CreatedAt, UpdatedAt, DeletedAt, LastLoginAt
-└── Items (1:N navigation)
-
-Items
-├── Id, Name, Description
-├── CreatedAt, UpdatedAt
-└── CreatedByUserId (FK → Users, nullable)
-```
-
-## Optional
-
-- [Contributing Guidelines](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/CONTRIBUTING.md)
-- [Changelog](https://github.com/DeanLuus22021994/Aspire-Full/blob/master/CHANGELOG.md)

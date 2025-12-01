@@ -21,4 +21,7 @@
   <Project Path="Aspire-Full.Gateway.Tests.Engine/Aspire-Full.Gateway.Tests.Engine.csproj" />
   <Project Path="Aspire-Full.Gateway.Tests.Unit/Aspire-Full.Gateway.Tests.Unit.csproj" />
   <Project Path="Aspire-Full.Gateway.Tests.Integration/Aspire-Full.Gateway.Tests.Integration.csproj" />
+  <Project Path="Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
+  <Project Path="Aspire-Full.Web/Aspire-Full.Web.csproj" />
+  <Project Path="Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
 </Solution>
