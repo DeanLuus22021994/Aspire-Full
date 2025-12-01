@@ -101,5 +101,12 @@ public static class CommandConstants
     {
         public const string Name = "pipeline";
         public const string Description = "Run the full build/test/run pipeline";
+
+        public const string SolutionDesc = "Solution to build";
+        public const string ProjectDesc = "AppHost project";
+        public const string ConfigDesc = "Build configuration";
+        public const string SkipRunDesc = "Skip the final dotnet run step";
+        public const string VerifyOnlyDesc = "Run format in verify mode";
+        public const string NoRestoreDesc = "Skip restore";
     }
 }
