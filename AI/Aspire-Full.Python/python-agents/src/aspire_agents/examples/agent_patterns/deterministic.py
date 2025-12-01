@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, Runner, trace  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner, trace
 from pydantic import BaseModel
 
 # This example demonstrates a deterministic flow, where each step is performed by an agent.

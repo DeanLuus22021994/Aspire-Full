@@ -18,12 +18,12 @@ class AppContext(BaseModel):
     )
 
 
-def french_spanish_enabled(ctx: RunContextWrapper[AppContext], _agent: Agent) -> bool:
+def french_spanish_enabled(ctx: RunContextWrapper[AppContext], _agent: object) -> bool:
     """Enable for French+Spanish and European preferences."""
     return ctx.context.language_preference in ["french_spanish", "european"]
 
 
-def european_enabled(ctx: RunContextWrapper[AppContext], _agent: Agent) -> bool:
+def european_enabled(ctx: RunContextWrapper[AppContext], _agent: object) -> bool:
     """Only enable for European preference."""
     return ctx.context.language_preference == "european"
 
@@ -58,17 +58,17 @@ orchestrator = Agent(
         spanish_agent.as_tool(
             tool_name="respond_spanish",
             tool_description="Respond to the user's question in Spanish",
-            # is_enabled=True,  # Always enabled
+            is_enabled=True,  # Always enabled
         ),
         french_agent.as_tool(
             tool_name="respond_french",
             tool_description="Respond to the user's question in French",
-            # is_enabled=french_spanish_enabled,
+            is_enabled=french_spanish_enabled,
         ),
         italian_agent.as_tool(
             tool_name="respond_italian",
             tool_description="Respond to the user's question in Italian",
-            # is_enabled=european_enabled,
+            is_enabled=european_enabled,
         ),
     ],
 )
