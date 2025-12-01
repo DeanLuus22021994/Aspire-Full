@@ -2,10 +2,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
+using Aspire_Full.DockerRegistry.Configuration;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddServiceDefaults();
+
+// Add Registry Server Services (GC, Workers)
+builder.Services.AddDockerRegistryServer(builder.Configuration);
 
 builder.Services.AddHostedService<RegistryWorker>();
 

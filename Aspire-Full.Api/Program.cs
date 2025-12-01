@@ -1,4 +1,5 @@
 using Aspire_Full.Api.Data;
+using Aspire_Full.Api.Extensions;
 using Aspire_Full.Api.Tensor;
 using Aspire_Full.Connectors;
 using Aspire_Full.DockerRegistry;
@@ -28,12 +29,9 @@ builder.AddRedisDistributedCache("redis");
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDockerRegistryClient(builder.Configuration);
-builder.Services.AddOptions<TensorModelCatalogOptions>()
-    .Bind(builder.Configuration.GetSection("TensorModels"))
-    .ValidateOnStart();
-builder.Services.AddSingleton<ITensorJobStore, InMemoryTensorJobStore>();
-builder.Services.AddSingleton<ITensorVectorBridge, TensorVectorBridge>();
-builder.Services.AddSingleton<ITensorJobCoordinator, TensorJobCoordinator>();
+
+// Add Tensor Orchestration
+builder.Services.AddTensorOrchestration(builder.Configuration);
 
 // Add Vector Store
 builder.Services.AddVectorStore(builder.Configuration);
