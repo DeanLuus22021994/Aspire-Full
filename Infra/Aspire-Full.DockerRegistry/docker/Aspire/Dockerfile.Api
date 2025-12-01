@@ -9,16 +9,17 @@ WORKDIR /src
 COPY ["Aspire-Full.slnx", "."]
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Build.targets", "."]
+COPY ["Directory.Packages.props", "."]
 COPY ["NuGet.config", "."]
 
 # Copy Projects
 COPY ["Web/Aspire-Full.Api/", "Web/Aspire-Full.Api/"]
 COPY ["Infra/Aspire-Full.ServiceDefaults/", "Infra/Aspire-Full.ServiceDefaults/"]
 COPY ["Infra/Aspire-Full.DockerRegistry/", "Infra/Aspire-Full.DockerRegistry/"]
+COPY ["Core/Aspire-Full.Shared/", "Core/Aspire-Full.Shared/"]
 COPY ["Core/Aspire-Full.Connectors/", "Core/Aspire-Full.Connectors/"]
 COPY ["AI/Aspire-Full.Tensor/", "AI/Aspire-Full.Tensor/"]
 COPY ["AI/Aspire-Full.VectorStore/", "AI/Aspire-Full.VectorStore/"]
-COPY ["AI/Aspire-Full.Qdrant/", "AI/Aspire-Full.Qdrant/"]
 
 # Restore and Publish
 WORKDIR /src/Web/Aspire-Full.Api

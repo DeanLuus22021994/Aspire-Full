@@ -9,13 +9,14 @@ WORKDIR /src
 COPY ["Aspire-Full.slnx", "."]
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Build.targets", "."]
+COPY ["Directory.Packages.props", "."]
 COPY ["NuGet.config", "."]
 
 # Copy Projects
 COPY ["Web/Aspire-Full.Gateway/", "Web/Aspire-Full.Gateway/"]
 COPY ["Infra/Aspire-Full.ServiceDefaults/", "Infra/Aspire-Full.ServiceDefaults/"]
+COPY ["Core/Aspire-Full.Shared/", "Core/Aspire-Full.Shared/"]
 COPY ["AI/Aspire-Full.Embeddings/", "AI/Aspire-Full.Embeddings/"]
-COPY ["AI/Aspire-Full.Qdrant/", "AI/Aspire-Full.Qdrant/"]
 COPY ["AI/Aspire-Full.VectorStore/", "AI/Aspire-Full.VectorStore/"]
 
 # Restore and Publish

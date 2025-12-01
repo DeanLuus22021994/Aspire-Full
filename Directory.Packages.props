@@ -32,7 +32,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.0.0-alpha.1.25208.3" />
     <PackageVersion Include="Microsoft.Extensions.VectorData.Abstractions" Version="9.7.0" />
     <PackageVersion Include="Microsoft.Extensions.Features" Version="10.0.1-servicing.25561.5" />
 

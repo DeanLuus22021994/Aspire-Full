@@ -7,8 +7,8 @@ LABEL org.opencontainers.image.licenses="MIT"
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Enable Python Free Threading (No GIL) and JIT
-ENV PYTHON_GIL=0
-ENV PYTHON_3_14_FREE_THREADING=1
+# ENV PYTHON_GIL=0
+# ENV PYTHON_3_14_FREE_THREADING=1
 ENV PYTHON_JIT=1
 
 # Install system dependencies
