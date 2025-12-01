@@ -35,4 +35,34 @@ public static partial class NativeMethods
         int numElements,
         float threshold,
         ref TensorMetrics metrics);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void MatrixMultiply(
+        [In] float[] a,
+        [In] float[] b,
+        [Out] float[] result,
+        int M,
+        int N,
+        int K,
+        ref TensorMetrics metrics);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void MeanPooling(
+        [In] float[] input,
+        [In] long[] attentionMask,
+        [Out] float[] output,
+        int batchSize,
+        int seqLen,
+        int hiddenSize,
+        ref TensorMetrics metrics);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void ReluActivation(
+        [In] float[] input,
+        [Out] float[] output,
+        int numElements,
+        ref TensorMetrics metrics);
 }
