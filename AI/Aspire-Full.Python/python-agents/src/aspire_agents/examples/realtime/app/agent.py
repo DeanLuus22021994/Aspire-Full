@@ -4,11 +4,11 @@ This module defines the agents and tools for the Realtime Agent app.
 
 import asyncio
 
-from agents import function_tool  # type: ignore # pylint: disable=import-error
-from agents.extensions.handoff_prompt import (  # type: ignore # pylint: disable=import-error
+from agents import function_tool
+from agents.extensions.handoff_prompt import (
     RECOMMENDED_PROMPT_PREFIX,
 )
-from agents.realtime import (  # type: ignore # pylint: disable=import-error
+from agents.realtime import (
     RealtimeAgent,
     realtime_handoff,
 )
@@ -100,7 +100,9 @@ seat_booking_agent = RealtimeAgent(
 
 triage_agent = RealtimeAgent(
     name="Triage Agent",
-    handoff_description=("A triage agent that can delegate a customer's request to the appropriate agent."),
+    handoff_description=(
+        "A triage agent that can delegate a customer's request to the appropriate agent."
+    ),
     instructions=(
         f"{RECOMMENDED_PROMPT_PREFIX} "
         "You are a helpful triaging agent. You can use your tools to delegate questions to "
