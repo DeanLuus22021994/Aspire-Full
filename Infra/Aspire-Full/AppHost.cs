@@ -151,7 +151,7 @@ else
     var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>(AppHostConstants.Resources.Gateway);
     ConfigureGateway(gateway);
 
-    var frontend = builder.AddJavaScriptApp(AppHostConstants.Resources.Frontend, "../Aspire-Full.Web", "dev")
+    var frontend = builder.AddJavaScriptApp(AppHostConstants.Resources.Frontend, "../../Web/Aspire-Full.Web", "dev")
         .WithHttpEndpoint(env: "PORT")
         .WithExternalHttpEndpoints();
     ConfigureFrontend(frontend, api);
@@ -171,7 +171,11 @@ else
         .WithExternalHttpEndpoints();
     ConfigureWasmProd(wasmProd, api);
 
-    var pythonAgents = builder.AddDockerfile(AppHostConstants.Resources.PythonAgents, "..", "Aspire-Full.Python/python-agents/Dockerfile.agent")
+    var agents = builder.AddProject<Projects.Aspire_Full_Agents>("agents")
+        .WithReference(qdrant)
+        .WithReference(redis);
+
+    var pythonAgents = builder.AddDockerfile(AppHostConstants.Resources.PythonAgents, "../../AI", "Aspire-Full.Python/python-agents/Dockerfile.agent")
         .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.PythonAgents, targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName)
         .WithExternalHttpEndpoints();
