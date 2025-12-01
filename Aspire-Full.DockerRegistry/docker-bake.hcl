@@ -30,8 +30,6 @@ target "base-native" {
   context = "Aspire-Full.DockerRegistry/docker"
   dockerfile = "Dockerfile.base-native"
   tags = ["${REGISTRY}/${NAMESPACE}/base-native:latest"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest,mode=max"]
 }
 
 target "base-dotnet" {
