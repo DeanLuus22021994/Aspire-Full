@@ -14,6 +14,7 @@ services:
               capabilities: [gpu]
     environment:
       - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__aspiredb=Host=postgres;Database=aspiredb;Username=postgres;Password=postgres
       - ConnectionStrings__redis=redis:6379
       - DockerRegistry__BaseAddress=http://registry:5000/
