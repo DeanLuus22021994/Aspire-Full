@@ -30,18 +30,38 @@ public static partial class NativeMethods
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial int ValidateTensorContent(
-        [In] float[] data,
-        int numElements,
-        float threshold,
-        ref TensorMetrics metrics);
+    public static partial IntPtr AllocateDeviceMemory(ulong sizeBytes);
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial void MatrixMultiply(
-        [In] float[] a,
-        [In] float[] b,
-        [Out] float[] result,
+    public static partial void FreeDeviceMemory(IntPtr d_ptr);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void CopyToDevice(IntPtr d_dst, [In] float[] h_src, ulong sizeBytes);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void CopyToHost([Out] float[] h_dst, IntPtr d_src, ulong sizeBytes);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial IntPtr AllocateDeviceMemoryLong(ulong sizeBytes);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void FreeDeviceMemoryLong(IntPtr d_ptr);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void CopyToDeviceLong(IntPtr d_dst, [In] long[] h_src, ulong sizeBytes);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void MatrixMultiply_GPU(
+        IntPtr d_A,
+        IntPtr d_B,
+        IntPtr d_C,
         int M,
         int N,
         int K,
@@ -49,10 +69,10 @@ public static partial class NativeMethods
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial void MeanPooling(
-        [In] float[] input,
-        [In] long[] attentionMask,
-        [Out] float[] output,
+    public static partial void MeanPooling_GPU(
+        IntPtr d_Input,
+        IntPtr d_AttentionMask,
+        IntPtr d_Output,
         int batchSize,
         int seqLen,
         int hiddenSize,
@@ -60,9 +80,9 @@ public static partial class NativeMethods
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial void ReluActivation(
-        [In] float[] input,
-        [Out] float[] output,
+    public static partial void ReluActivation_GPU(
+        IntPtr d_Input,
+        IntPtr d_Output,
         int numElements,
         ref TensorMetrics metrics);
 }

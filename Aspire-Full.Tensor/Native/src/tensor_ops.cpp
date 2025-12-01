@@ -103,12 +103,139 @@ __global__ void reluKernel(const float* input, float* output, int numElements) {
  *
  * @return Number of CUDA devices found, or -1 on error.
  */
+// ...existing code...
 EXPORT int InitTensorContext() {
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
     if (err != cudaSuccess) return -1;
     return deviceCount;
 }
+
+// --- Memory Management ---
+
+EXPORT float* AllocateDeviceMemory(size_t sizeBytes) {
+    float* d_ptr = NULL;
+    if (cudaMalloc((void**)&d_ptr, sizeBytes) != cudaSuccess) return NULL;
+    return d_ptr;
+}
+
+EXPORT void FreeDeviceMemory(float* d_ptr) {
+    cudaFree(d_ptr);
+}
+
+EXPORT void CopyToDevice(float* d_dst, const float* h_src, size_t sizeBytes) {
+    cudaMemcpy(d_dst, h_src, sizeBytes, cudaMemcpyHostToDevice);
+}
+
+EXPORT void CopyToHost(float* h_dst, const float* d_src, size_t sizeBytes) {
+    cudaMemcpy(h_dst, d_src, sizeBytes, cudaMemcpyDeviceToHost);
+}
+
+EXPORT long long* AllocateDeviceMemoryLong(size_t sizeBytes) {
+    long long* d_ptr = NULL;
+    if (cudaMalloc((void**)&d_ptr, sizeBytes) != cudaSuccess) return NULL;
+    return d_ptr;
+}
+
+EXPORT void FreeDeviceMemoryLong(long long* d_ptr) {
+    cudaFree(d_ptr);
+}
+
+EXPORT void CopyToDeviceLong(long long* d_dst, const long long* h_src, size_t sizeBytes) {
+    cudaMemcpy(d_dst, h_src, sizeBytes, cudaMemcpyHostToDevice);
+}
+
+// --- Compute Operations (GPU) ---
+
+EXPORT void MatrixMultiply_GPU(const float* d_A, const float* d_B, float* d_C, int M, int N, int K, TensorMetrics* metrics) {
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    dim3 threadsPerBlock(16, 16);
+    dim3 blocksPerGrid((N + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                       (M + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+    cudaEventRecord(start);
+#ifdef __CUDACC__
+    matMulKernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, M, N, K);
+#else
+    matMulKernel(d_A, d_B, d_C, M, N, K);
+#endif
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    if (metrics != NULL) {
+        metrics->compute_time_ms = milliseconds;
+        metrics->active_kernels = 1;
+        // Memory usage is not tracked per-op here as we don't allocate
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+EXPORT void MeanPooling_GPU(const float* d_Input, const long long* d_AttentionMask, float* d_Output, int batchSize, int seqLen, int hiddenSize, TensorMetrics* metrics) {
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    int threadsPerBlock = 256;
+    dim3 grid( (hiddenSize + threadsPerBlock - 1) / threadsPerBlock, 1, batchSize);
+
+    cudaEventRecord(start);
+#ifdef __CUDACC__
+    meanPoolingKernel<<<grid, threadsPerBlock>>>(d_Input, d_AttentionMask, d_Output, batchSize, seqLen, hiddenSize);
+#else
+    meanPoolingKernel(d_Input, d_AttentionMask, d_Output, batchSize, seqLen, hiddenSize);
+#endif
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    if (metrics != NULL) {
+        metrics->compute_time_ms = milliseconds;
+        metrics->active_kernels = 1;
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+EXPORT void ReluActivation_GPU(const float* d_Input, float* d_Output, int numElements, TensorMetrics* metrics) {
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    int threadsPerBlock = 256;
+    int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+
+    cudaEventRecord(start);
+#ifdef __CUDACC__
+    reluKernel<<<blocksPerGrid, threadsPerBlock>>>(d_Input, d_Output, numElements);
+#else
+    reluKernel(d_Input, d_Output, numElements);
+#endif
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    if (metrics != NULL) {
+        metrics->compute_time_ms = milliseconds;
+        metrics->active_kernels = 1;
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
 
 /**
  * @brief Computes a tensor operation (Vector Addition).

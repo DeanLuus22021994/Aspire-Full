@@ -18,10 +18,22 @@ struct TensorMetrics {
 };
 
 EXPORT int InitTensorContext();
-EXPORT void ComputeTensorOp(const float* h_A, const float* h_B, float* h_C, int numElements, TensorMetrics* metrics);
-EXPORT int ValidateTensorContent(const float* h_Data, int numElements, float threshold, TensorMetrics* metrics);
 
-// Enhanced Operations
-EXPORT void MatrixMultiply(const float* h_A, const float* h_B, float* h_C, int M, int N, int K, TensorMetrics* metrics);
-EXPORT void MeanPooling(const float* h_Input, const long long* h_AttentionMask, float* h_Output, int batchSize, int seqLen, int hiddenSize, TensorMetrics* metrics);
-EXPORT void ReluActivation(const float* h_Input, float* h_Output, int numElements, TensorMetrics* metrics);
+// Memory Management
+EXPORT float* AllocateDeviceMemory(size_t sizeBytes);
+EXPORT void FreeDeviceMemory(float* d_ptr);
+EXPORT void CopyToDevice(float* d_dst, const float* h_src, size_t sizeBytes);
+EXPORT void CopyToHost(float* h_dst, const float* d_src, size_t sizeBytes);
+
+EXPORT long long* AllocateDeviceMemoryLong(size_t sizeBytes);
+EXPORT void FreeDeviceMemoryLong(long long* d_ptr);
+EXPORT void CopyToDeviceLong(long long* d_dst, const long long* h_src, size_t sizeBytes);
+
+// Compute Operations (Inputs/Outputs are DEVICE pointers)
+EXPORT void MatrixMultiply_GPU(const float* d_A, const float* d_B, float* d_C, int M, int N, int K, TensorMetrics* metrics);
+EXPORT void MeanPooling_GPU(const float* d_Input, const long long* d_AttentionMask, float* d_Output, int batchSize, int seqLen, int hiddenSize, TensorMetrics* metrics);
+EXPORT void ReluActivation_GPU(const float* d_Input, float* d_Output, int numElements, TensorMetrics* metrics);
+
+// Legacy/Convenience (Host pointers) - kept for backward compatibility if needed, or removed.
+// Removing to enforce new pattern.
+

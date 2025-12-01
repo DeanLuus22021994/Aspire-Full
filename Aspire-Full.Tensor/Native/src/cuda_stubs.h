@@ -19,7 +19,10 @@ typedef int cudaEvent_t;
 #define NULL 0
 #endif
 
-struct dim3 { int x, y, z; };
+struct dim3 {
+    int x, y, z;
+    dim3(int x = 1, int y = 1, int z = 1) : x(x), y(y), z(z) {}
+};
 extern dim3 blockDim;
 extern dim3 blockIdx;
 extern dim3 threadIdx;
