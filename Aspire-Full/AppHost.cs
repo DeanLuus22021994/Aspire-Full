@@ -171,7 +171,7 @@ else
         .WithExternalHttpEndpoints();
     ConfigureWasmProd(wasmProd, api);
 
-    var pythonAgents = builder.AddDockerfile(AppHostConstants.Resources.PythonAgents, "..", "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent")
+    var pythonAgents = builder.AddDockerfile(AppHostConstants.Resources.PythonAgents, "..", "Aspire-Full.Python/python-agents/Dockerfile.agent")
         .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.PythonAgents, targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName)
         .WithExternalHttpEndpoints();

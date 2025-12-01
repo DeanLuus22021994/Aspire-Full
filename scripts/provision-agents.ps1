@@ -14,7 +14,7 @@ if (!(docker ps --filter "name=registry" --format "{{.Names}}")) {
 }
 
 Write-Host "Building Agent Image..." -ForegroundColor Green
-docker build -t $FullImageName -f Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent .
+docker build -t $FullImageName -f Aspire-Full.Python/python-agents/Dockerfile.agent .
 
 Write-Host "Pushing to Internal Registry..." -ForegroundColor Green
 docker push $FullImageName
