@@ -6,15 +6,13 @@ import queue
 import threading
 import time
 from concurrent.futures import Future
-from typing import List, cast
+from typing import TYPE_CHECKING, List, cast
 
 import torch
-from transformers import (  # type: ignore
-    AutoModel,
-    AutoTokenizer,
-    PreTrainedModel,
-    PreTrainedTokenizerBase,
-)
+from transformers import AutoModel, AutoTokenizer  # type: ignore
+
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel, PreTrainedTokenizerBase  # type: ignore
 
 from .gpu import ensure_tensor_core_gpu
 
@@ -58,10 +56,12 @@ class BatchComputeService:
             # Load tokenizer and model directly to GPU
             # type: ignore[no-untyped-call]
             self.tokenizer = cast(
-                PreTrainedTokenizerBase, AutoTokenizer.from_pretrained(model_name)
+                "PreTrainedTokenizerBase",
+                AutoTokenizer.from_pretrained(model_name),  # type: ignore
             )
             self.model = cast(
-                PreTrainedModel, AutoModel.from_pretrained(model_name).to(self.device)
+                "PreTrainedModel",
+                AutoModel.from_pretrained(model_name).to(self.device),  # type: ignore
             )
             self.model.eval()
 
