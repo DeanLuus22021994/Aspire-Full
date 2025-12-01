@@ -44,6 +44,35 @@ public class CiModule
         runnerCommand.AddCommand(logsCommand);
 
         command.AddCommand(runnerCommand);
+
+        // Cache command
+        var cacheCommand = new Command("cache", "Manage GitHub Actions cache");
+
+        var cacheListCommand = new Command("list", "List cache entries");
+        cacheListCommand.SetHandler(CacheListAsync);
+
+        var cacheDeleteCommand = new Command("delete", "Delete a cache entry");
+        var keyOption = new Option<string>(["--key", "-k"], "Cache key to delete");
+        cacheDeleteCommand.AddOption(keyOption);
+        cacheDeleteCommand.SetHandler(CacheDeleteAsync, keyOption);
+
+        var cacheClearCommand = new Command("clear", "Clear all cache entries");
+        cacheClearCommand.SetHandler(CacheClearAsync);
+
+        cacheCommand.AddCommand(cacheListCommand);
+        cacheCommand.AddCommand(cacheDeleteCommand);
+        cacheCommand.AddCommand(cacheClearCommand);
+
+        command.AddCommand(cacheCommand);
+
+        // SBOM command
+        var sbomCommand = new Command("sbom", "Generate SBOM");
+        var outputOption = new Option<string>(["--output", "-o"], () => "sbom.json", "Output file path");
+        sbomCommand.AddOption(outputOption);
+        sbomCommand.SetHandler(GenerateSbomAsync, outputOption);
+
+        command.AddCommand(sbomCommand);
+
         return command;
     }
 
