@@ -6,21 +6,20 @@ FROM base-dotnet AS dotnet-build
 WORKDIR /src
 
 # Copy Solution and Config Files
-COPY ["Aspire-Full.slnf", "."]
 COPY ["Aspire-Full.slnx", "."]
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Build.targets", "."]
 COPY ["NuGet.config", "."]
 
 # Copy Projects
-COPY ["Aspire-Full.Gateway/", "Aspire-Full.Gateway/"]
-COPY ["Aspire-Full.ServiceDefaults/", "Aspire-Full.ServiceDefaults/"]
-COPY ["Aspire-Full.Embeddings/", "Aspire-Full.Embeddings/"]
-COPY ["Aspire-Full.Qdrant/", "Aspire-Full.Qdrant/"]
-COPY ["Aspire-Full.VectorStore/", "Aspire-Full.VectorStore/"]
+COPY ["Web/Aspire-Full.Gateway/", "Web/Aspire-Full.Gateway/"]
+COPY ["Infra/Aspire-Full.ServiceDefaults/", "Infra/Aspire-Full.ServiceDefaults/"]
+COPY ["AI/Aspire-Full.Embeddings/", "AI/Aspire-Full.Embeddings/"]
+COPY ["AI/Aspire-Full.Qdrant/", "AI/Aspire-Full.Qdrant/"]
+COPY ["AI/Aspire-Full.VectorStore/", "AI/Aspire-Full.VectorStore/"]
 
 # Restore and Publish
-WORKDIR /src/Aspire-Full.Gateway
+WORKDIR /src/Web/Aspire-Full.Gateway
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \

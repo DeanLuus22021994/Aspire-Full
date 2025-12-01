@@ -6,23 +6,22 @@ FROM base-dotnet AS dotnet-build
 WORKDIR /src
 
 # Copy Solution and Config Files
-COPY ["Aspire-Full.slnf", "."]
 COPY ["Aspire-Full.slnx", "."]
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Build.targets", "."]
 COPY ["NuGet.config", "."]
 
 # Copy Projects
-COPY ["Aspire-Full.Api/", "Aspire-Full.Api/"]
-COPY ["Aspire-Full.ServiceDefaults/", "Aspire-Full.ServiceDefaults/"]
-COPY ["Aspire-Full.DockerRegistry/", "Aspire-Full.DockerRegistry/"]
-COPY ["Aspire-Full.Connectors/", "Aspire-Full.Connectors/"]
-COPY ["Aspire-Full.Tensor/", "Aspire-Full.Tensor/"]
-COPY ["Aspire-Full.VectorStore/", "Aspire-Full.VectorStore/"]
-COPY ["Aspire-Full.Qdrant/", "Aspire-Full.Qdrant/"]
+COPY ["Web/Aspire-Full.Api/", "Web/Aspire-Full.Api/"]
+COPY ["Infra/Aspire-Full.ServiceDefaults/", "Infra/Aspire-Full.ServiceDefaults/"]
+COPY ["Infra/Aspire-Full.DockerRegistry/", "Infra/Aspire-Full.DockerRegistry/"]
+COPY ["Core/Aspire-Full.Connectors/", "Core/Aspire-Full.Connectors/"]
+COPY ["AI/Aspire-Full.Tensor/", "AI/Aspire-Full.Tensor/"]
+COPY ["AI/Aspire-Full.VectorStore/", "AI/Aspire-Full.VectorStore/"]
+COPY ["AI/Aspire-Full.Qdrant/", "AI/Aspire-Full.Qdrant/"]
 
 # Restore and Publish
-WORKDIR /src/Aspire-Full.Api
+WORKDIR /src/Web/Aspire-Full.Api
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \

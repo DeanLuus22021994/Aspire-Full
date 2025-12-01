@@ -2,17 +2,16 @@ FROM base-dotnet AS build
 WORKDIR /src
 
 # Copy Solution and Config Files
-COPY ["Aspire-Full.slnf", "."]
 COPY ["Aspire-Full.slnx", "."]
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Build.targets", "."]
 COPY ["NuGet.config", "."]
 
-COPY ["Aspire-Full.WebAssembly/", "Aspire-Full.WebAssembly/"]
-COPY ["Aspire-Full.ServiceDefaults/", "Aspire-Full.ServiceDefaults/"]
-COPY ["Aspire-Full.Tensor/", "Aspire-Full.Tensor/"]
+COPY ["Web/Aspire-Full.WebAssembly/", "Web/Aspire-Full.WebAssembly/"]
+COPY ["Infra/Aspire-Full.ServiceDefaults/", "Infra/Aspire-Full.ServiceDefaults/"]
+COPY ["AI/Aspire-Full.Tensor/", "AI/Aspire-Full.Tensor/"]
 
-WORKDIR /src/Aspire-Full.WebAssembly
+WORKDIR /src/Web/Aspire-Full.WebAssembly
 RUN dotnet restore
 RUN dotnet publish "Aspire-Full.WebAssembly.csproj" -c Release -o /app/publish
 
@@ -23,5 +22,5 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 WORKDIR /usr/share/nginx/html
 COPY --from=build /app/publish/wwwroot .
-COPY ["Aspire-Full.WebAssembly/nginx.conf", "/etc/nginx/conf.d/default.conf"]
+COPY ["Web/Aspire-Full.WebAssembly/nginx.conf", "/etc/nginx/conf.d/default.conf"]
 EXPOSE 80
