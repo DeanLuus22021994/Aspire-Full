@@ -24,7 +24,7 @@ COPY ["AI/Aspire-Full.VectorStore/", "AI/Aspire-Full.VectorStore/"]
 # Restore and Publish
 WORKDIR /src/Web/Aspire-Full.Api
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
-    dotnet restore
+    dotnet restore /p:NoWarn=NU1109;NU1603
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "Aspire-Full.Api.csproj" -c Release -r linux-x64 --self-contained true -o /app/publish /p:UseAppHost=true
 

@@ -3,36 +3,45 @@ Example MCP server using Streamable HTTP transport.
 """
 
 import random
+from typing import Any, Callable, TypeVar, cast
 
-import requests  # type: ignore # pylint: disable=import-error
-from mcp.server.fastmcp import FastMCP  # type: ignore # pylint: disable=import-error
+import requests
+from mcp.server.fastmcp import FastMCP
 
 # Create server
-mcp = FastMCP("Echo Server")
+mcp: Any = FastMCP("Echo Server")
 
 
-@mcp.tool()
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def tool() -> Callable[[F], F]:
+    """Typed wrapper for mcp.tool decorator."""
+    return cast(Callable[[F], F], mcp.tool())
+
+
+@tool()
 def add(a: int, b: int) -> int:
     """Add two numbers"""
     print(f"[debug-server] add({a}, {b})")
     return a + b
 
 
-@mcp.tool()
+@tool()
 def get_secret_word() -> str:
     """Get a secret word."""
     print("[debug-server] get_secret_word()")
     return random.choice(["apple", "banana", "cherry"])
 
 
-@mcp.tool()
+@tool()
 def get_current_weather(city: str) -> str:
     """Get the current weather for a city."""
     print(f"[debug-server] get_current_weather({city})")
 
     endpoint = "https://wttr.in"
-    response = requests.get(f"{endpoint}/{city}", timeout=10)
-    return response.text
+    response: Any = requests.get(f"{endpoint}/{city}", timeout=10)
+    return str(response.text)
 
 
 if __name__ == "__main__":
