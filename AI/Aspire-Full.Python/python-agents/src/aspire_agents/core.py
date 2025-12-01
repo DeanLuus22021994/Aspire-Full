@@ -7,7 +7,9 @@ from typing import Any, Callable, cast
 
 from agents import Agent as OpenAIAgent  # type: ignore # pylint: disable=import-error
 from agents import Runner as OpenAIRunner  # type: ignore # pylint: disable=import-error
-from agents import function_tool as _original_function_tool  # type: ignore # pylint: disable=import-error
+from agents import (
+    function_tool as _original_function_tool,  # type: ignore # pylint: disable=import-error
+)
 
 from .compute import get_compute_service
 from .guardrails import (
@@ -29,16 +31,18 @@ __all__ = [
 ]
 
 
-def function_tool(func: Callable) -> Callable:
+def function_tool(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator that registers a function as a tool and enables semantic guardrails.
     """
 
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Context for guardrails
         class ToolContext:
-            def __init__(self, name, args, kwargs):
+            def __init__(
+                self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+            ) -> None:
                 self.tool_name = name
                 self.tool_arguments = kwargs if kwargs else args
 

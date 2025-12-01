@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 
 try:  # pylint: disable=import-error
     import torch  # type: ignore
@@ -68,7 +68,9 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
         )
 
     device_index = 0
-    props = torch.cuda.get_device_properties(device_index)
+    # Cast torch to Any to avoid partial type errors from the library
+    torch_any = cast(Any, torch)
+    props = torch_any.cuda.get_device_properties(device_index)
     total_memory = props.total_memory
     gpu_name = props.name
     major, minor = torch.cuda.get_device_capability(device_index)

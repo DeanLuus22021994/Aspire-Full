@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import yaml
 
@@ -30,7 +30,7 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("Agent config root must be a mapping")
-    return data
+    return cast(dict[str, Any], data)
 
 
 @dataclass(slots=True)
@@ -51,11 +51,14 @@ class ModelConfig:
         if not isinstance(data, dict):  # pragma: no cover - defensive
             raise ValueError("model section must be a string or mapping")
 
+        data_dict = cast(dict[str, Any], data)
         return cls(
-            provider=data.get("provider", "openai"),
-            name=str(data.get("name", data.get("deployment", "gpt-4.1-mini"))),
-            deployment=data.get("deployment"),
-            endpoint=data.get("endpoint"),
+            provider=cast(ProviderLiteral, data_dict.get("provider", "openai")),
+            name=str(
+                data_dict.get("name", data_dict.get("deployment", "gpt-4.1-mini"))
+            ),
+            deployment=cast(str | None, data_dict.get("deployment")),
+            endpoint=cast(str | None, data_dict.get("endpoint")),
         )
 
 
@@ -69,28 +72,30 @@ class AgentConfig:
     model: ModelConfig
     temperature: float = 0.0
     top_p: float | None = None
-    handoffs: list[str] = field(default_factory=list)
-    tags: list[str] = field(default_factory=list)
+    handoffs: list[str] = field(default_factory=lambda: cast(list[str], []))
+    tags: list[str] = field(default_factory=lambda: cast(list[str], []))
 
     @classmethod
     def from_file(cls, path: Path) -> "AgentConfig":
         """Parse an agent manifest from disk."""
         payload = _load_yaml(path)
         base = path.parent
-        prompt_body = _read_prompt(base, payload.get("prompt"))
+        prompt_body = _read_prompt(base, cast(str | None, payload.get("prompt")))
         model = ModelConfig.from_mapping(payload.get("model"))
 
         return cls(
-            name=payload.get("name", base.name),
-            description=payload.get("description", ""),
+            name=cast(str, payload.get("name", base.name)),
+            description=cast(str, payload.get("description", "")),
             prompt=prompt_body,
             model=model,
-            temperature=float(payload.get("temperature", 0.2)),
+            temperature=float(cast(float | str, payload.get("temperature", 0.2))),
             top_p=(
-                float(payload["top_p"]) if payload.get("top_p") is not None else None
+                float(cast(float | str, payload["top_p"]))
+                if payload.get("top_p") is not None
+                else None
             ),
-            handoffs=list(payload.get("handoffs", [])),
-            tags=list(payload.get("tags", [])),
+            handoffs=cast(list[str], list(payload.get("handoffs", []))),
+            tags=cast(list[str], list(payload.get("tags", []))),
         )
 
     def as_prompt(self, user_input: str) -> str:

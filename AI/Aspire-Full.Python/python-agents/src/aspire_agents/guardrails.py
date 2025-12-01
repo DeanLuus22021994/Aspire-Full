@@ -5,7 +5,7 @@ Leverages LocalComputeService for high-performance, GPU-accelerated checks.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable, Optional, cast
 
 from .compute import get_compute_service
 
@@ -34,12 +34,16 @@ class ToolGuardrailFunctionOutput:
         self.message = message
 
     @classmethod
-    def reject_content(cls, message: str, output_info: dict[str, Any]) -> "ToolGuardrailFunctionOutput":
+    def reject_content(
+        cls, message: str, output_info: dict[str, Any]
+    ) -> "ToolGuardrailFunctionOutput":
         # In a real implementation, this would signal rejection to the runner
         return cls(output_info, message=message)
 
     @classmethod
-    def raise_exception(cls, output_info: dict[str, Any]) -> "ToolGuardrailFunctionOutput":
+    def raise_exception(
+        cls, output_info: dict[str, Any]
+    ) -> "ToolGuardrailFunctionOutput":
         raise ToolOutputGuardrailTripwireTriggered(cls(output_info))
 
 
@@ -48,7 +52,7 @@ class GuardrailService:
     Provides semantic guardrail checks using the local GPU model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.compute = get_compute_service()
         # Pre-compute embeddings for common restricted concepts
         self.restricted_concepts = {
@@ -69,16 +73,20 @@ class GuardrailService:
                 "vulnerability",
             ],
         }
-        self.concept_embeddings = {}
+        self.concept_embeddings: dict[str, Any] = {}
         self._precompute_embeddings()
 
-    def _precompute_embeddings(self):
+    def _precompute_embeddings(self) -> None:
         """Pre-compute embeddings for restricted concepts on the GPU."""
         for category, phrases in self.restricted_concepts.items():
             # Use sync method for initialization
-            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrases)
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(
+                phrases
+            )
 
-    async def check_semantic_similarity(self, text: str, category: str, threshold: float = 0.4) -> bool:
+    async def check_semantic_similarity(
+        self, text: str, category: str, threshold: float = 0.4
+    ) -> bool:
         """
         Check if text is semantically similar to a restricted category.
         Returns True if similarity exceeds threshold.
@@ -87,12 +95,15 @@ class GuardrailService:
             return False
 
         # Compute embedding for the input text asynchronously
-        text_embedding = await self.compute.compute_embedding(text)
+        text_embedding = cast(Any, await self.compute.compute_embedding(text))
 
         # Compute similarity against the category's pre-computed embeddings
         # (1, D) x (N, D)^T -> (1, N)
         # Note: Operations happen on CPU here, which is fast for final dot product
-        similarities = (text_embedding.unsqueeze(0) @ self.concept_embeddings[category].t()).squeeze(0)
+        category_embeddings = self.concept_embeddings[category]
+        similarities = (text_embedding.unsqueeze(0) @ category_embeddings.t()).squeeze(
+            0
+        )
 
         # Check if any phrase matches
         max_similarity = similarities.max().item()
@@ -109,14 +120,14 @@ class GuardrailService:
 
 
 # Singleton instance
-_GUARDRAIL_SERVICE = None
+_guardrail_service: GuardrailService | None = None
 
 
 def get_guardrail_service() -> GuardrailService:
-    global _GUARDRAIL_SERVICE  # pylint: disable=global-statement
-    if _GUARDRAIL_SERVICE is None:
-        _GUARDRAIL_SERVICE = GuardrailService()
-    return _GUARDRAIL_SERVICE
+    global _guardrail_service  # pylint: disable=global-statement
+    if _guardrail_service is None:
+        _guardrail_service = GuardrailService()
+    return _guardrail_service
 
 
 def semantic_input_guardrail(
@@ -132,7 +143,10 @@ def semantic_input_guardrail(
 
         if await service.check_semantic_similarity(args_str, category, threshold):
             return ToolGuardrailFunctionOutput.reject_content(
-                message=(f"Input blocked: content semantically similar to restricted " f"category '{category}'."),
+                message=(
+                    f"Input blocked: content semantically similar to restricted "
+                    f"category '{category}'."
+                ),
                 output_info={"blocked_category": category},
             )
 
