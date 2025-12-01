@@ -46,6 +46,7 @@ target "api" {
   contexts = {
     "base-native" = "target:base-native"
     "base-dotnet" = "target:base-dotnet"
+    "native-lib" = "target:native-lib"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/api-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/api-cache:${ENVIRONMENT}"]

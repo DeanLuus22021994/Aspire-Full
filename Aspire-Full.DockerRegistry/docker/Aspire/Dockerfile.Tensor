@@ -2,11 +2,11 @@
 
 # Stage 1: Builder (Compile dependencies and models)
 # Use NVIDIA CUDA Devel image to ensure CUDA libraries are available for any source builds
-FROM nvidia/cuda:13.0.0-devel-ubuntu24.04 AS builder
+FROM nvidia/cuda:12.6.0-devel-ubuntu24.04 AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
+    PIP_NO_CACHE_DIR=0 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,9 @@ WORKDIR /build
 
 # Install Python 3.11 and system dependencies
 # Python 3.11 is selected for maximum compatibility with PyTorch CUDA wheels
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update && apt-get install -y --no-install-recommends \
@@ -39,9 +41,11 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 COPY Aspire-Full.Python/python-agents/pyproject.toml .
 
 # Install PyTorch with CUDA 12.4 support
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 
-RUN pip install --no-cache-dir \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install \
         transformers \
         openai-agents \
         fastapi \
@@ -76,7 +80,8 @@ RUN pip install --no-cache-dir \
 RUN playwright install --with-deps chromium
 
 # Pre-download models to cache
-RUN python -c "from transformers import AutoTokenizer, AutoModel; \
+RUN --mount=type=cache,target=/root/.cache/huggingface \
+    python -c "from transformers import AutoTokenizer, AutoModel; \
     model_name = 'sentence-transformers/all-MiniLM-L6-v2'; \
     AutoTokenizer.from_pretrained(model_name); \
     AutoModel.from_pretrained(model_name)"
@@ -85,7 +90,7 @@ RUN python -c "from transformers import AutoTokenizer, AutoModel; \
 RUN python -m compileall /usr/local/lib/python3.11
 
 # Stage 2: Runtime (Minimal, GPU-optimized)
-FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS runtime
+FROM nvidia/cuda:12.6.0-runtime-ubuntu24.04 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Tensor Compute Service"
 LABEL org.opencontainers.image.licenses="MIT"
