@@ -30,26 +30,53 @@ except ImportError:
 if TYPE_CHECKING:
 
     class SoundDeviceInputStream:
+        """Mock class for sounddevice.InputStream."""
+
         read_available: int
         active: bool
 
-        def start(self) -> None: ...
-        def stop(self) -> None: ...
-        def close(self) -> None: ...
-        def read(self, _frames: int) -> tuple[np.ndarray, bool]: ...
+        def start(self) -> None:
+            """Start the input stream."""
+            ...
+
+        def stop(self) -> None:
+            """Stop the input stream."""
+            ...
+
+        def close(self) -> None:
+            """Close the input stream."""
+            ...
+
+        def read(self, _frames: int) -> tuple[np.ndarray, bool]:
+            """Read from the input stream."""
+            ...
 
     class SoundDeviceOutputStream:
+        """Mock class for sounddevice.OutputStream."""
+
         active: bool
 
-        def start(self) -> None: ...
-        def stop(self) -> None: ...
-        def close(self) -> None: ...
+        def start(self) -> None:
+            """Start the output stream."""
+            ...
+
+        def stop(self) -> None:
+            """Stop the output stream."""
+            ...
+
+        def close(self) -> None:
+            """Close the output stream."""
+            ...
 
     class SoundDeviceModule:
+        """Mock class for sounddevice module."""
+
         InputStream: type[SoundDeviceInputStream]
         OutputStream: type[SoundDeviceOutputStream]
 
-        def query_devices(self, _kind: str = "") -> dict[str, Any]: ...
+        def query_devices(self, _kind: str = "") -> dict[str, Any]:
+            """Query available devices."""
+            ...
 
     sd: SoundDeviceModule
 else:
@@ -79,7 +106,7 @@ def get_weather(city: str) -> str:
 
 agent = RealtimeAgent(
     name="Assistant",
-    instructions="You always greet the user with 'Top of the morning to you'.",
+    # instructions="You always greet the user with 'Top of the morning to you'.",
     tools=[get_weather],
 )
 
@@ -171,7 +198,7 @@ class NoUIDemo:
                 remaining_fade = self.fade_total_samples - self.fade_done_samples
                 n = min(remaining_output, remaining_fade)
 
-                src = samples[self.chunk_position:self.chunk_position + n].astype(
+                src = samples[self.chunk_position : self.chunk_position + n].astype(
                     np.float32
                 )
                 # Linear ramp from current level down to 0 across remaining fade samples
@@ -180,7 +207,7 @@ class NoUIDemo:
                 )
                 gain = 1.0 - (idx / float(self.fade_total_samples))
                 ramped = np.clip(src * gain, -32768.0, 32767.0).astype(np.int16)
-                outdata[samples_filled:samples_filled + n, 0] = ramped
+                outdata[samples_filled : samples_filled + n, 0] = ramped
 
                 # Optionally report played bytes (ramped) to playback tracker
                 try:
@@ -243,10 +270,10 @@ class NoUIDemo:
 
             if samples_to_copy > 0:
                 chunk_data = samples[
-                    self.chunk_position:self.chunk_position + samples_to_copy
+                    self.chunk_position : self.chunk_position + samples_to_copy
                 ]
                 # More efficient: direct assignment for mono audio instead of reshape
-                outdata[samples_filled:samples_filled + samples_to_copy, 0] = (
+                outdata[samples_filled : samples_filled + samples_to_copy, 0] = (
                     chunk_data
                 )
                 samples_filled += samples_to_copy
