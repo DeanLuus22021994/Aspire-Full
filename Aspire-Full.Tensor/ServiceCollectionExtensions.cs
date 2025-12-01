@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
             .ValidateOnStart();
 
         services.AddScoped<ITensorRuntimeService, TensorRuntimeService>();
+        services.AddScoped<ITensorComputeService, TensorComputeService>();
 
         return services;
     }
