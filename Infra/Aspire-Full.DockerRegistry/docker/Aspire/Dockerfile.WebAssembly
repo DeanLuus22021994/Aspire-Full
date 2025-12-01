@@ -15,7 +15,7 @@ WORKDIR /src/Web/Aspire-Full.WebAssembly
 RUN dotnet restore
 RUN dotnet publish "Aspire-Full.WebAssembly.csproj" -c Release -o /app/publish
 
-FROM nginx:alpine AS final
+FROM nginx:1.27-alpine AS final
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full WebAssembly Frontend"
 LABEL org.opencontainers.image.licenses="MIT"

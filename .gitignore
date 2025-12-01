@@ -57,6 +57,7 @@ coverage/
 # Python tooling
 *.pyc
 __pycache__/
+.mypy_cache/
 .pytest_cache/
 
 .fake

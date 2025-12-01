@@ -69,12 +69,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
-os.environ["GRPC_VERBOSITY"] = (
-    "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
-)
+os.environ["GRPC_VERBOSITY"] = "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
 
-from agents import Agent, Runner
-from agents.extensions.memory import (
+from agents import Agent, Runner  # pylint: disable=wrong-import-position
+from agents.extensions.memory import (  # pylint: disable=wrong-import-position
     DAPR_CONSISTENCY_EVENTUAL,
     DAPR_CONSISTENCY_STRONG,
     DaprSession,
@@ -84,9 +82,7 @@ grpc_port = os.environ.get("DAPR_GRPC_PORT", "50001")
 DEFAULT_STATE_STORE = os.environ.get("DAPR_STATE_STORE", "statestore")
 
 
-async def ping_with_retry(
-    session: DaprSession, timeout_seconds: float = 5.0, interval_seconds: float = 0.5
-) -> bool:
+async def ping_with_retry(session: DaprSession, timeout_seconds: float = 5.0, interval_seconds: float = 0.5) -> bool:
     """Retry session.ping() until success or timeout."""
     now = asyncio.get_running_loop().time
     deadline = now() + timeout_seconds
@@ -175,9 +171,7 @@ async def main():
 
             print("=== Conversation Complete ===")
             print("Notice how the agent remembered the context from previous turns!")
-            print(
-                "Dapr session automatically handles conversation history with backend flexibility."
-            )
+            print("Dapr session automatically handles conversation history with backend flexibility.")
 
             # Demonstrate session persistence
             print("\n=== Session Persistence Demo ===")
@@ -220,7 +214,7 @@ async def main():
                 await new_session.clear_session()
                 # No need to call close() - context manager handles it automatically!
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
         print(
             "Make sure Dapr sidecar is running with: dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
@@ -339,18 +333,10 @@ spec:
     print("   See: https://docs.dapr.io/operations/components/component-secrets/")
 
     print("\n2. Start Dapr sidecar:")
-    print(
-        "   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
-    )
+    print("   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components")
     print("\n   IMPORTANT: Always specify --dapr-http-port 3500 to avoid connection errors!")
-    print(
-        "   If you recreate PostgreSQL while daprd is running, restart daprd or touch the component YAML"
-    )
-    print(
-        "   to trigger a reload, otherwise you may see 'relation "
-        + '\\"state\\"'
-        + " does not exist'."
-    )
+    print("   If you recreate PostgreSQL while daprd is running, restart daprd or touch the component YAML")
+    print("   to trigger a reload, otherwise you may see 'relation " + '\\"state\\"' + " does not exist'.")
 
     print("\n3. Run this example:")
     print("   python examples/memory/dapr_session_example.py")
@@ -393,9 +379,7 @@ async def demonstrate_multi_store():
                 dapr_address=f"localhost:{grpc_port}",
             ) as pg_session,
         ):
-            ok_redis = await ping_with_retry(
-                redis_session, timeout_seconds=5.0, interval_seconds=0.5
-            )
+            ok_redis = await ping_with_retry(redis_session, timeout_seconds=5.0, interval_seconds=0.5)
             ok_pg = await ping_with_retry(pg_session, timeout_seconds=5.0, interval_seconds=0.5)
             if not (ok_redis and ok_pg):
                 print(

@@ -25,7 +25,7 @@ def get_current_weather(city: str) -> str:
     print(f"[debug-server] get_current_weather({city})")
 
     endpoint = "https://wttr.in"
-    response = requests.get(f"{endpoint}/{city}")
+    response = requests.get(f"{endpoint}/{city}", timeout=10)
     return response.text
 
 
