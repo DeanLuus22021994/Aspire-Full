@@ -51,6 +51,7 @@
   "nsight.compute.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2025.2.1\\host\\windows-desktop-win7-x64\\ncu-ui.exe",
   "nsight.systems.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Systems 2025.6.1\\host-windows-x64\\nsys-ui.exe",
   "python.analysis.typeCheckingMode": "strict",
+  "flake8.args": ["--config=${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.flake8"],
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
