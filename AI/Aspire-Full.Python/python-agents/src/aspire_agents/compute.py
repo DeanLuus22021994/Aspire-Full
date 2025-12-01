@@ -28,7 +28,7 @@ class BatchComputeService:
     """
     Provides local tensor compute capabilities using a GPU-resident model.
     Implements dynamic batching and runs in a dedicated thread to leverage
-    Python 3.15 free-threading and maximize Tensor Core utilization.
+    Python 3.14 free-threading and maximize Tensor Core utilization.
     """
 
     def __init__(
@@ -56,7 +56,7 @@ class BatchComputeService:
             self.model = AutoModel.from_pretrained(model_name).to(self.device)
             self.model.eval()
 
-            # Optimize model with torch.compile for Python 3.15+ performance
+            # Optimize model with torch.compile for Python 3.14+ performance
             # Note: This requires a compatible backend. We try/except to be safe.
             try:
                 self.model = torch.compile(self.model)  # type: ignore

@@ -96,7 +96,7 @@ Isolated development environment with:
 - Docker-in-Docker capability (Aspire `docker` resource)
 - GitHub CLI with AI extensions
 - Pre-warmed NuGet cache
-- Same `AddDevContainer()` context used by VS Code and the AppHost, ensuring all host paths stay relative and Python 3.15 free-threaded requirements remain centralized.
+- Same `AddDevContainer()` context used by VS Code and the AppHost, ensuring all host paths stay relative and Python 3.14 free-threaded requirements remain centralized.
 
 ## Data Flow
 

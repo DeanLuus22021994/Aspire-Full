@@ -10,8 +10,8 @@ public class DockerImagesComponent : IDiscoveryComponent
         // Users must currently build from source or use experimental third-party images.
         // We list the latest official base tags here.
 
-        var bleedingEdge = "python:3.15.0a2-slim-bookworm"; // Actual alpha tag
-        var stable = "python:3.15.0a2-slim-bookworm";         // Actual stable tag
+        var bleedingEdge = "python:3.14.0a1-slim-bookworm"; // Actual alpha tag
+        var stable = "python:3.14.0a1-slim-bookworm";         // Actual stable tag
 
         var details = new Dictionary<string, string>
         {

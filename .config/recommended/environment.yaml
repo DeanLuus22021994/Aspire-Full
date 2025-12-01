@@ -7,7 +7,7 @@ environment:
     sdk: 10.0.100
     preview: true
   python:
-    version: 3.15.0
+    version: 3.14.0
     manager: uv
     torch:
       device: cpu
@@ -17,8 +17,8 @@ environment:
     images:
       python:
         free_threading:
-          bleeding_edge: python:3.15.0a2-slim-bookworm
-          stable: python:3.15.0a2-slim-bookworm
+          bleeding_edge: python:3.14.0a1-slim-bookworm
+          stable: python:3.14.0a1-slim-bookworm
           note: Requires --disable-gil build flag
   hardware:
     gpu:
