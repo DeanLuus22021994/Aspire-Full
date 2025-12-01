@@ -38,6 +38,17 @@
     <!-- Incremental build optimization -->
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+
+    <!-- Parallel build isolation - prevents package assets cache I/O conflicts -->
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
+
+    <!-- Disable shared compilation to prevent lock contention -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+
+    <!-- Isolate restore operations per project -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
 
   <!-- ==========================================================================
