@@ -1,4 +1,4 @@
-namespace Aspire_Full.Agents;
+namespace Aspire_Full.Shared.Models;
 
 public enum SubagentRole
 {

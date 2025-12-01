@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.Subagents\Aspire-Full.Subagents.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

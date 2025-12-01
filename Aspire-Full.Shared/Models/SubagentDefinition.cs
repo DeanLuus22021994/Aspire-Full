@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace Aspire_Full.Agents;
+namespace Aspire_Full.Shared.Models;
 
 public sealed record SubagentDefinition
 {
