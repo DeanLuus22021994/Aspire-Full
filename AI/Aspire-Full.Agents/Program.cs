@@ -1,8 +1,17 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Aspire_Full.Shared.Models;
+using Aspire_Full.Agents;
 using Aspire_Full.Shared;
 using Aspire_Full.Shared.Models;
+
+var maintenanceMode = GetOption("--maintenance");
+if (maintenanceMode != null)
+{
+    var workspace = GetOption("--workspace") ?? Directory.GetCurrentDirectory();
+    var agent = new MaintenanceAgent();
+    await agent.RunAsync(workspace);
+    return 0;
+}
 
 var inputPath = GetOption("--input") ?? "subagents.update.json";
 var outputPathOverride = GetOption("--output");

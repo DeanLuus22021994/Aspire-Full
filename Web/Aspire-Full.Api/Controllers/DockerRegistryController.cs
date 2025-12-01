@@ -4,8 +4,8 @@ using Aspire_Full.DockerRegistry.Configuration;
 using Aspire_Full.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using DockerManifestEntity = Aspire_Full.DockerRegistry.Models.DockerManifest;
 using DockerImageDescriptor = Aspire_Full.DockerRegistry.Models.DockerImageDescriptor;
+using DockerManifestEntity = Aspire_Full.DockerRegistry.Models.DockerManifest;
 
 namespace Aspire_Full.Api.Controllers;
 

@@ -1,9 +1,9 @@
-using Aspire_Full.Pipeline.Modules.Discovery.Components;
+using Aspire_Full.Pipeline.Constants;
 using Aspire_Full.Pipeline.Modules.Discovery;
+using Aspire_Full.Pipeline.Modules.Discovery.Components;
 using Spectre.Console;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using Aspire_Full.Pipeline.Constants;
 
 namespace Aspire_Full.Pipeline.Services;
 
@@ -86,7 +86,7 @@ public class DiscoveryService
         }
         else
         {
-             await SaveConfigurationAsync(PathConstants.PythonConfigYaml, toolingYaml);
+            await SaveConfigurationAsync(PathConstants.PythonConfigYaml, toolingYaml);
         }
     }
 
@@ -114,16 +114,23 @@ public class DiscoveryService
 
         // Discover lint roots
         List<string> lintRoots = [];
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsDir))) lintRoots.Add(PathConstants.PythonAgentsDir);
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir))) lintRoots.Add(PathConstants.SandboxesDir);
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsDir))) lintRoots.Add(PathConstants.ScriptsDir);
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ToolsDir))) lintRoots.Add(PathConstants.ToolsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsDir)))
+            lintRoots.Add(PathConstants.PythonAgentsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir)))
+            lintRoots.Add(PathConstants.SandboxesDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsDir)))
+            lintRoots.Add(PathConstants.ScriptsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ToolsDir)))
+            lintRoots.Add(PathConstants.ToolsDir);
 
         // Discover test roots
         List<string> testRoots = [];
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsTestsDir))) testRoots.Add(PathConstants.PythonAgentsTestsDir);
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir))) testRoots.Add(PathConstants.SandboxesDir);
-        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsTestsDir))) testRoots.Add(PathConstants.ScriptsTestsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsTestsDir)))
+            testRoots.Add(PathConstants.PythonAgentsTestsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir)))
+            testRoots.Add(PathConstants.SandboxesDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsTestsDir)))
+            testRoots.Add(PathConstants.ScriptsTestsDir);
 
         List<string> pytestAddOpts = ["-q"];
 
@@ -193,7 +200,8 @@ public class DiscoveryService
         {
             var root = RepoComponent.LocateRepositoryRoot();
             var configDir = Path.Combine(root, PathConstants.RecommendedConfigDir);
-            if (!Directory.Exists(configDir)) Directory.CreateDirectory(configDir);
+            if (!Directory.Exists(configDir))
+                Directory.CreateDirectory(configDir);
 
             var configPath = Path.Combine(configDir, fileName);
             await File.WriteAllTextAsync(configPath, yamlContent);

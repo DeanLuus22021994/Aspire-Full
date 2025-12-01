@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Aspire_Full.Pipeline.Modules.Discovery;
 using Aspire_Full.Pipeline.Utils;
-using System.Text.Json;
 using Aspire_Full.Shared;
 
 namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
@@ -10,7 +10,9 @@ public class PythonComponent : IDiscoveryComponent
     public async Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
         string root;
-        try { root = RepoComponent.LocateRepositoryRoot(); } catch { root = Directory.GetCurrentDirectory(); }
+        try
+        { root = RepoComponent.LocateRepositoryRoot(); }
+        catch { root = Directory.GetCurrentDirectory(); }
 
         var venvPython = Path.Combine(root, "Aspire-Full.Python", "python-agents", ".venv", "Scripts", "python.exe");
         string pythonExe = "python";
@@ -93,7 +95,8 @@ print(json.dumps(info))
         }
         finally
         {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
         }
     }
 }

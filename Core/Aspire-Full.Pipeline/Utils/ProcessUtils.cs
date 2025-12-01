@@ -60,7 +60,8 @@ public static class ProcessUtils
             CreateNoWindow = true
         };
 
-        foreach (var arg in args) startInfo.ArgumentList.Add(arg);
+        foreach (var arg in args)
+            startInfo.ArgumentList.Add(arg);
 
         if (envVars != null)
         {

@@ -5,8 +5,8 @@ using Aspire_Full.Gateway.Services;
 using Aspire_Full.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using UserDto = Aspire_Full.Shared.Models.User;
 using User = Aspire_Full.Gateway.Models.User;
+using UserDto = Aspire_Full.Shared.Models.User;
 
 namespace Aspire_Full.Gateway.Endpoints;
 

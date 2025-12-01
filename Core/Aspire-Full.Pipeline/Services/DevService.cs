@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using Spectre.Console;
-using Aspire_Full.Pipeline.Utils;
 using Aspire_Full.Pipeline.Constants;
+using Aspire_Full.Pipeline.Utils;
+using Spectre.Console;
 
 namespace Aspire_Full.Pipeline.Services;
 
@@ -129,9 +129,12 @@ public class DevService
         bool runE2E = !unitOnly && !aspireOnly;
         bool runAspire = !unitOnly && !e2eOnly;
 
-        if (unitOnly) { runE2E = false; runAspire = false; }
-        if (e2eOnly) { runUnit = false; runAspire = false; }
-        if (aspireOnly) { runUnit = false; runE2E = false; }
+        if (unitOnly)
+        { runE2E = false; runAspire = false; }
+        if (e2eOnly)
+        { runUnit = false; runAspire = false; }
+        if (aspireOnly)
+        { runUnit = false; runE2E = false; }
 
         if (runUnit)
         {
@@ -145,8 +148,10 @@ public class DevService
                 "--results-directory", PathConstants.TestResultsUnit
             };
 
-            if (coverage) args.Add("--collect:XPlat Code Coverage");
-            if (!string.IsNullOrEmpty(filter)) { args.Add("--filter"); args.Add(filter); }
+            if (coverage)
+                args.Add("--collect:XPlat Code Coverage");
+            if (!string.IsNullOrEmpty(filter))
+            { args.Add("--filter"); args.Add(filter); }
 
             await ProcessUtils.RunAsync(CliConstants.Dotnet, args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
         }
@@ -190,8 +195,10 @@ public class DevService
         var root = GitUtils.GetRepositoryRoot();
 
         var args = new List<string> { "poi" };
-        if (dryRun) args.Add("--dry-run");
-        if (force) args.Add("--force");
+        if (dryRun)
+            args.Add("--dry-run");
+        if (force)
+            args.Add("--force");
 
         AnsiConsole.MarkupLine("[cyan]Cleaning up local branches...[/]");
         await ProcessUtils.RunAsync(CliConstants.Gh, args.ToArray(), root, silent: false);
@@ -199,7 +206,8 @@ public class DevService
 
     private bool IsRunning(string pidFile)
     {
-        if (!File.Exists(pidFile)) return false;
+        if (!File.Exists(pidFile))
+            return false;
 
         if (int.TryParse(File.ReadAllText(pidFile), out int pid))
         {

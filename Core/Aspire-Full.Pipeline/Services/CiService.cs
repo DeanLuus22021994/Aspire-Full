@@ -1,6 +1,6 @@
-using Spectre.Console;
-using Aspire_Full.Pipeline.Utils;
 using Aspire_Full.Pipeline.Constants;
+using Aspire_Full.Pipeline.Utils;
+using Spectre.Console;
 
 namespace Aspire_Full.Pipeline.Services;
 
@@ -74,8 +74,10 @@ RUNNER_GROUP=Default
         var workDir = Path.GetDirectoryName(composeFile)!;
 
         var args = new List<string> { "compose", "logs" };
-        if (follow) args.Add("-f");
-        else args.AddRange(["--tail", "100"]);
+        if (follow)
+            args.Add("-f");
+        else
+            args.AddRange(["--tail", "100"]);
         args.Add(DockerConstants.RunnerContainerName);
 
         await ProcessUtils.RunAsync(CliConstants.Docker, args.ToArray(), workDir, silent: false);
@@ -108,7 +110,8 @@ RUNNER_GROUP=Default
         await GhUtils.EnsureExtensionAsync("actions/gh-actions-cache");
         var repo = await GhUtils.GetRepoAsync();
 
-        if (!AnsiConsole.Confirm($"Are you sure you want to clear ALL caches for {repo}?")) return;
+        if (!AnsiConsole.Confirm($"Are you sure you want to clear ALL caches for {repo}?"))
+            return;
 
         AnsiConsole.MarkupLine($"[red]Clearing all caches for {repo}...[/]");
 
@@ -166,7 +169,8 @@ RUNNER_GROUP=Default
 
         var args = new List<string> { "act" };
 
-        if (!string.IsNullOrEmpty(triggerEvent)) args.Add(triggerEvent);
+        if (!string.IsNullOrEmpty(triggerEvent))
+            args.Add(triggerEvent);
 
         if (!string.IsNullOrEmpty(workflow))
         {
@@ -186,7 +190,8 @@ RUNNER_GROUP=Default
             AnsiConsole.MarkupLine("[yellow]Dry run mode enabled[/]");
         }
 
-        if (verbose) args.Add("-v");
+        if (verbose)
+            args.Add("-v");
 
         if (!string.IsNullOrEmpty(pat))
         {

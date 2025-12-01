@@ -19,7 +19,7 @@ public class RegistryFactory
         var provider = _providers.FirstOrDefault(p => p.CanHandle(repository));
         if (provider == null)
         {
-             throw new DockerRegistryException(DockerRegistryErrorCode.Unknown, $"No registry provider found for repository '{repository}'");
+            throw new DockerRegistryException(DockerRegistryErrorCode.Unknown, $"No registry provider found for repository '{repository}'");
         }
         return provider;
     }

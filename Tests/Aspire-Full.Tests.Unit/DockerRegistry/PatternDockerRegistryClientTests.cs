@@ -1,7 +1,7 @@
 using System.Net;
 using Aspire_Full.DockerRegistry;
-using Aspire_Full.DockerRegistry.Models;
 using Aspire_Full.DockerRegistry.Configuration;
+using Aspire_Full.DockerRegistry.Models;
 using Aspire_Full.DockerRegistry.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

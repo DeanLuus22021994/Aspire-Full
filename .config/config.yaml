@@ -5,7 +5,7 @@ environment:
     sdk: "10.0.100"
     preview: true
   python:
-    version: "3.14.0"
+    version: "3.15.0"
     manager: "uv"
     torch:
       device: "cuda"
@@ -106,9 +106,9 @@ telemetry:
       relative_to_target_pct: 37.5
       utilization_gap: 0.50
     intent:
-      mode: active-development
-      implementation_ready: false
-      description: "Accelerated computations to facilitate precision development and high throughput."
+      mode: maintenance
+      implementation_ready: true
+      description: "Accelerated computations for package maintenance and high throughput."
     propagation_refs:
       connectors:
         tags:

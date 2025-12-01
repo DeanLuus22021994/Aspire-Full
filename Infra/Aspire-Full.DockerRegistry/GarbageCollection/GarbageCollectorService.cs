@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Aspire_Full.DockerRegistry.Abstractions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Aspire_Full.DockerRegistry.Abstractions;
 
 namespace Aspire_Full.DockerRegistry.GarbageCollection;
 

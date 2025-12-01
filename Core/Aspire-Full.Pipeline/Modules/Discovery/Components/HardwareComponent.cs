@@ -21,7 +21,8 @@ public class HardwareComponent : IDiscoveryComponent
                     details["GPU Name"] = parts[0].Trim();
                     details["Driver"] = parts[1].Trim();
                     details["VRAM"] = parts[2].Trim();
-                    if (parts.Length > 3) details["Utilization"] = parts[3].Trim();
+                    if (parts.Length > 3)
+                        details["Utilization"] = parts[3].Trim();
                 }
                 else
                 {

@@ -25,14 +25,17 @@ public class DotNetComponent : IDiscoveryComponent
             bool inSdks = false;
             foreach (var line in lines)
             {
-                if (line.StartsWith(".NET SDKs installed:")) { inSdks = true; continue; }
-                if (inSdks && string.IsNullOrWhiteSpace(line)) { inSdks = false; }
+                if (line.StartsWith(".NET SDKs installed:"))
+                { inSdks = true; continue; }
+                if (inSdks && string.IsNullOrWhiteSpace(line))
+                { inSdks = false; }
                 if (inSdks && line.StartsWith("  "))
                 {
                     sdkList.Add(line.Trim().Split(' ')[0]);
                 }
             }
-            if (sdkList.Any()) details["Installed SDKs"] = string.Join(", ", sdkList);
+            if (sdkList.Any())
+                details["Installed SDKs"] = string.Join(", ", sdkList);
         }
 
         config.DotNet.Sdk = version.Output.Trim();

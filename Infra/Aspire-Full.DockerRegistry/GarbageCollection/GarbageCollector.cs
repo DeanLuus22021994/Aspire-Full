@@ -38,7 +38,8 @@ public sealed class GarbageCollector : IGarbageCollector
             var repositories = await _client.ListRepositoriesAsync(cancellationToken);
             foreach (var repoInfo in repositories)
             {
-                if (cancellationToken.IsCancellationRequested) break;
+                if (cancellationToken.IsCancellationRequested)
+                    break;
 
                 if (repoInfo.Descriptor is null)
                 {
@@ -66,7 +67,8 @@ public sealed class GarbageCollector : IGarbageCollector
 
             foreach (var tag in tags)
             {
-                if (cancellationToken.IsCancellationRequested) break;
+                if (cancellationToken.IsCancellationRequested)
+                    break;
 
                 DockerManifest? manifest = null;
                 try
@@ -79,7 +81,8 @@ public sealed class GarbageCollector : IGarbageCollector
                     continue;
                 }
 
-                if (manifest == null) continue;
+                if (manifest == null)
+                    continue;
 
                 bool shouldDelete = false;
                 foreach (var policy in _policies)

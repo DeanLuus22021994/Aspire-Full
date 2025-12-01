@@ -1,6 +1,6 @@
-using Spectre.Console;
-using Aspire_Full.Pipeline.Utils;
 using Aspire_Full.Pipeline.Constants;
+using Aspire_Full.Pipeline.Utils;
+using Spectre.Console;
 
 namespace Aspire_Full.Pipeline.Services;
 
@@ -46,7 +46,8 @@ public class AiService
     {
         await GhUtils.EnsureExtensionAsync("github/gh-models");
         var args = new List<string> { "models", "run" };
-        if (!string.IsNullOrEmpty(model)) args.Add(model);
+        if (!string.IsNullOrEmpty(model))
+            args.Add(model);
 
         await ProcessUtils.RunAsync(CliConstants.Gh, args.ToArray(), silent: false);
     }

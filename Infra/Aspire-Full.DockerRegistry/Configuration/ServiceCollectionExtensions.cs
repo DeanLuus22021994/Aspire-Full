@@ -2,13 +2,13 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using Aspire_Full.DockerRegistry.Abstractions;
+using Aspire_Full.DockerRegistry.GarbageCollection;
+using Aspire_Full.DockerRegistry.Services;
+using Aspire_Full.DockerRegistry.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Aspire_Full.DockerRegistry.Abstractions;
-using Aspire_Full.DockerRegistry.Services;
-using Aspire_Full.DockerRegistry.Workers;
-using Aspire_Full.DockerRegistry.GarbageCollection;
 
 namespace Aspire_Full.DockerRegistry.Configuration;
 

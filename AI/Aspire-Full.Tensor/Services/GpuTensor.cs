@@ -32,7 +32,8 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
 
     public void Upload(T[] data)
     {
-        if (data.Length != Length) throw new ArgumentException("Data length mismatch");
+        if (data.Length != Length)
+            throw new ArgumentException("Data length mismatch");
 
         if (typeof(T) == typeof(float))
         {
@@ -50,7 +51,8 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
 
     public void Download(T[] destination)
     {
-        if (destination.Length != Length) throw new ArgumentException("Destination length mismatch");
+        if (destination.Length != Length)
+            throw new ArgumentException("Destination length mismatch");
 
         if (typeof(T) == typeof(float))
         {
@@ -58,7 +60,7 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
         }
         else
         {
-             throw new NotSupportedException($"Type {typeof(T)} not supported for download");
+            throw new NotSupportedException($"Type {typeof(T)} not supported for download");
         }
     }
 

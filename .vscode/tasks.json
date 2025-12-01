@@ -79,13 +79,10 @@
       "dependsOn": ["native:build"]
     },
     {
-      "label": "python:analyze-deps",
+      "label": "generate-dependency-report",
       "type": "shell",
       "command": "uv",
-      "args": ["run", "--python", "3.13", "scripts/generate_dependency_report.py"],
-      "options": {
-        "cwd": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents"
-      },
+      "args": ["run", "--python", "3.15", "scripts/generate_dependency_report.py"],
       "problemMatcher": []
     }
   ]

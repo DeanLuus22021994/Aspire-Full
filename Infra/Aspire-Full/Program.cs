@@ -182,6 +182,15 @@ else
     ConfigurePythonAgents(pythonAgents);
 }
 
+// -----------------------------------------------------------------------------
+// Maintenance Task - Tensor Optimized Package Management
+// -----------------------------------------------------------------------------
+var maintenance = builder.AddDockerfile("maintenance", "../../", "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Maintenance")
+    .WithContainerRuntimeArgs("--gpus", "all")
+    .WithContainerRuntimeArgs("--network", networkName)
+    .WithBindMount("../../", "/workspace")
+    .WithLifetime(ContainerLifetime.Persistent);
+
 void ConfigureApi<T>(IResourceBuilder<T> api) where T : IResourceWithEnvironment, IResourceWithWaitSupport
 {
     api.WithReference(database)

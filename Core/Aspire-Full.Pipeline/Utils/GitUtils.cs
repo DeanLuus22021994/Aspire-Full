@@ -5,16 +5,19 @@ public static class GitUtils
     public static string GetRepositoryRoot()
     {
         var current = Directory.GetCurrentDirectory();
-        if (ContainsSolutionMarker(current)) return current;
+        if (ContainsSolutionMarker(current))
+            return current;
 
         var candidate = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        if (ContainsSolutionMarker(candidate)) return candidate;
+        if (ContainsSolutionMarker(candidate))
+            return candidate;
 
         // Try walking up
         var dir = new DirectoryInfo(current);
         while (dir != null)
         {
-            if (ContainsSolutionMarker(dir.FullName)) return dir.FullName;
+            if (ContainsSolutionMarker(dir.FullName))
+                return dir.FullName;
             dir = dir.Parent;
         }
 

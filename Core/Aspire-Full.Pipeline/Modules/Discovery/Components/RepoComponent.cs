@@ -26,10 +26,12 @@ public class RepoComponent : IDiscoveryComponent
         try
         {
             var branch = await ProcessUtils.RunAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], root);
-            if (branch.ExitCode == 0) details["Branch"] = branch.Output.Trim();
+            if (branch.ExitCode == 0)
+                details["Branch"] = branch.Output.Trim();
 
             var commit = await ProcessUtils.RunAsync("git", ["rev-parse", "--short", "HEAD"], root);
-            if (commit.ExitCode == 0) details["Commit"] = commit.Output.Trim();
+            if (commit.ExitCode == 0)
+                details["Commit"] = commit.Output.Trim();
         }
         catch { /* Git might not be in path */ }
 
@@ -42,16 +44,19 @@ public class RepoComponent : IDiscoveryComponent
     public static string LocateRepositoryRoot()
     {
         var current = Directory.GetCurrentDirectory();
-        if (ContainsSolutionMarker(current)) return current;
+        if (ContainsSolutionMarker(current))
+            return current;
 
         var candidate = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        if (ContainsSolutionMarker(candidate)) return candidate;
+        if (ContainsSolutionMarker(candidate))
+            return candidate;
 
         // Try walking up
         var walk = current;
         while (!string.IsNullOrEmpty(walk))
         {
-            if (ContainsSolutionMarker(walk)) return walk;
+            if (ContainsSolutionMarker(walk))
+                return walk;
             walk = Path.GetDirectoryName(walk);
         }
 

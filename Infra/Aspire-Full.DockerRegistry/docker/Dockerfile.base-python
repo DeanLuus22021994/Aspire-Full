@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.15.0a2-slim-bookworm
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Base Python Image"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -8,7 +8,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloa
 
 # Enable Python Free Threading (No GIL) and JIT
 # ENV PYTHON_GIL=0
-# ENV PYTHON_3_14_FREE_THREADING=1
+# ENV PYTHON_3_15_FREE_THREADING=1
 ENV PYTHON_JIT=1
 
 # Install system dependencies
