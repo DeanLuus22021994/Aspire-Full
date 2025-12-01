@@ -212,6 +212,110 @@ public class DevModule : IModule
         await ProcessUtils.RunAsync("dotnet", ["build", "--configuration", "Release", "--verbosity", "minimal"], root, silent: false, envVars: envVars);
     }
 
+    private async Task TestAsync(bool unitOnly, bool e2eOnly, bool aspireOnly, bool coverage, string filter)
+    {
+        var root = GitUtils.GetRepositoryRoot();
+
+        // Build first
+        await BuildSolutionAsync();
+
+        var envVars = new Dictionary<string, string>
+        {
+            ["DOTNET_EnableAVX2"] = "1",
+            ["DOTNET_EnableSSE41"] = "1",
+            ["DOTNET_TieredPGO"] = "1",
+            ["DOTNET_ReadyToRun"] = "1",
+            ["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1",
+            ["DOTNET_NOLOGO"] = "1",
+            ["CUDA_VISIBLE_DEVICES"] = "all",
+            ["NVIDIA_VISIBLE_DEVICES"] = "all",
+            ["NVIDIA_DRIVER_CAPABILITIES"] = "compute,utility",
+            ["NVIDIA_REQUIRE_CUDA"] = "cuda>=12.4,driver>=535",
+            ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+        };
+
+        bool runUnit = !e2eOnly && !aspireOnly;
+        bool runE2E = !unitOnly && !aspireOnly;
+        bool runAspire = !unitOnly && !e2eOnly;
+
+        if (unitOnly) { runE2E = false; runAspire = false; }
+        if (e2eOnly) { runUnit = false; runAspire = false; }
+        if (aspireOnly) { runUnit = false; runE2E = false; }
+
+        if (runUnit)
+        {
+            AnsiConsole.MarkupLine("[cyan]Running Unit Tests...[/]");
+            var args = new List<string>
+            {
+                "test", "Aspire-Full.Tests.Unit",
+                "--configuration", "Release",
+                "--no-build",
+                "--logger", "console;verbosity=normal",
+                "--results-directory", "./TestResults/Unit"
+            };
+
+            if (coverage) args.Add("--collect:XPlat Code Coverage");
+            if (!string.IsNullOrEmpty(filter)) { args.Add("--filter"); args.Add(filter); }
+
+            await ProcessUtils.RunAsync("dotnet", args.ToArray(), root, silent: false, envVars: envVars);
+        }
+
+        if (runE2E)
+        {
+            AnsiConsole.MarkupLine("[cyan]Running E2E Tests (Dashboard)...[/]");
+            var args = new List<string>
+            {
+                "test", "Aspire-Full.Tests.E2E",
+                "--configuration", "Release",
+                "--no-build",
+                "--logger", "console;verbosity=normal",
+                "--results-directory", "./TestResults/E2E",
+                "--filter", string.IsNullOrEmpty(filter) ? "TestCategory=Dashboard" : filter
+            };
+
+            await ProcessUtils.RunAsync("dotnet", args.ToArray(), root, silent: false, envVars: envVars);
+        }
+
+        if (runAspire)
+        {
+            AnsiConsole.MarkupLine("[cyan]Running Aspire Integration Tests...[/]");
+            var args = new List<string>
+            {
+                "test", "Aspire-Full.Tests.E2E",
+                "--configuration", "Release",
+                "--no-build",
+                "--logger", "console;verbosity=normal",
+                "--results-directory", "./TestResults/Aspire",
+                "--filter", string.IsNullOrEmpty(filter) ? "TestCategory=AspireIntegration" : filter
+            };
+
+            await ProcessUtils.RunAsync("dotnet", args.ToArray(), root, silent: false, envVars: envVars);
+        }
+    }
+
+    private async Task CleanupAsync(bool dryRun, bool force)
+    {
+        await EnsureGhExtensionAsync("seachicken/gh-poi");
+        var root = GitUtils.GetRepositoryRoot();
+
+        var args = new List<string> { "poi" };
+        if (dryRun) args.Add("--dry-run");
+        if (force) args.Add("--force");
+
+        AnsiConsole.MarkupLine("[cyan]Cleaning up local branches...[/]");
+        await ProcessUtils.RunAsync("gh", args.ToArray(), root, silent: false);
+    }
+
+    private async Task EnsureGhExtensionAsync(string extensionName)
+    {
+        var (code, output) = await ProcessUtils.RunAsync("gh", ["extension", "list"], silent: true);
+        if (!output.Contains(extensionName))
+        {
+            AnsiConsole.MarkupLine($"[yellow]Installing gh extension: {extensionName}...[/]");
+            await ProcessUtils.RunAsync("gh", ["extension", "install", extensionName], silent: false);
+        }
+    }
+
     private bool IsRunning(string pidFile)
     {
         if (!File.Exists(pidFile)) return false;
