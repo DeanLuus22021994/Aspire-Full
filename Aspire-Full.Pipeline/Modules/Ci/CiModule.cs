@@ -15,7 +15,7 @@ public class CiModule
         var runnerCommand = new Command(CommandConstants.Ci.Runner, CommandConstants.Ci.RunnerDesc);
 
         // Setup
-        var setupCommand = new Command(CommandConstants.Ci.Setup, "Setup and start the runner");
+        var setupCommand = new Command(CommandConstants.Ci.Setup, CommandConstants.Ci.SetupDesc);
         var tokenOption = new Option<string>(["--token", "-t"], "GitHub Personal Access Token");
         var repoOption = new Option<string>(["--repo", "-r"], () => "DeanLuus22021994/Aspire-Full", "GitHub Repository");
         setupCommand.AddOption(tokenOption);
@@ -24,22 +24,22 @@ public class CiModule
         runnerCommand.AddCommand(setupCommand);
 
         // Start
-        var startCommand = new Command(CommandConstants.Ci.Start, "Start the runner service");
+        var startCommand = new Command(CommandConstants.Ci.Start, CommandConstants.Ci.StartDesc);
         startCommand.SetHandler(async () => await _service.StartRunnerAsync());
         runnerCommand.AddCommand(startCommand);
 
         // Stop
-        var stopCommand = new Command(CommandConstants.Ci.Stop, "Stop the runner service");
+        var stopCommand = new Command(CommandConstants.Ci.Stop, CommandConstants.Ci.StopDesc);
         stopCommand.SetHandler(async () => await _service.StopRunnerAsync());
         runnerCommand.AddCommand(stopCommand);
 
         // Status
-        var statusCommand = new Command(CommandConstants.Ci.Status, "Check runner status");
+        var statusCommand = new Command(CommandConstants.Ci.Status, CommandConstants.Ci.StatusDesc);
         statusCommand.SetHandler(async () => await _service.StatusRunnerAsync());
         runnerCommand.AddCommand(statusCommand);
 
         // Logs
-        var logsCommand = new Command(CommandConstants.Ci.Logs, "View runner logs");
+        var logsCommand = new Command(CommandConstants.Ci.Logs, CommandConstants.Ci.LogsDesc);
         var followOption = new Option<bool>(["--follow", "-f"], "Follow logs");
         logsCommand.AddOption(followOption);
         logsCommand.SetHandler(async (follow) => await _service.LogsRunnerAsync(follow), followOption);
@@ -50,15 +50,15 @@ public class CiModule
         // Cache command
         var cacheCommand = new Command(CommandConstants.Ci.Cache, CommandConstants.Ci.CacheDesc);
 
-        var cacheListCommand = new Command(CommandConstants.Ci.List, "List cache entries");
+        var cacheListCommand = new Command(CommandConstants.Ci.List, CommandConstants.Ci.ListDesc);
         cacheListCommand.SetHandler(async () => await _service.CacheListAsync());
 
-        var cacheDeleteCommand = new Command(CommandConstants.Ci.Delete, "Delete a cache entry");
+        var cacheDeleteCommand = new Command(CommandConstants.Ci.Delete, CommandConstants.Ci.DeleteDesc);
         var keyOption = new Option<string>(["--key", "-k"], "Cache key to delete");
         cacheDeleteCommand.AddOption(keyOption);
         cacheDeleteCommand.SetHandler(async (key) => await _service.CacheDeleteAsync(key), keyOption);
 
-        var cacheClearCommand = new Command(CommandConstants.Ci.Clear, "Clear all cache entries");
+        var cacheClearCommand = new Command(CommandConstants.Ci.Clear, CommandConstants.Ci.ClearDesc);
         cacheClearCommand.SetHandler(async () => await _service.CacheClearAsync());
 
         cacheCommand.AddCommand(cacheListCommand);
