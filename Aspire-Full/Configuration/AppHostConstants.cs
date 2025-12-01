@@ -3,7 +3,7 @@ namespace Aspire_Full.Configuration;
 public static class AppHostConstants
 {
     public const string NetworkName = "aspire-network";
-    
+
     public static class Images
     {
         public const string DockerDebugger = "docker/debugger:latest";
