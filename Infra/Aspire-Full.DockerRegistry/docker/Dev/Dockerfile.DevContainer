@@ -1,11 +1,30 @@
+# =============================================================================
+# Aspire Full DevContainer with TensorCore Compute
+# Python 3.15t (free-threaded) + .NET 10 + CUDA 13.0 + cuDNN
+# All dependencies baked for zero-latency development
+# =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full DevContainer"
+LABEL org.opencontainers.image.description="Aspire Full DevContainer with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
+
+# =============================================================================
+# Python 3.15 Free-Threading + TensorCore Configuration
+# =============================================================================
+ENV PYTHON_GIL=0
+ENV PYTHON_JIT=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+# Enable apt caching for faster rebuilds
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install prerequisites
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -95,6 +114,17 @@ RUN uv python install 3.15t \
 # Pre-install Playwright browsers to avoid runtime download latency
 RUN . /opt/venv/bin/activate \
     && playwright install --with-deps chromium
+
+# Pre-download HuggingFace models for instant startup (TensorCore accelerated)
+RUN --mount=type=cache,target=/root/.cache/huggingface \
+    . /opt/venv/bin/activate && \
+    python -c "from transformers import AutoTokenizer, AutoModel; \
+    model_name = 'sentence-transformers/all-MiniLM-L6-v2'; \
+    AutoTokenizer.from_pretrained(model_name); \
+    AutoModel.from_pretrained(model_name)"
+
+# Precompile Python packages for instant import
+RUN . /opt/venv/bin/activate && python -m compileall -q /opt/venv/lib
 
 # Copy maintenance scripts
 COPY .devcontainer/scripts /opt/devcontainer-scripts

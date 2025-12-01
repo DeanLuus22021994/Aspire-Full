@@ -1,40 +1,122 @@
 # syntax=docker/dockerfile:1
-# Build the base image first:
-# docker build -f Infra/Aspire-Full.DockerRegistry/docker/Dockerfile.base-playwright -t aspire-python-playwright:latest .
-FROM aspire-python-playwright:latest
+# =============================================================================
+# Aspire Python Agents with TensorCore Compute
+# Build with: docker buildx bake python-agents
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS builder
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Python Agents"
+LABEL org.opencontainers.image.description="Aspire Full Python Agents with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Enable Python 3.14 Free-Threading
-# ENV PYTHON_GIL=0
+# =============================================================================
+# Python 3.15 Free-Threading + TensorCore Configuration
+# =============================================================================
+ENV PYTHON_GIL=0
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install system dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libportaudio2 \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (Astral's ultra-fast Python package manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install Python 3.15t (free-threaded)
+RUN uv python install 3.15t
 
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
-# Note: These paths are relative to the build context (repo root)
-COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock* ./
+# =============================================================================
+# Bake ALL dependencies into the image
+# Copy pyproject.toml and uv.lock for reproducible builds
+# =============================================================================
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock ./
 
-# Install dependencies
-# We use --system because we are in a container
-# We use --prerelease=allow to ensure we get the latest bleeding edge versions compatible with 3.14
+# Create virtual environment with Python 3.15t
+RUN uv venv /opt/venv --python 3.15t
+
+# Activate venv and install ALL dependencies with CUDA support
+# PyTorch is installed from the CUDA 12.6 nightly index for TensorCore optimization
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv export --frozen --format requirements-txt --extra tracing --no-emit-project --output-file requirements.txt && \
-    uv pip install --system --no-cache-dir --prerelease=allow -r requirements.txt
+    . /opt/venv/bin/activate && \
+    uv sync --frozen --all-extras
+
+# Pre-install Playwright browsers (heavy but necessary for computer use)
+RUN . /opt/venv/bin/activate && playwright install --with-deps chromium
+
+# Pre-download transformer models for instant startup
+RUN --mount=type=cache,target=/root/.cache/huggingface \
+    . /opt/venv/bin/activate && \
+    python -c "from transformers import AutoTokenizer, AutoModel; \
+    model_name = 'sentence-transformers/all-MiniLM-L6-v2'; \
+    AutoTokenizer.from_pretrained(model_name); \
+    AutoModel.from_pretrained(model_name)"
 
 # Copy source code
 COPY AI/Aspire-Full.Python/python-agents/ .
 
-# Install the project itself
+# Install the project itself in editable mode
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --no-cache-dir --prerelease=allow -e .[tracing]
+    . /opt/venv/bin/activate && \
+    uv pip install -e .[tracing]
 
-# Pre-download models for instant readiness
-# This runs the script we just created to cache models in the image
-# RUN python scripts/download_models.py
+# Precompile all Python files for instant startup
+RUN . /opt/venv/bin/activate && python -m compileall -q .
+
+# =============================================================================
+# Runtime Stage - Minimal image with all dependencies baked in
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS runtime
+
+ENV PYTHON_GIL=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV PATH="/opt/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/venv"
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libportaudio2 \
+    libsndfile1 \
+    ffmpeg \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy Playwright browsers
+COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
+
+# Copy HuggingFace model cache
+COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
+
+# Copy application code (precompiled)
+COPY --from=builder /app .
+
+# Create non-root user
+RUN useradd -m -u 1000 aspire
+USER aspire
 
 # Expose port
 EXPOSE 8000

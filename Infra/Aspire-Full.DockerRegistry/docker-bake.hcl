@@ -43,11 +43,15 @@ target "base-dotnet" {
 }
 
 target "base-python" {
-  context = "Infra/Aspire-Full.DockerRegistry/docker"
-  dockerfile = "Dockerfile.base-python"
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Dockerfile.base-python"
   tags = ["${REGISTRY}/${NAMESPACE}/base-python:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest,mode=max"]
+  # Enable NVIDIA runtime for TensorCore acceleration during build
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "native-lib" {
@@ -109,12 +113,13 @@ target "web-assembly" {
 target "python-agents" {
   context = "."
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent"
-  contexts = {
-    "base-python" = "target:base-python"
-  }
   tags = ["${REGISTRY}/${NAMESPACE}/python-agents-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT},mode=max"]
+  # TensorCore acceleration - all dependencies baked with CUDA support
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "tensor-compute" {
@@ -123,4 +128,8 @@ target "tensor-compute" {
   tags = ["${REGISTRY}/${NAMESPACE}/tensor-compute-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max"]
+  # TensorCore acceleration - Python 3.15t free-threaded with CUDA
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }

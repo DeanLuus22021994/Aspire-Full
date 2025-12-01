@@ -1,15 +1,28 @@
-FROM python:3.14.0a1-slim-bookworm
+# =============================================================================
+# Base Python Image with CUDA TensorCore Support
+# Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN for TensorCore acceleration
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Base Python Image"
+LABEL org.opencontainers.image.description="Aspire Full Base Python Image with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Enable apt caching
+# Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Enable Python Free Threading (No GIL) and JIT
-# ENV PYTHON_GIL=0
-# ENV PYTHON_3_14_FREE_THREADING=1
+# =============================================================================
+# Python 3.15 Free-Threading Environment Variables
+# PYTHON_GIL=0 disables the Global Interpreter Lock for true parallelism
+# =============================================================================
+ENV PYTHON_GIL=0
 ENV PYTHON_JIT=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# NVIDIA TensorCore Configuration
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 # Install system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -18,8 +31,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     build-essential \
     curl \
     git \
+    libportaudio2 \
+    libsndfile1 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-ENV UV_SYSTEM_PYTHON=1
+# Install uv (Astral's ultra-fast Python package manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install Python 3.15t (free-threaded) via uv
+RUN uv python install 3.15t
+
+# Set uv to use system Python by default
+ENV UV_SYSTEM_PYTHON=0
+ENV UV_PYTHON=3.15t

@@ -1,147 +1,117 @@
 # Syntax=docker/dockerfile:1
+# =============================================================================
+# Aspire Tensor Compute with TensorCore Acceleration
+# Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN
+# =============================================================================
 
-# Stage 1: Builder (Compile dependencies and models)
-# Use NVIDIA CUDA Devel image to ensure CUDA libraries are available for any source builds
-FROM nvidia/cuda:13.0.0-devel-ubuntu24.04 AS builder
+# Stage 1: Builder (Compile dependencies with TensorCore optimization)
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS builder
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=0 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEBIAN_FRONTEND=noninteractive
+# =============================================================================
+# Python 3.15 Free-Threading + TensorCore Configuration
+# =============================================================================
+ENV PYTHON_GIL=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 WORKDIR /build
 
-# Install Python 3.14 and system dependencies
-# Python 3.14 is selected for free-threading capabilities
+# Install system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    python3.14 \
-    python3.14-dev \
-    python3.14-venv \
-    python3-pip \
     build-essential \
     git \
     libportaudio2 \
+    libsndfile1 \
+    ffmpeg \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.14 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.14 1 \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.14 1
+# Install uv (Astral's ultra-fast Python package manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install pip
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
+# Install Python 3.15t (free-threaded)
+RUN uv python install 3.15t
 
-# Install Python dependencies
-COPY AI/Aspire-Full.Python/python-agents/pyproject.toml .
+# Create virtual environment with Python 3.15t
+RUN uv venv /opt/venv --python 3.15t
 
-# Install PyTorch with CUDA 12.4 support
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+# Copy dependency files
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock ./
 
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install \
-        transformers \
-        openai-agents \
-        fastapi \
-        uvicorn \
-        uvloop \
-        openai \
-        typer \
-        rich \
-        pydantic \
-        PyYAML \
-        httpx \
-        tenacity \
-        mcp \
-        websockets \
-        python-dotenv \
-        sounddevice \
-        textual \
-        numpy \
-        pandas \
-        sqlalchemy \
-        psycopg2-binary \
-        redis \
-        azure-identity \
-        azure-keyvault-secrets \
-        dapr-ext-grpc \
-        dapr-ext-fastapi \
-        dapr-client \
-        twilio \
-        playwright
+# Install ALL dependencies with TensorCore-optimized PyTorch
+RUN --mount=type=cache,target=/root/.cache/uv \
+    . /opt/venv/bin/activate && \
+    uv sync --frozen --all-extras
 
-# Install Playwright browsers (heavy operation, but required for computer use tools)
-RUN playwright install --with-deps chromium
+# Install Playwright browsers
+RUN . /opt/venv/bin/activate && playwright install --with-deps chromium
 
-# Pre-download models to cache
+# Pre-download transformer models for instant startup
 RUN --mount=type=cache,target=/root/.cache/huggingface \
+    . /opt/venv/bin/activate && \
     python -c "from transformers import AutoTokenizer, AutoModel; \
     model_name = 'sentence-transformers/all-MiniLM-L6-v2'; \
     AutoTokenizer.from_pretrained(model_name); \
     AutoModel.from_pretrained(model_name)"
 
-# Explicitly compile all installed packages for maximum startup performance
-RUN python -m compileall /usr/local/lib/python3.14
-
-# Stage 2: Runtime (Minimal, GPU-optimized)
-FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS runtime
-LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Tensor Compute Service"
-LABEL org.opencontainers.image.licenses="MIT"
-
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    PYTHON_GIL=0
-
-WORKDIR /app
-
-# Install runtime system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    python3.14 \
-    python3.14-venv \
-    libgomp1 \
-    libportaudio2 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set Python 3.14 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.14 1 \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.14 1
-
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.14 /usr/local/lib/python3.14
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Copy model cache (transformers default cache is usually ~/.cache/huggingface)
-# We'll move it to a shared volume location in entrypoint or just bake it in
-COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
-
 # Copy application code
 COPY AI/Aspire-Full.Python/python-agents/ .
 
-# Precompile application code for instant startup
-RUN python -m compileall .
+# Precompile all Python for maximum startup performance
+RUN . /opt/venv/bin/activate && python -m compileall -q .
+
+# =============================================================================
+# Stage 2: Runtime (Minimal, TensorCore-optimized)
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS runtime
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full Tensor Compute with TensorCore"
+LABEL org.opencontainers.image.licenses="MIT"
+
+ENV PYTHON_GIL=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/opt/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/venv"
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+WORKDIR /app
+
+# Install runtime system dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    libportaudio2 \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder (all dependencies baked in)
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy Playwright browsers
+COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
+
+# Copy HuggingFace model cache
+COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
+
+# Copy application code (precompiled)
+COPY --from=builder /build .
 
 # Create non-root user
 RUN useradd -m -u 1000 aspire
 USER aspire
 
-# Environment variables for strict GPU usage
-ENV NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-
-# Entrypoint script to verify environment and start
-COPY --chown=aspire:aspire AI/Aspire-Full.Python/python-agents/scripts/run_agent.ps1 /app/scripts/run_agent.ps1
-
-# Default command (can be overridden)
+# Default command
 CMD ["python", "-m", "aspire_agents.cli", "--help"]
