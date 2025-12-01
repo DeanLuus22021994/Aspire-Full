@@ -73,18 +73,15 @@ import shutil
 import subprocess
 from pathlib import Path
 
-os.environ["GRPC_VERBOSITY"] = (
-    "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
-)
-
-from agents import (  # pylint: disable=wrong-import-position,import-error # type: ignore # noqa: E402
-    Agent,
-    Runner,
-)
-from agents.extensions.memory import (  # pylint: disable=wrong-import-position,import-error # type: ignore # noqa: E402
+from agents import Agent, Runner
+from agents.extensions.memory import (
     DAPR_CONSISTENCY_EVENTUAL,
     DAPR_CONSISTENCY_STRONG,
     DaprSession,
+)
+
+os.environ["GRPC_VERBOSITY"] = (
+    "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
 )
 
 grpc_port = os.environ.get("DAPR_GRPC_PORT", "50001")
@@ -123,7 +120,7 @@ async def main():
     print(
         "Start Dapr with: dapr run --app-id myapp --dapr-http-port 3500 "
         "--dapr-grpc-port 50001 --resources-path ./components"
-    )  # noqa: E501
+    )
     print()
 
     # Create a Dapr session instance with context manager for automatic cleanup
@@ -144,7 +141,7 @@ async def main():
                 print(
                     "Command: dapr run --app-id myapp --dapr-http-port 3500 "
                     "--dapr-grpc-port 50001 --resources-path ./components"
-                )  # noqa: E501
+                )
                 return
 
             print("Connected to Dapr successfully!")
@@ -232,12 +229,12 @@ async def main():
                 await new_session.clear_session()
                 # No need to call close() - context manager handles it automatically!
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Error: {e}")
         print(
             "Make sure Dapr sidecar is running with: dapr run --app-id myapp "
             "--dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
-        )  # noqa: E501
+        )
 
 
 async def demonstrate_advanced_features():
@@ -315,7 +312,7 @@ async def demonstrate_advanced_features():
                     )
                     print("Multi-tenant sessions created with isolated data")
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Advanced features error: {e}")
 
 
@@ -449,13 +446,13 @@ async def demonstrate_multi_store():
             r_items = await redis_session.get_items()
             p_items = await pg_session.get_items()
 
-            r_example = r_items[-1]["content"] if r_items else "empty"
-            p_example = p_items[-1]["content"] if p_items else "empty"
+            r_example = r_items[-1].get("content", "empty") if r_items else "empty"
+            p_example = p_items[-1].get("content", "empty") if p_items else "empty"
 
             print(f"{redis_store}: {len(r_items)} items; example: {r_example}")
             print(f"{pg_store}: {len(p_items)} items; example: {p_example}")
             print("Data is isolated per state store.")
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Multi-store demo error: {e}")
 
 
@@ -487,7 +484,7 @@ def _container_running(name: str):
         if result.returncode != 0:
             return None
         return result.stdout.strip().lower() == "true"
-    except Exception:  # pylint: disable=broad-exception-caught
+    except Exception:
         return None
 
 
