@@ -5,12 +5,12 @@ FROM base-python
 WORKDIR /app
 
 # Copy the project files
-COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock ./
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml ./
 COPY AI/Aspire-Full.Python/python-agents/src ./src
 COPY AI/Aspire-Full.Python/python-agents/README.md ./
 
 # Install dependencies
-RUN uv sync --frozen
+RUN uv sync
 
 # Set the entrypoint
 ENTRYPOINT ["uv", "run", "aspire-agents"]
