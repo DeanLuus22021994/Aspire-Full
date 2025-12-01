@@ -13,12 +13,13 @@
   - [x] Migrate `run-actions-locally.ps1` to `pipeline ci run-local`.
 
 
-- [ ] **Phase 3: Development & Docs Migration**
-    - [ ] Migrate `cleanup-branches.ps1` to `pipeline dev cleanup`.
-    - [ ] Migrate `setup-gh-extensions.ps1` to `pipeline dev extensions`.
-    - [ ] Migrate `gh-dashboard.ps1` to `pipeline dev dashboard`.
-    - [ ] Migrate `generate-docs.ps1` and `generate-changelog.ps1` to `pipeline docs generate`.
-    - [ ] Migrate `run-tests.ps1` to `pipeline test`.
+- [x] **Phase 3: Development Workflow Migration**
+  - [x] Create `DevModule` in `Modules/Dev/`.
+  - [x] Migrate `Start-Aspire.ps1` to `pipeline dev start`.
+  - [x] Migrate `build.cmd` to `pipeline dev build`.
+  - [x] Migrate `run-tests.ps1` to `pipeline dev test`.
+  - [x] Migrate `cleanup-branches.ps1` to `pipeline dev cleanup`.
+
 
 - [ ] **Phase 4: AI & Host Migration**
     - [ ] Migrate `agentic-workflows.ps1` to `pipeline ai workflows`.
