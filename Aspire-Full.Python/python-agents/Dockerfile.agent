@@ -31,12 +31,13 @@ WORKDIR /app
 
 # Copy dependency files
 # Note: These paths are relative to the build context (repo root)
-COPY Aspire-Full.Python/python-agents/pyproject.toml Aspire-Full.Python/python-agents/uv.lock* Aspire-Full.Python/python-agents/README.md ./
+COPY Aspire-Full.Python/python-agents/pyproject.toml Aspire-Full.Python/python-agents/uv.lock* ./
 
 # Install dependencies
 # We use --system because we are in a container
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --no-cache-dir -e .[tracing]
+    uv export --frozen --format requirements-txt --extra tracing --output-file requirements.txt && \
+    uv pip install --system --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers
 RUN --mount=type=cache,target=/root/.cache/ms-playwright \
@@ -44,6 +45,10 @@ RUN --mount=type=cache,target=/root/.cache/ms-playwright \
 
 # Copy source code
 COPY Aspire-Full.Python/python-agents/ .
+
+# Install the project itself
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system --no-cache-dir -e .[tracing]
 
 # Pre-download models for instant readiness
 # This runs the script we just created to cache models in the image
