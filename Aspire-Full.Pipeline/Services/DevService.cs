@@ -22,12 +22,12 @@ public class DevService
 
         if (wait)
         {
-            await ProcessUtils.RunAsync("dotnet", ["run", "--project", PathConstants.AppHostProjectName, "--no-build", "--launch-profile", "headless", "--configuration", "Release"], root, silent: false, envVars: EnvConstants.AspireAppHost);
+            await ProcessUtils.RunAsync(CliConstants.Dotnet, ["run", "--project", PathConstants.AppHostProjectName, "--no-build", "--launch-profile", "headless", "--configuration", CliConstants.Release], root, silent: false, envVars: EnvConstants.AspireAppHost);
         }
         else
         {
             // Start in background
-            var startInfo = new ProcessStartInfo("dotnet")
+            var startInfo = new ProcessStartInfo(CliConstants.Dotnet)
             {
                 WorkingDirectory = root,
                 UseShellExecute = false, // Must be false to set env vars
@@ -42,7 +42,7 @@ public class DevService
             startInfo.ArgumentList.Add("--launch-profile");
             startInfo.ArgumentList.Add("headless");
             startInfo.ArgumentList.Add("--configuration");
-            startInfo.ArgumentList.Add("Release");
+            startInfo.ArgumentList.Add(CliConstants.Release);
 
             foreach (var kvp in EnvConstants.AspireAppHost)
             {
