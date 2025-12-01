@@ -115,7 +115,7 @@ public class DevService
         var root = GitUtils.GetRepositoryRoot();
 
         AnsiConsole.MarkupLine("[cyan]Starting GPU-accelerated build...[/]");
-        await ProcessUtils.RunAsync("dotnet", ["build", "--configuration", "Release", "--verbosity", "minimal"], root, silent: false, envVars: EnvConstants.BuildAndTest);
+        await ProcessUtils.RunAsync(CliConstants.Dotnet, ["build", "--configuration", CliConstants.Release, "--verbosity", "minimal"], root, silent: false, envVars: EnvConstants.BuildAndTest);
     }
 
     public async Task TestAsync(bool unitOnly, bool e2eOnly, bool aspireOnly, bool coverage, string filter)
@@ -139,7 +139,7 @@ public class DevService
             var args = new List<string>
             {
                 "test", PathConstants.UnitTestProject,
-                "--configuration", "Release",
+                "--configuration", CliConstants.Release,
                 "--no-build",
                 "--logger", "console;verbosity=normal",
                 "--results-directory", PathConstants.TestResultsUnit
@@ -148,7 +148,7 @@ public class DevService
             if (coverage) args.Add("--collect:XPlat Code Coverage");
             if (!string.IsNullOrEmpty(filter)) { args.Add("--filter"); args.Add(filter); }
 
-            await ProcessUtils.RunAsync("dotnet", args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
+            await ProcessUtils.RunAsync(CliConstants.Dotnet, args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
         }
 
         if (runE2E)
@@ -157,14 +157,14 @@ public class DevService
             var args = new List<string>
             {
                 "test", PathConstants.E2ETestProject,
-                "--configuration", "Release",
+                "--configuration", CliConstants.Release,
                 "--no-build",
                 "--logger", "console;verbosity=normal",
                 "--results-directory", PathConstants.TestResultsE2E,
                 "--filter", string.IsNullOrEmpty(filter) ? "TestCategory=Dashboard" : filter
             };
 
-            await ProcessUtils.RunAsync("dotnet", args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
+            await ProcessUtils.RunAsync(CliConstants.Dotnet, args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
         }
 
         if (runAspire)
@@ -173,14 +173,14 @@ public class DevService
             var args = new List<string>
             {
                 "test", PathConstants.E2ETestProject,
-                "--configuration", "Release",
+                "--configuration", CliConstants.Release,
                 "--no-build",
                 "--logger", "console;verbosity=normal",
                 "--results-directory", PathConstants.TestResultsAspire,
                 "--filter", string.IsNullOrEmpty(filter) ? "TestCategory=AspireIntegration" : filter
             };
 
-            await ProcessUtils.RunAsync("dotnet", args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
+            await ProcessUtils.RunAsync(CliConstants.Dotnet, args.ToArray(), root, silent: false, envVars: EnvConstants.BuildAndTest);
         }
     }
 
@@ -194,7 +194,7 @@ public class DevService
         if (force) args.Add("--force");
 
         AnsiConsole.MarkupLine("[cyan]Cleaning up local branches...[/]");
-        await ProcessUtils.RunAsync("gh", args.ToArray(), root, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Gh, args.ToArray(), root, silent: false);
     }
 
     private bool IsRunning(string pidFile)
