@@ -41,7 +41,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Install Playwright browsers
 RUN --mount=type=cache,target=/root/.cache/ms-playwright \
-    uv run playwright install --with-deps chromium
+    playwright install --with-deps chromium
 
 # Copy source code
 COPY Aspire-Full.Python/python-agents/ .
