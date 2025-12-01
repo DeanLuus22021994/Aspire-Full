@@ -18,8 +18,7 @@
   <Project Path="AI/Aspire-Full.Tensor/Aspire-Full.Tensor.csproj" />
   <Project Path="AI/Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
   <Project Path="AI/Aspire-Full.Python/Aspire-Full.Python.csproj" />
-  <Project Path="AI/Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj" />
-  <Project Path="AI/Aspire-Full.Subagents/Aspire-Full.Subagents.csproj" />
+
   <Project Path="Web/Aspire-Full.Api/Aspire-Full.Api.csproj" />
   <Project Path="Web/Aspire-Full.Web/Aspire-Full.Web.csproj" />
   <Project Path="Web/Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj" />
