@@ -21,8 +21,8 @@
     <NativeSourceFiles Include="Native\src\**\*" />
     <NativeSourceFiles Include="Native\include\**\*" />
     <NativeSourceFiles Include="Native\CMakeLists.txt" />
-    <NativeBuildConfig Include="..\Aspire-Full.DockerRegistry\docker-bake.hcl" />
-    <NativeBuildConfig Include="..\Aspire-Full.DockerRegistry\docker\Aspire\Dockerfile.Native" />
+    <NativeBuildConfig Include="..\..\Infra\Aspire-Full.DockerRegistry\docker-bake.hcl" />
+    <NativeBuildConfig Include="..\..\Infra\Aspire-Full.DockerRegistry\docker\Aspire\Dockerfile.Native" />
   </ItemGroup>
 
   <Target Name="BuildNative"
@@ -32,7 +32,7 @@
           Outputs="build/libAspireFullNative.so">
 
     <Message Importance="High" Text="Building Native Library via Docker (Incremental)..." />
-    <Exec Command="docker buildx bake -f Aspire-Full.DockerRegistry/docker-bake.hcl native-lib" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
+    <Exec Command="docker buildx bake -f Infra/Aspire-Full.DockerRegistry/docker-bake.hcl native-lib" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
 
   </Target>
 
