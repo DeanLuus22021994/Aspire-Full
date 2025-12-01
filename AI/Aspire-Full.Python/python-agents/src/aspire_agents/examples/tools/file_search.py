@@ -5,7 +5,7 @@ This module demonstrates the usage of the FileSearchTool with an Agent.
 import asyncio
 
 from agents import Agent, FileSearchTool, Runner, trace
-from openai import OpenAI
+from openai import OpenAI as OpenAIClient
 
 
 async def main() -> None:
@@ -17,7 +17,7 @@ async def main() -> None:
     if vector_store_id is None:
         print("### Preparing vector store:\n")
         # Create a new vector store and index a file
-        client = OpenAI()
+        client = OpenAIClient()
         text = (
             "Arrakis, the desert planet in Frank Herbert's 'Dune,' was inspired by the scarcity "
             "of water as a metaphor for oil and other finite resources."
