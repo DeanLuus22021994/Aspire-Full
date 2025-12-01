@@ -48,7 +48,7 @@ target "native-lib" {
   contexts = {
     "base-native" = "target:base-native"
   }
-  output = ["type=local,dest=Aspire-Full.Native/build/"]
+  output = ["type=local,dest=Aspire-Full.Tensor/build/"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest,mode=max"]
 }
