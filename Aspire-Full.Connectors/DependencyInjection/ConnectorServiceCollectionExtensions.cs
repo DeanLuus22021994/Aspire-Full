@@ -1,3 +1,4 @@
+using Aspire_Full.Tensor.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -18,6 +19,7 @@ public static class ConnectorServiceCollectionExtensions
         services.AddSingleton<IConnectorMetricReporter, ConnectorMetricReporter>();
         services.AddSingleton<IConnectorMetricSnapshotProvider, ConnectorMetricSnapshotProvider>();
         services.AddSingleton<IVectorStoreConnector, VectorStoreConnector>();
+        services.AddSingleton<ITensorVectorBridge, TensorVectorBridge>();
 
         services.AddOpenTelemetry().WithTracing(builder => builder.AddSource(ConnectorDiagnostics.ActivitySourceName));
 

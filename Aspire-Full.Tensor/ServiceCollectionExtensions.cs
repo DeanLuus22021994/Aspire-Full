@@ -1,3 +1,4 @@
+using Aspire_Full.Tensor.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,18 @@ public static class ServiceCollectionExtensions
             .ValidateOnStart();
 
         services.AddScoped<ITensorRuntimeService, TensorRuntimeService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddTensorOrchestration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<TensorModelCatalogOptions>()
+            .Bind(configuration.GetSection("TensorModels"))
+            .ValidateOnStart();
+
+        services.AddSingleton<ITensorJobStore, InMemoryTensorJobStore>();
+        services.AddSingleton<ITensorJobCoordinator, TensorJobCoordinator>();
 
         return services;
     }
