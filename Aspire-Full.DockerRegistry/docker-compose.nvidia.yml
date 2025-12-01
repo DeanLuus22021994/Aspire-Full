@@ -24,23 +24,49 @@ services:
 
   postgres:
     image: postgres:latest
+    restart: unless-stopped
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=aspiredb
     volumes:
       - aspire-postgres-data:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:latest
+    restart: unless-stopped
     volumes:
       - aspire-redis-data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   registry:
     image: registry:2
+    restart: unless-stopped
     ports:
       - "5001:5000"
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
     volumes:
       - aspire-registry-data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/v2/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   aspire-postgres-data:
