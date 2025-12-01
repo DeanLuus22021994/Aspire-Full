@@ -1,16 +1,42 @@
-# Use the base python image
-FROM base-python
+# syntax=docker/dockerfile:1
+# Build the base image first:
+# docker build -f Infra/Aspire-Full.DockerRegistry/docker/Dockerfile.base-playwright -t aspire-python-playwright:latest .
+FROM aspire-python-playwright:latest
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full Python Agents"
+LABEL org.opencontainers.image.licenses="MIT"
 
-# Set the working directory
+# Enable Python 3.14 Free-Threading
+# ENV PYTHON_GIL=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Set working directory
 WORKDIR /app
 
-# Copy the project files
-COPY AI/Aspire-Full.Python/python-agents/pyproject.toml ./
-COPY AI/Aspire-Full.Python/python-agents/src ./src
-COPY AI/Aspire-Full.Python/python-agents/README.md ./
+# Copy dependency files
+# Note: These paths are relative to the build context (repo root)
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock* ./
 
 # Install dependencies
-RUN uv sync
+# We use --system because we are in a container
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv export --frozen --format requirements-txt --extra tracing --no-emit-project --output-file requirements.txt && \
+    uv pip install --system --no-cache-dir -r requirements.txt
 
-# Set the entrypoint
-ENTRYPOINT ["uv", "run", "aspire-agents"]
+# Copy source code
+COPY AI/Aspire-Full.Python/python-agents/ .
+
+# Install the project itself
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system --no-cache-dir -e .[tracing]
+
+# Pre-download models for instant readiness
+# This runs the script we just created to cache models in the image
+RUN python scripts/download_models.py
+
+# Expose port
+EXPOSE 8000
+
+# Run the server
+CMD ["python", "src/aspire_agents/examples/realtime/app/server.py"]
