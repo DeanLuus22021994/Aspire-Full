@@ -2,7 +2,7 @@
 
 This workspace hosts the shared Semantic Kernel (SK) scaffolding for folder-scoped agents that can be invoked as VS Code handoffs or background tasks. The goals for this package are:
 
-- provide a single `uv` project targeting the free-threaded CPython 3.14 runtime (`cpython-3.14.0a1t`)
+- provide a single `uv` project targeting the free-threaded CPython 3.14 runtime (`cpython-3.14t`)
 - keep common tooling (SK kernel wiring, tracing, Typer CLI, lint/type/test commands) in one place
 - let each Aspire folder drop a lightweight `python-agents/` descriptor that references the shared CLI plus its own prompts, skills, and handoff metadata
 
@@ -11,8 +11,8 @@ This workspace hosts the shared Semantic Kernel (SK) scaffolding for folder-scop
 1. Install the requested interpreter (pyenv or uv):
 
    ```bash
-   uv python install 3.15.0a2t
-   uv venv .venv --python 3.15.0a2t
+   uv python install 3.14t
+   uv venv .venv --python 3.14t
    uv sync
    ```
 
