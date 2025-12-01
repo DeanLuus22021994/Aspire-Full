@@ -237,11 +237,11 @@ void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> a
 
 void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
 {
-    pythonAgents.WithEnvironment("OTEL_SERVICE_NAME", "python-agents")
-        .WithEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://aspire-dashboard:18889")
-        .WithEnvironment("OTEL_PYTHON_LOG_CORRELATION", "true")
-        .WithEnvironment("CUDA_VISIBLE_DEVICES", "0")
-        .WithEnvironment("GPU_TARGET_UTILIZATION", runtimeConfig.Telemetry.Gpu.Snapshot.TargetUtilization.ToString());
+    pythonAgents.WithEnvironment(AppHostConstants.EnvironmentVariables.OtelServiceName, AppHostConstants.Resources.PythonAgents)
+        .WithEnvironment(AppHostConstants.EnvironmentVariables.OtelExporterOtlpEndpoint, "http://aspire-dashboard:18889")
+        .WithEnvironment(AppHostConstants.EnvironmentVariables.OtelPythonLogCorrelation, "true")
+        .WithEnvironment(AppHostConstants.EnvironmentVariables.CudaVisibleDevices, "0")
+        .WithEnvironment(AppHostConstants.EnvironmentVariables.GpuTargetUtilization, runtimeConfig.Telemetry.Gpu.Snapshot.TargetUtilization.ToString());
 
     if (settings.Agents.Gpu)
     {
