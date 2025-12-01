@@ -24,9 +24,9 @@ const string dockerDebuggerImage = AppHostConstants.Images.DockerDebugger;
 // Dev Infrastructure - Docker-in-Docker daemon + dashboard + devcontainer
 // -----------------------------------------------------------------------------
 var dockerDaemon = builder.AddContainer(AppHostConstants.Resources.DockerDaemon, AppHostConstants.Images.DockerDind)
-    .WithVolume(AppHostConstants.Volumes.DockerData, "/var/lib/docker")
-    .WithVolume(AppHostConstants.Volumes.DockerCerts, "/certs")
-    .WithEnvironment("DOCKER_TLS_CERTDIR", "/certs")
+    .WithVolume(AppHostConstants.Volumes.DockerData, AppHostConstants.Paths.DockerLib)
+    .WithVolume(AppHostConstants.Volumes.DockerCerts, AppHostConstants.Paths.Certs)
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DockerTlsCertDir, AppHostConstants.Paths.Certs)
     .WithContainerRuntimeArgs("--host=tcp://0.0.0.0:2376", "--host=unix:///var/run/docker.sock")
     .WithContainerRuntimeArgs("--network", networkName)
     .WithHttpEndpoint(name: "engine", port: AppHostConstants.Ports.DockerEngine, targetPort: 2376)
@@ -34,23 +34,23 @@ var dockerDaemon = builder.AddContainer(AppHostConstants.Resources.DockerDaemon,
 
 var dockerDebugger = builder.AddContainer(AppHostConstants.Resources.DockerDebugger, dockerDebuggerImage)
     .WaitFor(dockerDaemon)
-    .WithVolume(AppHostConstants.Volumes.DockerCerts, "/certs")
-    .WithEnvironment("DOCKER_HOST", $"tcp://{AppHostConstants.Resources.DockerDaemon}:2376")
-    .WithEnvironment("DOCKER_TLS_VERIFY", "1")
-    .WithEnvironment("DOCKER_CERT_PATH", "/certs/client")
-    .WithEnvironment("DOCKER_DEBUGGER_TARGET_NETWORK", networkName)
+    .WithVolume(AppHostConstants.Volumes.DockerCerts, AppHostConstants.Paths.Certs)
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DockerHost, $"tcp://{AppHostConstants.Resources.DockerDaemon}:2376")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DockerTlsVerify, "1")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DockerCertPath, AppHostConstants.Paths.CertsClient)
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DockerDebuggerTargetNetwork, networkName)
     .WithHttpEndpoint(name: "debugger-ui", port: AppHostConstants.Ports.DockerDebuggerUi, targetPort: 9393)
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
 var dashboard = builder.AddContainer(AppHostConstants.Resources.AspireDashboard, AppHostConstants.Images.AspireDashboard)
-    .WithVolume(AppHostConstants.Volumes.DashboardData, "/app/data")
-    .WithEnvironment("DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS", "true")
-    .WithEnvironment("DASHBOARD__OTLP__AUTHMODE", "Unsecured")
-    .WithEnvironment("DASHBOARD__FRONTEND__AUTHMODE", "Unsecured")
-    .WithEnvironment("DASHBOARD__RESOURCESERVICE__AUTHMODE", "Unsecured")
-    .WithEnvironment("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL", "http://0.0.0.0:16036")
-    .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
+    .WithVolume(AppHostConstants.Volumes.DashboardData, AppHostConstants.Paths.DashboardData)
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DotnetDashboardUnsecuredAllowAnonymous, "true")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardOtlpAuthMode, "Unsecured")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardFrontendAuthMode, "Unsecured")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardResourceServiceAuthMode, "Unsecured")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireDashboardMcpEndpointUrl, "http://0.0.0.0:16036")
+    .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireAllowUnsecuredTransport, "true")
     .WithHttpEndpoint(name: "ui", port: AppHostConstants.Ports.DashboardUi, targetPort: 18888)
     .WithHttpEndpoint(name: "otlp", port: AppHostConstants.Ports.DashboardOtlp, targetPort: 18889)
     .WithContainerRuntimeArgs("--network", networkName)
@@ -60,7 +60,7 @@ var dashboard = builder.AddContainer(AppHostConstants.Resources.AspireDashboard,
 // Internal Docker Registry - Local artifact cache
 // -----------------------------------------------------------------------------
 var registry = builder.AddContainer(AppHostConstants.Resources.Registry, AppHostConstants.Images.Registry)
-    .WithVolume(settings.Registry.VolumeName, "/var/lib/registry")
+    .WithVolume(settings.Registry.VolumeName, AppHostConstants.Paths.RegistryData)
     .WithHttpEndpoint(name: "registry", port: settings.Registry.Port, targetPort: 5000)
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
