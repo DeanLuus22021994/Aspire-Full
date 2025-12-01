@@ -1,10 +1,14 @@
-FROM python:3.12-slim
+FROM python:3.14-slim
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Base Python Image"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Enable apt caching
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Enable Python Free Threading (No GIL)
+ENV PYTHON_GIL=0
+ENV PYTHON_3_14_FREE_THREADING=1
 
 # Install system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
