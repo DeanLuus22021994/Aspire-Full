@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Aspire_Full.Subagents;
+using Aspire_Full.Shared.Models;
 using Aspire_Full.Shared;
 using Aspire_Full.Shared.Models;
 

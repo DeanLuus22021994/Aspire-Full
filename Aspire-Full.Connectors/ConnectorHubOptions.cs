@@ -1,4 +1,4 @@
-using Aspire_Full.Qdrant;
+using Aspire_Full.VectorStore;
 
 namespace Aspire_Full.Connectors;
 
