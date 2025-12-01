@@ -19,7 +19,8 @@ builder.AddNpgsqlDbContext<GatewayDbContext>("aspiredb", settings =>
 
 // Vector Store & Embeddings
 builder.Services.AddQdrantClient(builder.Configuration);
-builder.Services.AddSingleton<IVectorStoreService, VectorStoreService>();
+builder.Services.AddSingleton<Aspire_Full.VectorStore.IVectorStoreService, Aspire_Full.VectorStore.QdrantVectorStoreService>();
+builder.Services.AddSingleton<IUserVectorService, UserVectorService>();
 
 // Register Embedding Services
 builder.Services.AddEmbeddingServices();
