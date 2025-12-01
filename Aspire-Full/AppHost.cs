@@ -43,23 +43,23 @@ var dockerDebugger = builder.AddContainer(AppHostConstants.Resources.DockerDebug
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
-var dashboard = builder.AddContainer("aspire-dashboard", "mcr.microsoft.com/dotnet/aspire-dashboard:latest")
-    .WithVolume("aspire-dashboard-data", "/app/data")
+var dashboard = builder.AddContainer(AppHostConstants.Resources.AspireDashboard, AppHostConstants.Images.AspireDashboard)
+    .WithVolume(AppHostConstants.Volumes.DashboardData, "/app/data")
     .WithEnvironment("DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS", "true")
     .WithEnvironment("DASHBOARD__OTLP__AUTHMODE", "Unsecured")
     .WithEnvironment("DASHBOARD__FRONTEND__AUTHMODE", "Unsecured")
     .WithEnvironment("DASHBOARD__RESOURCESERVICE__AUTHMODE", "Unsecured")
     .WithEnvironment("ASPIRE_DASHBOARD_MCP_ENDPOINT_URL", "http://0.0.0.0:16036")
     .WithEnvironment("ASPIRE_ALLOW_UNSECURED_TRANSPORT", "true")
-    .WithHttpEndpoint(name: "ui", port: 18888, targetPort: 18888)
-    .WithHttpEndpoint(name: "otlp", port: 18889, targetPort: 18889)
+    .WithHttpEndpoint(name: "ui", port: AppHostConstants.Ports.DashboardUi, targetPort: 18888)
+    .WithHttpEndpoint(name: "otlp", port: AppHostConstants.Ports.DashboardOtlp, targetPort: 18889)
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
 // -----------------------------------------------------------------------------
 // Internal Docker Registry - Local artifact cache
 // -----------------------------------------------------------------------------
-var registry = builder.AddContainer("registry", "registry:2")
+var registry = builder.AddContainer(AppHostConstants.Resources.Registry, AppHostConstants.Images.Registry)
     .WithVolume(settings.Registry.VolumeName, "/var/lib/registry")
     .WithHttpEndpoint(name: "registry", port: settings.Registry.Port, targetPort: 5000)
     .WithContainerRuntimeArgs("--network", networkName)
