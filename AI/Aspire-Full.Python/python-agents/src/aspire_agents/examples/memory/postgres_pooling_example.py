@@ -8,12 +8,25 @@ health checks, and session management best practices.
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator, cast
 
 from agents import Agent, Runner
 from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine  # type: ignore
+else:
+    try:
+        from sqlalchemy.ext.asyncio import AsyncEngine  # type: ignore
+    except ImportError:
+        AsyncEngine = Any
+
+try:
+    from sqlalchemy import text  # type: ignore
+    from sqlalchemy.ext.asyncio import create_async_engine  # type: ignore
+except ImportError:
+    text = None  # type: ignore
+    create_async_engine = None  # type: ignore
 
 
 class PostgreSQLSessionManager:
@@ -44,7 +57,11 @@ class PostgreSQLSessionManager:
     def get_engine(self) -> AsyncEngine:
         """Get or create the singleton engine instance."""
         if self._engine is None:
-            self._engine = create_async_engine(
+            if create_async_engine is None:
+                raise ImportError("sqlalchemy.ext.asyncio is required")
+
+            creator = cast(Any, create_async_engine)
+            self._engine = creator(
                 self._connection_url,
                 # Pool configuration
                 pool_size=20,  # Base connection pool size
@@ -65,14 +82,15 @@ class PostgreSQLSessionManager:
                     "timeout": 10,  # Connection timeout
                 },
             )
-        return self._engine
+        return cast(AsyncEngine, self._engine)
 
-    async def get_pool_status(self) -> dict:
+    async def get_pool_status(self) -> dict[str, Any]:
         """Get current connection pool statistics."""
         if self._engine is None:
             return {"status": "not_initialized"}
 
-        pool = self._engine.pool
+        engine = cast(Any, self._engine)
+        pool = engine.pool
         return {
             "size": pool.size(),
             "checked_in": pool.checkedin(),
@@ -87,7 +105,9 @@ class PostgreSQLSessionManager:
     async def health_check(self) -> bool:
         """Verify database connectivity."""
         try:
-            engine = self.get_engine()
+            if text is None:
+                return False
+            engine = cast(Any, self.get_engine())
             async with engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
             return True
@@ -98,7 +118,8 @@ class PostgreSQLSessionManager:
     async def close(self):
         """Gracefully close all connections."""
         if self._engine:
-            await self._engine.dispose()
+            engine = cast(Any, self._engine)
+            await engine.dispose()
             self._engine = None
 
     @asynccontextmanager
@@ -110,7 +131,7 @@ class PostgreSQLSessionManager:
             async with manager.create_session("user_123") as session:
                 await Runner.run(agent, "Hello", session=session)
         """
-        engine = self.get_engine()
+        engine = cast(Any, self.get_engine())
         session = SQLAlchemySession(
             session_id=session_id,
             engine=engine,

@@ -48,7 +48,8 @@ PREREQUISITES:
        incredible useful for agents.
 7. Start dapr sidecar (The app-id is the name of the application that will be running
    the agent. It can be any name you want. You can check the app-id with `dapr list`.):
-        dapr run --app-id openai-agents-example --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components
+        dapr run --app-id openai-agents-example --dapr-http-port 3500 \\
+            --dapr-grpc-port 50001 --resources-path ./components
 
 COMMON ISSUES:
 - "Health check connection refused (port 3500)": Always use --dapr-http-port 3500
@@ -229,7 +230,7 @@ async def main():
                 await new_session.clear_session()
                 # No need to call close() - context manager handles it automatically!
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
         print(
             "Make sure Dapr sidecar is running with: dapr run --app-id myapp "
@@ -312,7 +313,7 @@ async def demonstrate_advanced_features():
                     )
                     print("Multi-tenant sessions created with isolated data")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Advanced features error: {e}")
 
 
@@ -452,7 +453,7 @@ async def demonstrate_multi_store():
             print(f"{redis_store}: {len(r_items)} items; example: {r_example}")
             print(f"{pg_store}: {len(p_items)} items; example: {p_example}")
             print("Data is isolated per state store.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Multi-store demo error: {e}")
 
 
@@ -484,7 +485,7 @@ def _container_running(name: str):
         if result.returncode != 0:
             return None
         return result.stdout.strip().lower() == "true"
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return None
 
 

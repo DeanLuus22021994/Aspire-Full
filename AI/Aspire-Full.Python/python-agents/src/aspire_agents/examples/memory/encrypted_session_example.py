@@ -90,7 +90,7 @@ async def main():
     raw_items = await underlying_session.get_items()
     print("Raw encrypted items in underlying storage:")
     for i, item in enumerate(raw_items, 1):
-        if isinstance(item, dict) and item.get("__enc__") == 1:
+        if item.get("__enc__") == 1:
             enc_item = cast(EncryptedEnvelope, item)
             print(
                 f"  {i}. Encrypted envelope: __enc__={enc_item['__enc__']}, "
@@ -99,7 +99,9 @@ async def main():
         else:
             print(f"  {i}. Unencrypted item: {item}")
 
-    print(f"\nAll {len(raw_items)} items are stored encrypted with TTL-based expiration.")
+    print(
+        f"\nAll {len(raw_items)} items are stored encrypted with TTL-based expiration."
+    )
 
     # Clean up
     underlying_session.close()

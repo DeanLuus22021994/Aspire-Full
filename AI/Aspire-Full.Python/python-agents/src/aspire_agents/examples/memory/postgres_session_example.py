@@ -7,6 +7,7 @@ container from docker-compose, showing production-ready patterns.
 
 import asyncio
 import os
+from typing import Any, cast
 
 from agents import Agent, Runner
 from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
@@ -21,7 +22,9 @@ async def main():
     pg_db = "agents"  # Use dedicated agents database
 
     # Construct PostgreSQL connection URL for asyncpg driver
-    database_url = f"postgresql+asyncpg://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+    database_url = (
+        f"postgresql+asyncpg://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+    )
 
     print("=== PostgreSQL Session Example ===")
     print(f"Connecting to: {database_url.replace(pg_password, '***')}\n")
@@ -107,7 +110,8 @@ async def main():
 
     finally:
         # Clean up connection pool
-        await session.engine.dispose()
+        session_any = cast(Any, session)
+        await session_any.engine.dispose()
         print("\nConnection pool closed.")
 
 

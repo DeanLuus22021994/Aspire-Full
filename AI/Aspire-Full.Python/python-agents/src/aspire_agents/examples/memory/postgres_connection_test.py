@@ -11,13 +11,30 @@ This example validates:
 import asyncio
 import os
 from datetime import datetime
+from typing import TYPE_CHECKING, Any, cast
 
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine  # type: ignore
+else:
+    try:
+        from sqlalchemy.ext.asyncio import AsyncEngine
+    except ImportError:
+        AsyncEngine = Any
+
+try:
+    from sqlalchemy import text  # type: ignore
+    from sqlalchemy.ext.asyncio import create_async_engine  # type: ignore
+except ImportError:
+    text = None  # type: ignore
+    create_async_engine = None  # type: ignore
 
 
 async def test_postgres_connection():
     """Test PostgreSQL connection and basic operations."""
+    if create_async_engine is None or text is None:
+        print("Skipping test: sqlalchemy not installed")
+        return
+
     # Get connection parameters from environment
     postgres_host = os.getenv("POSTGRES_HOST", "localhost")
     postgres_port = os.getenv("POSTGRES_PORT", "5432")
@@ -38,7 +55,8 @@ async def test_postgres_connection():
     print()
 
     # Create async engine with connection pooling
-    engine: AsyncEngine = create_async_engine(
+    creator = cast(Any, create_async_engine)
+    engine: AsyncEngine = creator(
         connection_string,
         echo=False,  # Set to True to see SQL queries
         pool_size=5,
@@ -49,7 +67,8 @@ async def test_postgres_connection():
     try:
         # Test 1: Basic connection
         print("Test 1: Testing database connection...")
-        async with engine.connect() as conn:
+        engine_any = cast(Any, engine)
+        async with engine_any.connect() as conn:
             result = await conn.execute(text("SELECT version()"))
             version = result.scalar()
             print(f"✓ Connected! PostgreSQL version: {version[:50]}...")
@@ -57,7 +76,7 @@ async def test_postgres_connection():
 
         # Test 2: Check installed extensions
         print("Test 2: Checking installed extensions...")
-        async with engine.connect() as conn:
+        async with engine_any.connect() as conn:
             result = await conn.execute(
                 text("SELECT extname, extversion FROM pg_extension ORDER BY extname")
             )
@@ -68,7 +87,7 @@ async def test_postgres_connection():
 
         # Test 3: Create test table and insert data
         print("Test 3: Creating test table and inserting data...")
-        async with engine.begin() as conn:
+        async with engine_any.begin() as conn:
             # Create test table
             await conn.execute(
                 text(
@@ -93,7 +112,9 @@ async def test_postgres_connection():
                 ),
                 {
                     "session_id": "test-session-1",
-                    "data": '{"test": "data", "timestamp": "' + datetime.now().isoformat() + '"}',
+                    "data": '{"test": "data", "timestamp": "'
+                    + datetime.now().isoformat()
+                    + '"}',
                 },
             )
             print("✓ Test table created and data inserted")
@@ -101,7 +122,7 @@ async def test_postgres_connection():
 
         # Test 4: Query the data back
         print("Test 4: Querying data...")
-        async with engine.connect() as conn:
+        async with engine_any.connect() as conn:
             result = await conn.execute(text("SELECT * FROM test_sessions"))
             rows = result.fetchall()
             print(f"✓ Found {len(rows)} row(s):")
@@ -111,14 +132,14 @@ async def test_postgres_connection():
 
         # Test 5: Check connection pool status
         print("Test 5: Connection pool status...")
-        print(f"  • Pool size: {engine.pool.size()}")
-        print(f"  • Checked out connections: {engine.pool.checkedout()}")
-        print(f"  • Overflow: {engine.pool.overflow()}")
+        print(f"  • Pool size: {engine_any.pool.size()}")
+        print(f"  • Checked out connections: {engine_any.pool.checkedout()}")
+        print(f"  • Overflow: {engine_any.pool.overflow()}")
         print()
 
         # Test 6: Cleanup - drop test table
         print("Test 6: Cleaning up test table...")
-        async with engine.begin() as conn:
+        async with engine_any.begin() as conn:
             await conn.execute(text("DROP TABLE IF EXISTS test_sessions"))
             print("✓ Test table dropped")
 
@@ -132,7 +153,8 @@ async def test_postgres_connection():
         raise
     finally:
         # Close the engine
-        await engine.dispose()
+        engine_any = cast(Any, engine)
+        await engine_any.dispose()
         print("\nConnection pool closed.")
 
 
