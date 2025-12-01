@@ -24,7 +24,18 @@
   "files.associations": {
     ".pycodestyle": "ini"
   },
-  "cSpell.words": ["Instrumentor", "Serilog", "triaging"],
+  "cSpell.words": [
+    "ASPNETCORE",
+    "AUTHMODE",
+    "CERTDIR",
+    "CUDA",
+    "Dind",
+    "Instrumentor",
+    "pgvector",
+    "qdrant",
+    "Serilog",
+    "triaging"
+  ],
   "python.defaultInterpreterPath": "${workspaceFolder}/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
   "cmake.sourceDirectory": "C:/Users/Dean/source/Aspire-Full - 1/Aspire-Full.Native",
   "nsight.server.connection.port": 4500,

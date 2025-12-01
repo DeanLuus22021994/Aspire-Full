@@ -50,6 +50,22 @@ public static class ServiceCollectionExtensions
             };
         });
 
+        return services;
+    }
+
+    public static IServiceCollection AddDockerRegistryServer(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? sectionName = null)
+    {
+        // Ensure options are registered if not already (though Client usually does it)
+        // But for safety, we can re-bind or assume Client is called or bind here too.
+        // Better to bind here too to be safe.
+        var section = configuration.GetSection(sectionName ?? DefaultConfigSection);
+        services.AddOptions<DockerRegistryOptions>()
+            .Bind(section)
+            .ValidateDataAnnotations();
+
         services.AddSingleton<IBuildxWorkerFactory, BuildxWorkerFactory>();
         services.AddSingleton<IGarbageCollector, GarbageCollector>();
         services.AddSingleton<IGarbageCollectionPolicy, MaxCountRetentionPolicy>();
