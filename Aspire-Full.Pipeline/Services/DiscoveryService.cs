@@ -2,6 +2,7 @@ using Aspire_Full.Pipeline.Modules.Discovery.Components;
 using Aspire_Full.Pipeline.Modules.Discovery;
 using Spectre.Console;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 using Aspire_Full.Pipeline.Constants;
 
 namespace Aspire_Full.Pipeline.Services;
