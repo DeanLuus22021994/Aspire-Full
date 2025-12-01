@@ -145,34 +145,34 @@ if (useBakedImages)
 }
 else
 {
-    var api = builder.AddProject<Projects.Aspire_Full_Api>("api");
+    var api = builder.AddProject<Projects.Aspire_Full_Api>(AppHostConstants.Resources.Api);
     ConfigureApi(api);
 
-    var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>("gateway");
+    var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>(AppHostConstants.Resources.Gateway);
     ConfigureGateway(gateway);
 
-    var frontend = builder.AddJavaScriptApp("frontend", "../Aspire-Full.Web", "dev")
+    var frontend = builder.AddJavaScriptApp(AppHostConstants.Resources.Frontend, "../Aspire-Full.Web", "dev")
         .WithHttpEndpoint(env: "PORT")
         .WithExternalHttpEndpoints();
     ConfigureFrontend(frontend, api);
 
-    var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-docs")
-        .WithHttpEndpoint(name: "docs", port: 5175, targetPort: 5175)
+    var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmDocs)
+        .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 5175)
         .WithExternalHttpEndpoints();
     ConfigureWasmDocs(wasmDocs, api);
 
-    var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-uat")
-        .WithHttpEndpoint(name: "uat", port: 5176, targetPort: 5176)
+    var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmUat)
+        .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 5176)
         .WithExternalHttpEndpoints();
     ConfigureWasmUat(wasmUat, api);
 
-    var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>("frontend-prod")
-        .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 5177)
+    var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmProd)
+        .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 5177)
         .WithExternalHttpEndpoints();
     ConfigureWasmProd(wasmProd, api);
 
-    var pythonAgents = builder.AddDockerfile("python-agents", "..", "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent")
-        .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
+    var pythonAgents = builder.AddDockerfile(AppHostConstants.Resources.PythonAgents, "..", "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent")
+        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.PythonAgents, targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName)
         .WithExternalHttpEndpoints();
     ConfigurePythonAgents(pythonAgents);
