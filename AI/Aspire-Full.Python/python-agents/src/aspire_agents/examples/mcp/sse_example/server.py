@@ -4,8 +4,8 @@ Example MCP server using SSE transport.
 
 import random
 
-import requests  # type: ignore # pylint: disable=import-error
-from mcp.server.fastmcp import FastMCP  # type: ignore # pylint: disable=import-error
+import requests
+from mcp.server.fastmcp import FastMCP
 
 # Create server
 mcp = FastMCP("Echo Server")

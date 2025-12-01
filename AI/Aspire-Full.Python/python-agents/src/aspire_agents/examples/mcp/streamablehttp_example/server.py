@@ -6,7 +6,7 @@ import random
 from typing import Any, Callable, TypeVar, cast
 
 import requests
-from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
+from mcp.server.fastmcp import FastMCP
 
 # Create server
 mcp: Any = FastMCP("Echo Server")
