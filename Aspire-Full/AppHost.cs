@@ -71,28 +71,28 @@ builder.AddDevContainer(networkName);
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search
 // -----------------------------------------------------------------------------
-var postgres = builder.AddPostgres("postgres")
+var postgres = builder.AddPostgres(AppHostConstants.Resources.Postgres)
     .WithPgAdmin()
-    .WithDataVolume("aspire-postgres-data")
+    .WithDataVolume(AppHostConstants.Volumes.PostgresData)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithContainerRuntimeArgs("--network", networkName);
 
-var database = postgres.AddDatabase("aspiredb");
+var database = postgres.AddDatabase(AppHostConstants.Resources.Database);
 
 // -----------------------------------------------------------------------------
 // Cache Layer - Redis for session and distributed caching
 // -----------------------------------------------------------------------------
-var redis = builder.AddRedis("redis")
+var redis = builder.AddRedis(AppHostConstants.Resources.Redis)
     .WithRedisCommander()
-    .WithDataVolume("aspire-redis-data")
+    .WithDataVolume(AppHostConstants.Volumes.RedisData)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithContainerRuntimeArgs("--network", networkName);
 
 // -----------------------------------------------------------------------------
 // Vector Database - Qdrant for semantic search and embeddings
 // -----------------------------------------------------------------------------
-var qdrant = builder.AddQdrant("qdrant")
-    .WithDataVolume("aspire-qdrant-data")
+var qdrant = builder.AddQdrant(AppHostConstants.Resources.Qdrant)
+    .WithDataVolume(AppHostConstants.Volumes.QdrantData)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithContainerRuntimeArgs("--network", networkName);
 
