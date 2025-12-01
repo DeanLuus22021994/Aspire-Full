@@ -14,12 +14,27 @@ import os
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from aspire_agents.memory.session import SessionManager
-
 # Handle optional dependencies without type ignores
 if TYPE_CHECKING:
-    from sqlalchemy import text
-    from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+    class TextClause:
+        pass
+
+    def text(_: str) -> TextClause: ...
+
+    class AsyncConnection:
+        async def execute(self, _: Any, __: Any = None) -> Any: ...
+        async def commit(self) -> None: ...
+        async def close(self) -> None: ...
+        async def __aenter__(self) -> "AsyncConnection": ...
+        async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None: ...
+
+    class AsyncEngine:
+        async def connect(self) -> AsyncConnection: ...
+        async def begin(self) -> AsyncConnection: ...
+        async def dispose(self) -> None: ...
+
+    def create_async_engine(_: str, **__: Any) -> AsyncEngine: ...
 else:
     try:
         from sqlalchemy import text
@@ -28,6 +43,21 @@ else:
         text = None
         create_async_engine = None
         AsyncEngine = Any
+
+
+class SessionManager:
+    """Base class for session managers."""
+
+    async def create_session(
+        self, session_id: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        raise NotImplementedError
+
+    async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+        raise NotImplementedError
+
+    async def close(self) -> None:
+        pass
 
 
 class PostgreSQLSessionManager(SessionManager):

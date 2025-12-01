@@ -42,7 +42,14 @@ else:
         RealtimeItem = Any
         RealtimeModelSendRawMessage = Any
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -50,14 +57,16 @@ from typing_extensions import assert_never
 
 # OpenTelemetry Imports
 if TYPE_CHECKING:
-    from opentelemetry import trace
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    from opentelemetry import trace  # type: ignore
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # type: ignore
         OTLPSpanExporter,
     )
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.instrumentation.fastapi import (
+        FastAPIInstrumentor,  # type: ignore
+    )
+    from opentelemetry.sdk.resources import Resource  # type: ignore
+    from opentelemetry.sdk.trace import TracerProvider  # type: ignore
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore
 
     OTEL_AVAILABLE = True
 else:

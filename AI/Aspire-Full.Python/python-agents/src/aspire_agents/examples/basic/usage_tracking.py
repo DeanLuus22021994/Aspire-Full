@@ -3,9 +3,18 @@ This module demonstrates how to track usage (tokens, requests) for an Agent.
 """
 
 import asyncio
+from typing import Any
 
 from agents import Agent, Runner, Usage, function_tool
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
+
 from pydantic import BaseModel
 
 

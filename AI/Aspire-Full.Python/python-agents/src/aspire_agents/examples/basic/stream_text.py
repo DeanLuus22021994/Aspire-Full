@@ -3,9 +3,18 @@ This module demonstrates streaming text response from an agent.
 """
 
 import asyncio
+from typing import Any
 
 from agents import Agent, Runner
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
+
 from openai.types.responses import ResponseTextDeltaEvent
 
 

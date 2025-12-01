@@ -6,7 +6,15 @@ import asyncio
 from typing import Annotated, Any, Optional
 
 from agents import Agent, Runner, function_tool
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
+
 from openai.types.responses import (
     ResponseFunctionCallArgumentsDeltaEvent,
 )

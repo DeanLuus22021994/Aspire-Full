@@ -13,7 +13,14 @@ from agents import (
     AgentOutputSchemaBase,
     Runner,
 )
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
 
 # This example demonstrates how to use an output type that is not in strict mode. Strict mode
 # allows us to guarantee valid JSON output, but some schemas are not strict-compatible.

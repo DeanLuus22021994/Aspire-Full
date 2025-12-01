@@ -5,10 +5,17 @@ This module demonstrates the use of dynamic prompt templates.
 import argparse
 import asyncio
 import random
-from typing import Any
+from typing import Any, cast
 
 from agents import Agent, GenerateDynamicPromptData, Runner
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
 
 # NOTE: This example will not work out of the box, because the default prompt ID will not be available
 # in your project.
@@ -37,18 +44,21 @@ class DynamicContext:
         print(f"[debug] DynamicContext initialized with poem_style: {self.poem_style}")
 
 
-async def _get_dynamic_prompt(data: GenerateDynamicPromptData) -> dict[str, Any]:
+async def _get_dynamic_prompt(data: GenerateDynamicPromptData) -> Any:
     """
     Generate a dynamic prompt based on the context.
     """
     ctx: DynamicContext = data.context.context
-    return {
-        "id": ctx.prompt_id,
-        "version": "1",
-        "variables": {
-            "poem_style": ctx.poem_style,
+    return cast(
+        Any,
+        {
+            "id": ctx.prompt_id,
+            "version": "1",
+            "variables": {
+                "poem_style": ctx.poem_style,
+            },
         },
-    }
+    )
 
 
 async def dynamic_prompt(prompt_id: str) -> None:

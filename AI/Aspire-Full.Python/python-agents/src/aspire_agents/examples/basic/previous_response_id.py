@@ -3,9 +3,16 @@ This module demonstrates using the previous_response_id to continue a conversati
 """
 
 import asyncio
+from typing import Any
 
 from agents import Agent, Runner
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
 
 # This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
 # The second run passes the previous response ID to the model, which allows it to continue the

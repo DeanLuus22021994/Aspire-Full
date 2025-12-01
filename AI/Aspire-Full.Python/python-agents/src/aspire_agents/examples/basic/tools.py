@@ -3,10 +3,18 @@ This module demonstrates basic tool usage with an agent.
 """
 
 import asyncio
-from typing import Annotated
+from typing import Annotated, Any
 
 from agents import Agent, Runner, function_tool
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:
+        pass
+
+
 from pydantic import BaseModel, Field
 
 
