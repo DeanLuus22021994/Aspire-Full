@@ -1,7 +1,8 @@
 #pragma once
 
 #ifndef __CUDACC__
-#include <stdlib.h>
+// #include <stdlib.h> // Removed to avoid dependency on host headers
+typedef unsigned long long size_t;
 
 #define __global__
 #define __device__

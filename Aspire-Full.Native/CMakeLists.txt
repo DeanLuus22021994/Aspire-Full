@@ -21,6 +21,9 @@ endif()
 # Include directories
 include_directories(include)
 
+# Define build macro
+add_compile_definitions(ASPIRE_NATIVE_BUILD)
+
 # Add library with source from src/
 add_library(AspireFullNative SHARED src/tensor_ops.cu)
 

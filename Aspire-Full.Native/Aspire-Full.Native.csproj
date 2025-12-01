@@ -20,6 +20,9 @@
   </Target>
 
   <ItemGroup>
+    <None Include="src\**\*" />
+    <None Include="include\**\*" />
+    <None Include="CMakeLists.txt" />
   </ItemGroup>
 
 </Project>

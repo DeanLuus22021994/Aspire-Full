@@ -1,12 +1,14 @@
 /**
- * @file tensor_ops.cu
+ * @file tensor_ops.cpp
  * @brief CUDA implementation of tensor operations for the Aspire-Full Native library.
+ *        Renamed to .cpp to trick VS Code IntelliSense into using C++ stubs while
+ *        CMake handles the CUDA compilation.
  */
 
 #include "../include/tensor_ops.h"
-#include <stdio.h>
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__INTELLISENSE__)
+#include <stdio.h>
 #include <cuda_runtime.h>
 #else
 #include "cuda_stubs.h"
