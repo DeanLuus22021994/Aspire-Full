@@ -7,7 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aspire_Full.DockerRegistry.Abstractions;
 using Aspire_Full.DockerRegistry.Configuration;
-using Aspire_Full.DockerRegistry.Native;
+using Aspire_Full.Tensor.Core.Memory;
+using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 
 namespace Aspire_Full.DockerRegistry.Workers;

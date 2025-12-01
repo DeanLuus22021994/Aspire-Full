@@ -1,16 +1,15 @@
-using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading;
+using Aspire_Full.Tensor.Core.Native;
 
-namespace Aspire_Full.DockerRegistry.Native;
+namespace Aspire_Full.Tensor.Core.Memory;
 
 /// <summary>
 /// High-performance GPU memory pool with pre-allocated device buffers.
 /// Uses C# 14 features and .NET 10 TensorPrimitives for portable compute.
+/// Thread-safe buffer management with automatic CPU fallback.
 /// </summary>
 public sealed class GpuMemoryPool : IDisposable
 {
@@ -24,7 +23,7 @@ public sealed class GpuMemoryPool : IDisposable
     private bool _disposed;
 
     // Metrics for telemetry
-    private static readonly Meter s_meter = new("Aspire.DockerRegistry.Gpu", "1.0.0");
+    private static readonly Meter s_meter = new("Aspire.Tensor.Core.Memory", "1.0.0");
     private static readonly Counter<long> s_allocationsCounter = s_meter.CreateCounter<long>("gpu.memory.allocations");
     private static readonly Histogram<double> s_allocationDuration = s_meter.CreateHistogram<double>("gpu.memory.allocation_duration_ms");
     private static readonly UpDownCounter<long> s_activeBuffers = s_meter.CreateUpDownCounter<long>("gpu.memory.active_buffers");
@@ -57,6 +56,21 @@ public sealed class GpuMemoryPool : IDisposable
     /// Number of available buffers in the pool.
     /// </summary>
     public int AvailableCount => _availableBuffers.Count;
+
+    /// <summary>
+    /// Maximum buffer count for this pool.
+    /// </summary>
+    public int MaxBufferCount => _maxBufferCount;
+
+    /// <summary>
+    /// Default buffer size in bytes.
+    /// </summary>
+    public nuint DefaultBufferSize => _defaultBufferSize;
+
+    /// <summary>
+    /// Whether GPU acceleration is being used for buffers.
+    /// </summary>
+    public bool IsUsingGpu => NativeTensorContext.IsGpuAvailable;
 
     /// <summary>
     /// Rents a GPU buffer from the pool, allocating if necessary.
@@ -105,8 +119,49 @@ public sealed class GpuMemoryPool : IDisposable
 
         foreach (ref readonly var op in operations)
         {
-            using var buffer = new GpuBufferScope(this, op.RequiredSize);
-            op.Execute(buffer.Buffer);
+            using var scope = new GpuBufferScope(this, op.RequiredSize);
+            op.Execute(scope.Buffer);
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously rents a buffer, waiting if pool is exhausted.
+    /// </summary>
+    public async ValueTask<GpuBuffer> RentAsync(nuint minimumSize = 0, CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        var requiredSize = minimumSize == 0 ? _defaultBufferSize : minimumSize;
+
+        // Try to get an existing buffer
+        if (_availableBuffers.TryDequeue(out var buffer) && buffer.Size >= requiredSize)
+        {
+            _allocatedBuffers.TryAdd(buffer.DevicePointer, buffer);
+            s_activeBuffers.Add(1);
+            return buffer;
+        }
+
+        // Wait for allocation lock
+        await _allocationLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_totalAllocated >= _maxBufferCount)
+            {
+                // Pool exhausted - wait for a buffer to be returned
+                while (!_availableBuffers.TryDequeue(out buffer))
+                {
+                    await Task.Delay(10, cancellationToken);
+                }
+                _allocatedBuffers.TryAdd(buffer.DevicePointer, buffer);
+                s_activeBuffers.Add(1);
+                return buffer;
+            }
+
+            return AllocateNewBufferInternal(requiredSize);
+        }
+        finally
+        {
+            _allocationLock.Release();
         }
     }
 
@@ -123,23 +178,28 @@ public sealed class GpuMemoryPool : IDisposable
                 throw new InvalidOperationException($"GPU memory pool exhausted. Max buffers: {_maxBufferCount}");
             }
 
-            var buffer = GpuBuffer.Allocate(size);
-            _allocatedBuffers.TryAdd(buffer.DevicePointer, buffer);
-
-            Interlocked.Increment(ref _totalAllocated);
-            Interlocked.Add(ref _totalBytesAllocated, (long)size);
-            Interlocked.Add(ref s_globalTotalBytes, (long)size);
-
-            s_allocationsCounter.Add(1);
-            s_activeBuffers.Add(1);
-            s_allocationDuration.Record((DateTime.UtcNow - startTime).TotalMilliseconds);
-
-            return buffer;
+            return AllocateNewBufferInternal(size);
         }
         finally
         {
             _allocationLock.Release();
+            s_allocationDuration.Record((DateTime.UtcNow - startTime).TotalMilliseconds);
         }
+    }
+
+    private GpuBuffer AllocateNewBufferInternal(nuint size)
+    {
+        var buffer = GpuBuffer.Allocate(size);
+        _allocatedBuffers.TryAdd(buffer.DevicePointer, buffer);
+
+        Interlocked.Increment(ref _totalAllocated);
+        Interlocked.Add(ref _totalBytesAllocated, (long)size);
+        Interlocked.Add(ref s_globalTotalBytes, (long)size);
+
+        s_allocationsCounter.Add(1);
+        s_activeBuffers.Add(1);
+
+        return buffer;
     }
 
     public void Dispose()
@@ -167,24 +227,30 @@ public sealed class GpuMemoryPool : IDisposable
 
 /// <summary>
 /// Represents a GPU device buffer with zero-copy host access.
+/// Automatically falls back to pinned managed memory when GPU unavailable.
 /// </summary>
 public sealed class GpuBuffer : IDisposable
 {
     private nint _devicePointer;
     private nint _hostPointer;
     private readonly nuint _size;
+    private readonly bool _isGpuBacked;
+    private byte[]? _pinnedArray;
     private bool _disposed;
 
-    private GpuBuffer(nint devicePointer, nint hostPointer, nuint size)
+    private GpuBuffer(nint devicePointer, nint hostPointer, nuint size, bool isGpuBacked, byte[]? pinnedArray = null)
     {
         _devicePointer = devicePointer;
         _hostPointer = hostPointer;
         _size = size;
+        _isGpuBacked = isGpuBacked;
+        _pinnedArray = pinnedArray;
     }
 
     public nint DevicePointer => _devicePointer;
     public nint HostPointer => _hostPointer;
     public nuint Size => _size;
+    public bool IsGpuBacked => _isGpuBacked;
 
     /// <summary>
     /// Gets a span over the host-mapped memory for zero-copy access.
@@ -197,13 +263,19 @@ public sealed class GpuBuffer : IDisposable
 
     /// <summary>
     /// Gets a memory over the host-mapped memory for async operations.
-    /// Note: For GPU buffers, this creates a managed copy. For CPU buffers, it wraps the pinned array.
+    /// For GPU buffers, creates a managed copy; for CPU buffers, wraps the pinned array.
     /// </summary>
     public Memory<byte> AsMemory()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        // Create a managed array copy for Memory<T> compatibility with async methods
-        // This is less efficient than Span but necessary for async I/O
+
+        // For CPU fallback, return the pinned array directly
+        if (_pinnedArray is not null)
+        {
+            return _pinnedArray.AsMemory();
+        }
+
+        // For GPU, create managed copy for async compatibility
         var array = new byte[(int)_size];
         AsSpan().CopyTo(array);
         return array;
@@ -220,15 +292,26 @@ public sealed class GpuBuffer : IDisposable
 
     /// <summary>
     /// Allocates a new GPU buffer with host-mapped memory.
+    /// Automatically falls back to pinned managed memory when GPU unavailable.
     /// </summary>
     public static GpuBuffer Allocate(nuint size)
     {
-        // Try CUDA allocation first, fall back to managed memory
-        if (NativeTensorContext.InitTensorContext() > 0)
+        // Try CUDA allocation first
+        if (NativeTensorContext.IsGpuAvailable)
         {
-            var devicePtr = NativeTensorContext.AllocateDeviceMemory(size);
-            var hostPtr = NativeTensorContext.MapHostMemory(devicePtr, size);
-            return new GpuBuffer(devicePtr, hostPtr, size);
+            try
+            {
+                var devicePtr = NativeTensorContext.AllocateDeviceMemory(size);
+                if (devicePtr != nint.Zero)
+                {
+                    var hostPtr = NativeTensorContext.MapHostMemory(devicePtr, size);
+                    return new GpuBuffer(devicePtr, hostPtr, size, isGpuBacked: true);
+                }
+            }
+            catch
+            {
+                // Fall through to CPU allocation
+            }
         }
 
         // CPU fallback with pinned memory
@@ -237,7 +320,7 @@ public sealed class GpuBuffer : IDisposable
         {
             fixed (byte* ptr = pinnedArray)
             {
-                return new GpuBuffer(nint.Zero, (nint)ptr, size);
+                return new GpuBuffer(nint.Zero, (nint)ptr, size, isGpuBacked: false, pinnedArray);
             }
         }
     }
@@ -253,20 +336,44 @@ public sealed class GpuBuffer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Copies data from host to device (GPU only).
+    /// </summary>
+    public void CopyToDevice()
+    {
+        if (_isGpuBacked && _devicePointer != nint.Zero)
+        {
+            NativeTensorContext.SynchronizeDevice();
+        }
+    }
+
+    /// <summary>
+    /// Copies data from device to host (GPU only).
+    /// </summary>
+    public void CopyToHost()
+    {
+        if (_isGpuBacked && _devicePointer != nint.Zero)
+        {
+            NativeTensorContext.SynchronizeDevice();
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
 
-        if (_devicePointer != nint.Zero)
+        if (_isGpuBacked && _devicePointer != nint.Zero)
         {
             NativeTensorContext.FreeDeviceMemory(_devicePointer);
         }
+
+        _pinnedArray = null;
     }
 }
 
 /// <summary>
-/// RAII scope for GPU buffer usage.
+/// RAII scope for GPU buffer usage with automatic return.
 /// </summary>
 public readonly ref struct GpuBufferScope
 {

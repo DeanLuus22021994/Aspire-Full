@@ -1,5 +1,5 @@
 using Aspire_Full.Shared;
-using Aspire_Full.Tensor.Native;
+using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 
 namespace Aspire_Full.Tensor.Services;
@@ -31,8 +31,8 @@ public class TensorComputeService : ITensorComputeService
             d_A.Upload(a);
             d_B.Upload(b);
 
-            var metrics = new TensorMetrics();
-            NativeMethods.MatrixMultiply_GPU(d_A.Pointer, d_B.Pointer, d_C.Pointer, m, n, k, ref metrics);
+            var metrics = new NativeTensorContext.TensorMetrics();
+            NativeTensorContext.MatrixMultiply_GPU(d_A.Pointer, d_B.Pointer, d_C.Pointer, m, n, k, ref metrics);
 
             d_C.Download(result);
             LogMetrics("MatrixMultiply", metrics);
@@ -56,8 +56,8 @@ public class TensorComputeService : ITensorComputeService
             d_Input.Upload(input);
             d_Mask.Upload(attentionMask);
 
-            var metrics = new TensorMetrics();
-            NativeMethods.MeanPooling_GPU(d_Input.Pointer, d_Mask.Pointer, d_Output.Pointer, batchSize, seqLen, hiddenSize, ref metrics);
+            var metrics = new NativeTensorContext.TensorMetrics();
+            NativeTensorContext.MeanPooling_GPU(d_Input.Pointer, d_Mask.Pointer, d_Output.Pointer, batchSize, seqLen, hiddenSize, ref metrics);
 
             d_Output.Download(output);
             LogMetrics("MeanPooling", metrics);
@@ -79,8 +79,8 @@ public class TensorComputeService : ITensorComputeService
 
             d_Input.Upload(input);
 
-            var metrics = new TensorMetrics();
-            NativeMethods.ReluActivation_GPU(d_Input.Pointer, d_Output.Pointer, input.Length, ref metrics);
+            var metrics = new NativeTensorContext.TensorMetrics();
+            NativeTensorContext.ReluActivation_GPU(d_Input.Pointer, d_Output.Pointer, input.Length, ref metrics);
 
             d_Output.Download(output);
             LogMetrics("ReluActivation", metrics);
@@ -93,9 +93,9 @@ public class TensorComputeService : ITensorComputeService
         }
     }
 
-    private void LogMetrics(string operation, TensorMetrics metrics)
+    private void LogMetrics(string operation, NativeTensorContext.TensorMetrics metrics)
     {
         _logger.LogDebug("{Operation} completed in {Time}ms. Memory: {Memory}MB. Kernels: {Kernels}",
-            operation, metrics.ComputeTimeMs, metrics.MemoryUsageMb, metrics.ActiveKernels);
+            operation, metrics.compute_time_ms, metrics.memory_usage_mb, metrics.active_kernels);
     }
 }

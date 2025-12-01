@@ -12,7 +12,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Aspire_Full.DockerRegistry.Native;
+using Aspire_Full.Tensor.Core.Memory;
+using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 
 namespace Aspire_Full.DockerRegistry.Services;

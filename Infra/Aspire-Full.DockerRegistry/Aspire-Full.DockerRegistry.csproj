@@ -17,23 +17,12 @@
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     <PackageReference Include="System.IO.Hashing" />
     <PackageReference Include="System.IO.Pipelines" />
-    <PackageReference Include="System.Numerics.Tensors" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
     <ProjectReference Include="..\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
-    </Content>
-    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
-    </Content>
+    <ProjectReference Include="..\Aspire-Full.Tensor.Core\Aspire-Full.Tensor.Core.csproj" />
   </ItemGroup>
 
 </Project>

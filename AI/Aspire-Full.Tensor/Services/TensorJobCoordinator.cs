@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Aspire_Full.Tensor.Native;
+using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -73,7 +73,7 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             Prompt = prompt,
             PromptPreview = BuildPromptPreview(prompt),
             InputImageUrl = submission.InputImageUrl,
-            ExecutionProvider = metrics.ActiveKernels > 0 ? "cuda" : targetProvider,
+            ExecutionProvider = metrics.active_kernels > 0 ? "cuda" : targetProvider,
             CreatedAt = now,
             CompletedAt = now,
             VectorDocumentId = null,
@@ -82,9 +82,9 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         };
 
         // Add Real-time Metrics
-        job.Metadata["compute_time_ms"] = metrics.ComputeTimeMs.ToString("F4", CultureInfo.InvariantCulture);
-        job.Metadata["memory_usage_mb"] = metrics.MemoryUsageMb.ToString("F2", CultureInfo.InvariantCulture);
-        job.Metadata["active_kernels"] = metrics.ActiveKernels.ToString();
+        job.Metadata["compute_time_ms"] = metrics.compute_time_ms.ToString("F4", CultureInfo.InvariantCulture);
+        job.Metadata["memory_usage_mb"] = metrics.memory_usage_mb.ToString("F2", CultureInfo.InvariantCulture);
+        job.Metadata["active_kernels"] = metrics.active_kernels.ToString();
 
         if (submission.PersistToVectorStore)
         {
@@ -143,7 +143,7 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         };
     }
 
-    private ReadOnlyMemory<float> GenerateNativeEmbedding(string prompt, int size, string modelId, out TensorMetrics metrics)
+    private ReadOnlyMemory<float> GenerateNativeEmbedding(string prompt, int size, string modelId, out NativeTensorContext.TensorMetrics metrics)
     {
         var finalSize = Math.Max(8, size);
         var seedData = new float[finalSize];
@@ -170,11 +170,11 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             }
         }
 
-        metrics = new TensorMetrics();
+        metrics = new NativeTensorContext.TensorMetrics();
         try
         {
             // Execute on GPU
-            NativeMethods.ComputeTensorOp(seedData, weightData, resultData, finalSize, ref metrics);
+            NativeTensorContext.ComputeTensorOp(seedData, weightData, resultData, finalSize, ref metrics);
         }
         catch (DllNotFoundException)
         {
@@ -184,8 +184,8 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             {
                 resultData[i] = seedData[i] + weightData[i];
             }
-            metrics.ComputeTimeMs = 0;
-            metrics.ActiveKernels = 0;
+            metrics.compute_time_ms = 0;
+            metrics.active_kernels = 0;
         }
         catch (Exception ex)
         {

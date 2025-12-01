@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aspire_Full.Tensor.Core</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
+    <Description>Core GPU tensor compute infrastructure providing unified native interop, memory pooling, and portable SIMD fallback operations.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="System.Numerics.Tensors" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
+  </ItemGroup>
+
+  <!-- Native source files (managed in AI/Aspire-Full.Tensor/Native) -->
+  <ItemGroup>
+    <None Include="..\..\AI\Aspire-Full.Tensor\Native\src\**\*" Link="Native\src\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\AI\Aspire-Full.Tensor\Native\include\**\*" Link="Native\include\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\AI\Aspire-Full.Tensor\Native\CMakeLists.txt" Link="Native\CMakeLists.txt" />
+  </ItemGroup>
+
+  <!-- Native Library Content - built via docker-bake.hcl native-lib target -->
+  <ItemGroup>
+    <!-- Linux / Docker -->
+    <Content Include="build\libAspireFullNative.so" Condition="Exists('build\libAspireFullNative.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libAspireFullNative.so</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/linux-x64/native/</PackagePath>
+    </Content>
+
+    <!-- Windows -->
+    <Content Include="build\AspireFullNative.dll" Condition="Exists('build\AspireFullNative.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>AspireFullNative.dll</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/win-x64/native/</PackagePath>
+    </Content>
+  </ItemGroup>
+
+</Project>

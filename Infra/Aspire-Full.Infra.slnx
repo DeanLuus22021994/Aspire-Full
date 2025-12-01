@@ -9,4 +9,5 @@
   <Project Path="Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
   <Project Path="Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
   <Project Path="Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
+  <Project Path="Aspire-Full.Tensor.Core/Aspire-Full.Tensor.Core.csproj" />
 </Solution>

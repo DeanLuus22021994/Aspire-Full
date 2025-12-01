@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Aspire_Full.DockerRegistry.Abstractions;
 using Aspire_Full.DockerRegistry.Configuration;
 using Aspire_Full.DockerRegistry.Native;
+using Aspire_Full.Tensor.Core.Abstractions;
+using Aspire_Full.Tensor.Core.Memory;
+using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -13,9 +16,9 @@ namespace Aspire_Full.DockerRegistry.Workers;
 
 /// <summary>
 /// Factory for GPU-accelerated BuildKit workers with integrated resource monitoring.
-/// Implements IGpuResourceMonitor for telemetry and memory pool management.
+/// Implements IDockerRegistryGpuMonitor for telemetry and memory pool management.
 /// </summary>
-public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IGpuResourceMonitor, IDisposable
+public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IDockerRegistryGpuMonitor, IDisposable
 {
     private readonly ConcurrentQueue<IBuildxWorker> _workerPool = new();
     private readonly ConcurrentQueue<IBuildxExporter> _exporterPool = new();
@@ -122,7 +125,7 @@ public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IGpuResourceMoni
 
     #endregion
 
-    #region IGpuResourceMonitor Implementation
+    #region IDockerRegistryGpuMonitor Implementation
 
     /// <summary>
     /// Returns true if GPU compute is available.

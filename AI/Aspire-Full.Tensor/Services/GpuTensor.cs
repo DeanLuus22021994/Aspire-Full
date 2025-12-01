@@ -1,5 +1,5 @@
 using System;
-using Aspire_Full.Tensor.Native;
+using Aspire_Full.Tensor.Core.Native;
 
 namespace Aspire_Full.Tensor.Services;
 
@@ -7,21 +7,21 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
 {
     public IntPtr Pointer { get; private set; }
     public int Length { get; }
-    public ulong SizeBytes { get; }
+    public nuint SizeBytes { get; }
     private bool _disposed;
 
     public GpuTensor(int length)
     {
         Length = length;
-        SizeBytes = (ulong)(length * System.Runtime.InteropServices.Marshal.SizeOf<T>());
+        SizeBytes = (nuint)(length * System.Runtime.InteropServices.Marshal.SizeOf<T>());
 
         if (typeof(T) == typeof(long))
         {
-            Pointer = NativeMethods.AllocateDeviceMemoryLong(SizeBytes);
+            Pointer = NativeTensorContext.AllocateDeviceMemoryLong(SizeBytes);
         }
         else
         {
-            Pointer = NativeMethods.AllocateDeviceMemory(SizeBytes);
+            Pointer = NativeTensorContext.AllocateDeviceMemory(SizeBytes);
         }
 
         if (Pointer == IntPtr.Zero)
@@ -37,11 +37,11 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
 
         if (typeof(T) == typeof(float))
         {
-            NativeMethods.CopyToDevice(Pointer, (float[])(object)data, SizeBytes);
+            NativeTensorContext.CopyToDevice(Pointer, (float[])(object)data, SizeBytes);
         }
         else if (typeof(T) == typeof(long))
         {
-            NativeMethods.CopyToDeviceLong(Pointer, (long[])(object)data, SizeBytes);
+            NativeTensorContext.CopyToDeviceLong(Pointer, (long[])(object)data, SizeBytes);
         }
         else
         {
@@ -56,7 +56,7 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
 
         if (typeof(T) == typeof(float))
         {
-            NativeMethods.CopyToHost((float[])(object)destination, Pointer, SizeBytes);
+            NativeTensorContext.CopyToHost((float[])(object)destination, Pointer, SizeBytes);
         }
         else
         {
@@ -72,11 +72,11 @@ public class GpuTensor<T> : IDisposable where T : unmanaged
             {
                 if (typeof(T) == typeof(long))
                 {
-                    NativeMethods.FreeDeviceMemoryLong(Pointer);
+                    NativeTensorContext.FreeDeviceMemoryLong(Pointer);
                 }
                 else
                 {
-                    NativeMethods.FreeDeviceMemory(Pointer);
+                    NativeTensorContext.FreeDeviceMemory(Pointer);
                 }
                 Pointer = IntPtr.Zero;
             }

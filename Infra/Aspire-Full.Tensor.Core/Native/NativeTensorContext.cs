@@ -1,14 +1,13 @@
-using System;
 using System.Numerics.Tensors;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Aspire_Full.DockerRegistry.Native;
+namespace Aspire_Full.Tensor.Core.Native;
 
 /// <summary>
-/// Native CUDA interop context for GPU-accelerated tensor operations.
-/// Uses LibraryImport (C# 14) with ReadOnlySpan overloads for zero-copy performance.
+/// Unified native CUDA interop context for GPU-accelerated tensor operations.
 /// Provides portable fallback via TensorPrimitives when GPU unavailable.
+/// Single source of truth for all P/Invoke definitions to AspireFullNative library.
 /// </summary>
 public static partial class NativeTensorContext
 {
@@ -18,6 +17,10 @@ public static partial class NativeTensorContext
 
     #region Structs
 
+    /// <summary>
+    /// Unified tensor metrics struct matching native layout.
+    /// Contains all fields from both DockerRegistry and ML compute contexts.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct TensorMetrics
     {
@@ -26,8 +29,15 @@ public static partial class NativeTensorContext
         public int active_kernels;
         public int gpu_utilization_percent;
         public long total_flops;
+        // Extended metrics for detailed profiling
+        public float hash_time_ms;
+        public float compress_time_ms;
+        public float transfer_time_ms;
     }
 
+    /// <summary>
+    /// GPU device information for capability detection.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct GpuDeviceInfo
     {
@@ -38,6 +48,8 @@ public static partial class NativeTensorContext
         public int compute_capability_minor;
         public int multiprocessor_count;
         public int max_threads_per_block;
+        public int warp_size;
+        public int max_shared_memory_per_block;
     }
 
     #endregion
@@ -55,6 +67,10 @@ public static partial class NativeTensorContext
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial int GetDeviceInfo(int deviceId, out GpuDeviceInfo info);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial int SetDevice(int deviceId);
 
     /// <summary>
     /// Thread-safe GPU device count with lazy initialization.
@@ -96,6 +112,17 @@ public static partial class NativeTensorContext
     /// </summary>
     public static bool IsGpuAvailable => GpuDeviceCount > 0;
 
+    /// <summary>
+    /// Resets the cached GPU device count to force re-detection.
+    /// </summary>
+    public static void ResetDeviceCache()
+    {
+        lock (s_initLock)
+        {
+            s_gpuDeviceCount = -1;
+        }
+    }
+
     #endregion
 
     #region Memory Management
@@ -120,9 +147,30 @@ public static partial class NativeTensorContext
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial int SynchronizeDevice();
 
+    // Long/Int64 memory variants for embedding tensors
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial nint AllocateDeviceMemoryLong(nuint size);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void FreeDeviceMemoryLong(nint devicePtr);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void CopyToDevice(nint deviceDst, [In] float[] hostSrc, nuint sizeBytes);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void CopyToHost([Out] float[] hostDst, nint deviceSrc, nuint sizeBytes);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void CopyToDeviceLong(nint deviceDst, [In] long[] hostSrc, nuint sizeBytes);
+
     #endregion
 
-    #region Tensor Operations - GPU Path
+    #region Core Tensor Operations
 
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -169,6 +217,40 @@ public static partial class NativeTensorContext
 
     #endregion
 
+    #region ML Compute Operations (from AI/Tensor)
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void MatrixMultiply_GPU(
+        nint deviceA,
+        nint deviceB,
+        nint deviceC,
+        int M,
+        int N,
+        int K,
+        ref TensorMetrics metrics);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void MeanPooling_GPU(
+        nint deviceInput,
+        nint deviceAttentionMask,
+        nint deviceOutput,
+        int batchSize,
+        int seqLen,
+        int hiddenSize,
+        ref TensorMetrics metrics);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void ReluActivation_GPU(
+        nint deviceInput,
+        nint deviceOutput,
+        int numElements,
+        ref TensorMetrics metrics);
+
+    #endregion
+
     #region Portable Operations - TensorPrimitives Fallback
 
     /// <summary>
@@ -180,11 +262,8 @@ public static partial class NativeTensorContext
     {
         if (IsGpuAvailable)
         {
-            // GPU path - pin and dispatch to CUDA kernel
             return CosineSimilarityGpu(x, y);
         }
-
-        // CPU SIMD fallback using TensorPrimitives
         return TensorPrimitives.CosineSimilarity(x, y);
     }
 
@@ -199,7 +278,6 @@ public static partial class NativeTensorContext
         {
             return NormGpu(x);
         }
-
         return TensorPrimitives.Norm(x);
     }
 
@@ -214,12 +292,11 @@ public static partial class NativeTensorContext
         {
             return DotGpu(x, y);
         }
-
         return TensorPrimitives.Dot(x, y);
     }
 
     /// <summary>
-    /// Applies softmax activation in-place.
+    /// Applies softmax activation.
     /// Uses GPU when available, falls back to TensorPrimitives SIMD.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -230,8 +307,26 @@ public static partial class NativeTensorContext
             SoftMaxGpu(x, destination);
             return;
         }
-
         TensorPrimitives.SoftMax(x, destination);
+    }
+
+    /// <summary>
+    /// Applies ReLU activation.
+    /// Uses GPU when available, falls back to element-wise max.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReLU(ReadOnlySpan<float> x, Span<float> destination)
+    {
+        if (IsGpuAvailable)
+        {
+            ReLUGpu(x, destination);
+            return;
+        }
+        // CPU fallback
+        for (int i = 0; i < x.Length; i++)
+        {
+            destination[i] = Math.Max(0, x[i]);
+        }
     }
 
     /// <summary>
@@ -255,6 +350,36 @@ public static partial class NativeTensorContext
         return maxAbs <= threshold;
     }
 
+    /// <summary>
+    /// Performs element-wise addition: destination = x + y.
+    /// Uses GPU when available, falls back to TensorPrimitives SIMD.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Add(ReadOnlySpan<float> x, ReadOnlySpan<float> y, Span<float> destination)
+    {
+        if (IsGpuAvailable && x.Length >= 4096)
+        {
+            AddGpu(x, y, destination);
+            return;
+        }
+        TensorPrimitives.Add(x, y, destination);
+    }
+
+    /// <summary>
+    /// Performs element-wise multiplication: destination = x * y.
+    /// Uses GPU when available, falls back to TensorPrimitives SIMD.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Multiply(ReadOnlySpan<float> x, ReadOnlySpan<float> y, Span<float> destination)
+    {
+        if (IsGpuAvailable && x.Length >= 4096)
+        {
+            MultiplyGpu(x, y, destination);
+            return;
+        }
+        TensorPrimitives.Multiply(x, y, destination);
+    }
+
     #endregion
 
     #region Private GPU Dispatch Methods
@@ -266,7 +391,6 @@ public static partial class NativeTensorContext
         {
             var metrics = new TensorMetrics();
             float result = 0;
-            // Call native CUDA kernel for cosine similarity
             CosineSimilarityKernel((nint)xPtr, (nint)yPtr, x.Length, &result, ref metrics);
             return result;
         }
@@ -305,6 +429,43 @@ public static partial class NativeTensorContext
         }
     }
 
+    private static unsafe void ReLUGpu(ReadOnlySpan<float> x, Span<float> destination)
+    {
+        fixed (float* xPtr = x)
+        fixed (float* dPtr = destination)
+        {
+            var metrics = new TensorMetrics();
+            ReluActivation_GPU((nint)xPtr, (nint)dPtr, x.Length, ref metrics);
+        }
+    }
+
+    private static unsafe void AddGpu(ReadOnlySpan<float> x, ReadOnlySpan<float> y, Span<float> destination)
+    {
+        fixed (float* xPtr = x)
+        fixed (float* yPtr = y)
+        fixed (float* dPtr = destination)
+        {
+            var metrics = new TensorMetrics();
+            // Use ComputeTensorOp for element-wise add
+            ComputeTensorOp(x.ToArray(), y.ToArray(), destination.ToArray(), x.Length, ref metrics);
+        }
+    }
+
+    private static unsafe void MultiplyGpu(ReadOnlySpan<float> x, ReadOnlySpan<float> y, Span<float> destination)
+    {
+        fixed (float* xPtr = x)
+        fixed (float* yPtr = y)
+        fixed (float* dPtr = destination)
+        {
+            var metrics = new TensorMetrics();
+            MultiplyKernel((nint)xPtr, (nint)yPtr, (nint)dPtr, x.Length, ref metrics);
+        }
+    }
+
+    #endregion
+
+    #region Native Kernel Imports
+
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static unsafe partial void CosineSimilarityKernel(nint x, nint y, int length, float* result, ref TensorMetrics metrics);
@@ -320,6 +481,10 @@ public static partial class NativeTensorContext
     [LibraryImport(DllName)]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static partial void SoftMaxKernel(nint x, nint destination, int length, ref TensorMetrics metrics);
+
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static partial void MultiplyKernel(nint x, nint y, nint destination, int length, ref TensorMetrics metrics);
 
     #endregion
 }

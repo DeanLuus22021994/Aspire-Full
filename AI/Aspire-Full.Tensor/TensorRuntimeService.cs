@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Linq;
-using Aspire_Full.Tensor.Native;
+using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -31,7 +31,7 @@ public sealed class TensorRuntimeService(ILogger<TensorRuntimeService> logger, I
         int deviceCount = 0;
         try
         {
-            deviceCount = NativeMethods.InitTensorContext();
+            deviceCount = NativeTensorContext.InitTensorContext();
             cudaAvailable = deviceCount > 0;
         }
         catch (Exception ex)

@@ -9,6 +9,7 @@
   <Project Path="Infra/Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
   <Project Path="Infra/Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
   <Project Path="Infra/Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
+  <Project Path="Infra/Aspire-Full.Tensor.Core/Aspire-Full.Tensor.Core.csproj" />
   <Project Path="Core/Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
   <Project Path="Core/Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
   <Project Path="Core/Aspire-Full.Github/Aspire-Full.Github.csproj" />

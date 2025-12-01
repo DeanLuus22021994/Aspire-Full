@@ -3,8 +3,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Aspire_Full.Tensor</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- Skip native build if requested or if Docker is not available (optional check) -->
-    <SkipNativeBuild Condition="'$(SkipNativeBuild)' == ''">false</SkipNativeBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,46 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
   </ItemGroup>
 
-  <!-- Define Native Source Files for Incremental Build -->
-  <ItemGroup>
-    <NativeSourceFiles Include="Native\src\**\*" />
-    <NativeSourceFiles Include="Native\include\**\*" />
-    <NativeSourceFiles Include="Native\CMakeLists.txt" />
-    <NativeBuildConfig Include="..\..\Infra\Aspire-Full.DockerRegistry\docker-bake.hcl" />
-    <NativeBuildConfig Include="..\..\Infra\Aspire-Full.DockerRegistry\docker\Aspire\Dockerfile.Native" />
-  </ItemGroup>
-
-  <Target Name="BuildNative"
-          BeforeTargets="Build"
-          Condition="'$(SkipNativeBuild)' != 'true'"
-          Inputs="@(NativeSourceFiles);@(NativeBuildConfig)"
-          Outputs="build/libAspireFullNative.so">
-
-    <Message Importance="High" Text="Building Native Library via Docker (Incremental)..." />
-    <Exec Command="docker buildx bake -f Infra/Aspire-Full.DockerRegistry/docker-bake.hcl native-lib" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
-
-  </Target>
-
-  <ItemGroup>
-    <!-- Include Native Library in Output -->
-    <!-- Linux / Docker -->
-    <Content Include="build/libAspireFullNative.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
-      <Visible>false</Visible>
-      <!-- Also copy to runtimes folder for NuGet/Portable packaging -->
-      <PackagePath>runtimes/linux-x64/native/</PackagePath>
-    </Content>
-
-    <!-- Windows (Placeholder if manual build exists) -->
-    <Content Include="build/AspireFullNative.dll" Condition="Exists('build/AspireFullNative.dll')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
-      <Visible>false</Visible>
-      <PackagePath>runtimes/win-x64/native/</PackagePath>
-    </Content>
-  </ItemGroup>
-
+  <!-- Native source is managed by Aspire-Full.Tensor.Core -->
   <ItemGroup>
     <None Include="Native\src\**\*" />
     <None Include="Native\include\**\*" />
@@ -64,5 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.Tensor.Core\Aspire-Full.Tensor.Core.csproj" />
   </ItemGroup>
 </Project>
