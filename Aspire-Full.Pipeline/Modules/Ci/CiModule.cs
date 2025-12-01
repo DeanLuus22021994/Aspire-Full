@@ -73,6 +73,28 @@ public class CiModule
 
         command.AddCommand(sbomCommand);
 
+        // Run Local command
+        var runLocalCommand = new Command("run-local", "Run GitHub Actions locally using gh-act");
+        var workflowOption = new Option<string>(["--workflow", "-w"], "Workflow file to run (e.g. ci.yml)");
+        var jobOption = new Option<string>(["--job", "-j"], "Specific job to run");
+        var eventOption = new Option<string>(["--event", "-e"], () => "push", "Trigger event");
+        var listOption = new Option<bool>(["--list", "-l"], "List available workflows");
+        var dryRunOption = new Option<bool>(["--dry-run", "-n"], "Dry run");
+        var patOption = new Option<string>(["--pat", "-p"], "GitHub Personal Access Token");
+        var verboseOption = new Option<bool>(["--verbose", "-v"], "Verbose output");
+
+        runLocalCommand.AddOption(workflowOption);
+        runLocalCommand.AddOption(jobOption);
+        runLocalCommand.AddOption(eventOption);
+        runLocalCommand.AddOption(listOption);
+        runLocalCommand.AddOption(dryRunOption);
+        runLocalCommand.AddOption(patOption);
+        runLocalCommand.AddOption(verboseOption);
+
+        runLocalCommand.SetHandler(RunLocalAsync, workflowOption, jobOption, eventOption, listOption, dryRunOption, patOption, verboseOption);
+
+        command.AddCommand(runLocalCommand);
+
         return command;
     }
 
@@ -228,5 +250,67 @@ RUNNER_GROUP=Default
 
         await File.WriteAllTextAsync(output, sbomContent);
         AnsiConsole.MarkupLine($"[green]SBOM generated: {output}[/]");
+    }
+
+    private async Task RunLocalAsync(string workflow, string job, string triggerEvent, bool list, bool dryRun, string pat, bool verbose)
+    {
+        await EnsureGhExtensionAsync("nektos/gh-act");
+
+        // Check Docker
+        var (code, _) = await ProcessUtils.RunAsync("docker", ["info"], silent: true);
+        if (code != 0)
+        {
+            AnsiConsole.MarkupLine("[red]Docker is not running. Please start Docker Desktop.[/]");
+            return;
+        }
+
+        var root = GitUtils.GetRepositoryRoot();
+
+        if (list)
+        {
+            AnsiConsole.MarkupLine("[yellow]Available workflows:[/]");
+            await ProcessUtils.RunAsync("gh", ["act", "-l"], root, silent: false);
+            return;
+        }
+
+        var args = new List<string> { "act" };
+
+        if (!string.IsNullOrEmpty(triggerEvent)) args.Add(triggerEvent);
+
+        if (!string.IsNullOrEmpty(workflow))
+        {
+            args.Add("-W");
+            args.Add($".github/workflows/{workflow}");
+        }
+
+        if (!string.IsNullOrEmpty(job))
+        {
+            args.Add("-j");
+            args.Add(job);
+        }
+
+        if (dryRun)
+        {
+            args.Add("-n");
+            AnsiConsole.MarkupLine("[yellow]Dry run mode enabled[/]");
+        }
+
+        if (verbose) args.Add("-v");
+
+        if (!string.IsNullOrEmpty(pat))
+        {
+            args.Add("-s");
+            args.Add($"GITHUB_TOKEN={pat}");
+            AnsiConsole.MarkupLine("[green]Using provided PAT for authentication[/]");
+        }
+        else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_TOKEN")))
+        {
+             // act might pick it up automatically, but explicit is better if we want to be sure
+             // But usually act reads env vars.
+             // Let's just leave it to act unless user provided one explicitly via arg.
+        }
+
+        AnsiConsole.MarkupLine($"[cyan]Running: gh {string.Join(" ", args)}[/]");
+        await ProcessUtils.RunAsync("gh", args.ToArray(), root, silent: false);
     }
 }
