@@ -2,17 +2,14 @@
 FROM base-native AS build
 WORKDIR /src
 
-# Install Ninja
-RUN apt-get update && apt-get install -y ninja-build
-
 # Copy Native Project
 COPY ["Aspire-Full.Native/", "Aspire-Full.Native/"]
 
 # Build Native Library
 WORKDIR /src/Aspire-Full.Native
 RUN mkdir -p build && cd build && \
-    cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release && \
-    ninja
+    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    make
 
 # Stage 2: Export
 FROM scratch AS export
