@@ -55,9 +55,7 @@ async def faq_lookup_tool(question: str) -> str:
             "You are allowed to bring one bag on the plane. "
             "It must be under 50 pounds and 22 inches x 14 inches x 9 inches."
         )
-    elif any(
-        keyword in question_lower for keyword in ["seat", "seats", "seating", "plane"]
-    ):
+    elif any(keyword in question_lower for keyword in ["seat", "seats", "seating", "plane"]):
         return (
             "There are 120 seats on the plane. "
             "There are 22 business class seats and 98 economy seats. "
@@ -162,7 +160,7 @@ seat_booking_agent.handoffs.append(triage_agent)
 # RUN
 
 
-async def main():
+async def main() -> None:
     """Run the customer service example."""
     current_agent: Agent[AirlineAgentContext] = triage_agent
     input_items: list[TResponseInputItem] = []
@@ -183,9 +181,7 @@ async def main():
                 if isinstance(new_item, MessageOutputItem):
                     print(f"{agent_name}: {ItemHelpers.text_message_output(new_item)}")
                 elif isinstance(new_item, HandoffOutputItem):
-                    print(
-                        f"Handed off from {new_item.source_agent.name} to {new_item.target_agent.name}"
-                    )
+                    print(f"Handed off from {new_item.source_agent.name} to {new_item.target_agent.name}")
                 elif isinstance(new_item, ToolCallItem):
                     print(f"{agent_name}: Calling a tool")
                 elif isinstance(new_item, ToolCallOutputItem):

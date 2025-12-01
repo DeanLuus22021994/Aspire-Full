@@ -38,7 +38,7 @@ def create_config(
     return f"Config for {project_name} v{version} created"
 
 
-async def main():
+async def main() -> None:
     """
     Demonstrates real-time streaming of function call arguments.
 
@@ -49,8 +49,7 @@ async def main():
     agent = Agent(
         name="CodeGenerator",
         instructions=(
-            "You are a helpful coding assistant. "
-            "Use the provided tools to create files and configurations."
+            "You are a helpful coding assistant. " "Use the provided tools to create files and configurations."
         ),
         tools=[write_file, create_config],
     )
@@ -60,8 +59,7 @@ async def main():
     result = Runner.run_streamed(
         agent,
         input=(
-            "Create a Python web project called 'my-app' with FastAPI. "
-            "Version 1.0.0, dependencies: fastapi, uvicorn"
+            "Create a Python web project called 'my-app' with FastAPI. " "Version 1.0.0, dependencies: fastapi, uvicorn"
         ),
     )
 
@@ -85,9 +83,7 @@ async def main():
             # Real-time argument streaming
             elif isinstance(event.data, ResponseFunctionCallArgumentsDeltaEvent):
                 if current_active_call_id and current_active_call_id in function_calls:
-                    function_calls[current_active_call_id]["arguments"] += (
-                        event.data.delta
-                    )
+                    function_calls[current_active_call_id]["arguments"] += event.data.delta
                     print(event.data.delta, end="", flush=True)
 
             # Function call completed
@@ -96,9 +92,7 @@ async def main():
                     call_id = getattr(event.data.item, "call_id", "unknown")
                     if call_id in function_calls:
                         function_info = function_calls[call_id]
-                        print(
-                            f"\n✅ Function call streaming completed: {function_info['name']}"
-                        )
+                        print(f"\n✅ Function call streaming completed: {function_info['name']}")
                         print()
                         if current_active_call_id == call_id:
                             current_active_call_id = None
