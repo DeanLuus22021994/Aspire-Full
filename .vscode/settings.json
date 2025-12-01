@@ -50,5 +50,6 @@
   "nsight.server.connection.host": "localhost",
   "nsight.compute.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2025.2.1\\host\\windows-desktop-win7-x64\\ncu-ui.exe",
   "nsight.systems.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Systems 2025.6.1\\host-windows-x64\\nsys-ui.exe",
-  "flake8.args": ["--max-line-length=120"]
+  "flake8.args": ["--max-line-length=120"],
+  "python.analysis.typeCheckingMode": "strict"
 }
