@@ -24,7 +24,6 @@
     <ProjectReference Include="..\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
     <ProjectReference Include="..\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
     <ProjectReference Include="..\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Qdrant\Aspire-Full.Qdrant.csproj" />
   </ItemGroup>
 
   <ItemGroup>
