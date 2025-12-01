@@ -14,13 +14,6 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Aspire-Full.Native\build\Release\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Native\build\Release\AspireFullNative.dll')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
-    </Content>
-    <Content Include="..\Aspire-Full.Native\build\libAspireFullNative.so" Condition="Exists('..\Aspire-Full.Native\build\libAspireFullNative.so')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
-    </Content>
+    <ProjectReference Include="..\Aspire-Full.Native\Aspire-Full.Native.csproj" />
   </ItemGroup>
 </Project>

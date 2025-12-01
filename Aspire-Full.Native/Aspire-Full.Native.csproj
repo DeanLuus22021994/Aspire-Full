@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+  </PropertyGroup>
+
+  <Target Name="BuildNative" BeforeTargets="Build">
+    <Message Importance="High" Text="Building Native Library via Docker..." />
+    <Exec Command="docker buildx bake -f Aspire-Full.DockerRegistry/docker-bake.hcl native-lib" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="build/libAspireFullNative.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libAspireFullNative.so</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>
