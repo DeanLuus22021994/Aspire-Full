@@ -35,6 +35,34 @@ public class DevModule : IModule
         buildCommand.SetHandler(BuildSolutionAsync);
         command.AddCommand(buildCommand);
 
+        // Test
+        var testCommand = new Command("test", "Run tests");
+        var unitOption = new Option<bool>(["--unit", "-u"], "Run unit tests only");
+        var e2eOption = new Option<bool>(["--e2e", "-e"], "Run E2E tests only");
+        var aspireOption = new Option<bool>(["--aspire", "-a"], "Run Aspire integration tests only");
+        var coverageOption = new Option<bool>(["--coverage", "-c"], "Collect code coverage");
+        var filterOption = new Option<string>(["--filter", "-f"], "Test filter expression");
+
+        testCommand.AddOption(unitOption);
+        testCommand.AddOption(e2eOption);
+        testCommand.AddOption(aspireOption);
+        testCommand.AddOption(coverageOption);
+        testCommand.AddOption(filterOption);
+
+        testCommand.SetHandler(TestAsync, unitOption, e2eOption, aspireOption, coverageOption, filterOption);
+        command.AddCommand(testCommand);
+
+        // Cleanup
+        var cleanupCommand = new Command("cleanup", "Clean up local branches");
+        var dryRunOption = new Option<bool>(["--dry-run", "-n"], "Dry run");
+        var forceOption = new Option<bool>(["--force", "-f"], "Force delete");
+
+        cleanupCommand.AddOption(dryRunOption);
+        cleanupCommand.AddOption(forceOption);
+
+        cleanupCommand.SetHandler(CleanupAsync, dryRunOption, forceOption);
+        command.AddCommand(cleanupCommand);
+
         return command;
     }
 
