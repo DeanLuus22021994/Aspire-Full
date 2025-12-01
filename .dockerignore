@@ -21,9 +21,15 @@ TestResults/
 # Language package directories
 **/node_modules
 **/.venv
+**/.uv
 pip-wheel-metadata/
-AI/Aspire-Full.Python/python-agents/.ruff_cache/
-AI/Aspire-Full.Python/python-agents/.mypy_cache/
+**/.ruff_cache
+**/.mypy_cache
+**/.pytest_cache
+**/*.egg-info
+**/dist
+**/*.whl
+**/.python-version
 
 # Native Build Artifacts
 AI/Aspire-Full.Tensor/build/

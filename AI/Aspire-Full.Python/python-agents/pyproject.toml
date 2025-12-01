@@ -7,7 +7,7 @@ name = "aspire-agents"
 version = "0.1.0"
 description = "Semantic Kernel based agents for the Aspire workspace"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 authors = [{ name = "Aspire Maintainers" }]
 dependencies = [
     "openai>=1.51.0",

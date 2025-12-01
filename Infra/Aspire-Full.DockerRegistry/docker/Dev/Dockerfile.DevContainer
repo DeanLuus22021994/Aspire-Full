@@ -67,24 +67,34 @@ RUN curl -sSL https://aspire.dev/install.sh | bash \
     && mv /root/.aspire /opt/aspire \
     && chmod -R 755 /opt/aspire
 
-# Install uv
+# Install uv (Astral's ultra-fast Python package manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install Python 3.14 (free-threaded) and bake dependencies
-# We copy the pyproject.toml from the context (root) to install dependencies
-COPY Aspire-Full.Python/python-agents/pyproject.toml /tmp/python-agents/pyproject.toml
-# Create a dummy README to satisfy build
+# ============================================================================
+# Install Python 3.15 (free-threaded) and bake ALL dependencies
+# This eliminates dependency installation latency during development
+# ============================================================================
+# Copy dependency files from context (relative to Aspire-Full.DockerRegistry)
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml /tmp/python-agents/pyproject.toml
+COPY AI/Aspire-Full.Python/python-agents/uv.lock /tmp/python-agents/uv.lock
+
+# Create dummy package structure to satisfy hatchling build
 RUN touch /tmp/python-agents/README.md \
     && mkdir -p /tmp/python-agents/src/aspire_agents \
     && touch /tmp/python-agents/src/aspire_agents/__init__.py
 
-RUN uv python install 3.14t \
+# Install Python 3.15t (free-threaded) and create isolated virtual environment
+# Using --locked ensures reproducible builds from uv.lock
+RUN uv python install 3.15t \
     && cd /tmp/python-agents \
-    && uv venv /opt/venv --python 3.14t \
+    && uv venv /opt/venv --python 3.15t \
     && . /opt/venv/bin/activate \
-    && uv pip compile pyproject.toml -o requirements.txt --all-extras --prerelease=allow \
-    && uv pip install -r requirements.txt \
+    && uv sync --frozen --all-extras \
     && chmod -R 755 /opt/venv
+
+# Pre-install Playwright browsers to avoid runtime download latency
+RUN . /opt/venv/bin/activate \
+    && playwright install --with-deps chromium
 
 # Copy maintenance scripts
 COPY .devcontainer/scripts /opt/devcontainer-scripts
