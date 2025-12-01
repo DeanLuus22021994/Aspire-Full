@@ -15,6 +15,9 @@
 - [x] Replace hardcoded strings in `Aspire-Full/AppHost.cs`.
 
 ## Phase 4: API Cleanup
-- [x] Create `Aspire-Full.Api/Extensions/TensorServiceCollectionExtensions.cs`.
+- [x] Create `Aspire-Full.Api/Extensions/TensorServiceCollectionExtensions.cs`. (Initially created, then moved to `Aspire-Full.Tensor`)
 - [x] Refactor `Aspire-Full.Api/Program.cs` to use `AddTensorOrchestration`.
 - [x] Refactor `Aspire-Full.Api/Program.cs` to use `AddDockerRegistryClient`.
+- [x] Move Tensor Orchestration logic (`TensorJobCoordinator`, `TensorJobStore`, `TensorDtos`) from `Aspire-Full.Api` to `Aspire-Full.Tensor`.
+- [x] Move `TensorVectorBridge` to `Aspire-Full.Connectors` to decouple Tensor core from Connectors.
+- [x] Update `Aspire-Full.Api` to consume Tensor services from the shared library.
