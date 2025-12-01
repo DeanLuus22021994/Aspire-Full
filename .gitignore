@@ -41,7 +41,8 @@ TestResults/
 *.trx
 
 # Aspire
-.aspire/
+.aspire/*
+!.aspire/settings.json
 .aspire.pid
 .api.pid
 

@@ -118,28 +118,28 @@ if (useBakedImages)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureGateway(gateway);
 
-    var frontend = builder.AddContainer(AppHostConstants.Resources.Frontend, $"{registryHost}/{namespaceName}/web-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Frontend, targetPort: 80)
-        .WithContainerRuntimeArgs("--network", networkName);
-    ConfigureFrontend(frontend, api);
+    //var frontend = builder.AddContainer(AppHostConstants.Resources.Frontend, $"{registryHost}/{namespaceName}/web-{envTag}", $"{version}-{arch}")
+    //    .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Frontend, targetPort: 80)
+    //    .WithContainerRuntimeArgs("--network", networkName);
+    //ConfigureFrontend(frontend, api);
 
-    var wasmDocs = builder.AddContainer(AppHostConstants.Resources.WasmDocs, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 80)
-        .WithContainerRuntimeArgs("--network", networkName);
-    ConfigureWasmDocs(wasmDocs, api);
+    //var wasmDocs = builder.AddContainer(AppHostConstants.Resources.WasmDocs, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+    //    .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 80)
+    //    .WithContainerRuntimeArgs("--network", networkName);
+    //ConfigureWasmDocs(wasmDocs, api);
 
-    var wasmUat = builder.AddContainer(AppHostConstants.Resources.WasmUat, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 80)
-        .WithContainerRuntimeArgs("--network", networkName);
-    ConfigureWasmUat(wasmUat, api);
+    //var wasmUat = builder.AddContainer(AppHostConstants.Resources.WasmUat, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+    //    .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 80)
+    //    .WithContainerRuntimeArgs("--network", networkName);
+    //ConfigureWasmUat(wasmUat, api);
 
-    var wasmProd = builder.AddContainer(AppHostConstants.Resources.WasmProd, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 80)
-        .WithContainerRuntimeArgs("--network", networkName);
-    ConfigureWasmProd(wasmProd, api);
+    //var wasmProd = builder.AddContainer(AppHostConstants.Resources.WasmProd, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+    //    .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 80)
+    //    .WithContainerRuntimeArgs("--network", networkName);
+    //ConfigureWasmProd(wasmProd, api);
 
     var pythonAgents = builder.AddContainer(AppHostConstants.Resources.PythonAgents, $"{registryHost}/{namespaceName}/python-agents-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.PythonAgents, targetPort: 8000)
+        .WithHttpEndpoint(name: "http", targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigurePythonAgents(pythonAgents);
 }
@@ -151,32 +151,32 @@ else
     var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>(AppHostConstants.Resources.Gateway);
     ConfigureGateway(gateway);
 
-    var frontend = builder.AddJavaScriptApp(AppHostConstants.Resources.Frontend, "../../Web/Aspire-Full.Web", "dev")
-        .WithHttpEndpoint(env: "PORT")
-        .WithExternalHttpEndpoints();
-    ConfigureFrontend(frontend, api);
+    //var frontend = builder.AddJavaScriptApp(AppHostConstants.Resources.Frontend, "../../Web/Aspire-Full.Web", "dev")
+    //    .WithHttpEndpoint(env: "PORT")
+    //    .WithExternalHttpEndpoints();
+    //ConfigureFrontend(frontend, api);
 
-    var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmDocs)
-        .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 5175)
-        .WithExternalHttpEndpoints();
-    ConfigureWasmDocs(wasmDocs, api);
+    //var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmDocs)
+    //    .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 5175)
+    //    .WithExternalHttpEndpoints();
+    //ConfigureWasmDocs(wasmDocs, api);
 
-    var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmUat)
-        .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 5176)
-        .WithExternalHttpEndpoints();
-    ConfigureWasmUat(wasmUat, api);
+    //var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmUat)
+    //    .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 5176)
+    //    .WithExternalHttpEndpoints();
+    //ConfigureWasmUat(wasmUat, api);
 
-    var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmProd)
-        .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 5177)
-        .WithExternalHttpEndpoints();
-    ConfigureWasmProd(wasmProd, api);
+    //var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmProd)
+    //    .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 5177)
+    //    .WithExternalHttpEndpoints();
+    //ConfigureWasmProd(wasmProd, api);
 
     var agents = builder.AddProject<Projects.Aspire_Full_Agents>("agents")
         .WithReference(qdrant)
         .WithReference(redis);
 
     var pythonAgents = builder.AddDockerfile(AppHostConstants.Resources.PythonAgents, "../../AI", "Aspire-Full.Python/python-agents/Dockerfile.agent")
-        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.PythonAgents, targetPort: 8000)
+        .WithHttpEndpoint(name: "http", targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName)
         .WithExternalHttpEndpoints();
     ConfigurePythonAgents(pythonAgents);
@@ -250,6 +250,11 @@ void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
     if (settings.Agents.Gpu)
     {
         pythonAgents.WithContainerRuntimeArgs("--gpus", "all");
+    }
+
+    if (settings.Agents.Replicas > 1)
+    {
+        pythonAgents.WithAnnotation(new ReplicaAnnotation(settings.Agents.Replicas));
     }
 }
 

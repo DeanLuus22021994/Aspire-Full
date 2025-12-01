@@ -19,7 +19,7 @@ variable "ARCH" {
 }
 
 group "default" {
-  targets = ["api", "gateway", "web", "web-assembly", "python-agents", "tensor-compute"]
+  targets = ["api", "gateway", "python-agents", "tensor-compute"]
 }
 
 group "bootstrap" {

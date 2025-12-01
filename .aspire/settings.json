@@ -1,0 +1,10 @@
+{
+  "registry": {
+    "port": 5001,
+    "volumeName": "aspire-registry-data"
+  },
+  "agents": {
+    "replicas": 3,
+    "gpu": true
+  }
+}
