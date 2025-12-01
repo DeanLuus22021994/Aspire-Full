@@ -9,6 +9,6 @@
   <Project Path="Aspire-Full.Web/Aspire-Full.Web.csproj" />
   <Project Path="Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj" />
   <Project Path="Aspire-Full.Gateway/Aspire-Full.Gateway.csproj" />
-  <Project Path="Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
-  <Project Path="Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
+  <Project Path="../Core/Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
+  <Project Path="../Infra/Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
 </Solution>

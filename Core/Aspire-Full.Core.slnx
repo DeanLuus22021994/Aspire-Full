@@ -9,5 +9,5 @@
   <Project Path="Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
   <Project Path="Aspire-Full.Github/Aspire-Full.Github.csproj" />
   <Project Path="Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
-  <Project Path="Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
+  <Project Path="../Infra/Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
 </Solution>
