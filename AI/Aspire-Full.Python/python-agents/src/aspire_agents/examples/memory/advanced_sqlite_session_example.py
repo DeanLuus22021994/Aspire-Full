@@ -218,7 +218,8 @@ async def main():
     for branch in branches:
         current = " (current)" if branch["is_current"] else ""
         print(
-            f"  {branch['branch_id']}: {branch['user_turns']} user turns, {branch['message_count']} total messages{current}"
+            f"  {branch['branch_id']}: {branch['user_turns']} user turns, "
+            f"{branch['message_count']} total messages{current}"
         )
 
     # Show conversation turns in current branch
