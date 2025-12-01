@@ -5,16 +5,98 @@ This module implements a streamed voice agent example using Textual.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-import sounddevice as sd
-from agents.voice import StreamedAudioInput, VoicePipeline
-from textual import events
-from textual.app import App, ComposeResult
-from textual.containers import Container
-from textual.reactive import reactive
-from textual.widgets import Button, RichLog, Static
+
+if TYPE_CHECKING:
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+
+    class sd:
+        class OutputStream:
+            def __init__(self, samplerate: int, channels: int, dtype: Any) -> None: ...
+            def start(self) -> None: ...
+            def write(self, data: Any) -> None: ...
+            def close(self) -> None: ...
+
+        class InputStream:
+            def __init__(self, channels: int, samplerate: int, dtype: str) -> None: ...
+            def start(self) -> None: ...
+            def stop(self) -> None: ...
+            def close(self) -> None: ...
+
+            read_available: int
+
+            def read(self, size: int) -> tuple[Any, Any]: ...
+
+        @staticmethod
+        def query_devices() -> Any: ...
+
+    class StreamedAudioInput:
+        async def add_audio(self, audio: Any) -> None: ...
+
+    class VoicePipeline:
+        def __init__(self, workflow: Any) -> None: ...
+        async def run(self, input: Any) -> Any: ...
+
+    class events:
+        class Key:
+            key: str
+
+    class App(Generic[T]):
+        def run(self) -> None: ...
+        def exit(self, result: Any = None) -> None: ...
+        def run_worker(self, worker: Any) -> None: ...
+        def query_one(self, selector: Any, type: Any = None) -> Any: ...
+
+    class ComposeResult:
+        pass
+
+    class Container:
+        def __enter__(self) -> None: ...
+        def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None: ...
+
+    def reactive(default: Any) -> Any: ...
+
+    class Button:
+        def press(self) -> None: ...
+
+    class RichLog:
+        def write(self, content: Any) -> None: ...
+
+    class Static:
+        id: str | None
+
+        def __init__(self, id: str | None = None, **kwargs: Any) -> None: ...
+else:
+    try:
+        import sounddevice as sd
+    except ImportError:
+        sd = None
+
+    try:
+        from agents.voice import StreamedAudioInput, VoicePipeline
+    except ImportError:
+        StreamedAudioInput = None
+        VoicePipeline = None
+
+    try:
+        from textual import events
+        from textual.app import App, ComposeResult
+        from textual.containers import Container
+        from textual.reactive import reactive
+        from textual.widgets import Button, RichLog, Static
+    except ImportError:
+        events = None
+        App = Any
+        ComposeResult = Any
+        Container = Any
+        reactive = Any
+        Button = Any
+        RichLog = Any
+        Static = Any
 
 from aspire_agents.gpu import ensure_tensor_core_gpu
 
@@ -148,9 +230,10 @@ class RealtimeApp(App[None]):
     def _on_transcription(self, transcription: str) -> None:
         """Callback for when transcription is received."""
         try:
-            self.query_one("#bottom-pane", RichLog).write(
-                f"Transcription: {transcription}"
-            )
+            log_widget = self.query_one("#bottom-pane", RichLog)
+            if TYPE_CHECKING:
+                assert isinstance(log_widget, RichLog)
+            log_widget.write(f"Transcription: {transcription}")
         except Exception:
             pass
 
@@ -169,13 +252,17 @@ class RealtimeApp(App[None]):
     async def start_voice_pipeline(self) -> None:
         """Start the voice pipeline."""
         try:
-            self.audio_player.start()
+            if self.audio_player:
+                self.audio_player.start()
             self.result = await self.pipeline.run(self._audio_input)
 
             async for event in self.result.stream():
                 bottom_pane = self.query_one("#bottom-pane", RichLog)
+                if TYPE_CHECKING:
+                    assert isinstance(bottom_pane, RichLog)
                 if event.type == "voice_stream_event_audio":
-                    self.audio_player.write(event.data)
+                    if self.audio_player:
+                        self.audio_player.write(event.data)
                     data_len = len(event.data) if event.data is not None else 0
                     msg = f"Received audio: {data_len} bytes"
                     bottom_pane.write(msg)
@@ -183,12 +270,18 @@ class RealtimeApp(App[None]):
                     bottom_pane.write(f"Lifecycle event: {event.event}")
         except Exception as e:
             bottom_pane = self.query_one("#bottom-pane", RichLog)
+            if TYPE_CHECKING:
+                assert isinstance(bottom_pane, RichLog)
             bottom_pane.write(f"Error: {e}")
         finally:
-            self.audio_player.close()
+            if self.audio_player:
+                self.audio_player.close()
 
     async def send_mic_audio(self) -> None:
         """Send microphone audio to the pipeline."""
+        if sd is None:
+            return
+
         device_info = sd.query_devices()
         print(device_info)
 
@@ -202,6 +295,8 @@ class RealtimeApp(App[None]):
         stream.start()
 
         status_indicator = self.query_one(AudioStatusIndicator)
+        if TYPE_CHECKING:
+            assert isinstance(status_indicator, AudioStatusIndicator)
 
         try:
             while True:
@@ -216,7 +311,8 @@ class RealtimeApp(App[None]):
 
                 # Cast to Any to avoid mypy error about float64 vs int16
                 # sounddevice returns numpy array, but type inference is tricky
-                await self._audio_input.add_audio(data.astype(np.int16))
+                if self._audio_input:
+                    await self._audio_input.add_audio(data.astype(np.int16))
                 await asyncio.sleep(0)
         except KeyboardInterrupt:
             pass

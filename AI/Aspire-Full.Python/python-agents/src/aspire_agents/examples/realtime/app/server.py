@@ -8,9 +8,9 @@ import json
 import logging
 import struct
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
-try:
+if TYPE_CHECKING:
     from agents.realtime import (
         RealtimeRunner,
         RealtimeSession,
@@ -20,13 +20,27 @@ try:
     from agents.realtime.items import RealtimeItem
     from agents.realtime.model import RealtimeModelConfig
     from agents.realtime.model_inputs import RealtimeModelSendRawMessage
-except ImportError:
-    RealtimeAgent: Any = None
-    RealtimePlaybackTracker: Any = None
-    RealtimeRunner: Any = None
-    RealtimeSession: Any = None
-    RealtimeSessionEvent: Any = None
-    RealtimeModelConfig: Any = None
+else:
+    try:
+        from agents.realtime import (
+            RealtimeRunner,
+            RealtimeSession,
+            RealtimeSessionEvent,
+        )
+        from agents.realtime.config import RealtimeUserInputMessage
+        from agents.realtime.items import RealtimeItem
+        from agents.realtime.model import RealtimeModelConfig
+        from agents.realtime.model_inputs import RealtimeModelSendRawMessage
+    except ImportError:
+        RealtimeAgent = Any
+        RealtimePlaybackTracker = Any
+        RealtimeRunner = Any
+        RealtimeSession = Any
+        RealtimeSessionEvent = Any
+        RealtimeModelConfig = Any
+        RealtimeUserInputMessage = Any
+        RealtimeItem = Any
+        RealtimeModelSendRawMessage = Any
 
 from aspire_agents.gpu import ensure_tensor_core_gpu
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -35,7 +49,7 @@ from fastapi.staticfiles import StaticFiles
 from typing_extensions import assert_never
 
 # OpenTelemetry Imports
-try:
+if TYPE_CHECKING:
     from opentelemetry import trace
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
         OTLPSpanExporter,
@@ -46,17 +60,29 @@ try:
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     OTEL_AVAILABLE = True
-except ImportError:
-    trace = None
-    OTLPSpanExporter = None
-    FastAPIInstrumentor = None
-    Resource = None
-    TracerProvider = None
-    BatchSpanProcessor = None
-    OTEL_AVAILABLE = False
-    logging.getLogger(__name__).warning(
-        "OpenTelemetry packages not found. Tracing will be disabled."
-    )
+else:
+    try:
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,
+        )
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+        OTEL_AVAILABLE = True
+    except ImportError:
+        trace = None
+        OTLPSpanExporter = None
+        FastAPIInstrumentor = None
+        Resource = None
+        TracerProvider = None
+        BatchSpanProcessor = None
+        OTEL_AVAILABLE = False
+        logging.getLogger(__name__).warning(
+            "OpenTelemetry packages not found. Tracing will be disabled."
+        )
 
 # Import TwilioHandler class - handle both module and package use cases
 try:
@@ -189,7 +215,7 @@ class RealtimeWebSocketManager:
             sanitized_content: list[Any] = []
             for part in content:
                 if isinstance(part, dict):
-                    sanitized_part = part.copy()
+                    sanitized_part: dict[str, Any] = part.copy()
                     if sanitized_part.get("type") in {"audio", "input_audio"}:
                         sanitized_part.pop("audio", None)
                     sanitized_content.append(sanitized_part)
