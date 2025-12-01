@@ -38,7 +38,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 
 # Install Python dependencies
-COPY Aspire-Full.Python/python-agents/pyproject.toml .
+COPY AI/Aspire-Full.Python/Aspire-Full.Python/python-agents/pyproject.toml .
 
 # Install PyTorch with CUDA 12.4 support
 RUN --mount=type=cache,target=/root/.cache/pip \
@@ -125,7 +125,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
 
 # Copy application code
-COPY Aspire-Full.Python/python-agents/ .
+COPY AI/Aspire-Full.Python/Aspire-Full.Python/python-agents/ .
 
 # Precompile application code for instant startup
 RUN python -m compileall .
@@ -140,7 +140,7 @@ ENV NVIDIA_VISIBLE_DEVICES=all \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 # Entrypoint script to verify environment and start
-COPY --chown=aspire:aspire scripts/run_agent.ps1 /app/scripts/run_agent.ps1
+COPY --chown=aspire:aspire AI/Aspire-Full.Python/Aspire-Full.Python/python-agents/scripts/run_agent.ps1 /app/scripts/run_agent.ps1
 
 # Default command (can be overridden)
 CMD ["python", "-m", "aspire_agents.cli", "--help"]
