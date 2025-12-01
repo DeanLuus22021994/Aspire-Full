@@ -1,7 +1,8 @@
 using System.Linq;
 using System.Text.Json;
-using Aspire_Full.Api.Tensor;
 using Aspire_Full.Tensor;
+using Aspire_Full.Tensor.Models;
+using Aspire_Full.Tensor.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
