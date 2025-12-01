@@ -8,17 +8,26 @@ import json
 import logging
 import struct
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from typing import Any, AsyncIterator
 
-from agents.realtime import (
-    RealtimeRunner,
-    RealtimeSession,
-    RealtimeSessionEvent,
-)
-from agents.realtime.config import RealtimeUserInputMessage
-from agents.realtime.items import RealtimeItem
-from agents.realtime.model import RealtimeModelConfig
-from agents.realtime.model_inputs import RealtimeModelSendRawMessage
+try:
+    from agents.realtime import (
+        RealtimeRunner,
+        RealtimeSession,
+        RealtimeSessionEvent,
+    )
+    from agents.realtime.config import RealtimeUserInputMessage
+    from agents.realtime.items import RealtimeItem
+    from agents.realtime.model import RealtimeModelConfig
+    from agents.realtime.model_inputs import RealtimeModelSendRawMessage
+except ImportError:
+    RealtimeAgent: Any = None
+    RealtimePlaybackTracker: Any = None
+    RealtimeRunner: Any = None
+    RealtimeSession: Any = None
+    RealtimeSessionEvent: Any = None
+    RealtimeModelConfig: Any = None
+
 from aspire_agents.gpu import ensure_tensor_core_gpu
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
@@ -56,48 +65,6 @@ try:
 except ImportError:
     # Fall back to direct import (when run as a script)
     from agent import get_starting_agent
-from aspire_agents.gpu import ensure_tensor_core_gpu
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-from typing_extensions import assert_never
-
-# OpenTelemetry Imports
-try:
-    from opentelemetry import trace
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-        OTLPSpanExporter,
-    )
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-    OTEL_AVAILABLE = True
-except ImportError:
-    trace = None
-    OTLPSpanExporter = None
-    FastAPIInstrumentor = None
-    Resource = None
-    TracerProvider = None
-    BatchSpanProcessor = None
-    OTEL_AVAILABLE = False
-    logging.getLogger(__name__).warning(
-        "OpenTelemetry packages not found. Tracing will be disabled."
-    )
-
-# Import TwilioHandler class - handle both module and package use cases
-if TYPE_CHECKING:
-    # For type checking, use the relative import
-    from .agent import get_starting_agent
-else:
-    # At runtime, try both import styles
-    try:
-        # Try relative import first (when used as a package)
-        from .agent import get_starting_agent
-    except ImportError:
-        # Fall back to direct import (when run as a script)
-        from agent import get_starting_agent
 
 
 logging.basicConfig(level=logging.INFO)
@@ -181,7 +148,7 @@ class RealtimeWebSocketManager:
 
     async def send_user_message(
         self, session_id: str, message: RealtimeUserInputMessage
-    ) -> None:  # type: ignore
+    ) -> None:
         """Send a structured user message via the higher-level API (supports input_image)."""
         session = self.active_sessions.get(session_id)
         if not session:
@@ -214,7 +181,7 @@ class RealtimeWebSocketManager:
             print(e)
             logger.error("Error processing events for session %s: %s", session_id, e)
 
-    def _sanitize_history_item(self, item: RealtimeItem) -> dict[str, Any]:  # type: ignore
+    def _sanitize_history_item(self, item: RealtimeItem) -> dict[str, Any]:
         """Remove large binary payloads from history items while keeping transcripts."""
         item_dict: dict[str, Any] = item.model_dump()
         content = item_dict.get("content")
@@ -231,7 +198,7 @@ class RealtimeWebSocketManager:
             item_dict["content"] = sanitized_content
         return item_dict
 
-    async def _serialize_event(self, event: RealtimeSessionEvent) -> dict[str, Any]:  # type: ignore
+    async def _serialize_event(self, event: RealtimeSessionEvent) -> dict[str, Any]:
         """
         Serialize a RealtimeSessionEvent to a dictionary.
         """
@@ -312,17 +279,17 @@ if (
     and FastAPIInstrumentor
 ):
     # Configure OpenTelemetry
-    resource = Resource.create(attributes={"service.name": "python-agents"})  # type: ignore
-    provider = TracerProvider(resource=resource)  # type: ignore
-    trace.set_tracer_provider(provider)  # type: ignore
+    resource = Resource.create(attributes={"service.name": "python-agents"})
+    provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(provider)
 
     # Cast to Any to avoid mypy issues with add_span_processor
     # The type stub for TracerProvider might be missing this method in some versions
     provider_any: Any = provider
     if hasattr(provider_any, "add_span_processor"):
-        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))  # type: ignore
+        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
 
-    FastAPIInstrumentor.instrument_app(app)  # type: ignore
+    FastAPIInstrumentor.instrument_app(app)
 
 
 @app.websocket("/ws/{session_id}")
@@ -354,7 +321,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                         "Forwarding image (structured message) to Realtime API (len=%d).",
                         len(data_url),
                     )
-                    user_msg: RealtimeUserInputMessage = {  # type: ignore
+                    user_msg: RealtimeUserInputMessage = {
                         "type": "message",
                         "role": "user",
                         "content": (
@@ -448,7 +415,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
                             "Forwarding chunked image (structured message) to Realtime API (len=%d).",
                             len(data_url),
                         )
-                        user_msg2: RealtimeUserInputMessage = {  # type: ignore
+                        user_msg2: RealtimeUserInputMessage = {
                             "type": "message",
                             "role": "user",
                             "content": (

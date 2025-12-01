@@ -9,18 +9,17 @@ import threading
 from typing import Any
 
 import numpy as np
-import sounddevice as sd  # type: ignore # pylint: disable=import-error
-from agents import function_tool  # type: ignore # pylint: disable=import-error
-from agents.realtime import (  # type: ignore # pylint: disable=import-error
+import sounddevice as sd
+from agents import function_tool
+from agents.realtime import (
     RealtimeAgent,
     RealtimePlaybackTracker,
     RealtimeRunner,
     RealtimeSession,
     RealtimeSessionEvent,
 )
-from agents.realtime.model import RealtimeModelConfig  # type: ignore # pylint: disable=import-error
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # pylint: disable=import-error
+from agents.realtime.model import RealtimeModelConfig
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # Audio configuration
 CHUNK_LENGTH_S = 0.04  # 40ms aligns with realtime defaults
@@ -79,7 +78,7 @@ class NoUIDemo:
         # Use an unbounded queue to avoid drops that sound like skipped words.
         self.output_queue: queue.Queue[Any] = queue.Queue(maxsize=0)
         self.interrupt_event = threading.Event()
-        self.current_audio_chunk: tuple[np.ndarray[Any, np.dtype[Any]], str, int] | None = None
+        self.current_audio_chunk: tuple[np.ndarray, str, int] | None = None
         self.chunk_position = 0
         self.bytes_per_sample = np.dtype(FORMAT).itemsize
 
@@ -115,21 +114,32 @@ class NoUIDemo:
                 self.fading = True
                 self.fade_done_samples = 0
                 # Remaining samples in the current chunk
-                remaining_in_chunk = len(self.current_audio_chunk[0]) - self.chunk_position
-                self.fade_total_samples = min(self.fade_samples, max(0, remaining_in_chunk))
+                remaining_in_chunk = (
+                    len(self.current_audio_chunk[0]) - self.chunk_position
+                )
+                self.fade_total_samples = min(
+                    self.fade_samples, max(0, remaining_in_chunk)
+                )
 
             samples, item_id, content_index = self.current_audio_chunk
             samples_filled = 0
-            while samples_filled < len(outdata) and self.fade_done_samples < self.fade_total_samples:
+            while (
+                samples_filled < len(outdata)
+                and self.fade_done_samples < self.fade_total_samples
+            ):
                 remaining_output = len(outdata) - samples_filled
                 remaining_fade = self.fade_total_samples - self.fade_done_samples
                 n = min(remaining_output, remaining_fade)
 
-                src = samples[self.chunk_position : self.chunk_position + n].astype(np.float32)
+                src = samples[self.chunk_position : self.chunk_position + n].astype(
+                    np.float32
+                )
                 # Linear ramp from current level down to 0 across remaining fade samples
-                idx = np.arange(self.fade_done_samples, self.fade_done_samples + n, dtype=np.float32)
-                gain = 1.0 - (idx / float(self.fade_total_samples))  # type: ignore
-                ramped = np.clip(src * gain, -32768.0, 32767.0).astype(np.int16)  # type: ignore
+                idx = np.arange(
+                    self.fade_done_samples, self.fade_done_samples + n, dtype=np.float32
+                )
+                gain = 1.0 - (idx / float(self.fade_total_samples))
+                ramped = np.clip(src * gain, -32768.0, 32767.0).astype(np.int16)
                 outdata[samples_filled : samples_filled + n, 0] = ramped
 
                 # Optionally report played bytes (ramped) to playback tracker
@@ -139,7 +149,7 @@ class NoUIDemo:
                         item_content_index=content_index,
                         bytes=ramped.tobytes(),
                     )
-                except Exception:  # pylint: disable=broad-exception-caught
+                except Exception:
                     pass
 
                 samples_filled += n
@@ -169,7 +179,10 @@ class NoUIDemo:
             if self.current_audio_chunk is None:
                 try:
                     # Respect a small jitter buffer before starting playback
-                    if self.prebuffering and self.output_queue.qsize() < self.prebuffer_target_chunks:
+                    if (
+                        self.prebuffering
+                        and self.output_queue.qsize() < self.prebuffer_target_chunks
+                    ):
                         break
                     self.prebuffering = False
                     self.current_audio_chunk = self.output_queue.get_nowait()
@@ -189,9 +202,13 @@ class NoUIDemo:
             samples_to_copy = min(remaining_output, remaining_chunk)
 
             if samples_to_copy > 0:
-                chunk_data = samples[self.chunk_position : self.chunk_position + samples_to_copy]
+                chunk_data = samples[
+                    self.chunk_position : self.chunk_position + samples_to_copy
+                ]
                 # More efficient: direct assignment for mono audio instead of reshape
-                outdata[samples_filled : samples_filled + samples_to_copy, 0] = chunk_data
+                outdata[samples_filled : samples_filled + samples_to_copy, 0] = (
+                    chunk_data
+                )
                 samples_filled += samples_to_copy
                 self.chunk_position += samples_to_copy
 
@@ -202,7 +219,7 @@ class NoUIDemo:
                         item_content_index=content_index,
                         bytes=chunk_data.tobytes(),
                     )
-                except Exception:  # pylint: disable=broad-exception-caught
+                except Exception:
                     pass
 
                 # If we've used up the entire chunk, reset for next iteration
@@ -246,7 +263,9 @@ class NoUIDemo:
 
                 # Start audio recording
                 await self.start_audio_recording()
-                print("Audio recording started. You can start speaking - expect lots of logs!")
+                print(
+                    "Audio recording started. You can start speaking - expect lots of logs!"
+                )
 
                 # Process session events
                 async for event in session:
@@ -286,12 +305,12 @@ class NoUIDemo:
 
         try:
             # Simple energy-based barge-in: if user speaks while audio is playing, interrupt.
-            def rms_energy(samples: np.ndarray[Any, np.dtype[Any]]) -> float:
+            def rms_energy(samples: np.ndarray) -> float:
                 if samples.size == 0:
                     return 0.0
                 # Normalize int16 to [-1, 1]
-                x = samples.astype(np.float32) / 32768.0  # type: ignore
-                return float(np.sqrt(np.mean(x * x)))  # type: ignore
+                x = samples.astype(np.float32) / 32768.0
+                return float(np.sqrt(np.mean(x * x)))
 
             while self.recording:
                 # Check if there's enough data to read
@@ -306,7 +325,10 @@ class NoUIDemo:
                 audio_bytes = data.tobytes()
 
                 # Smart barge‑in: if assistant audio is playing, send only if mic has speech.
-                assistant_playing = self.current_audio_chunk is not None or not self.output_queue.empty()
+                assistant_playing = (
+                    self.current_audio_chunk is not None
+                    or not self.output_queue.empty()
+                )
                 if assistant_playing:
                     # Compute RMS energy to detect speech while assistant is talking
                     samples = data.reshape(-1)
@@ -320,7 +342,7 @@ class NoUIDemo:
                 # Yield control back to event loop
                 await asyncio.sleep(0)
 
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             print(f"Audio capture error: {e}")
         finally:
             if self.audio_stream and self.audio_stream.active:
@@ -347,7 +369,9 @@ class NoUIDemo:
                 # Enqueue audio for callback-based playback with metadata
                 np_audio = np.frombuffer(event.audio.data, dtype=np.int16)
                 # Non-blocking put; queue is unbounded, so drops won’t occur.
-                self.output_queue.put_nowait((np_audio, event.item_id, event.content_index))
+                self.output_queue.put_nowait(
+                    (np_audio, event.item_id, event.content_index)
+                )
             elif event.type == "audio_interrupted":
                 print("Audio interrupted")
                 # Begin graceful fade + flush in the audio callback and rebuild jitter buffer.
@@ -363,7 +387,7 @@ class NoUIDemo:
                 print(f"Raw model event: {_truncate_str(str(event.data), 200)}")
             else:
                 print(f"Unknown event type: {event.type}")
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             print(f"Error processing event: {_truncate_str(str(e), 200)}")
 
 
