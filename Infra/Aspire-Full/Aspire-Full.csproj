@@ -23,13 +23,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.Api\Aspire-Full.Api.csproj" />
+    <ProjectReference Include="..\..\Web\Aspire-Full.Api\Aspire-Full.Api.csproj" />
     <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj">
       <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
-    <ProjectReference Include="..\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Shared\Aspire-Full.Shared.csproj">
+    <ProjectReference Include="..\..\Web\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
+    <ProjectReference Include="..\..\Web\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
+    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj">
       <IsAspireProjectResource>false</IsAspireProjectResource>
     </ProjectReference>
   </ItemGroup>

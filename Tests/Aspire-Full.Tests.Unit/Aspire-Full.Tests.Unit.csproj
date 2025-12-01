@@ -32,20 +32,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.Api\Aspire-Full.Api.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
-    <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Agents\Aspire-Full.Agents.csproj" />
-    <ProjectReference Include="..\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
-    <ProjectReference Include="..\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
+    <ProjectReference Include="..\..\Web\Aspire-Full.Api\Aspire-Full.Api.csproj" />
+    <ProjectReference Include="..\..\Core\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
+    <ProjectReference Include="..\..\AI\Aspire-Full.Agents\Aspire-Full.Agents.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
+    <ProjectReference Include="..\..\Web\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\AspireFullNative.dll')">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>AspireFullNative.dll</Link>
     </Content>
-    <Content Include="..\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\libAspireFullNative.so')">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>libAspireFullNative.so</Link>
     </Content>

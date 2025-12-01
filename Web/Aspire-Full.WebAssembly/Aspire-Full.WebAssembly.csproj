@@ -15,19 +15,19 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
+    <ProjectReference Include="..\..\AI\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
+    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="wwwroot\appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="wwwroot\appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" Condition=" '$(Configuration)' == 'Debug' " />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Aspire-Full.Tensor\build\AspireFullNative.dll*" Condition="'$(OS)' == 'Windows_NT'">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll*" Condition="'$(OS)' == 'Windows_NT'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>AspireFullNative.dll</Link>
     </Content>
-    <Content Include="..\Aspire-Full.Tensor\build\libAspireFullNative.so*" Condition="'$(OS)' != 'Windows_NT'">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so*" Condition="'$(OS)' != 'Windows_NT'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>libAspireFullNative.so</Link>
     </Content>

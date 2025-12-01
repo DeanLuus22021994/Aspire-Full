@@ -1,32 +1,40 @@
 import os
+import re
 
 root_dir = os.getcwd()
 
 categories = ["Infra", "Core", "AI", "Web", "Tests"]
 
+# Update Scoped SLNX files
 for cat in categories:
     slnx_path = os.path.join(root_dir, cat, f"Aspire-Full.{cat}.slnx")
     if os.path.exists(slnx_path):
-        with open(slnx_path, 'r', encoding='utf-8') as f:
+        with open(slnx_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         # Update Solution Items to go up one level
-        content = content.replace('Path="Directory.Build.props"', 'Path="../Directory.Build.props"')
-        content = content.replace('Path="Directory.Packages.props"', 'Path="../Directory.Packages.props"')
-        content = content.replace('Path="global.json"', 'Path="../global.json"')
-        content = content.replace('Path="NuGet.config"', 'Path="../NuGet.config"')
-        
-        with open(slnx_path, 'w', encoding='utf-8') as f:
+        # Use regex to be safe
+        content = re.sub(
+            r'Path="Directory.Build.props"', 'Path="../Directory.Build.props"', content
+        )
+        content = re.sub(
+            r'Path="Directory.Packages.props"',
+            'Path="../Directory.Packages.props"',
+            content,
+        )
+        content = re.sub(r'Path="global.json"', 'Path="../global.json"', content)
+        content = re.sub(r'Path="NuGet.config"', 'Path="../NuGet.config"', content)
+
+        with open(slnx_path, "w", encoding="utf-8") as f:
             f.write(content)
+        print(f"Updated {slnx_path}")
 
 # Update Master SLNX
 master_slnx = os.path.join(root_dir, "Aspire-Full.slnx")
 if os.path.exists(master_slnx):
-    with open(master_slnx, 'r', encoding='utf-8') as f:
+    with open(master_slnx, "r", encoding="utf-8") as f:
         content = f.read()
-    
-    # Update project paths to include category folder
-    # We know the mapping from the previous script, let's recreate a simple one
+
     project_map = {
         "Aspire-Full": "Infra",
         "Aspire-Full.ServiceDefaults": "Infra",
@@ -49,17 +57,16 @@ if os.path.exists(master_slnx):
         "Aspire-Full.Gateway": "Web",
         "Aspire-Full.Tests.Unit": "Tests",
         "Aspire-Full.Tests.E2E": "Tests",
-        "Aspire-Full.Gateway.Tests": "Tests"
+        "Aspire-Full.Gateway.Tests": "Tests",
     }
-    
-    for proj, cat in project_map.items():
-        # Replace Path="Aspire-Full... with Path="Category/Aspire-Full...
-        # Be careful not to double replace
-        old_path = f'Path="{proj}/{proj}.csproj"'
-        new_path = f'Path="{cat}/{proj}/{proj}.csproj"'
-        content = content.replace(old_path, new_path)
-        
-    with open(master_slnx, 'w', encoding='utf-8') as f:
-        f.write(content)
 
-print("SLNX updates complete.")
+    for proj, cat in project_map.items():
+        # Regex to match Path="Proj/Proj.csproj"
+        # We want to replace it with Path="Cat/Proj/Proj.csproj"
+        pattern = f'Path="{re.escape(proj)}/{re.escape(proj)}.csproj"'
+        replacement = f'Path="{cat}/{proj}/{proj}.csproj"'
+        content = re.sub(pattern, replacement, content)
+
+    with open(master_slnx, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"Updated {master_slnx}")

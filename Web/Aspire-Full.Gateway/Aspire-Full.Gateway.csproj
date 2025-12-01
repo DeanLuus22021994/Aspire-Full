@@ -9,8 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <ProjectReference Include="..\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Embeddings\Aspire-Full.Embeddings.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\AI\Aspire-Full.Embeddings\Aspire-Full.Embeddings.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,19 +20,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\AspireFullNative.dll')">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>AspireFullNative.dll</Link>
     </Content>
-    <Content Include="..\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\libAspireFullNative.so')">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>libAspireFullNative.so</Link>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
-    <ProjectReference Include="..\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
+    <ProjectReference Include="..\..\AI\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
+    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
   </ItemGroup>
 
 </Project>

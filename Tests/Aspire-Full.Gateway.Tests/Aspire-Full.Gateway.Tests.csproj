@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
+    <ProjectReference Include="..\..\Web\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
   </ItemGroup>
 
 </Project>
