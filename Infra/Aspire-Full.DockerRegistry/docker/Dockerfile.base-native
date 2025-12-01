@@ -1,25 +1,32 @@
 # =============================================================================
-# Base Native Image with CUDA 13.0 TensorCore Support
-# CMake + Ninja + CUDA for native library compilation
+# Base Native Image - Inherits from CUDA Bootstrap Devel
+# CMake + Ninja for native CUDA library compilation
 # =============================================================================
-FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
+FROM cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Base Native Image with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Base Native (inherits CUDA Bootstrap)"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# TensorCore Configuration
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-
-# Enable apt caching for faster rebuilds
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-
-# Install CMake 3.28 (stable) and build tools
+# TensorCore config inherited from cuda-bootstrap-devel
+# Install CMake 3.28 (stable) and Ninja build system
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y build-essential wget ninja-build && \
-    wget https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3-linux-x86_64.sh && \
-    chmod +x cmake-3.28.3-linux-x86_64.sh && \
-    ./cmake-3.28.3-linux-x86_64.sh --skip-license --prefix=/usr/local && \
-    rm cmake-3.28.3-linux-x86_64.sh
+    apt-get update && apt-get install -y --no-install-recommends \
+    ninja-build \
+    && rm -rf /var/lib/apt/lists/* \
+    && wget https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3-linux-x86_64.sh \
+    && chmod +x cmake-3.28.3-linux-x86_64.sh \
+    && ./cmake-3.28.3-linux-x86_64.sh --skip-license --prefix=/usr/local \
+    && rm cmake-3.28.3-linux-x86_64.sh
+
+# ccache for faster recompilation
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends ccache \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CCACHE_DIR=/root/.ccache
+ENV PATH="/usr/lib/ccache:${PATH}"
+
+# Named volume for ccache persistence
+VOLUME ["/root/.ccache"]

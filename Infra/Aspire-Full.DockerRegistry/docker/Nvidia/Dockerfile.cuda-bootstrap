@@ -1,0 +1,94 @@
+# syntax=docker/dockerfile:1
+# =============================================================================
+# CUDA Bootstrap Image - Unified Base for All TensorCore Workloads
+# Two-stage build: devel (NVCC + build tools) and runtime (minimal)
+# =============================================================================
+
+# =============================================================================
+# Stage 1: CUDA Bootstrap Devel - For compilation workloads
+# Includes NVCC, cuDNN, build essentials for native CUDA compilation
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS cuda-bootstrap-devel
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire CUDA Bootstrap (Devel) - TensorCore"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# =============================================================================
+# TensorCore Configuration - Inherited by all child images
+# =============================================================================
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545"
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH="${CUDA_HOME}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+
+# cuDNN autotuning cache directory
+ENV CUDNN_LOGINFO_DBG=1
+ENV CUDA_CACHE_PATH=/var/cuda-cache
+ENV CUDA_CACHE_MAXSIZE=4294967296
+
+# Enable apt caching for faster rebuilds - inherited by all child images
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install minimal build essentials (child images add specific tools)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    curl \
+    wget \
+    git \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create CUDA cache directory for cuDNN autotuning persistence
+RUN mkdir -p /var/cuda-cache && chmod 777 /var/cuda-cache
+
+# Named volume mount points for build cache persistence
+VOLUME ["/var/cuda-cache", "/root/.ccache"]
+
+# =============================================================================
+# Stage 2: CUDA Bootstrap Runtime - For production workloads
+# Minimal image with TensorCore support, no build tools
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS cuda-bootstrap-runtime
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire CUDA Bootstrap (Runtime) - TensorCore"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# =============================================================================
+# TensorCore Configuration - Inherited by all child images
+# =============================================================================
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545"
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+ENV CUDA_HOME=/usr/local/cuda
+ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+
+# cuDNN autotuning cache
+ENV CUDA_CACHE_PATH=/var/cuda-cache
+ENV CUDA_CACHE_MAXSIZE=4294967296
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install minimal runtime dependencies only
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create CUDA cache directory
+RUN mkdir -p /var/cuda-cache && chmod 777 /var/cuda-cache
+
+# Named volume mount point
+VOLUME ["/var/cuda-cache"]

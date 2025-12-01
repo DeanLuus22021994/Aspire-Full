@@ -18,25 +18,71 @@ variable "ARCH" {
   default = "linux-x64"
 }
 
+# =============================================================================
+# Build Groups
+# =============================================================================
+
 group "default" {
   targets = ["api", "gateway", "python-agents", "tensor-compute"]
 }
 
 group "bootstrap" {
-  targets = ["base-native", "base-dotnet", "base-python"]
+  targets = ["cuda-bootstrap-devel", "cuda-bootstrap-runtime", "base-native", "base-dotnet", "base-python"]
 }
 
+group "cuda-bootstrap" {
+  targets = ["cuda-bootstrap-devel", "cuda-bootstrap-runtime"]
+}
+
+# =============================================================================
+# CUDA Bootstrap Targets - Root of all TensorCore images
+# =============================================================================
+
+target "cuda-bootstrap-devel" {
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Nvidia/Dockerfile.cuda-bootstrap"
+  target = "cuda-bootstrap-devel"
+  tags = ["${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel:latest"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest,mode=max"]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
+}
+
+target "cuda-bootstrap-runtime" {
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Nvidia/Dockerfile.cuda-bootstrap"
+  target = "cuda-bootstrap-runtime"
+  tags = ["${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime:latest"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest,mode=max"]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
+}
+
+# =============================================================================
+# Base Image Targets - Inherit from CUDA Bootstrap
+# =============================================================================
+
 target "base-native" {
-  context = "Infra/Aspire-Full.DockerRegistry/docker"
-  dockerfile = "Dockerfile.base-native"
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Dockerfile.base-native"
+  contexts = {
+    "cuda-bootstrap-devel" = "target:cuda-bootstrap-devel"
+  }
   tags = ["${REGISTRY}/${NAMESPACE}/base-native:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest,mode=max"]
 }
 
 target "base-dotnet" {
-  context = "Infra/Aspire-Full.DockerRegistry/docker"
-  dockerfile = "Dockerfile.base-dotnet"
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Dockerfile.base-dotnet"
+  contexts = {
+    "cuda-bootstrap-runtime" = "target:cuda-bootstrap-runtime"
+  }
   tags = ["${REGISTRY}/${NAMESPACE}/base-dotnet:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest,mode=max"]
@@ -45,10 +91,12 @@ target "base-dotnet" {
 target "base-python" {
   context = "."
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Dockerfile.base-python"
+  contexts = {
+    "cuda-bootstrap-devel" = "target:cuda-bootstrap-devel"
+  }
   tags = ["${REGISTRY}/${NAMESPACE}/base-python:latest"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest,mode=max"]
-  # Enable NVIDIA runtime for TensorCore acceleration during build
   args = {
     BUILDKIT_INLINE_CACHE = "1"
   }

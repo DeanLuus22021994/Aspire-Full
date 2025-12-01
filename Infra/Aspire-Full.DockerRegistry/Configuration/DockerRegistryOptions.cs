@@ -55,6 +55,62 @@ public sealed class DockerRegistryOptions
     /// Interval for garbage collection.
     /// </summary>
     public TimeSpan GarbageCollectionInterval { get; set; } = TimeSpan.FromHours(24);
+
+    /// <summary>
+    /// GPU acceleration configuration for TensorCore builds.
+    /// </summary>
+    public GpuAccelerationOptions GpuAcceleration { get; set; } = new();
+}
+
+/// <summary>
+/// GPU acceleration configuration for NVIDIA CUDA builds.
+/// </summary>
+public sealed class GpuAccelerationOptions
+{
+    /// <summary>
+    /// Whether GPU acceleration is enabled for BuildKit workers.
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// The CUDA bootstrap image for devel builds (compilation).
+    /// </summary>
+    public string CudaBootstrapDevelImage { get; set; } = "host.docker.internal:5001/aspire/cuda-bootstrap-devel:latest";
+
+    /// <summary>
+    /// The CUDA bootstrap image for runtime builds (production).
+    /// </summary>
+    public string CudaBootstrapRuntimeImage { get; set; } = "host.docker.internal:5001/aspire/cuda-bootstrap-runtime:latest";
+
+    /// <summary>
+    /// Named volume for CUDA compilation cache.
+    /// </summary>
+    public string CudaCacheVolume { get; set; } = "aspire-cuda-cache";
+
+    /// <summary>
+    /// Named volume for ccache (C/C++ compilation cache).
+    /// </summary>
+    public string CcacheVolume { get; set; } = "aspire-ccache";
+
+    /// <summary>
+    /// Named volume for BuildKit cache.
+    /// </summary>
+    public string BuildkitCacheVolume { get; set; } = "aspire-buildkit-cache";
+
+    /// <summary>
+    /// CUDA architectures to target for TensorCore builds.
+    /// </summary>
+    public string TorchCudaArchList { get; set; } = "7.0 7.5 8.0 8.6 8.9 9.0+PTX";
+
+    /// <summary>
+    /// Minimum required CUDA version on the host.
+    /// </summary>
+    public string MinimumCudaVersion { get; set; } = "12.4";
+
+    /// <summary>
+    /// Minimum required NVIDIA driver version on the host.
+    /// </summary>
+    public string MinimumDriverVersion { get; set; } = "535";
 }
 
 public sealed class DockerRegistryCredentialOptions

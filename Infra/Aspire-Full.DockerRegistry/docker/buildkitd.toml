@@ -1,18 +1,62 @@
 debug = true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OCI Worker Configuration with NVIDIA GPU Runtime
+# ─────────────────────────────────────────────────────────────────────────────
 [worker.oci]
   enabled = true
   gc = true
-  gckeepstorage = 30000 # 30GB
+  gckeepstorage = 50000 # 50GB for TensorCore builds
 
+  # Use NVIDIA Container Runtime for GPU passthrough during builds
+  runtime = "nvidia"
+  runtimeArgs = ["--gpus=all"]
+
+  # Named platforms for multi-arch TensorCore builds
+  platforms = ["linux/amd64"]
+
+  # Resource limits for GPU-accelerated builds
+  maxParallelism = 4
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Garbage Collection Policies
+  # ─────────────────────────────────────────────────────────────────────────────
   [[worker.oci.gcpolicy]]
-    keepBytes = 15000000000 # 15GB
-    keepDuration = 604800 # 7 days
+    keepBytes = 20000000000 # 20GB
+    keepDuration = 604800   # 7 days
     filters = ["type==source.local", "type==exec.cachemount", "type==source.git.checkout"]
 
   [[worker.oci.gcpolicy]]
-    all = true
-    keepBytes = 30000000000 # 30GB
+    # Keep CUDA compilation caches longer
+    keepBytes = 10000000000 # 10GB
+    keepDuration = 2592000  # 30 days
+    filters = ["type==exec.cachemount"]
 
+  [[worker.oci.gcpolicy]]
+    all = true
+    keepBytes = 50000000000 # 50GB total
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CUDA Cache Mounts - Persist across builds for faster recompilation
+# ─────────────────────────────────────────────────────────────────────────────
+[[worker.oci.cachemount]]
+  path = "/var/cache/cuda"
+  type = "bind"
+  source = "aspire-cuda-cache"
+
+[[worker.oci.cachemount]]
+  path = "/root/.ccache"
+  type = "bind"
+  source = "aspire-ccache"
+
+[[worker.oci.cachemount]]
+  path = "/root/.cache/uv"
+  type = "bind"
+  source = "aspire-uv-cache"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Registry Configuration
+# ─────────────────────────────────────────────────────────────────────────────
 [registry."host.docker.internal:5001"]
   http = true
   insecure = true

@@ -33,10 +33,9 @@ services:
       - DOTNET_DASHBOARD_OTLP_ENDPOINT_URL=http://aspire-dashboard:18889
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
       - ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://aspire-dashboard:16036
-      # Docker-in-Docker connection (for devcontainer builds)
-      - DOCKER_HOST=tcp://docker:2376
-      - DOCKER_TLS_VERIFY=1
-      - DOCKER_CERT_PATH=/certs/client
+      # BuildKit connection (for GPU-accelerated builds)
+      - BUILDKIT_HOST=tcp://docker:1234
+      - DOCKER_BUILDKIT=1
     networks:
       - aspire-network
     command: sleep infinity
@@ -72,10 +71,9 @@ services:
       - DOTNET_NOLOGO=1
       - DOTNET_RUNNING_IN_CONTAINER=true
       - NUGET_PACKAGES=/home/runner/.nuget/packages
-      # Docker-in-Docker connection
-      - DOCKER_HOST=tcp://docker:2376
-      - DOCKER_TLS_VERIFY=1
-      - DOCKER_CERT_PATH=/certs/client
+      # BuildKit connection (for GPU-accelerated builds)
+      - BUILDKIT_HOST=tcp://docker:1234
+      - DOCKER_BUILDKIT=1
       # Tool cache for GitHub Actions
       - RUNNER_TOOL_CACHE=/opt/hostedtoolcache
       - AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
@@ -86,15 +84,39 @@ services:
       - docker
       - aspire-dashboard
 
-  # Docker-in-Docker service - isolated Docker daemon with named volume
+  # ─────────────────────────────────────────────────────────────────────────────
+  # NVIDIA BuildKit - GPU-accelerated Docker build daemon
+  # ─────────────────────────────────────────────────────────────────────────────
   docker:
-    image: docker:27-dind
+    image: moby/buildkit:master
     privileged: true
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu", "utility", "compute"]
     volumes:
       - aspire-docker-data:/var/lib/docker
       - aspire-docker-certs:/certs
+      - aspire-buildkit-cache:/var/lib/buildkit
+      - aspire-ccache:/root/.ccache
+      - aspire-cuda-cache:/var/cache/cuda
+      - aspire-uv-cache:/root/.cache/uv
+      - ../Aspire-Full.DockerRegistry/docker/buildkitd.toml:/etc/buildkit/buildkitd.toml:ro
     environment:
       - DOCKER_TLS_CERTDIR=/certs
+      - BUILDKIT_HOST=tcp://0.0.0.0:1234
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
+    entrypoint:
+      - buildkitd
+      - --addr=tcp://0.0.0.0:1234
+      - --addr=unix:///run/buildkit/buildkitd.sock
+      - --config=/etc/buildkit/buildkitd.toml
     networks:
       - aspire-network
     restart: unless-stopped
@@ -183,6 +205,13 @@ volumes:
   aspire-docker-data:
     external: true
   aspire-docker-certs:
+    external: true
+  # BuildKit + CUDA cache volumes
+  aspire-buildkit-cache:
+    external: true
+  aspire-ccache:
+    external: true
+  aspire-cuda-cache:
     external: true
   # GitHub Actions Runner volumes
   aspire-runner-data:

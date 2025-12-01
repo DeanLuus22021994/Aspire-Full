@@ -1,36 +1,26 @@
 # =============================================================================
-# Base Python Image with CUDA TensorCore Support
-# Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN for TensorCore acceleration
+# Base Python Image - Inherits from CUDA Bootstrap Devel
+# Python 3.15t (free-threaded) with TensorCore acceleration
 # =============================================================================
-FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
+FROM cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Base Python Image with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Base Python (inherits CUDA Bootstrap)"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Enable apt caching for faster rebuilds
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-
 # =============================================================================
-# Python 3.15 Free-Threading Environment Variables
+# Python 3.15 Free-Threading Configuration
 # PYTHON_GIL=0 disables the Global Interpreter Lock for true parallelism
+# TensorCore config inherited from cuda-bootstrap-devel
 # =============================================================================
 ENV PYTHON_GIL=0
 ENV PYTHON_JIT=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# NVIDIA TensorCore Configuration
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-
-# Install system dependencies
+# Install Python system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    git \
     libportaudio2 \
     libsndfile1 \
     ffmpeg \
@@ -42,6 +32,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Install Python 3.15t (free-threaded) via uv
 RUN uv python install 3.15t
 
-# Set uv to use system Python by default
+# Set uv to use installed Python
 ENV UV_SYSTEM_PYTHON=0
 ENV UV_PYTHON=3.15t
+
+# Named volume for uv cache persistence
+VOLUME ["/root/.cache/uv"]

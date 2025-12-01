@@ -25,6 +25,14 @@ public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IDisposable
         _workerSemaphore = new SemaphoreSlim(_options.MaxWorkerPoolSize);
         // Enforce 2 exporters to 1 worker ratio
         _exporterSemaphore = new SemaphoreSlim(_options.MaxWorkerPoolSize * 2);
+
+        if (_options.GpuAcceleration.Enabled)
+        {
+            _logger.LogInformation(
+                "GPU acceleration enabled. Bootstrap images: devel={DevelImage}, runtime={RuntimeImage}",
+                _options.GpuAcceleration.CudaBootstrapDevelImage,
+                _options.GpuAcceleration.CudaBootstrapRuntimeImage);
+        }
     }
 
     public async Task<IBuildxWorker> GetWorkerAsync(CancellationToken cancellationToken = default)
@@ -35,7 +43,7 @@ public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IDisposable
             return worker;
         }
 
-        return new BuildxWorker(Guid.NewGuid().ToString(), _logger);
+        return new BuildxWorker(Guid.NewGuid().ToString(), _logger, _options.GpuAcceleration);
     }
 
     public Task ReleaseWorkerAsync(IBuildxWorker worker)
@@ -62,6 +70,11 @@ public sealed class BuildxWorkerFactory : IBuildxWorkerFactory, IDisposable
         _exporterSemaphore.Release();
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Gets the GPU acceleration options for external consumers.
+    /// </summary>
+    public GpuAccelerationOptions GpuAccelerationOptions => _options.GpuAcceleration;
 
     public void Dispose()
     {
