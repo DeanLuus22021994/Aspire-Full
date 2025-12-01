@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+FROM python:3.14.0a3-bookworm
+
+# Install system dependencies for Playwright and general build tools
+# We install these in a separate layer to cache them effectively
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Install Playwright browsers and dependencies
+# We do this in the base image so it's cached and doesn't slow down app builds
+# We need to install playwright first to get the CLI
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system --no-cache-dir playwright
+
+# Install Playwright system dependencies and browsers
+RUN playwright install-deps && \
+    playwright install chromium
+
+# Set environment variables for Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
