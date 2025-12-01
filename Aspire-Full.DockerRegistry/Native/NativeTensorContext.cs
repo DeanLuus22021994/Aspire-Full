@@ -1,9 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Aspire_Full.DockerRegistry.Native;
 
-public static class NativeTensorContext
+public static partial class NativeTensorContext
 {
     private const string DllName = "AspireFullNative";
 
@@ -15,19 +16,22 @@ public static class NativeTensorContext
         public int active_kernels;
     }
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int InitTensorContext();
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial int InitTensorContext();
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void ComputeTensorOp(
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void ComputeTensorOp(
         [In] float[] A,
         [In] float[] B,
         [Out] float[] C,
         int numElements,
         ref TensorMetrics metrics);
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int ValidateTensorContent(
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial int ValidateTensorContent(
         [In] float[] Data,
         int numElements,
         float threshold,

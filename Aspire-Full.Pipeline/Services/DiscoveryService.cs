@@ -9,20 +9,15 @@ namespace Aspire_Full.Pipeline.Services;
 
 public class DiscoveryService
 {
-    private readonly IDiscoveryComponent[] _components;
-
-    public DiscoveryService()
-    {
-        _components =
-        [
-            new RepoComponent(),
-            new DotNetComponent(),
-            new PythonComponent(),
-            new DockerComponent(),
-            new DockerImagesComponent(),
-            new HardwareComponent()
-        ];
-    }
+    private readonly IDiscoveryComponent[] _components =
+    [
+        new RepoComponent(),
+        new DotNetComponent(),
+        new PythonComponent(),
+        new DockerComponent(),
+        new DockerImagesComponent(),
+        new HardwareComponent()
+    ];
 
     public async Task RunDiscoveryAsync()
     {
@@ -98,39 +93,39 @@ public class DiscoveryService
     private PythonToolingConfig GeneratePythonToolingConfig(string rootPath)
     {
         // Shared instances for anchors
-        var vendorGlobs = new List<string>
-        {
+        List<string> vendorGlobs =
+        [
             ".vscode", ".vscode/**",
             ".vscode-test", ".vscode-test/**",
             ".vscode-*", ".vscode-*/**",
             "node_modules", "node_modules/**"
-        };
+        ];
 
-        var flake8Ignore = new List<string> { "E203", "W503" };
+        List<string> flake8Ignore = ["E203", "W503"];
 
-        var pylintDisable = new List<string> { "missing-docstring", "invalid-name" };
+        List<string> pylintDisable = ["missing-docstring", "invalid-name"];
 
-        var pylintVendorRegex = new List<string>
-        {
+        List<string> pylintVendorRegex =
+        [
             ".*/\\.vscode/.*", ".*\\\\.vscode\\\\.*",
             ".*/\\.vscode-test/.*", ".*\\\\.vscode-test\\\\.*",
             ".*/\\.vscode-.*", ".*\\\\.vscode-.*"
-        };
+        ];
 
         // Discover lint roots
-        var lintRoots = new List<string>();
+        List<string> lintRoots = [];
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsDir))) lintRoots.Add(PathConstants.PythonAgentsDir);
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir))) lintRoots.Add(PathConstants.SandboxesDir);
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsDir))) lintRoots.Add(PathConstants.ScriptsDir);
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.ToolsDir))) lintRoots.Add(PathConstants.ToolsDir);
 
         // Discover test roots
-        var testRoots = new List<string>();
+        List<string> testRoots = [];
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsTestsDir))) testRoots.Add(PathConstants.PythonAgentsTestsDir);
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir))) testRoots.Add(PathConstants.SandboxesDir);
         if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsTestsDir))) testRoots.Add(PathConstants.ScriptsTestsDir);
 
-        var pytestAddOpts = new List<string> { "-q" };
+        List<string> pytestAddOpts = ["-q"];
 
         return new PythonToolingConfig
         {
@@ -155,7 +150,7 @@ public class DiscoveryService
                 Pylint = new PylintConfig
                 {
                     Disable = pylintDisable,
-                    Ignore = new List<string> { ".vscode", ".vscode/extensions", ".vscode-test", ".vscode-debug", ".vscode-extensions" },
+                    Ignore = [".vscode", ".vscode/extensions", ".vscode-test", ".vscode-debug", ".vscode-extensions"],
                     IgnorePaths = pylintVendorRegex,
                     IgnorePatterns = pylintVendorRegex // Anchor: *pylint_vendor_regex
                 },
@@ -180,8 +175,8 @@ public class DiscoveryService
                 Pytest = new PytestConfig
                 {
                     AddOpts = pytestAddOpts,
-                    Markers = new List<string> { "slow: marks tests as slow", "gpu: requires NVIDIA GPU" },
-                    FilterWarnings = new List<string> { "ignore::DeprecationWarning" }
+                    Markers = ["slow: marks tests as slow", "gpu: requires NVIDIA GPU"],
+                    FilterWarnings = ["ignore::DeprecationWarning"]
                 },
                 Runner = new TestRunnerConfig
                 {

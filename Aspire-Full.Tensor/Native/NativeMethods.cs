@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Aspire_Full.Tensor.Native;
 
@@ -10,23 +11,26 @@ public struct TensorMetrics
     public int ActiveKernels;
 }
 
-public static class NativeMethods
+public static partial class NativeMethods
 {
     private const string DllName = "AspireFullNative";
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int InitTensorContext();
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial int InitTensorContext();
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void ComputeTensorOp(
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial void ComputeTensorOp(
         [In] float[] a,
         [In] float[] b,
         [Out] float[] result,
         int numElements,
         ref TensorMetrics metrics);
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int ValidateTensorContent(
+    [LibraryImport(DllName)]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial int ValidateTensorContent(
         [In] float[] data,
         int numElements,
         float threshold,
