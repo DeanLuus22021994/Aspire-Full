@@ -1,25 +1,13 @@
 # Syntax=docker/dockerfile:1
 # =============================================================================
 # Aspire Tensor Compute with TensorCore Acceleration
+# Inherits from cuda-bootstrap for unified TensorCore configuration
 # Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN
 # =============================================================================
 
 # Stage 1: Builder (Compile dependencies with TensorCore optimization)
-FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS builder
-
-# =============================================================================
-# Python 3.15 Free-Threading + TensorCore Configuration
-# =============================================================================
-ENV PYTHON_GIL=0
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV DEBIAN_FRONTEND=noninteractive
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-
-# Enable apt caching
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+# Inherits TensorCore ENV vars from cuda-bootstrap-devel
+FROM cuda-bootstrap-devel AS builder
 
 WORKDIR /build
 
@@ -39,7 +27,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Install Python 3.15t (free-threaded)
-RUN uv python install 3.15t
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv python install 3.15t
 
 # Create virtual environment with Python 3.15t
 RUN uv venv /opt/venv --python 3.15t
@@ -71,21 +60,15 @@ RUN . /opt/venv/bin/activate && python -m compileall -q .
 
 # =============================================================================
 # Stage 2: Runtime (Minimal, TensorCore-optimized)
+# Inherits TensorCore ENV vars from cuda-bootstrap-runtime
 # =============================================================================
-FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS runtime
+FROM cuda-bootstrap-runtime AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Tensor Compute with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
-ENV PYTHON_GIL=0
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/opt/venv/bin:$PATH"
 ENV VIRTUAL_ENV="/opt/venv"
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 WORKDIR /app
 

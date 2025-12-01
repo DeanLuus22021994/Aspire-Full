@@ -2,7 +2,6 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Numerics.Tensors;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +11,7 @@ using Aspire_Full.DockerRegistry.Models;
 using Aspire_Full.DockerRegistry.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
 
 namespace Aspire_Full.DockerRegistry.Services;
 
@@ -112,12 +112,12 @@ public sealed class ImageValidationPipeline
                 if (NativeTensorContext.IsGpuAvailable)
                 {
                     s_validationsGpu.Add(1);
-                    return await ValidateWithGpuAsync(dataSpan, cancellationToken);
+                    return await ValidateWithGpuAsync(layerData, cancellationToken);
                 }
                 else
                 {
                     s_validationsCpu.Add(1);
-                    return ValidateWithTensorPrimitives(dataSpan);
+                    return ValidateWithTensorPrimitives(layerData);
                 }
             }
             finally
@@ -138,29 +138,27 @@ public sealed class ImageValidationPipeline
     /// GPU-accelerated validation path.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private async Task<TensorValidationResult> ValidateWithGpuAsync(
-        ReadOnlySpan<float> data,
+    private Task<TensorValidationResult> ValidateWithGpuAsync(
+        float[] data,
         CancellationToken cancellationToken)
     {
-        var validated = NativeTensorContext.ValidateContent(data, 0.5f, out var metrics);
+        var validated = NativeTensorContext.ValidateContent(data.AsSpan(), 0.5f, out var metrics);
 
-        await Task.CompletedTask; // Yield for async pattern
-
-        return new TensorValidationResult
+        return Task.FromResult(new TensorValidationResult
         {
             IsValid = validated,
             GpuAccelerated = true,
             ComputeTimeMs = metrics.compute_time_ms,
             MemoryUsageMb = metrics.memory_usage_mb,
             GpuUtilization = metrics.gpu_utilization_percent
-        };
+        });
     }
 
     /// <summary>
     /// CPU validation using TensorPrimitives for portable SIMD.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private TensorValidationResult ValidateWithTensorPrimitives(ReadOnlySpan<float> data)
+    private TensorValidationResult ValidateWithTensorPrimitives(float[] data)
     {
         var startTime = Stopwatch.GetTimestamp();
 
@@ -255,7 +253,7 @@ public sealed class ImageValidationPipeline
         }
     }
 
-    private static void GenerateLayerEmbedding(DockerLayerInfo layer, Span<float> embedding)
+    private static void GenerateLayerEmbedding(DockerManifestLayer layer, Span<float> embedding)
     {
         // Generate pseudo-embedding from layer metadata
         var hash = layer.Digest?.GetHashCode() ?? 0;

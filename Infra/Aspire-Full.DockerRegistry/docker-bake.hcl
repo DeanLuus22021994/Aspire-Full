@@ -173,6 +173,10 @@ target "python-agents" {
 target "tensor-compute" {
   context = "."
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Tensor"
+  contexts = {
+    "cuda-bootstrap-devel" = "target:cuda-bootstrap-devel"
+    "cuda-bootstrap-runtime" = "target:cuda-bootstrap-runtime"
+  }
   tags = ["${REGISTRY}/${NAMESPACE}/tensor-compute-${ENVIRONMENT}:${VERSION}-${ARCH}"]
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max"]
