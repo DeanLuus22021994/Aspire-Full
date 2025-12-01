@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+FROM python:3.14-rc-slim
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Python Playwright Base"
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install system dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libportaudio2 \
+    libasound2-dev \
+    ffmpeg
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Install Playwright and Browsers
+# We install playwright into the system python so 'playwright' command is available
+# We pin to a recent version to ensure stability, but >=1.48.0 matches pyproject.toml
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system "playwright>=1.48.0"
+
+RUN --mount=type=cache,target=/root/.cache/ms-playwright \
+    playwright install --with-deps chromium

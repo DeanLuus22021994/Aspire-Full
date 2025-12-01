@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1
-FROM python:3.14-rc-slim
+# Build the base image first:
+# docker build -f Aspire-Full.Python/python-agents/Dockerfile.playwright -t aspire-python-playwright:latest .
+FROM aspire-python-playwright:latest
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
 LABEL org.opencontainers.image.description="Aspire Full Python Agents"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -8,23 +10,6 @@ LABEL org.opencontainers.image.licenses="MIT"
 # ENV PYTHON_GIL=0
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-
-# Enable apt caching
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-
-# Install system dependencies for audio, video, and browser
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    git \
-    libportaudio2 \
-    libasound2-dev \
-    ffmpeg
-
-# Install uv for fast package management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Set working directory
 WORKDIR /app
@@ -38,10 +23,6 @@ COPY Aspire-Full.Python/python-agents/pyproject.toml Aspire-Full.Python/python-a
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv export --frozen --format requirements-txt --extra tracing --no-emit-project --output-file requirements.txt && \
     uv pip install --system --no-cache-dir -r requirements.txt
-
-# Install Playwright browsers
-RUN --mount=type=cache,target=/root/.cache/ms-playwright \
-    playwright install --with-deps chromium
 
 # Copy source code
 COPY Aspire-Full.Python/python-agents/ .
