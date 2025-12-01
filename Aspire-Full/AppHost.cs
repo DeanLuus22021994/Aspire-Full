@@ -100,11 +100,11 @@ var qdrant = builder.AddQdrant(AppHostConstants.Resources.Qdrant)
 // API Service - RESTful backend with Entity Framework
 // -----------------------------------------------------------------------------
 var useBakedImages = builder.Configuration.GetValue<bool>("USE_BAKED_IMAGES");
-var registryHost = "localhost:5001";
-var namespaceName = "aspire";
-var version = "1.0.0";
-var arch = "linux-x64";
-var envTag = "dev";
+var registryHost = AppHostConstants.Configuration.RegistryHost;
+var namespaceName = AppHostConstants.Configuration.Namespace;
+var version = AppHostConstants.Configuration.Version;
+var arch = AppHostConstants.Configuration.Architecture;
+var envTag = AppHostConstants.Configuration.EnvironmentTag;
 
 if (useBakedImages)
 {
