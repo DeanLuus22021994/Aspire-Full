@@ -51,7 +51,8 @@ public class PipelineModule
             var args = step.Args.Where(a => !string.IsNullOrEmpty(a)).ToArray();
 
             // We use ProcessUtils here
-            if (await ProcessUtils.RunAsync("dotnet", args, root, silent: false) != 0)
+            var result = await ProcessUtils.RunAsync("dotnet", args, root, silent: false);
+            if (result.ExitCode != 0)
             {
                 AnsiConsole.MarkupLine($"[red]Step '{step.Desc}' failed.[/]");
                 Environment.Exit(1);
