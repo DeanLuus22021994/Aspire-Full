@@ -14,6 +14,6 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Aspire-Full.Native\Aspire-Full.Native.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Native\Aspire-Full.Native.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
