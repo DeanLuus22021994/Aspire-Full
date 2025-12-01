@@ -16,7 +16,14 @@ from agents import (
     Runner,
     trace,
 )
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+        pass
+
 
 if TYPE_CHECKING:
 

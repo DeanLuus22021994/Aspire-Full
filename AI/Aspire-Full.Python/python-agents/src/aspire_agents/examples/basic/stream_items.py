@@ -12,7 +12,7 @@ try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
 
-    def ensure_tensor_core_gpu() -> Any:
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
         pass
 
 

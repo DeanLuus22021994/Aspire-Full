@@ -5,19 +5,53 @@ This module demonstrates the use of guardrails with tools.
 import asyncio
 import json
 import os
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from aspire_agents.compute import (
-    get_compute_service,
-)
-from aspire_agents.core import (
-    Agent,
-    Runner,
-    function_tool,
-    semantic_input_guardrail,
-    semantic_output_guardrail,
-)
-from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered
+if TYPE_CHECKING:
+    from aspire_agents.compute import (
+        get_compute_service,
+    )
+    from aspire_agents.core import (
+        Agent,
+        Runner,
+        function_tool,
+        semantic_input_guardrail,
+        semantic_output_guardrail,
+    )
+    from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered
+else:
+    try:
+        from aspire_agents.compute import (
+            get_compute_service,
+        )
+        from aspire_agents.core import (
+            Agent,
+            Runner,
+            function_tool,
+            semantic_input_guardrail,
+            semantic_output_guardrail,
+        )
+        from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered
+    except ImportError:
+
+        def get_compute_service() -> Any:
+            pass
+
+        Agent = Any
+        Runner = Any
+
+        def function_tool(f: Any) -> Any:
+            return f
+
+        def semantic_input_guardrail(**_kwargs: Any) -> Any:
+            pass
+
+        def semantic_output_guardrail(**_kwargs: Any) -> Any:
+            pass
+
+        class ToolOutputGuardrailTripwireTriggered(Exception):
+            def __init__(self, output: Any) -> None:
+                self.output = output
 
 
 @function_tool

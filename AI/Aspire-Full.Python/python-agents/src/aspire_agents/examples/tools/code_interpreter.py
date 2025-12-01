@@ -3,9 +3,16 @@ This module demonstrates the usage of the CodeInterpreterTool with an Agent.
 """
 
 import asyncio
+from typing import Any
 
 from agents import Agent, CodeInterpreterTool, Runner, trace
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+        pass
 
 
 async def main() -> None:

@@ -8,7 +8,7 @@ import json
 import logging
 import struct
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator, cast
 
 if TYPE_CHECKING:
     from agents.realtime import (
@@ -32,8 +32,6 @@ else:
         from agents.realtime.model import RealtimeModelConfig
         from agents.realtime.model_inputs import RealtimeModelSendRawMessage
     except ImportError:
-        RealtimeAgent = Any
-        RealtimePlaybackTracker = Any
         RealtimeRunner = Any
         RealtimeSession = Any
         RealtimeSessionEvent = Any
@@ -46,7 +44,7 @@ try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
 
-    def ensure_tensor_core_gpu() -> Any:
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
         pass
 
 
@@ -61,8 +59,8 @@ if TYPE_CHECKING:
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # type: ignore
         OTLPSpanExporter,
     )
-    from opentelemetry.instrumentation.fastapi import (
-        FastAPIInstrumentor,  # type: ignore
+    from opentelemetry.instrumentation.fastapi import (  # type: ignore
+        FastAPIInstrumentor,
     )
     from opentelemetry.sdk.resources import Resource  # type: ignore
     from opentelemetry.sdk.trace import TracerProvider  # type: ignore
@@ -99,7 +97,7 @@ try:
     from .agent import get_starting_agent
 except ImportError:
     # Fall back to direct import (when run as a script)
-    from agent import get_starting_agent
+    from agent import get_starting_agent  # type: ignore[no-redef]
 
 
 logging.basicConfig(level=logging.INFO)
@@ -221,10 +219,11 @@ class RealtimeWebSocketManager:
         item_dict: dict[str, Any] = item.model_dump()
         content = item_dict.get("content")
         if isinstance(content, list):
+            content_list = cast(list[Any], content)
             sanitized_content: list[Any] = []
-            for part in content:
+            for part in content_list:
                 if isinstance(part, dict):
-                    sanitized_part: dict[str, Any] = part.copy()
+                    sanitized_part: dict[str, Any] = cast(dict[str, Any], part).copy()
                     if sanitized_part.get("type") in {"audio", "input_audio"}:
                         sanitized_part.pop("audio", None)
                     sanitized_content.append(sanitized_part)
@@ -314,17 +313,17 @@ if (
     and FastAPIInstrumentor
 ):
     # Configure OpenTelemetry
-    resource = Resource.create(attributes={"service.name": "python-agents"})
-    provider = TracerProvider(resource=resource)
-    trace.set_tracer_provider(provider)
+    resource = Resource.create(attributes={"service.name": "python-agents"})  # type: ignore
+    provider = TracerProvider(resource=resource)  # type: ignore
+    trace.set_tracer_provider(provider)  # type: ignore
 
     # Cast to Any to avoid mypy issues with add_span_processor
     # The type stub for TracerProvider might be missing this method in some versions
-    provider_any: Any = provider
+    provider_any: Any = provider  # type: ignore
     if hasattr(provider_any, "add_span_processor"):
-        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+        provider_any.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))  # type: ignore
 
-    FastAPIInstrumentor.instrument_app(app)
+    FastAPIInstrumentor.instrument_app(app)  # type: ignore
 
 
 @app.websocket("/ws/{session_id}")

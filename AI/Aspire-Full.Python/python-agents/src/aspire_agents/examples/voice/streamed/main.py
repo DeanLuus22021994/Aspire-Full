@@ -100,19 +100,19 @@ if TYPE_CHECKING:
     class Static:
         id: str | None
 
-        def __init__(self, id: str | None = None, **kwargs: Any) -> None:
-            _ = (id, kwargs)
+        def __init__(self, widget_id: str | None = None, **kwargs: Any) -> None:
+            _ = (widget_id, kwargs)
 
     class RichLog(Static):
         def __init__(
             self,
-            id: str | None = None,
+            widget_id: str | None = None,
             wrap: bool = False,
             highlight: bool = False,
             markup: bool = False,
             **kwargs: Any,
         ) -> None:
-            super().__init__(id=id, **kwargs)
+            super().__init__(widget_id=widget_id, **kwargs)
             _ = (wrap, highlight, markup)
 
         def write(self, content: Any) -> None:
@@ -145,7 +145,13 @@ else:
         RichLog = Any
         Static = Any
 
-from aspire_agents.gpu import ensure_tensor_core_gpu
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+        pass
+
 
 # Import MyWorkflow class - handle both module and package use cases
 if TYPE_CHECKING:

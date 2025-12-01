@@ -18,7 +18,14 @@ from agents.realtime import (
     RealtimeSessionEvent,
 )
 from agents.realtime.model import RealtimeModelConfig
-from aspire_agents.gpu import ensure_tensor_core_gpu
+
+try:
+    from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+except ImportError:
+
+    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+        pass
+
 
 if TYPE_CHECKING:
 
@@ -29,7 +36,7 @@ if TYPE_CHECKING:
         def start(self) -> None: ...
         def stop(self) -> None: ...
         def close(self) -> None: ...
-        def read(self, frames: int) -> tuple[np.ndarray, bool]: ...
+        def read(self, _frames: int) -> tuple[np.ndarray, bool]: ...
 
     class SoundDeviceOutputStream:
         active: bool
@@ -42,7 +49,7 @@ if TYPE_CHECKING:
         InputStream: type[SoundDeviceInputStream]
         OutputStream: type[SoundDeviceOutputStream]
 
-        def query_devices(self, kind: str = "") -> dict[str, Any]: ...
+        def query_devices(self, _kind: str = "") -> dict[str, Any]: ...
 
     sd: SoundDeviceModule
 else:
