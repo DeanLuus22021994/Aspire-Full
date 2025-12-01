@@ -57,8 +57,10 @@ public class CiModule
 
         AnsiConsole.MarkupLine("[cyan]=== Setting up GitHub Actions Runner ===[/]");
 
-        // Ensure Infra
-        await new Infra.InfraModule().GetCommand().Parse("init").InvokeAsync("");
+        // Ensure Infra (Network and Volumes)
+        await DockerUtils.CreateNetworkAsync("aspire-network");
+        await DockerUtils.CreateVolumeAsync("github-runner-data");
+        // We should ideally ensure all volumes from InfraModule are created, but for runner this is enough.
 
         // Create .env file
         var root = GitUtils.GetRepositoryRoot();
@@ -118,26 +120,6 @@ RUNNER_GROUP=Default
         else args.AddRange(["--tail", "100"]);
         args.Add("github-runner");
 
-        // For logs -f we need to stream output, ProcessUtils might need adjustment or use RunProcessWithOutputAsync from Program.cs logic
-        // But ProcessUtils.RunAsync captures output at end. For -f we need real-time.
-        // I'll use a custom process call here or enhance ProcessUtils.
-
-        var startInfo = new System.Diagnostics.ProcessStartInfo("docker")
-        {
-            WorkingDirectory = workDir,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
-        };
-        foreach (var arg in args) startInfo.ArgumentList.Add(arg);
-
-        using var process = new System.Diagnostics.Process { StartInfo = startInfo };
-        process.OutputDataReceived += (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); };
-        process.ErrorDataReceived += (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); };
-
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-        await process.WaitForExitAsync();
+        await ProcessUtils.RunAsync("docker", args.ToArray(), workDir, silent: false);
     }
 }
