@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
+    <ProjectReference Include="..\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="wwwroot\appsettings.json" CopyToOutputDirectory="PreserveNewest" />

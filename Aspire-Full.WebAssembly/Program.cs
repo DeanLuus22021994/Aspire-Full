@@ -1,8 +1,8 @@
 using Aspire_Full.Tensor;
-using Aspire_Full.WebAssembly.Extensions;
 using Aspire_Full.WebAssembly.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
