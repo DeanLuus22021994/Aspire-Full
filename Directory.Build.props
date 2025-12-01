@@ -17,6 +17,9 @@
     <!-- AI Context Optimization -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn> <!-- Suppress missing XML comment warnings for now, but enable generation -->
+
+    <!-- Strict Nullability -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS8600;CS8602;CS8603;CS8604;CS8625</WarningsAsErrors>
   </PropertyGroup>
 
   <!-- ==========================================================================

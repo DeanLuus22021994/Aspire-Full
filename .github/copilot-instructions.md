@@ -14,21 +14,26 @@ You are an expert developer working on the **Aspire-Full** solution, a distribut
 2.  **Coding Standards**:
     - **Language**: Use C# 13 / .NET 10 features.
     - **Namespaces**: Use file-scoped namespaces (`namespace MyNamespace;`).
-    - **Error Handling**: Prefer `Result<T>` pattern over throwing exceptions for business logic.
+    - **Error Handling**: **MANDATORY**: Use `Result<T>` pattern for all service methods. Do not throw exceptions for business logic.
     - **Async**: Always use `async/await` and pass `CancellationToken`.
     - **Dependency Injection**: Use constructor injection. Avoid `IServiceLocator`.
+    - **Time**: **MANDATORY**: Use `TimeProvider` instead of `DateTime.Now` or `DateTime.UtcNow`.
+    - **Logging**: **MANDATORY**: Use `ILogger<T>` instead of `Console.WriteLine`.
 
 3.  **Data Access**:
     - Use Entity Framework Core.
     - **No Raw SQL** unless absolutely necessary for performance (and documented).
     - Use Projections (`.Select()`) to fetch only needed data.
 
-4.  **AI & Tensor Operations**:
+4.  **Dependency Management**:
+    - **MANDATORY**: Use Central Package Management (`Directory.Packages.props`). Do not define versions in `.csproj` files.
+
+5.  **AI & Tensor Operations**:
     - When working in `Aspire-Full.Tensor`, remember it uses a hybrid Managed/Native architecture.
     - Use `GpuTensor<T>` for memory management.
     - Do not modify `Native/src/*.cpp` unless you are updating the CUDA kernels.
 
-5.  **Testing**:
+6.  **Testing**:
     - **Unit Tests**: xUnit. Mock external dependencies.
     - **E2E Tests**: NUnit with Playwright or Aspire Test Host.
 

@@ -37,8 +37,11 @@ csharp_style_var_for_built_in_types = true:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = true:suggestion
 
+# File-scoped namespaces
+csharp_style_namespace_declarations = file_scoped:error
+
 # Expression-bodied members
-csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_methods = true:suggestion
 csharp_style_expression_bodied_constructors = false:none
 csharp_style_expression_bodied_properties = true:suggestion
 
@@ -49,9 +52,6 @@ csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
 # Null checking
 csharp_style_throw_expression = true:suggestion
 csharp_style_conditional_delegate_call = true:suggestion
-
-# File-scoped namespaces
-csharp_style_namespace_declarations = file_scoped:warning
 
 # Naming conventions
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion

@@ -3,22 +3,27 @@
 ## Steps
 
 1.  **Enforce AI Context Rules**
-    - Create `.github/copilot-instructions.md`.
-    - Define rules: `Aspire-Full.Shared` for DTOs, `Result<T>` usage, No raw SQL, etc.
+    - Update `.github/copilot-instructions.md` with stricter rules:
+        - **Mandatory**: `Directory.Packages.props` for version management (Central Package Management).
+        - **Mandatory**: `Result<T>` for all service methods.
+        - **Forbidden**: `DateTime.Now` (use `TimeProvider`).
+        - **Forbidden**: `Console.WriteLine` (use `ILogger`).
 
-2.  **Complete Knowledge Graph**
-    - Rewrite `llms.txt`.
-    - Index all projects: AI (Agents, Tensor), Core (Api, Gateway), Infra (Docker, DevContainer).
+2.  **Centralize Dependency Management**
+    - Create `Directory.Packages.props`.
+    - Move all package versions from `.csproj` files to `Directory.Packages.props`.
+    - Enforce `ManagePackageVersionsCentrally`.
 
 3.  **Enhance Code Intelligence**
     - Update `Directory.Build.props`.
-    - Enable `GenerateDocumentationFile`.
-    - Enforce `TreatWarningsAsErrors` for XML doc warnings (CS1570, CS1572).
+    - Enforce `TreatWarningsAsErrors` for specific high-value warnings (CS8600, CS8602 - Nullability).
+    - Enable `EnforceCodeStyleInBuild`.
 
-4.  **Synchronize Solution**
-    - Scan directory for `.csproj` files.
-    - Update `Aspire-Full.slnx` to include missing projects (e.g., `Aspire-Full.Pipeline`).
-
-5.  **Standardize Syntax**
+4.  **Standardize Syntax**
     - Update `.editorconfig`.
-    - Enforce file-scoped namespaces, global usings, and naming conventions.
+    - Enforce `csharp_style_namespace_declarations = file_scoped:error`.
+    - Enforce `csharp_style_expression_bodied_methods = true:suggestion`.
+
+5.  **Validation**
+    - Run `dotnet build` to verify no regressions.
+    - Verify `llms.txt` covers the new structure.
