@@ -100,3 +100,12 @@ target "tensor-compute" {
   cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT}"]
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max"]
 }
+
+target "native-lib" {
+  context = "."
+  dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Native"
+  contexts = {
+    "base-native" = "target:base-native"
+  }
+  output = ["type=local,dest=Aspire-Full.Native/build/"]
+}

@@ -24,4 +24,11 @@ public static class NativeMethods
         [Out] float[] result,
         int numElements,
         ref TensorMetrics metrics);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int ValidateTensorContent(
+        [In] float[] data,
+        int numElements,
+        float threshold,
+        ref TensorMetrics metrics);
 }

@@ -13,6 +13,7 @@
   <Project Path="Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
   <Project Path="Aspire-Full.Subagents/Aspire-Full.Subagents.csproj" />
   <Project Path="Aspire-Full.Agents/Aspire-Full.Agents.csproj" />
+  <Project Path="Aspire-Full.Tensor/Aspire-Full.Tensor.csproj" />
   <Project Path="Aspire-Full/Aspire-Full.csproj" />
   <Project Path="Aspire-Full.Gateway/Aspire-Full.Gateway.csproj" />
   <Project Path="Aspire-Full.Gateway.Tests.Business/Aspire-Full.Gateway.Tests.Business.csproj" />
