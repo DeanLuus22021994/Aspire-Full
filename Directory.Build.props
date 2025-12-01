@@ -43,12 +43,34 @@
     <UseArtifactsOutput>true</UseArtifactsOutput>
     <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
 
-    <!-- Disable shared compilation to prevent lock contention -->
-    <UseSharedCompilation>false</UseSharedCompilation>
+    <!-- Re-enable shared compilation with proper isolation (faster than disabled) -->
+    <UseSharedCompilation>true</UseSharedCompilation>
+
+    <!-- Graph-based restore for optimal parallelism -->
+    <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
 
     <!-- Isolate restore operations per project -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+
+    <!-- Binary log for build analysis and AI insights -->
+    <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <!-- ==========================================================================
+       AI-Driven Development Optimizations
+       Enhance code generation, analysis, and Copilot integration
+       ========================================================================== -->
+  <PropertyGroup>
+    <!-- Source generators for improved code analysis -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+
+    <!-- Enhanced IntelliSense for AI assistants -->
+    <Features>$(Features);strict</Features>
+
+    <!-- Improved diagnostics for AI code review -->
+    <ReportAnalyzer>true</ReportAnalyzer>
   </PropertyGroup>
 
   <!-- ==========================================================================
