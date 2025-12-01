@@ -5,6 +5,8 @@ using System.Diagnostics;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+builder.AddServiceDefaults();
+
 builder.Services.AddHostedService<RegistryWorker>();
 
 var host = builder.Build();
