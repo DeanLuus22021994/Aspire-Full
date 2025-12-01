@@ -1,13 +1,207 @@
 using System.CommandLine;
+using System.Diagnostics;
+using Spectre.Console;
+using Aspire_Full.Pipeline.Utils;
 
 namespace Aspire_Full.Pipeline.Modules.Dev;
 
-public class DevModule
+public class DevModule : IModule
 {
+    private const string PidFileName = ".aspire.pid";
+
     public Command GetCommand()
     {
-        var command = new Command("dev", "Developer workflows");
-        // Subcommands will be added here
+        var command = new Command("dev", "Development workflow operations");
+
+        // Start
+        var startCommand = new Command("start", "Start Aspire AppHost");
+        var waitOption = new Option<bool>(["--wait", "-w"], "Wait for process to exit (blocking)");
+        startCommand.AddOption(waitOption);
+        startCommand.SetHandler(StartAspireAsync, waitOption);
+        command.AddCommand(startCommand);
+
+        // Stop
+        var stopCommand = new Command("stop", "Stop Aspire AppHost");
+        stopCommand.SetHandler(StopAspireAsync);
+        command.AddCommand(stopCommand);
+
+        // Status
+        var statusCommand = new Command("status", "Check Aspire AppHost status");
+        statusCommand.SetHandler(StatusAspireAsync);
+        command.AddCommand(statusCommand);
+
+        // Build
+        var buildCommand = new Command("build", "Build the solution with GPU optimizations");
+        buildCommand.SetHandler(BuildSolutionAsync);
+        command.AddCommand(buildCommand);
+
         return command;
+    }
+
+    private async Task StartAspireAsync(bool wait)
+    {
+        var root = GitUtils.GetRepositoryRoot();
+        var pidFile = Path.Combine(root, PidFileName);
+
+        if (IsRunning(pidFile))
+        {
+            AnsiConsole.MarkupLine("[yellow]Aspire is already running.[/]");
+            return;
+        }
+
+        // Set environment variables
+        var envVars = new Dictionary<string, string>
+        {
+            ["DOTNET_EnableAVX2"] = "1",
+            ["DOTNET_EnableSSE41"] = "1",
+            ["DOTNET_TieredPGO"] = "1",
+            ["DOTNET_TieredCompilation"] = "1",
+            ["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1",
+            ["DOTNET_NOLOGO"] = "1",
+            ["CUDA_VISIBLE_DEVICES"] = "all",
+            ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true",
+            ["NVIDIA_VISIBLE_DEVICES"] = "all",
+            ["NVIDIA_DRIVER_CAPABILITIES"] = "compute,utility",
+            ["NVIDIA_REQUIRE_CUDA"] = "cuda>=12.4,driver>=535",
+            ["ASPIRE_ALLOW_UNSECURED_TRANSPORT"] = "true",
+            ["ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL"] = "http://localhost:18889",
+            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "http://localhost:18889"
+        };
+
+        AnsiConsole.MarkupLine("[cyan]Starting Aspire AppHost...[/]");
+
+        if (wait)
+        {
+            await ProcessUtils.RunAsync("dotnet", ["run", "--project", "Aspire-Full", "--no-build", "--launch-profile", "headless", "--configuration", "Release"], root, silent: false, envVars: envVars);
+        }
+        else
+        {
+            // Start in background
+            var startInfo = new ProcessStartInfo("dotnet")
+            {
+                WorkingDirectory = root,
+                UseShellExecute = false, // Must be false to set env vars
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+
+            startInfo.ArgumentList.Add("run");
+            startInfo.ArgumentList.Add("--project");
+            startInfo.ArgumentList.Add("Aspire-Full");
+            startInfo.ArgumentList.Add("--no-build");
+            startInfo.ArgumentList.Add("--launch-profile");
+            startInfo.ArgumentList.Add("headless");
+            startInfo.ArgumentList.Add("--configuration");
+            startInfo.ArgumentList.Add("Release");
+
+            foreach (var kvp in envVars)
+            {
+                startInfo.Environment[kvp.Key] = kvp.Value;
+            }
+
+            var process = Process.Start(startInfo);
+            if (process != null)
+            {
+                await File.WriteAllTextAsync(pidFile, process.Id.ToString());
+                AnsiConsole.MarkupLine($"[green]Aspire started in background (PID: {process.Id})[/]");
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[red]Failed to start Aspire process.[/]");
+            }
+        }
+    }
+
+    private async Task StopAspireAsync()
+    {
+        var root = GitUtils.GetRepositoryRoot();
+        var pidFile = Path.Combine(root, PidFileName);
+
+        if (File.Exists(pidFile))
+        {
+            if (int.TryParse(await File.ReadAllTextAsync(pidFile), out int pid))
+            {
+                try
+                {
+                    var process = Process.GetProcessById(pid);
+                    process.Kill(true); // Kill entire process tree
+                    AnsiConsole.MarkupLine($"[yellow]Stopped Aspire process (PID: {pid})[/]");
+                }
+                catch (ArgumentException)
+                {
+                    AnsiConsole.MarkupLine("[yellow]Process not running.[/]");
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine($"[red]Error stopping process: {ex.Message}[/]");
+                }
+            }
+            File.Delete(pidFile);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[yellow]No PID file found. Aspire might not be running.[/]");
+        }
+    }
+
+    private async Task StatusAspireAsync()
+    {
+        var root = GitUtils.GetRepositoryRoot();
+        var pidFile = Path.Combine(root, PidFileName);
+
+        if (IsRunning(pidFile))
+        {
+            var pid = await File.ReadAllTextAsync(pidFile);
+            AnsiConsole.MarkupLine($"[green]Aspire is RUNNING (PID: {pid})[/]");
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[yellow]Aspire is NOT running.[/]");
+        }
+    }
+
+    private async Task BuildSolutionAsync()
+    {
+        var root = GitUtils.GetRepositoryRoot();
+
+        // Set environment variables
+        var envVars = new Dictionary<string, string>
+        {
+            ["DOTNET_EnableAVX2"] = "1",
+            ["DOTNET_EnableSSE41"] = "1",
+            ["DOTNET_TieredPGO"] = "1",
+            ["DOTNET_ReadyToRun"] = "1",
+            ["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1",
+            ["DOTNET_NOLOGO"] = "1",
+            ["CUDA_VISIBLE_DEVICES"] = "all",
+            ["NVIDIA_VISIBLE_DEVICES"] = "all",
+            ["NVIDIA_DRIVER_CAPABILITIES"] = "compute,utility",
+            ["NVIDIA_REQUIRE_CUDA"] = "cuda>=12.4,driver>=535",
+            ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+        };
+
+        AnsiConsole.MarkupLine("[cyan]Starting GPU-accelerated build...[/]");
+        await ProcessUtils.RunAsync("dotnet", ["build", "--configuration", "Release", "--verbosity", "minimal"], root, silent: false, envVars: envVars);
+    }
+
+    private bool IsRunning(string pidFile)
+    {
+        if (!File.Exists(pidFile)) return false;
+
+        if (int.TryParse(File.ReadAllText(pidFile), out int pid))
+        {
+            try
+            {
+                Process.GetProcessById(pid);
+                return true;
+            }
+            catch
+            {
+                // Process not found
+                File.Delete(pidFile);
+                return false;
+            }
+        }
+        return false;
     }
 }
