@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.config" />
+  </Folder>
+  <Project Path="Aspire-Full.Api/Aspire-Full.Api.csproj" />
+  <Project Path="Aspire-Full.Web/Aspire-Full.Web.csproj" />
+  <Project Path="Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj" />
+  <Project Path="Aspire-Full.Gateway/Aspire-Full.Gateway.csproj" />
+  <Project Path="Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
+  <Project Path="Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
+</Solution>

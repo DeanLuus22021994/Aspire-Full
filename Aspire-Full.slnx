@@ -1,22 +1,30 @@
 <Solution>
-  <Project Path="Aspire-Full.Api/Aspire-Full.Api.csproj" />
-  <Project Path="Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.config" />
+  </Folder>
+  <Project Path="Aspire-Full/Aspire-Full.csproj" />
   <Project Path="Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
-  <Project Path="Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj" />
-  <Project Path="Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj" />
-  <Project Path="Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
-  <Project Path="Aspire-Full.Github/Aspire-Full.Github.csproj" />
-  <Project Path="Aspire-Full.Python/Aspire-Full.Python.csproj" />
-  <Project Path="Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
-  <Project Path="Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj" />
   <Project Path="Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
+  <Project Path="Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
+  <Project Path="Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
+  <Project Path="Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
+  <Project Path="Aspire-Full.Github/Aspire-Full.Github.csproj" />
   <Project Path="Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
   <Project Path="Aspire-Full.Agents/Aspire-Full.Agents.csproj" />
+  <Project Path="Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj" />
   <Project Path="Aspire-Full.Tensor/Aspire-Full.Tensor.csproj" />
-  <Project Path="Aspire-Full/Aspire-Full.csproj" />
-  <Project Path="Aspire-Full.Gateway/Aspire-Full.Gateway.csproj" />
-  <Project Path="Aspire-Full.Gateway.Tests/Aspire-Full.Gateway.Tests.csproj" />
-  <Project Path="Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
+  <Project Path="Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
+  <Project Path="Aspire-Full.Python/Aspire-Full.Python.csproj" />
+  <Project Path="Aspire-Full.Qdrant/Aspire-Full.Qdrant.csproj" />
+  <Project Path="Aspire-Full.Subagents/Aspire-Full.Subagents.csproj" />
+  <Project Path="Aspire-Full.Api/Aspire-Full.Api.csproj" />
   <Project Path="Aspire-Full.Web/Aspire-Full.Web.csproj" />
-  <Project Path="Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
+  <Project Path="Aspire-Full.WebAssembly/Aspire-Full.WebAssembly.csproj" />
+  <Project Path="Aspire-Full.Gateway/Aspire-Full.Gateway.csproj" />
+  <Project Path="Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj" />
+  <Project Path="Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj" />
+  <Project Path="Aspire-Full.Gateway.Tests/Aspire-Full.Gateway.Tests.csproj" />
 </Solution>

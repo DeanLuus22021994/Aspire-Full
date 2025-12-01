@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.config" />
+  </Folder>
+  <Project Path="Aspire-Full/Aspire-Full.csproj" />
+  <Project Path="Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
+  <Project Path="Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
+  <Project Path="Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
+</Solution>
