@@ -108,38 +108,38 @@ var envTag = "dev";
 
 if (useBakedImages)
 {
-    var api = builder.AddContainer("api", $"{registryHost}/{namespaceName}/api-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "http", port: 5000, targetPort: 8080)
+    var api = builder.AddContainer(AppHostConstants.Resources.Api, $"{registryHost}/{namespaceName}/api-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Api, targetPort: 8080)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureApi(api);
 
-    var gateway = builder.AddContainer("gateway", $"{registryHost}/{namespaceName}/gateway-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "http", port: 5001, targetPort: 8080)
+    var gateway = builder.AddContainer(AppHostConstants.Resources.Gateway, $"{registryHost}/{namespaceName}/gateway-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Gateway, targetPort: 8080)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureGateway(gateway);
 
-    var frontend = builder.AddContainer("frontend", $"{registryHost}/{namespaceName}/web-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "http", port: 3000, targetPort: 80)
+    var frontend = builder.AddContainer(AppHostConstants.Resources.Frontend, $"{registryHost}/{namespaceName}/web-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Frontend, targetPort: 80)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureFrontend(frontend, api);
 
-    var wasmDocs = builder.AddContainer("frontend-docs", $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "docs", port: 5175, targetPort: 80)
+    var wasmDocs = builder.AddContainer(AppHostConstants.Resources.WasmDocs, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 80)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureWasmDocs(wasmDocs, api);
 
-    var wasmUat = builder.AddContainer("frontend-uat", $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "uat", port: 5176, targetPort: 80)
+    var wasmUat = builder.AddContainer(AppHostConstants.Resources.WasmUat, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 80)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureWasmUat(wasmUat, api);
 
-    var wasmProd = builder.AddContainer("frontend-prod", $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "prod", port: 5177, targetPort: 80)
+    var wasmProd = builder.AddContainer(AppHostConstants.Resources.WasmProd, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 80)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureWasmProd(wasmProd, api);
 
-    var pythonAgents = builder.AddContainer("python-agents", $"{registryHost}/{namespaceName}/python-agents-{envTag}", $"{version}-{arch}")
-        .WithHttpEndpoint(name: "http", port: 8000, targetPort: 8000)
+    var pythonAgents = builder.AddContainer(AppHostConstants.Resources.PythonAgents, $"{registryHost}/{namespaceName}/python-agents-{envTag}", $"{version}-{arch}")
+        .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.PythonAgents, targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigurePythonAgents(pythonAgents);
 }
