@@ -14,7 +14,9 @@ if(NOT DEFINED CMAKE_CUDA_COMPILER)
 endif()
 
 # Target NVIDIA GeForce RTX 3050 (Compute Capability 8.6)
-set(CMAKE_CUDA_ARCHITECTURES 86)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+    set(CMAKE_CUDA_ARCHITECTURES 86)
+endif()
 
 add_library(AspireFullNative SHARED tensor_ops.cu)
 

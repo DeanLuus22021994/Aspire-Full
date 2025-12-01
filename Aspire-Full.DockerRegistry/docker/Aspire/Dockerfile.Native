@@ -8,8 +8,8 @@ COPY ["Aspire-Full.Native/", "Aspire-Full.Native/"]
 # Build Native Library
 WORKDIR /src/Aspire-Full.Native
 RUN mkdir -p build && cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
-    make
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+    ninja
 
 # Stage 2: Export
 FROM scratch AS export

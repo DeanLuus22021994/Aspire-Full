@@ -99,6 +99,22 @@ target "tensor-compute" {
   cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max"]
 }
 
+target "base-native" {
+  context = "Aspire-Full.DockerRegistry/docker"
+  dockerfile = "Dockerfile.base-native"
+  tags = ["${REGISTRY}/${NAMESPACE}/base-native:latest"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest,mode=max"]
+}
+
+target "base-dotnet" {
+  context = "Aspire-Full.DockerRegistry/docker"
+  dockerfile = "Dockerfile.base-dotnet"
+  tags = ["${REGISTRY}/${NAMESPACE}/base-dotnet:latest"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest,mode=max"]
+}
+
 target "native-lib" {
   context = "."
   dockerfile = "Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Native"
@@ -106,4 +122,6 @@ target "native-lib" {
     "base-native" = "target:base-native"
   }
   output = ["type=local,dest=Aspire-Full.Native/build/"]
+  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest"]
+  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest,mode=max"]
 }
