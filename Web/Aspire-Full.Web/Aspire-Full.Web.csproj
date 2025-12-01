@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll')">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>AspireFullNative.dll</Link>
     </Content>
-    <Content Include="..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so')">
+    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>libAspireFullNative.so</Link>
     </Content>
