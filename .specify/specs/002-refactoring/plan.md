@@ -7,12 +7,12 @@
 - [x] Refactor Gateway service to consume the shared library.
 
 ## Phase 2: WebAssembly Standardization
-- [ ] Add `Aspire-Full.ServiceDefaults` project reference to `Aspire-Full.WebAssembly`.
-- [ ] Update `Aspire-Full.WebAssembly/Program.cs` to call `AddServiceDefaults()`.
+- [x] Add `Aspire-Full.ServiceDefaults` project reference to `Aspire-Full.WebAssembly`. (Attempted, but reverted due to `Microsoft.AspNetCore.App` dependency incompatibility with `browser-wasm`. Kept local extension.)
+- [x] Update `Aspire-Full.WebAssembly/Program.cs` to call `AddServiceDefaults()`. (Using local extension for OTLP.)
 
 ## Phase 3: AppHost Cleanup
-- [ ] Create `Aspire-Full/Configuration/AppHostConstants.cs`.
-- [ ] Replace hardcoded strings in `Aspire-Full/AppHost.cs`.
+- [x] Create `Aspire-Full/Configuration/AppHostConstants.cs`. (Updated with missing constants)
+- [x] Replace hardcoded strings in `Aspire-Full/AppHost.cs`.
 
 ## Phase 4: API Cleanup
 - [x] Create `Aspire-Full.Api/Extensions/TensorServiceCollectionExtensions.cs`.

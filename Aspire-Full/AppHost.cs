@@ -209,8 +209,8 @@ void ConfigureWasmDocs<T, U>(IResourceBuilder<T> wasmDocs, IResourceBuilder<U> a
     wasmDocs.WithReference(api.GetEndpoint("http"));
     ((dynamic)wasmDocs).WaitFor(api);
 
-    wasmDocs.WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "docs")
-            .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5175");
+    wasmDocs.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "docs")
+            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5175");
 }
 
 void ConfigureWasmUat<T, U>(IResourceBuilder<T> wasmUat, IResourceBuilder<U> api)
@@ -220,8 +220,8 @@ void ConfigureWasmUat<T, U>(IResourceBuilder<T> wasmUat, IResourceBuilder<U> api
     wasmUat.WithReference(api.GetEndpoint("http"));
     ((dynamic)wasmUat).WaitFor(api);
 
-    wasmUat.WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "uat")
-           .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5176");
+    wasmUat.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "uat")
+           .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5176");
 }
 
 void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> api)
@@ -231,8 +231,8 @@ void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> a
     wasmProd.WithReference(api.GetEndpoint("http"));
     ((dynamic)wasmProd).WaitFor(api);
 
-    wasmProd.WithEnvironment("FRONTEND_ENVIRONMENT_KEY", "prod")
-            .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5177");
+    wasmProd.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "prod")
+            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5177");
 }
 
 void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
