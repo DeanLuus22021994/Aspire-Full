@@ -14,14 +14,14 @@
     <!-- 0 = use all available processors -->
     <MaxCpuCount Condition="'$(MaxCpuCount)' == ''">0</MaxCpuCount>
 
-    <!-- Graph-based build for optimal dependency resolution -->
-    <GraphBuild Condition="'$(GraphBuild)' == ''">true</GraphBuild>
+    <!-- Graph-based build for optimal dependency resolution (CLI only) -->
+    <GraphBuild Condition="'$(GraphBuild)' == '' AND '$(BuildingInsideVisualStudio)' != 'true' AND '$(DesignTimeBuild)' != 'true'">true</GraphBuild>
 
     <!-- Isolate project builds to prevent file locking -->
     <DisableOutOfProcTaskHost>false</DisableOutOfProcTaskHost>
 
-    <!-- Node reuse for faster subsequent builds -->
-    <EnableMSBuildNodeReuse Condition="'$(CI)' != 'true'">true</EnableMSBuildNodeReuse>
+    <!-- Node reuse for faster subsequent builds (not in IDE) -->
+    <EnableMSBuildNodeReuse Condition="'$(CI)' != 'true' AND '$(BuildingInsideVisualStudio)' != 'true'">true</EnableMSBuildNodeReuse>
   </PropertyGroup>
 
   <!-- ==========================================================================

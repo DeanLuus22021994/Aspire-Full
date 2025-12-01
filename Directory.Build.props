@@ -46,8 +46,8 @@
     <!-- Re-enable shared compilation with proper isolation (faster than disabled) -->
     <UseSharedCompilation>true</UseSharedCompilation>
 
-    <!-- Graph-based restore for optimal parallelism -->
-    <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+    <!-- Graph-based restore for optimal parallelism (CLI only, can cause IDE issues) -->
+    <RestoreUseStaticGraphEvaluation Condition="'$(BuildingInsideVisualStudio)' != 'true' AND '$(DesignTimeBuild)' != 'true'">true</RestoreUseStaticGraphEvaluation>
 
     <!-- Isolate restore operations per project -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
@@ -62,15 +62,11 @@
        Enhance code generation, analysis, and Copilot integration
        ========================================================================== -->
   <PropertyGroup>
-    <!-- Source generators for improved code analysis -->
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <!-- Do NOT emit compiler generated files - conflicts with source generators -->
+    <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
 
-    <!-- Enhanced IntelliSense for AI assistants -->
-    <Features>$(Features);strict</Features>
-
-    <!-- Improved diagnostics for AI code review -->
-    <ReportAnalyzer>true</ReportAnalyzer>
+    <!-- Improved diagnostics for AI code review (CLI builds only) -->
+    <ReportAnalyzer Condition="'$(DesignTimeBuild)' != 'true'">true</ReportAnalyzer>
   </PropertyGroup>
 
   <!-- ==========================================================================
