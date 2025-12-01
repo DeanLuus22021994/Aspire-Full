@@ -6,31 +6,64 @@ import queue
 import threading
 import time
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, List, cast
+from typing import TYPE_CHECKING, Any, List, Protocol, cast
 
 import torch
 
 from .gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
+    # pylint: disable=too-few-public-methods,missing-class-docstring,missing-function-docstring
 
-    class PreTrainedTokenizerBase:
+    class PreTrainedTokenizerBase(Protocol):
+        """Protocol for HuggingFace tokenizer interface."""
+
         def __call__(
-            self, text: List[str], padding: bool, truncation: bool, return_tensors: str
-        ) -> Any: ...
+            self,
+            text: List[str],
+            padding: bool,
+            truncation: bool,
+            return_tensors: str,
+        ) -> Any:
+            """Tokenize input text."""
+            ...
 
-    class PreTrainedModel(torch.nn.Module):
-        def __call__(self, **kwargs: Any) -> Any: ...
-        def to(self, *args: Any, **kwargs: Any) -> "PreTrainedModel": ...
-        def eval(self) -> "PreTrainedModel": ...
+    class PreTrainedModel(Protocol):
+        """Protocol for HuggingFace model interface."""
+
+        def __call__(self, **kwargs: Any) -> Any:
+            """Run forward pass."""
+            ...
+
+        def to(self, *args: Any, **kwargs: Any) -> "PreTrainedModel":
+            """Move model to device."""
+            ...
+
+        def eval(self) -> "PreTrainedModel":
+            """Set model to evaluation mode."""
+            ...
+
+        def parameters(self) -> Any:
+            """Return model parameters."""
+            ...
 
     class AutoTokenizer:
+        """Stub for HuggingFace AutoTokenizer."""
+
         @staticmethod
-        def from_pretrained(model_name: str) -> PreTrainedTokenizerBase: ...
+        def from_pretrained(model_name: str) -> PreTrainedTokenizerBase:
+            """Load pretrained tokenizer."""
+            ...
 
     class AutoModel:
+        """Stub for HuggingFace AutoModel."""
+
         @staticmethod
-        def from_pretrained(model_name: str) -> PreTrainedModel: ...
+        def from_pretrained(model_name: str) -> PreTrainedModel:
+            """Load pretrained model."""
+            ...
+
+    # pylint: enable=too-few-public-methods,missing-class-docstring,missing-function-docstring
 else:
     from transformers import AutoModel, AutoTokenizer
 
@@ -45,7 +78,7 @@ class TensorCoreUnavailableError(RuntimeError):
     """Raised when strict tensor core requirements are not met."""
 
 
-class BatchComputeService:
+class BatchComputeService:  # pylint: disable=too-many-instance-attributes
     """
     Provides local tensor compute capabilities using a GPU-resident model.
     Implements dynamic batching and runs in a dedicated thread to leverage
@@ -57,7 +90,7 @@ class BatchComputeService:
         model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         batch_size: int = 32,
         max_latency_ms: int = 10,
-    ):
+    ) -> None:
         self.device = self._enforce_gpu()
         self.batch_size = batch_size
         self.max_latency_ms = max_latency_ms
@@ -84,30 +117,21 @@ class BatchComputeService:
             # Optimize model with torch.compile for Python 3.14+ performance
             # Note: This requires a compatible backend. We try/except to be safe.
             try:
-                self.model = cast(PreTrainedModel, torch.compile(self.model))
-                logger.info(
-                    "Model compiled with torch.compile() for maximum efficiency."
-                )
+                self.model = cast(PreTrainedModel, torch.compile(self.model))  # type: ignore[call-overload]
+                logger.info("Model compiled with torch.compile() for maximum efficiency.")
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.warning("Could not compile model: %s. Running in eager mode.", e)
 
         except Exception as e:  # pylint: disable=broad-exception-caught
-            raise TensorCoreUnavailableError(
-                f"Failed to load model {model_name} on GPU: {e}"
-            ) from e
+            raise TensorCoreUnavailableError(f"Failed to load model {model_name} on GPU: {e}") from e
 
-            # Verify model is actually on GPU (or CPU if fallback enabled)
-        # Cast to nn.Module to satisfy type checker since torch.compile returns a callable
-        param_device = next(cast(torch.nn.Module, self.model).parameters()).device
+        # Verify model is actually on GPU (or CPU if fallback enabled)
+        param_device = next(self.model.parameters()).device
         if param_device.type != self.device.type:
-            raise TensorCoreUnavailableError(
-                f"Model loaded on {param_device} but expected {self.device}!"
-            )
+            raise TensorCoreUnavailableError(f"Model loaded on {param_device} but expected {self.device}!")
 
         # Start the worker thread
-        self.worker_thread = threading.Thread(
-            target=self._process_batches, name="TensorComputeWorker", daemon=True
-        )
+        self.worker_thread = threading.Thread(target=self._process_batches, name="TensorComputeWorker", daemon=True)
         self.worker_thread.start()
 
         logger.info("BatchComputeService initialized successfully on Tensor Cores.")
@@ -122,12 +146,10 @@ class BatchComputeService:
 
         ensure_tensor_core_gpu()
         if not torch.cuda.is_available():
-            raise TensorCoreUnavailableError(
-                "CUDA is not available. CPU fallback is strictly forbidden."
-            )
+            raise TensorCoreUnavailableError("CUDA is not available. CPU fallback is strictly forbidden.")
         return torch.device("cuda")
 
-    def _process_batches(self):
+    def _process_batches(self) -> None:
         """
         Main loop for the worker thread.
         Aggregates requests into batches and executes them.
@@ -141,9 +163,7 @@ class BatchComputeService:
                 # Determine timeout based on max latency
                 current_time = time.time()
                 time_since_last = (current_time - last_batch_time) * 1000
-                remaining_time = max(
-                    0.0, (self.max_latency_ms - time_since_last) / 1000.0
-                )
+                remaining_time = max(0.0, (self.max_latency_ms - time_since_last) / 1000.0)
 
                 # If we have items and timeout expired, force process
                 if batch_texts and remaining_time <= 0:
@@ -189,7 +209,7 @@ class BatchComputeService:
                 batch_texts = []
                 batch_futures = []
 
-    def _execute_batch(self, texts: List[str], futures: List[Future[torch.Tensor]]):
+    def _execute_batch(self, texts: List[str], futures: List[Future[torch.Tensor]]) -> None:
         """Run inference on a batch and resolve futures."""
         try:
             # Tokenize
@@ -203,9 +223,7 @@ class BatchComputeService:
             # Inference with mixed precision for Tensor Core utilization
             # Only use autocast if on CUDA
             if self.device.type == "cuda":
-                with torch.no_grad(), torch.autocast(
-                    device_type="cuda", dtype=torch.float16
-                ):
+                with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.float16):
                     outputs = self.model(**inputs)
             else:
                 with torch.no_grad():
@@ -214,13 +232,11 @@ class BatchComputeService:
             # Mean pooling
             attention_mask = cast(torch.Tensor, inputs["attention_mask"])
             token_embeddings = outputs.last_hidden_state
-            input_mask_expanded = (
-                attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            )
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
 
-            embeddings = torch.sum(
-                token_embeddings * input_mask_expanded, 1
-            ) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+            embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
+                input_mask_expanded.sum(1), min=1e-9
+            )
 
             # Normalize
             embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
