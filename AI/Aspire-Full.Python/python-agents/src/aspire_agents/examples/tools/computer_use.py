@@ -92,9 +92,7 @@ if TYPE_CHECKING:
         class Chromium:
             """Chromium stub."""
 
-            async def launch(
-                self, headless: bool = True, args: list[str] | None = None
-            ) -> Browser:
+            async def launch(self, headless: bool = True, args: list[str] | None = None) -> Browser:
                 _ = (headless, args)
                 return cast(Any, None)
 
@@ -111,6 +109,7 @@ if TYPE_CHECKING:
 
     def async_playwright() -> AsyncPlaywrightContextManager:
         return cast(Any, None)
+
 else:
     try:
         from playwright.async_api import Browser, Page, Playwright, async_playwright
@@ -178,7 +177,7 @@ CUA_KEY_TO_PLAYWRIGHT_KEY = {
 class LocalPlaywrightComputer(AsyncComputer):
     """A computer, implemented using a local Playwright browser."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self._page: Page | None = None
@@ -189,9 +188,7 @@ class LocalPlaywrightComputer(AsyncComputer):
         """
         width, height = self.dimensions
         launch_args = [f"--window-size={width},{height}"]
-        browser = await self.playwright.chromium.launch(
-            headless=False, args=launch_args
-        )
+        browser = await self.playwright.chromium.launch(headless=False, args=launch_args)
         page = await browser.new_page()
         await page.set_viewport_size({"width": width, "height": height})
         await page.goto("https://www.bing.com")
