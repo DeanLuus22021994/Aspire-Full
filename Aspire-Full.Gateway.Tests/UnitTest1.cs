@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace Aspire_Full.Gateway.Tests;
 
 public class UserTests
