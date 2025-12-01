@@ -10,66 +10,113 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 
 if TYPE_CHECKING:
-    from typing import Generic, TypeVar
+    from typing import Generic, Iterator, TypeVar
 
     T = TypeVar("T")
 
     class sd:
         class OutputStream:
-            def __init__(self, samplerate: int, channels: int, dtype: Any) -> None: ...
-            def start(self) -> None: ...
-            def write(self, data: Any) -> None: ...
-            def close(self) -> None: ...
+            def __init__(self, samplerate: int, channels: int, dtype: Any) -> None:
+                _ = (samplerate, channels, dtype)
+
+            def start(self) -> None:
+                pass
+
+            def write(self, data: Any) -> None:
+                _ = data
+
+            def close(self) -> None:
+                pass
 
         class InputStream:
-            def __init__(self, channels: int, samplerate: int, dtype: str) -> None: ...
-            def start(self) -> None: ...
-            def stop(self) -> None: ...
-            def close(self) -> None: ...
+            def __init__(self, channels: int, samplerate: int, dtype: str) -> None:
+                _ = (channels, samplerate, dtype)
+
+            def start(self) -> None:
+                pass
+
+            def stop(self) -> None:
+                pass
+
+            def close(self) -> None:
+                pass
 
             read_available: int
 
-            def read(self, size: int) -> tuple[Any, Any]: ...
+            def read(self, size: int) -> tuple[Any, Any]:
+                _ = size
+                return (None, None)
 
         @staticmethod
-        def query_devices() -> Any: ...
+        def query_devices() -> Any:
+            return None
 
     class StreamedAudioInput:
-        async def add_audio(self, audio: Any) -> None: ...
+        async def add_audio(self, audio: Any) -> None:
+            _ = audio
 
     class VoicePipeline:
-        def __init__(self, workflow: Any) -> None: ...
-        async def run(self, input: Any) -> Any: ...
+        def __init__(self, workflow: Any) -> None:
+            _ = workflow
+
+        async def run(self, input_data: Any) -> Any:
+            _ = input_data
+            return None
 
     class events:
         class Key:
             key: str
 
     class App(Generic[T]):
-        def run(self) -> None: ...
-        def exit(self, result: Any = None) -> None: ...
-        def run_worker(self, worker: Any) -> None: ...
-        def query_one(self, selector: Any, type: Any = None) -> Any: ...
+        def run(self) -> None:
+            pass
 
-    class ComposeResult:
-        pass
+        def exit(self, result: Any = None) -> None:
+            _ = result
+
+        def run_worker(self, worker: Any) -> None:
+            _ = worker
+
+        def query_one(self, selector: Any, type_hint: Any = None) -> Any:
+            _ = (selector, type_hint)
+            return cast(Any, None)
+
+    ComposeResult = Iterator[Any]
 
     class Container:
-        def __enter__(self) -> None: ...
-        def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None: ...
+        def __enter__(self) -> None:
+            pass
 
-    def reactive(default: Any) -> Any: ...
+        def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+            _ = (exc_type, exc_value, traceback)
+
+    def reactive(default: Any) -> Any:
+        return default
 
     class Button:
-        def press(self) -> None: ...
-
-    class RichLog:
-        def write(self, content: Any) -> None: ...
+        def press(self) -> None:
+            pass
 
     class Static:
         id: str | None
 
-        def __init__(self, id: str | None = None, **kwargs: Any) -> None: ...
+        def __init__(self, id: str | None = None, **kwargs: Any) -> None:
+            _ = (id, kwargs)
+
+    class RichLog(Static):
+        def __init__(
+            self,
+            id: str | None = None,
+            wrap: bool = False,
+            highlight: bool = False,
+            markup: bool = False,
+            **kwargs: Any,
+        ) -> None:
+            super().__init__(id=id, **kwargs)
+            _ = (wrap, highlight, markup)
+
+        def write(self, content: Any) -> None:
+            _ = content
 else:
     try:
         import sounddevice as sd
@@ -205,7 +252,7 @@ class RealtimeApp(App[None]):
     """
 
     should_send_audio: asyncio.Event
-    audio_player: sd.OutputStream
+    audio_player: sd.OutputStream | None
     last_audio_item_id: str | None
     connected: asyncio.Event
     result: Any
@@ -221,11 +268,14 @@ class RealtimeApp(App[None]):
             workflow=MyWorkflow(secret_word="dog", on_start=self._on_transcription)
         )
         self._audio_input = StreamedAudioInput()
-        self.audio_player = sd.OutputStream(
-            samplerate=SAMPLE_RATE,
-            channels=CHANNELS,
-            dtype=FORMAT,
-        )
+        if cast(Any, sd) is not None:
+            self.audio_player = sd.OutputStream(
+                samplerate=SAMPLE_RATE,
+                channels=CHANNELS,
+                dtype=FORMAT,
+            )
+        else:
+            self.audio_player = None
 
     def _on_transcription(self, transcription: str) -> None:
         """Callback for when transcription is received."""
@@ -279,7 +329,7 @@ class RealtimeApp(App[None]):
 
     async def send_mic_audio(self) -> None:
         """Send microphone audio to the pipeline."""
-        if sd is None:
+        if cast(Any, sd) is None:
             return
 
         device_info = sd.query_devices()

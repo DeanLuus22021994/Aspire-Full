@@ -6,7 +6,6 @@ import asyncio
 import base64
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-# pylint: disable=import-error
 from agents import (
     Agent,
     AsyncComputer,
@@ -20,12 +19,77 @@ from agents import (
 from aspire_agents.gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
-    from playwright.async_api import (
-        Browser,
-        Page,
-        Playwright,
-        async_playwright,
-    )
+
+    class Page:
+        class Mouse:
+            async def click(self, x: int, y: int, button: str = "left") -> None:
+                _ = (x, y, button)
+
+            async def dblclick(self, x: int, y: int) -> None:
+                _ = (x, y)
+
+            async def move(self, x: int, y: int) -> None:
+                _ = (x, y)
+
+            async def down(self) -> None:
+                pass
+
+            async def up(self) -> None:
+                pass
+
+        class Keyboard:
+            async def type(self, text: str) -> None:
+                _ = text
+
+            async def down(self, key: str) -> None:
+                _ = key
+
+            async def up(self, key: str) -> None:
+                _ = key
+
+        mouse: Mouse
+        keyboard: Keyboard
+
+        async def set_viewport_size(self, size: dict[str, int]) -> None:
+            _ = size
+
+        async def goto(self, url: str) -> None:
+            _ = url
+
+        async def screenshot(self, full_page: bool = True) -> bytes:
+            _ = full_page
+            return b""
+
+        async def evaluate(self, script: str) -> Any:
+            _ = script
+            return None
+
+    class Browser:
+        async def new_page(self) -> Page:
+            return cast(Any, None)
+
+        async def close(self) -> None:
+            pass
+
+    class Playwright:
+        class Chromium:
+            async def launch(
+                self, headless: bool = True, args: list[str] | None = None
+            ) -> Browser:
+                _ = (headless, args)
+                return cast(Any, None)
+
+        chromium: Chromium
+
+        async def stop(self) -> None:
+            pass
+
+    class AsyncPlaywrightContextManager:
+        async def start(self) -> Playwright:
+            return cast(Any, None)
+
+    def async_playwright() -> AsyncPlaywrightContextManager:
+        return cast(Any, None)
 else:
     try:
         from playwright.async_api import Browser, Page, Playwright, async_playwright
@@ -117,7 +181,7 @@ class LocalPlaywrightComputer(AsyncComputer):
         Start the computer session.
         """
         # Start Playwright and call the subclass hook for getting browser/page
-        if async_playwright:
+        if cast(Any, async_playwright) is not None:
             self._playwright = await async_playwright().start()
             self._browser, self._page = await self._get_browser_and_page()
         return self

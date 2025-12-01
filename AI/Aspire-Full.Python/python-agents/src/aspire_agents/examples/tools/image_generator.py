@@ -40,17 +40,21 @@ async def main() -> None:
         )
         print(result.final_output)
         for item in result.new_items:
-            if (
-                item.type == "tool_call_item"
-                and item.raw_item.type == "image_generation_call"
-                and (img_result := item.raw_item.result)
-            ):
-                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                    tmp.write(base64.b64decode(img_result))
-                    temp_path = tmp.name
+            if item.type == "tool_call_item":
+                raw_item = item.raw_item
+                if (
+                    getattr(raw_item, "type", None) == "image_generation_call"
+                    and (img_result := getattr(raw_item, "result", None))
+                    and isinstance(img_result, str)
+                ):
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".png", delete=False
+                    ) as tmp:
+                        tmp.write(base64.b64decode(img_result))
+                        temp_path = tmp.name
 
-                # Open the image
-                open_file(temp_path)
+                    # Open the image
+                    open_file(temp_path)
 
 
 if __name__ == "__main__":
