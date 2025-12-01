@@ -23,18 +23,24 @@ def _as_tuple(values: Sequence[str] | None) -> tuple[str, ...]:
 
 @dataclass(frozen=True)
 class PathsConfig:
+    """Configuration for source paths and exclusion patterns."""
+
     roots: tuple[str, ...]
     exclude_globs: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class Flake8Config:
+    """Configuration options for flake8 linter."""
+
     extend_ignore: tuple[str, ...]
     exclude: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class PylintConfig:
+    """Configuration options for pylint linter."""
+
     disable: tuple[str, ...]
     ignore: tuple[str, ...]
     ignore_paths: tuple[str, ...]
@@ -43,23 +49,31 @@ class PylintConfig:
 
 @dataclass(frozen=True)
 class PyrightConfig:
+    """Configuration options for pyright type checker."""
+
     exclude: tuple[str, ...]
     extra_paths: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class PycodestyleConfig:
+    """Configuration options for pycodestyle checker."""
+
     ignore: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class RunnerConfig:
+    """Configuration for the lint runner execution."""
+
     auto_targets: tuple[str, ...]
     pylint_disable: tuple[str, ...]
 
 
 @dataclass(frozen=True)
-class LintConfig:
+class LintConfig:  # pylint: disable=too-many-instance-attributes
+    """Root configuration container for all linting tools."""
+
     line_length: int
     vendor_globs: tuple[str, ...]
     paths: PathsConfig
@@ -72,6 +86,7 @@ class LintConfig:
 
 @lru_cache(maxsize=1)
 def load_config() -> LintConfig:
+    """Load and parse the lint configuration from config.yaml."""
     payload = _load_yaml_payload()
     # Navigate to contexts.python.lint
     ctx = payload.get("contexts", {}).get("python", {})
