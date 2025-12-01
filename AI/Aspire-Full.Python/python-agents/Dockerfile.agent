@@ -37,7 +37,7 @@ COPY Aspire-Full.Python/python-agents/pyproject.toml Aspire-Full.Python/python-a
 # We use --system because we are in a container
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv export --frozen --format requirements-txt --extra tracing --no-emit-project --output-file requirements.txt && \
-    uv pip install --system --no-cache-dir -r requirements.txt playwright
+    uv pip install --system --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers
 RUN --mount=type=cache,target=/root/.cache/ms-playwright \
