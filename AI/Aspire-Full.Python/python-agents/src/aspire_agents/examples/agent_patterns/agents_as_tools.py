@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, ItemHelpers, MessageOutputItem, Runner, trace  # type: ignore # pylint: disable=import-error
+from agents import Agent, ItemHelpers, MessageOutputItem, Runner, trace
 
 # This example shows the agents-as-tools pattern. The frontline agent receives a user message and
 # then picks which agents to call, as tools. In this case, it picks from a set of translation
@@ -49,7 +49,10 @@ orchestrator_agent = Agent(
 
 synthesizer_agent = Agent(
     name="synthesizer_agent",
-    instructions=("You inspect translations, correct them if needed, " "and produce a final concatenated response."),
+    instructions=(
+        "You inspect translations, correct them if needed, "
+        "and produce a final concatenated response."
+    ),
 )
 
 
@@ -69,7 +72,9 @@ async def main() -> None:
                 if text:
                     print(f"  - Translation step: {text}")
 
-        synthesizer_result = await Runner.run(synthesizer_agent, orchestrator_result.to_input_list())
+        synthesizer_result = await Runner.run(
+            synthesizer_agent, orchestrator_result.to_input_list()
+        )
 
     print(f"\n\nFinal response:\n{synthesizer_result.final_output}")
 

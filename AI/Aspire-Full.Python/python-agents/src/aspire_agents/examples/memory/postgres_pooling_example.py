@@ -129,29 +129,24 @@ async def main() -> None:
 
     print(f"Connecting to PostgreSQL at {postgres_host}:{postgres_port}...")
 
-    try:
-        # Initialize session manager
-        session_manager = PostgreSQLSessionManager(connection_string)
+    # Initialize session manager
+    session_manager = PostgreSQLSessionManager(connection_string)
 
-        # Create a session
-        session_id = f"user-session-{int(datetime.now().timestamp())}"
-        print(f"Creating session: {session_id}")
-        await session_manager.create_session(
-            session_id, {"user_id": "user123", "role": "admin", "theme": "dark"}
-        )
+    # Create a session
+    session_id = f"user-session-{int(datetime.now().timestamp())}"
+    print(f"Creating session: {session_id}")
+    await session_manager.create_session(
+        session_id, {"user_id": "user123", "role": "admin", "theme": "dark"}
+    )
 
-        # Retrieve session
-        print("Retrieving session...")
-        session_data = await session_manager.get_session(session_id)
-        print(f"Session data: {session_data}")
+    # Retrieve session
+    print("Retrieving session...")
+    session_data = await session_manager.get_session(session_id)
+    print(f"Session data: {session_data}")
 
-        # Clean up
-        await session_manager.close()
-        print("Connection pool closed.")
-
-    except Exception as e:
-        print(f"Error running example: {e}")
-        print("Ensure PostgreSQL is running and accessible.")
+    # Clean up
+    await session_manager.close()
+    print("Connection pool closed.")
 
 
 if __name__ == "__main__":
