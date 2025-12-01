@@ -1,3 +1,7 @@
+"""
+This module demonstrates the lifecycle hooks of an agent run.
+"""
+
 import asyncio
 import random
 from typing import Any, Optional, cast
@@ -18,11 +22,14 @@ from pydantic import BaseModel
 
 
 class LoggingHooks(AgentHooks[Any]):
+    """Hooks for logging agent events."""
+
     async def on_start(
         self,
         context: RunContextWrapper[Any],
         agent: Agent[Any],
     ) -> None:
+        """Called when the agent starts."""
         _ = context
         print(f"#### {agent.name} is starting.")
 
@@ -32,11 +39,14 @@ class LoggingHooks(AgentHooks[Any]):
         agent: Agent[Any],
         output: Any,
     ) -> None:
+        """Called when the agent ends."""
         _ = context
         print(f"#### {agent.name} produced output: {output}.")
 
 
 class ExampleHooks(RunHooks):
+    """Hooks for logging run events."""
+
     def __init__(self):
         self.event_counter = 0
 
@@ -47,6 +57,7 @@ class ExampleHooks(RunHooks):
         )
 
     async def on_agent_start(self, context: RunContextWrapper, agent: Agent) -> None:
+        """Called when an agent starts."""
         self.event_counter += 1
         print(
             f"### {self.event_counter}: Agent {agent.name} started. "
@@ -60,6 +71,7 @@ class ExampleHooks(RunHooks):
         system_prompt: Optional[str],
         input_items: list[TResponseInputItem],
     ) -> None:
+        """Called when the LLM starts."""
         _ = agent
         _ = system_prompt
         _ = input_items
@@ -72,6 +84,7 @@ class ExampleHooks(RunHooks):
     async def on_llm_end(
         self, context: RunContextWrapper, agent: Agent, response: ModelResponse
     ) -> None:
+        """Called when the LLM ends."""
         _ = agent
         _ = response
         self.event_counter += 1
@@ -83,6 +96,7 @@ class ExampleHooks(RunHooks):
     async def on_agent_end(
         self, context: RunContextWrapper, agent: Agent, output: Any
     ) -> None:
+        """Called when an agent ends."""
         self.event_counter += 1
         print(
             f"### {self.event_counter}: Agent {agent.name} ended with output {output}. "
@@ -96,10 +110,12 @@ class ExampleHooks(RunHooks):
     async def on_tool_start(
         self, context: RunContextWrapper, agent: Agent, tool: Tool
     ) -> None:
+        """Called when a tool starts."""
         _ = agent
         self.event_counter += 1
         # While this type cast is not ideal,
-        # we don't plan to change the context arg type in the near future for backwards compatibility.
+        # we don't plan to change the context arg type in the near future for
+        # backwards compatibility.
         tool_context = cast(ToolContext[Any], context)
         print(
             f"### {self.event_counter}: Tool {tool.name} started. "
@@ -112,10 +128,12 @@ class ExampleHooks(RunHooks):
     async def on_tool_end(
         self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str
     ) -> None:
+        """Called when a tool ends."""
         _ = agent
         self.event_counter += 1
         # While this type cast is not ideal,
-        # we don't plan to change the context arg type in the near future for backwards compatibility.
+        # we don't plan to change the context arg type in the near future for
+        # backwards compatibility.
         tool_context = cast(ToolContext[Any], context)
         print(
             f"### {self.event_counter}: Tool {tool.name} finished. result={result}, "
@@ -128,6 +146,7 @@ class ExampleHooks(RunHooks):
     async def on_handoff(
         self, context: RunContextWrapper, from_agent: Agent, to_agent: Agent
     ) -> None:
+        """Called when a handoff occurs."""
         self.event_counter += 1
         print(
             f"### {self.event_counter}: Handoff from {from_agent.name} to {to_agent.name}. "
@@ -178,6 +197,7 @@ start_agent = Agent(
 
 
 async def main() -> None:
+    """Run the lifecycle example."""
     user_input = input("Enter a max number: ")
     try:
         max_number = int(user_input)

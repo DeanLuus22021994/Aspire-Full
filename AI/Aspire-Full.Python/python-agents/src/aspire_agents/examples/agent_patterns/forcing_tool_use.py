@@ -1,3 +1,7 @@
+"""
+This module demonstrates how to force the agent to use a tool.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -98,32 +102,6 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    """
-This module demonstrates how to force the agent to use a tool.
-"""
-
-from __future__ import annotations
-
-import asyncio
-from typing import Any, Literal, cast
-
-# ...existing code...
-# 1. `default`: The default behavior, which is to send the tool output to the LLM. In this case,
-#     `tool_choice` is not set, because otherwise it would result in an infinite loop - the LLM would
-#     call the tool, the tool would run and send the results to the LLM, and that would repeat
-#     (because the model is forced to use a tool every time.)
-# 2. `first_tool_result`: The first tool result is used as the final output.
-# 3. `custom`: A custom tool use behavior function is used. The custom function receives all the tool
-#     results, and chooses to use the first tool result to generate the final output.
-#
-# Usage:
-# python examples/agent_patterns/forcing_tool_use.py -t default
-# python examples/agent_patterns/forcing_tool_use.py -t first_tool
-# python examples/agent_patterns/forcing_tool_use.py -t custom
-
-
-class Weather(BaseModel):
-    # ...existing code...
     parser.add_argument(
         "-t",
         "--tool-use-behavior",
@@ -136,10 +114,6 @@ class Weather(BaseModel):
             "to be used as the final output. custom will use a custom tool use "
             "behavior function."
         ),
-    )
-    args = parser.parse_args()
-    asyncio.run(
-        main(cast(Literal["default", "first_tool", "custom"], args.tool_use_behavior))
     )
     args = parser.parse_args()
     asyncio.run(
