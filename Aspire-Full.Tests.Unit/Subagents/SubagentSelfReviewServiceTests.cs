@@ -1,6 +1,7 @@
-using Aspire_Full.Subagents;
+using Aspire_Full.Agents;
+using Aspire_Full.Shared.Models;
 
-namespace Aspire_Full.Tests.Unit.Subagents;
+namespace Aspire_Full.Tests.Unit.Agents;
 
 public class SubagentSelfReviewServiceTests
 {
