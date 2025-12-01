@@ -7,9 +7,8 @@ import asyncio
 import random
 from typing import Any
 
-from agents import Agent, GenerateDynamicPromptData, Runner  # type: ignore # pylint: disable=import-error
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
+from agents import Agent, GenerateDynamicPromptData, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # NOTE: This example will not work out of the box, because the default prompt ID will not be available
 # in your project.
@@ -59,12 +58,14 @@ async def dynamic_prompt(prompt_id: str) -> None:
     ensure_tensor_core_gpu()
     context = DynamicContext(prompt_id)
 
-    agent = Agent(  # type: ignore
+    agent = Agent(
         name="Assistant",
-        prompt=_get_dynamic_prompt,  # type: ignore
+        prompt=_get_dynamic_prompt,
     )
 
-    result = await Runner.run(agent, "Tell me about recursion in programming.", context=context)
+    result = await Runner.run(
+        agent, "Tell me about recursion in programming.", context=context
+    )
     print(result.final_output)
 
 
@@ -73,7 +74,7 @@ async def static_prompt(prompt_id: str) -> None:
     Run the agent with a static prompt.
     """
     ensure_tensor_core_gpu()
-    agent = Agent(  # type: ignore
+    agent = Agent(
         name="Assistant",
         prompt={
             "id": prompt_id,

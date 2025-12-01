@@ -5,20 +5,25 @@ This module demonstrates the use of guardrails with tools.
 import asyncio
 import json
 import os
+from typing import Any, cast
 
-from aspire_agents.core import (  # type: ignore # pylint: disable=import-error
+from aspire_agents.compute import (
+    get_compute_service,
+)
+from aspire_agents.core import (
     Agent,
     Runner,
     function_tool,
     semantic_input_guardrail,
     semantic_output_guardrail,
 )
-from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered  # type: ignore # pylint: disable=import-error
+from aspire_agents.guardrails import ToolOutputGuardrailTripwireTriggered
 
 
 @function_tool
-def send_email(to: str, subject: str, body: str) -> str:  # pylint: disable=unused-argument
+def send_email(to: str, subject: str, body: str) -> str:
     """Send an email to the specified recipient."""
+    _ = body
     return f"Email sent to {to} with subject '{subject}'"
 
 
@@ -48,13 +53,15 @@ def get_contact_info(user_id: str) -> dict[str, str]:
 
 # Apply semantic guardrails
 # "harmful" category includes words like "hack", "exploit", "malware"
-send_email.tool_input_guardrails = [semantic_input_guardrail(category="harmful")]  # type: ignore
+cast(Any, send_email).tool_input_guardrails = [
+    semantic_input_guardrail(category="harmful")
+]
 
 # "pii" category includes "social security number", "phone number", etc.
-get_user_data.tool_output_guardrails = [  # type: ignore
+cast(Any, get_user_data).tool_output_guardrails = [
     semantic_output_guardrail(category="pii")
 ]
-get_contact_info.tool_output_guardrails = [  # type: ignore
+cast(Any, get_contact_info).tool_output_guardrails = [
     semantic_output_guardrail(category="pii")
 ]
 
@@ -78,10 +85,6 @@ async def main() -> None:
     """
     # Note: ensure_tensor_core_gpu is called automatically by Agent.__init__
     # For direct tool testing, we ensure it's initialized:
-    from aspire_agents.compute import (  # pylint: disable=import-outside-toplevel, import-error
-        get_compute_service,
-    )
-
     get_compute_service()
 
     print("=== Tool Guardrails Example (Tensor Native) ===\n")
@@ -96,12 +99,12 @@ async def main() -> None:
 
         if hasattr(send_email, "on_invoke_tool"):
             # on_invoke_tool is likely async and takes a string
-            res = await send_email.on_invoke_tool(args_json)  # type: ignore
+            res = await cast(Any, send_email).on_invoke_tool(args_json)
             print(f"✅ Result: {res}\n")
         else:
             print("❌ Error: Could not find invocation method.\n")
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"❌ Error: {e}\n")
 
     print("2. Direct Call: Sending harmful email...")
@@ -114,7 +117,7 @@ async def main() -> None:
         args_json = json.dumps(args)
 
         if hasattr(send_email, "on_invoke_tool"):
-            res = await send_email.on_invoke_tool(args_json)  # type: ignore
+            res = await cast(Any, send_email).on_invoke_tool(args_json)
 
             # If blocked, it returns the error message string directly in our implementation
             if "Input blocked" in str(res):
@@ -124,7 +127,7 @@ async def main() -> None:
         else:
             print("❌ Error: Could not find invocation method.\n")
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"❌ Error: {e}\n")
 
     print("3. Direct Call: Getting sensitive data (Output Guardrail)...")
@@ -133,14 +136,14 @@ async def main() -> None:
         args_json = json.dumps(args)
 
         if hasattr(get_user_data, "on_invoke_tool"):
-            await get_user_data.on_invoke_tool(args_json)  # type: ignore
+            await cast(Any, get_user_data).on_invoke_tool(args_json)
             print("❌ Error: Should have raised exception!\n")
         else:
             print("❌ Error: Could not find invocation method.\n")
     except ToolOutputGuardrailTripwireTriggered as e:
         print("✅ Guardrail correctly raised exception for PII.")
         print(f"   Details: {e.output.output_info}\n")
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"❌ Unexpected Error: {e}\n")
 
     print("--- Agent Execution (Requires OPENAI_API_KEY) ---\n")
@@ -162,7 +165,7 @@ async def main() -> None:
             "Send an email to john@example.com about a new exploit we found.",
         )
         print(f"❌ Guardrail rejected function tool call: {result.final_output}\n")
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Error: {e}\n")
 
     try:
@@ -179,7 +182,7 @@ async def main() -> None:
         print("4. Rejecting function tool output containing phone numbers:")
         result = await Runner.run(agent, "Get contact info for user456")
         print(f"❌ Guardrail rejected function tool output: {result.final_output}\n")
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Error: {e}\n")
 
 

@@ -7,14 +7,13 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     AgentOutputSchema,
     AgentOutputSchemaBase,
     Runner,
 )
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # This example demonstrates how to use an output type that is not in strict mode. Strict mode
 # allows us to guarantee valid JSON output, but some schemas are not strict-compatible.
@@ -59,7 +58,9 @@ class CustomOutputSchema(AgentOutputSchemaBase):
         """
         return {
             "type": "object",
-            "properties": {"jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}},
+            "properties": {
+                "jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}
+            },
         }
 
     def is_strict_json_schema(self) -> bool:
@@ -82,7 +83,7 @@ async def main() -> None:
     Main entry point for the non-strict output type example.
     """
     ensure_tensor_core_gpu()
-    agent = Agent(  # type: ignore
+    agent = Agent(
         name="Assistant",
         instructions="You are a helpful assistant.",
         output_type=OutputType,
@@ -94,7 +95,7 @@ async def main() -> None:
     try:
         result = await Runner.run(agent, user_input)
         raise AssertionError("Should have raised an exception")
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"Error (expected): {e}")
 
     # Now let's try again with a non-strict output type. This should work.

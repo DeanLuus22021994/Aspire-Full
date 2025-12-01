@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, ItemHelpers, Runner, trace  # type: ignore # pylint: disable=import-error
+from agents import Agent, ItemHelpers, Runner, trace
 
 # """
 # This example shows the parallelization pattern. We run the agent three times in parallel, and pick
@@ -42,9 +42,8 @@ async def main() -> None:
         )
 
         outputs = [
-            ItemHelpers.text_message_outputs(res_1.new_items),
-            ItemHelpers.text_message_outputs(res_2.new_items),
-            ItemHelpers.text_message_outputs(res_3.new_items),
+            ItemHelpers.text_message_outputs(res.new_items)
+            for res in [res_1, res_2, res_3]
         ]
 
         translations = "\n\n".join(outputs)

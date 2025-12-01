@@ -2,9 +2,11 @@ import asyncio
 import base64
 import os
 
-from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner
 
-FILEPATH = os.path.join(os.path.dirname(__file__), "media/partial_o3-and-o4-mini-system-card.pdf")
+FILEPATH = os.path.join(
+    os.path.dirname(__file__), "media/partial_o3-and-o4-mini-system-card.pdf"
+)
 
 
 def file_to_base64(file_path: str) -> str:

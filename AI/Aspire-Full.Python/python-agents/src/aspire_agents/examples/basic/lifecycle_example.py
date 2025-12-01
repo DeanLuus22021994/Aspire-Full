@@ -2,7 +2,7 @@ import asyncio
 import random
 from typing import Any, Optional, cast
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     AgentHooks,
     RunContextWrapper,
@@ -12,8 +12,8 @@ from agents import (  # type: ignore # pylint: disable=import-error
     Usage,
     function_tool,
 )
-from agents.items import ModelResponse, TResponseInputItem  # type: ignore # pylint: disable=import-error
-from agents.tool_context import ToolContext  # type: ignore # pylint: disable=import-error
+from agents.items import ModelResponse, TResponseInputItem
+from agents.tool_context import ToolContext
 from pydantic import BaseModel
 
 
@@ -23,7 +23,7 @@ class LoggingHooks(AgentHooks[Any]):
         context: RunContextWrapper[Any],
         agent: Agent[Any],
     ) -> None:
-        # pylint: disable=unused-argument
+        _ = context
         print(f"#### {agent.name} is starting.")
 
     async def on_end(
@@ -32,7 +32,7 @@ class LoggingHooks(AgentHooks[Any]):
         agent: Agent[Any],
         output: Any,
     ) -> None:
-        # pylint: disable=unused-argument
+        _ = context
         print(f"#### {agent.name} produced output: {output}.")
 
 
@@ -47,9 +47,11 @@ class ExampleHooks(RunHooks):
         )
 
     async def on_agent_start(self, context: RunContextWrapper, agent: Agent) -> None:
-        # pylint: disable=unused-argument
         self.event_counter += 1
-        print(f"### {self.event_counter}: Agent {agent.name} started. " f"Usage: {self._usage_to_str(context.usage)}")
+        print(
+            f"### {self.event_counter}: Agent {agent.name} started. "
+            f"Usage: {self._usage_to_str(context.usage)}"
+        )
 
     async def on_llm_start(
         self,
@@ -58,17 +60,29 @@ class ExampleHooks(RunHooks):
         system_prompt: Optional[str],
         input_items: list[TResponseInputItem],
     ) -> None:
-        # pylint: disable=unused-argument
+        _ = agent
+        _ = system_prompt
+        _ = input_items
         self.event_counter += 1
-        print(f"### {self.event_counter}: LLM started. " f"Usage: {self._usage_to_str(context.usage)}")
+        print(
+            f"### {self.event_counter}: LLM started. "
+            f"Usage: {self._usage_to_str(context.usage)}"
+        )
 
-    async def on_llm_end(self, context: RunContextWrapper, agent: Agent, response: ModelResponse) -> None:
-        # pylint: disable=unused-argument
+    async def on_llm_end(
+        self, context: RunContextWrapper, agent: Agent, response: ModelResponse
+    ) -> None:
+        _ = agent
+        _ = response
         self.event_counter += 1
-        print(f"### {self.event_counter}: LLM ended. " f"Usage: {self._usage_to_str(context.usage)}")
+        print(
+            f"### {self.event_counter}: LLM ended. "
+            f"Usage: {self._usage_to_str(context.usage)}"
+        )
 
-    async def on_agent_end(self, context: RunContextWrapper, agent: Agent, output: Any) -> None:
-        # pylint: disable=unused-argument
+    async def on_agent_end(
+        self, context: RunContextWrapper, agent: Agent, output: Any
+    ) -> None:
         self.event_counter += 1
         print(
             f"### {self.event_counter}: Agent {agent.name} ended with output {output}. "
@@ -79,36 +93,41 @@ class ExampleHooks(RunHooks):
     # They do not include hosted tools that run on the OpenAI server side,
     # such as WebSearchTool, FileSearchTool, CodeInterpreterTool, HostedMCPTool,
     # or other built-in hosted tools.
-    async def on_tool_start(self, context: RunContextWrapper, agent: Agent, tool: Tool) -> None:
-        # pylint: disable=unused-argument
+    async def on_tool_start(
+        self, context: RunContextWrapper, agent: Agent, tool: Tool
+    ) -> None:
+        _ = agent
         self.event_counter += 1
         # While this type cast is not ideal,
         # we don't plan to change the context arg type in the near future for backwards compatibility.
         tool_context = cast(ToolContext[Any], context)
         print(
             f"### {self.event_counter}: Tool {tool.name} started. "
-            f"name={tool_context.tool_name}, "  # type: ignore
+            f"name={tool_context.tool_name}, "
             f"call_id={tool_context.tool_call_id}, "
-            f"args={tool_context.tool_arguments}. "  # type: ignore
+            f"args={tool_context.tool_arguments}. "
             f"Usage: {self._usage_to_str(tool_context.usage)}"
         )
 
-    async def on_tool_end(self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str) -> None:
-        # pylint: disable=unused-argument
+    async def on_tool_end(
+        self, context: RunContextWrapper, agent: Agent, tool: Tool, result: str
+    ) -> None:
+        _ = agent
         self.event_counter += 1
         # While this type cast is not ideal,
         # we don't plan to change the context arg type in the near future for backwards compatibility.
         tool_context = cast(ToolContext[Any], context)
         print(
             f"### {self.event_counter}: Tool {tool.name} finished. result={result}, "
-            f"name={tool_context.tool_name}, "  # type: ignore
+            f"name={tool_context.tool_name}, "
             f"call_id={tool_context.tool_call_id}, "
-            f"args={tool_context.tool_arguments}. "  # type: ignore
+            f"args={tool_context.tool_arguments}. "
             f"Usage: {self._usage_to_str(tool_context.usage)}"
         )
 
-    async def on_handoff(self, context: RunContextWrapper, from_agent: Agent, to_agent: Agent) -> None:
-        # pylint: disable=unused-argument
+    async def on_handoff(
+        self, context: RunContextWrapper, from_agent: Agent, to_agent: Agent
+    ) -> None:
         self.event_counter += 1
         print(
             f"### {self.event_counter}: Handoff from {from_agent.name} to {to_agent.name}. "
@@ -147,7 +166,10 @@ multiply_agent = Agent(
 
 start_agent = Agent(
     name="Start Agent",
-    instructions=("Generate a random number. If it's even, stop. " "If it's odd, hand off to the multiplier agent."),
+    instructions=(
+        "Generate a random number. If it's even, stop. "
+        "If it's odd, hand off to the multiplier agent."
+    ),
     tools=[random_number],
     output_type=FinalResult,
     handoffs=[multiply_agent],

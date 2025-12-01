@@ -4,10 +4,9 @@ This module demonstrates streaming text response from an agent.
 
 import asyncio
 
-from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
-from openai.types.responses import ResponseTextDeltaEvent  # type: ignore # pylint: disable=import-error
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
+from openai.types.responses import ResponseTextDeltaEvent
 
 
 async def main() -> None:
@@ -22,7 +21,9 @@ async def main() -> None:
 
     result = Runner.run_streamed(agent, input="Please tell me 5 jokes.")
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+        if event.type == "raw_response_event" and isinstance(
+            event.data, ResponseTextDeltaEvent
+        ):
             print(event.data.delta, end="", flush=True)
 
 

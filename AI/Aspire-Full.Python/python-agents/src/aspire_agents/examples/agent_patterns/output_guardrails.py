@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     GuardrailFunctionOutput,
     OutputGuardrailTripwireTriggered,
@@ -30,14 +31,18 @@ class MessageOutput(BaseModel):
     Output schema for the agent.
     """
 
-    reasoning: str = Field(description="Thoughts on how to respond to the user's message")
+    reasoning: str = Field(
+        description="Thoughts on how to respond to the user's message"
+    )
     response: str = Field(description="The response to the user's message")
-    user_name: str | None = Field(description="The name of the user who sent the message, if known")
+    user_name: str | None = Field(
+        description="The name of the user who sent the message, if known"
+    )
 
 
 @output_guardrail
 async def sensitive_data_check(
-    _context: RunContextWrapper, _agent: Agent, output: MessageOutput
+    _context: RunContextWrapper[Any], _agent: object, output: MessageOutput
 ) -> GuardrailFunctionOutput:
     """
     Check if the output contains sensitive data.
@@ -72,7 +77,9 @@ async def main() -> None:
 
     # This should trip the guardrail
     try:
-        result = await Runner.run(agent, "My phone number is 650-123-4567. Where do you think I live?")
+        result = await Runner.run(
+            agent, "My phone number is 650-123-4567. Where do you think I live?"
+        )
         print(
             f"Guardrail didn't trip - this is unexpected. Output: "
             f"{json.dumps(result.final_output.model_dump(), indent=2)}"

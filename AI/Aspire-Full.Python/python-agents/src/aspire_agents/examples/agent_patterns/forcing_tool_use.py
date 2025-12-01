@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     FunctionToolResult,
     ModelSettings,
@@ -59,7 +59,9 @@ async def custom_tool_use_behavior(
     Custom tool use behavior function.
     """
     weather: Weather = results[0].output
-    return ToolsToFinalOutputResult(is_final_output=True, final_output=f"{weather.city} is {weather.conditions}.")
+    return ToolsToFinalOutputResult(
+        is_final_output=True, final_output=f"{weather.city} is {weather.conditions}."
+    )
 
 
 async def main(
@@ -68,7 +70,9 @@ async def main(
     """
     Main entry point for the forcing tool use example.
     """
-    behavior: Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction = "run_llm_again"
+    behavior: (
+        Literal["run_llm_again", "stop_on_first_tool"] | ToolsToFinalOutputFunction
+    ) = "run_llm_again"
     if tool_use_behavior == "default":
         behavior = "run_llm_again"
     elif tool_use_behavior == "first_tool":
@@ -81,7 +85,9 @@ async def main(
         instructions="You are a helpful agent.",
         tools=[get_weather],
         tool_use_behavior=behavior,
-        model_settings=ModelSettings(tool_choice="required" if tool_use_behavior != "default" else None),
+        model_settings=ModelSettings(
+            tool_choice="required" if tool_use_behavior != "default" else None
+        ),
     )
 
     result = await Runner.run(agent, input="What's the weather in Tokyo?")
@@ -105,4 +111,6 @@ if __name__ == "__main__":
         ),
     )
     args = parser.parse_args()
-    asyncio.run(main(args.tool_use_behavior))
+    asyncio.run(
+        main(cast(Literal["default", "first_tool", "custom"], args.tool_use_behavior))
+    )

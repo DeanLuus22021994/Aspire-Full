@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     GuardrailFunctionOutput,
     InputGuardrailTripwireTriggered,
@@ -45,7 +45,7 @@ guardrail_agent = Agent(
 @input_guardrail
 async def math_guardrail(
     context: RunContextWrapper[None],
-    _agent: Agent,
+    _agent: object,
     input_data: str | list[TResponseInputItem],
 ) -> GuardrailFunctionOutput:
     """This is an input guardrail function, which happens to call an agent to check if the input

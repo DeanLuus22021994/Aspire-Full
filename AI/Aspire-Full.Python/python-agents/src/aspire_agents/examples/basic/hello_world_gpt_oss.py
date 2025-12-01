@@ -1,13 +1,13 @@
 import asyncio
 import logging
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     OpenAIChatCompletionsModel,
     Runner,
     set_tracing_disabled,
 )
-from openai import AsyncOpenAI  # type: ignore # pylint: disable=import-error
+from openai import AsyncOpenAI
 
 set_tracing_disabled(True)
 logging.basicConfig(level=logging.DEBUG)
@@ -31,7 +31,9 @@ async def main():
     # See also: https://github.com/openai/openai-agents-python/issues/1414
     agent = Agent(
         name="Assistant",
-        instructions=("You're a helpful assistant. You provide a concise answer to the user's question."),
+        instructions=(
+            "You're a helpful assistant. You provide a concise answer to the user's question."
+        ),
         model=gpt_oss_model,
     )
 

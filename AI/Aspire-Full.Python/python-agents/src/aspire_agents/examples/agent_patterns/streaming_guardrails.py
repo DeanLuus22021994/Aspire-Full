@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import asyncio
 
-from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
-from openai.types.responses import ResponseTextDeltaEvent  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
+from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel, Field
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 # This example shows how to use guardrails as the model is streaming. Output guardrails run after the
 # final output has been generated; this example runs guardails every N tokens, allowing for early
@@ -19,7 +18,8 @@ from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: d
 agent = Agent(
     name="Assistant",
     instructions=(
-        "You are a helpful assistant. You ALWAYS write long responses, " "making sure to be verbose and detailed."
+        "You are a helpful assistant. You ALWAYS write long responses, "
+        "making sure to be verbose and detailed."
     ),
 )
 
@@ -29,8 +29,12 @@ class GuardrailOutput(BaseModel):
     Output schema for the guardrail agent.
     """
 
-    reasoning: str = Field(description="Reasoning about whether the response could be understood by a ten year old.")
-    is_readable_by_ten_year_old: bool = Field(description="Whether the response is understandable by a ten year old.")
+    reasoning: str = Field(
+        description="Reasoning about whether the response could be understood by a ten year old."
+    )
+    is_readable_by_ten_year_old: bool = Field(
+        description="Whether the response is understandable by a ten year old."
+    )
 
 
 guardrail_agent = Agent(
@@ -67,7 +71,9 @@ async def main() -> None:
     guardrail_task = None
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
+        if event.type == "raw_response_event" and isinstance(
+            event.data, ResponseTextDeltaEvent
+        ):
             print(event.data.delta, end="", flush=True)
             current_text += event.data.delta
 

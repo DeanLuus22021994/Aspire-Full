@@ -1,6 +1,6 @@
 import asyncio
 
-from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner
 
 
 async def main():

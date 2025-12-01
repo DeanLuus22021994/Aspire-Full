@@ -4,9 +4,8 @@ This module demonstrates using the previous_response_id to continue a conversati
 
 import asyncio
 
-from agents import Agent, Runner  # type: ignore # pylint: disable=import-error
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
 # The second run passes the previous response ID to the model, which allows it to continue the
@@ -55,7 +54,10 @@ async def main_stream() -> None:
     result = Runner.run_streamed(agent, "What is the largest country in South America?")
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
+        if (
+            event.type == "raw_response_event"
+            and event.data.type == "response.output_text.delta"
+        ):
             print(event.data.delta, end="", flush=True)
 
     print()
@@ -67,7 +69,10 @@ async def main_stream() -> None:
     )
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and event.data.type == "response.output_text.delta":
+        if (
+            event.type == "raw_response_event"
+            and event.data.type == "response.output_text.delta"
+        ):
             print(event.data.delta, end="", flush=True)
 
 

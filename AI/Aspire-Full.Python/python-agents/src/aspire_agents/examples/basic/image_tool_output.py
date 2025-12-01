@@ -1,10 +1,10 @@
 import asyncio
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     Runner,
-    ToolOutputImage,  # type: ignore
-    ToolOutputImageDict,  # type: ignore
+    ToolOutputImage,
+    ToolOutputImageDict,
     function_tool,
 )
 
@@ -24,7 +24,9 @@ def fetch_random_image() -> ToolOutputImage | ToolOutputImageDict:
         }
 
     return ToolOutputImage(
-        image_url=("https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"),
+        image_url=(
+            "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
+        ),
         detail="auto",
     )
 

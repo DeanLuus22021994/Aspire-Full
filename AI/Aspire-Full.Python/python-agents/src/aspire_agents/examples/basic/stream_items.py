@@ -5,9 +5,8 @@ This module demonstrates streaming items from an agent run.
 import asyncio
 import random
 
-from agents import Agent, ItemHelpers, Runner, function_tool  # type: ignore # pylint: disable=import-error
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
+from agents import Agent, ItemHelpers, Runner, function_tool
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 @function_tool
@@ -45,7 +44,9 @@ async def main() -> None:
             elif event.item.type == "tool_call_output_item":
                 print(f"-- Tool output: {event.item.output}")
             elif event.item.type == "message_output_item":
-                print(f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}")
+                print(
+                    f"-- Message output:\n {ItemHelpers.text_message_output(event.item)}"
+                )
             else:
                 pass  # Ignore other event types
 

@@ -5,19 +5,18 @@ This module demonstrates the handoffs/routing pattern.
 import asyncio
 import uuid
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     RawResponsesStreamEvent,
     Runner,
     TResponseInputItem,
     trace,
 )
-from openai.types.responses import (  # type: ignore # pylint: disable=import-error
+from aspire_agents.gpu import ensure_tensor_core_gpu
+from openai.types.responses import (
     ResponseContentPartDoneEvent,
     ResponseTextDeltaEvent,
 )
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
 
 # This example shows the handoffs/routing pattern. The triage agent receives the first message, and
 # then hands off to the appropriate agent based on the language of the request. Responses are
