@@ -52,11 +52,9 @@ class PostgreSQLSessionManager:
                 pool_timeout=30,  # Max seconds to wait for connection
                 pool_recycle=1800,  # Recycle connections after 30 min
                 pool_pre_ping=True,  # Health check before using connection
-
                 # Performance tuning
                 echo=False,  # Disable SQL logging in production
                 echo_pool=False,  # Disable pool logging
-
                 # Connection arguments for asyncpg
                 connect_args={
                     "server_settings": {
@@ -80,8 +78,10 @@ class PostgreSQLSessionManager:
             "checked_in": pool.checkedin(),
             "checked_out": pool.checkedout(),
             "overflow": pool.overflow(),
-            "max_overflow": pool._max_overflow,
-            "pool_size": pool._pool.maxsize,
+            # pylint: disable=protected-access
+            "max_overflow": pool._max_overflow,  # type: ignore
+            "pool_size": pool._pool.maxsize,  # type: ignore
+            # pylint: enable=protected-access
         }
 
     async def health_check(self) -> bool:
@@ -91,7 +91,7 @@ class PostgreSQLSessionManager:
             async with engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
             return True
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Health check failed: {e}")
             return False
 
@@ -123,6 +123,7 @@ class PostgreSQLSessionManager:
 
 
 async def main():
+    """Run the advanced PostgreSQL pooling example."""
     print("=== Advanced PostgreSQL Pooling Example ===\n")
 
     # Initialize session manager

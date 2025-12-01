@@ -14,12 +14,14 @@ from agents.extensions.memory import AdvancedSQLiteSession
 
 @function_tool
 async def get_weather(city: str) -> str:
+    """Get the weather for a given city."""
     if city.strip().lower() == "new york":
         return f"The weather in {city} is cloudy."
     return f"The weather in {city} is sunny."
 
 
 async def main():
+    """Run the advanced SQLite session example."""
     # Create an agent
     agent = Agent(
         name="Assistant",
