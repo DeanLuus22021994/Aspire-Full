@@ -25,16 +25,24 @@
     ".pycodestyle": "ini"
   },
   "cSpell.words": [
+    "addopts",
     "ASPNETCORE",
     "AUTHMODE",
     "CERTDIR",
+    "chelnak",
     "CUDA",
     "Dind",
     "Instrumentor",
+    "llms",
+    "nektos",
     "pgvector",
+    "pylint",
+    "pytest",
     "qdrant",
+    "seachicken",
     "Serilog",
-    "triaging"
+    "triaging",
+    "xmldoc"
   ],
   "python.defaultInterpreterPath": "${workspaceFolder}/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
   "cmake.sourceDirectory": "C:/Users/Dean/source/Aspire-Full - 1/Aspire-Full.Native",
