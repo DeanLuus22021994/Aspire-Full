@@ -3,9 +3,8 @@ using Aspire_Full.Api.Tensor;
 using Aspire_Full.Connectors;
 using Aspire_Full.DockerRegistry;
 using Aspire_Full.DockerRegistry.Configuration;
-using Aspire_Full.Qdrant;
 using Aspire_Full.Tensor;
-using Aspire_Full.VectorStore;
+using Aspire_Full.VectorStore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;
 
@@ -35,8 +34,9 @@ builder.Services.AddOptions<TensorModelCatalogOptions>()
 builder.Services.AddSingleton<ITensorJobStore, InMemoryTensorJobStore>();
 builder.Services.AddSingleton<ITensorVectorBridge, TensorVectorBridge>();
 builder.Services.AddSingleton<ITensorJobCoordinator, TensorJobCoordinator>();
-builder.Services.AddQdrantClient(builder.Configuration);
-builder.Services.AddSingleton<IVectorStoreService, QdrantVectorStoreService>();
+
+// Add Vector Store
+builder.Services.AddVectorStore(builder.Configuration);
 
 // Add CORS for frontend
 builder.Services.AddCors(options =>

@@ -3,7 +3,7 @@ using Aspire_Full.Embeddings.Extensions;
 using Aspire_Full.Gateway.Data;
 using Aspire_Full.Gateway.Endpoints;
 using Aspire_Full.Gateway.Services;
-using Aspire_Full.Qdrant;
+using Aspire_Full.VectorStore.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,8 +18,7 @@ builder.AddNpgsqlDbContext<GatewayDbContext>("aspiredb", settings =>
     settings.ConnectionString = builder.Configuration.GetConnectionString("aspiredb"));
 
 // Vector Store & Embeddings
-builder.Services.AddQdrantClient(builder.Configuration);
-builder.Services.AddSingleton<Aspire_Full.VectorStore.IVectorStoreService, Aspire_Full.VectorStore.QdrantVectorStoreService>();
+builder.Services.AddVectorStore(builder.Configuration);
 builder.Services.AddSingleton<IUserVectorService, UserVectorService>();
 
 // Register Embedding Services
