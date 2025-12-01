@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
-using Aspire_Full.Tensor.Models;
+using Aspire_Full.Shared.Models;
 using Aspire_Full.Tensor.Services;
 using Microsoft.Extensions.Logging;
 
@@ -17,7 +17,7 @@ public sealed class TensorVectorBridge : ITensorVectorBridge
         _logger = logger;
     }
 
-    public async Task<string?> TryPersistAsync(TensorJobStatusDto job, ReadOnlyMemory<float> embedding, CancellationToken cancellationToken)
+    public async Task<string?> TryPersistAsync(TensorJobStatus job, ReadOnlyMemory<float> embedding, CancellationToken cancellationToken)
     {
         using var activity = ConnectorDiagnostics.ActivitySource.StartActivity("TensorVectorBridge.PersistEmbedding");
         activity?.SetTag("tensor.job_id", job.Id);
@@ -55,7 +55,7 @@ public sealed class TensorVectorBridge : ITensorVectorBridge
         }
     }
 
-    private static IReadOnlyDictionary<string, object?> BuildConnectorMetadata(TensorJobStatusDto job, ReadOnlyMemory<float> embedding)
+    private static IReadOnlyDictionary<string, object?> BuildConnectorMetadata(TensorJobStatus job, ReadOnlyMemory<float> embedding)
     {
         var metadata = new Dictionary<string, object?>
         {

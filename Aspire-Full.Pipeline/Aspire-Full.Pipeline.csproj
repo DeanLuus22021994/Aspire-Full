@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.Native\Aspire-Full.Native.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
   </ItemGroup>
 </Project>

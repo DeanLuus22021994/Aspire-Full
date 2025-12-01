@@ -1,6 +1,7 @@
 using Aspire_Full.Pipeline.Modules.Discovery;
 using Aspire_Full.Pipeline.Utils;
 using System.Text.Json;
+using Aspire_Full.Shared;
 
 namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
@@ -60,8 +61,7 @@ print(json.dumps(info))
 
             try
             {
-                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var data = JsonSerializer.Deserialize<Dictionary<string, object>>(result.Output.Trim(), jsonOptions);
+                var data = JsonSerializer.Deserialize(result.Output.Trim(), AppJsonContext.Default.DictionaryStringObject);
                 var details = data?.ToDictionary(k => k.Key, k => k.Value?.ToString() ?? "null") ?? new();
 
                 // Check UV separately

@@ -1,9 +1,11 @@
 using Aspire_Full.DockerRegistry;
-using Aspire_Full.DockerRegistry.Models;
 using Aspire_Full.DockerRegistry.Abstractions;
 using Aspire_Full.DockerRegistry.Configuration;
+using Aspire_Full.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using DockerManifestEntity = Aspire_Full.DockerRegistry.Models.DockerManifest;
+using DockerImageDescriptor = Aspire_Full.DockerRegistry.Models.DockerImageDescriptor;
 
 namespace Aspire_Full.Api.Controllers;
 
@@ -21,12 +23,12 @@ public class DockerRegistryController : ControllerBase
     }
 
     [HttpGet("repositories")]
-    public async Task<ActionResult<IEnumerable<DockerRegistryRepositoryResponse>>> GetRepositories(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<DockerRegistryRepository>>> GetRepositories(CancellationToken cancellationToken)
     {
         try
         {
             var repositories = await _client.ListRepositoriesAsync(cancellationToken).ConfigureAwait(false);
-            var response = repositories.Select(repo => new DockerRegistryRepositoryResponse
+            var response = repositories.Select(repo => new DockerRegistryRepository
             {
                 Repository = repo.Repository,
                 MatchesPattern = repo.MatchesPattern,
@@ -70,7 +72,7 @@ public class DockerRegistryController : ControllerBase
     }
 
     [HttpGet("repositories/{service}/manifests/{tag}")]
-    public async Task<ActionResult<DockerManifestResponseDto>> GetManifest(
+    public async Task<ActionResult<DockerManifest>> GetManifest(
         string service,
         string tag,
         [FromQuery] string? environment,
@@ -92,13 +94,13 @@ public class DockerRegistryController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new DockerManifestResponseDto
+            return Ok(new DockerManifest
             {
                 Repository = manifest.Repository,
                 Tag = manifest.Tag,
                 Digest = manifest.Digest,
                 TotalSize = manifest.TotalSize,
-                Layers = manifest.Layers.Select(layer => new DockerManifestLayerDto
+                Layers = manifest.Layers.Select(layer => new DockerManifestLayer
                 {
                     MediaType = layer.MediaType,
                     Digest = layer.Digest,
@@ -124,29 +126,4 @@ public class DockerRegistryController : ControllerBase
 
         return descriptor.WithDefaults(_options.Patterns);
     }
-}
-
-public sealed class DockerRegistryRepositoryResponse
-{
-    public required string Repository { get; init; }
-    public bool MatchesPattern { get; init; }
-    public string? Service { get; init; }
-    public string? Environment { get; init; }
-    public string? Architecture { get; init; }
-}
-
-public sealed class DockerManifestResponseDto
-{
-    public required string Repository { get; init; }
-    public required string Tag { get; init; }
-    public required string Digest { get; init; }
-    public required long TotalSize { get; init; }
-    public required IList<DockerManifestLayerDto> Layers { get; init; }
-}
-
-public sealed class DockerManifestLayerDto
-{
-    public required string MediaType { get; init; }
-    public required string Digest { get; init; }
-    public required long Size { get; init; }
 }

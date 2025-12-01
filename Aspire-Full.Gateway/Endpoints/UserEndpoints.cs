@@ -2,8 +2,11 @@ using Aspire_Full.Embeddings;
 using Aspire_Full.Gateway.Data;
 using Aspire_Full.Gateway.Models;
 using Aspire_Full.Gateway.Services;
+using Aspire_Full.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UserDto = Aspire_Full.Shared.Models.User;
+using User = Aspire_Full.Gateway.Models.User;
 
 namespace Aspire_Full.Gateway.Endpoints;
 
@@ -25,7 +28,17 @@ public static class UserEndpoints
     {
         var users = await db.Users
             .OrderByDescending(u => u.CreatedAt)
-            .Select(u => UserResponseDto.FromUser(u))
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                DisplayName = u.DisplayName,
+                Role = u.Role,
+                IsActive = u.IsActive,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                LastLoginAt = u.LastLoginAt
+            })
             .ToListAsync();
         return TypedResults.Ok(users);
     }
@@ -33,11 +46,11 @@ public static class UserEndpoints
     static async Task<IResult> GetUser(int id, GatewayDbContext db)
     {
         var user = await db.Users.FindAsync(id);
-        return user is null ? TypedResults.NotFound() : TypedResults.Ok(UserResponseDto.FromUser(user));
+        return user is null ? TypedResults.NotFound() : TypedResults.Ok(ToDto(user));
     }
 
     static async Task<IResult> UpsertUser(
-        [FromBody] CreateUserDto dto,
+        [FromBody] CreateUser dto,
         GatewayDbContext db,
         IEmbeddingService embeddingService,
         IUserVectorService vectorStore,
@@ -88,7 +101,7 @@ public static class UserEndpoints
             // In a real production system, we might want a background job or outbox pattern.
         }
 
-        return TypedResults.Ok(UserResponseDto.FromUser(user));
+        return TypedResults.Ok(ToDto(user));
     }
 
     static async Task<IResult> DownsertUser(int id, GatewayDbContext db, IUserVectorService vectorStore)
@@ -116,7 +129,7 @@ public static class UserEndpoints
 
         user.LastLoginAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return TypedResults.Ok(UserResponseDto.FromUser(user));
+        return TypedResults.Ok(ToDto(user));
     }
 
     static async Task<IResult> SearchUsers(
@@ -128,4 +141,16 @@ public static class UserEndpoints
         var results = await vectorStore.SearchAsync(embedding);
         return TypedResults.Ok(results);
     }
+
+    static UserDto ToDto(User user) => new()
+    {
+        Id = user.Id,
+        Email = user.Email,
+        DisplayName = user.DisplayName,
+        Role = user.Role,
+        IsActive = user.IsActive,
+        CreatedAt = user.CreatedAt,
+        UpdatedAt = user.UpdatedAt,
+        LastLoginAt = user.LastLoginAt
+    };
 }

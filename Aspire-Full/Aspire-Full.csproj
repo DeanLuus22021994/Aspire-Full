@@ -29,6 +29,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
     <ProjectReference Include="..\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Shared\Aspire-Full.Shared.csproj">
+      <IsAspireProjectResource>false</IsAspireProjectResource>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,9 @@
 using Aspire_Full.Api.Data;
 using Aspire_Full.Api.Models;
+using Aspire_Full.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UserDto = Aspire_Full.Shared.Models.User;
 
 namespace Aspire_Full.Api.Controllers;
 
@@ -21,17 +23,29 @@ public class UsersController : ControllerBase
         _logger = logger;
     }
 
+    private static UserDto MapToDto(Aspire_Full.Api.Models.User user) => new()
+    {
+        Id = user.Id,
+        Email = user.Email,
+        DisplayName = user.DisplayName,
+        Role = user.Role,
+        IsActive = user.IsActive,
+        CreatedAt = user.CreatedAt,
+        UpdatedAt = user.UpdatedAt,
+        LastLoginAt = user.LastLoginAt
+    };
+
     /// <summary>
     /// Get all active users.
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
     {
         _logger.LogInformation("Getting all active users");
 
         var users = await _context.Users
             .OrderByDescending(u => u.CreatedAt)
-            .Select(u => UserResponseDto.FromUser(u))
+            .Select(u => MapToDto(u))
             .ToListAsync();
 
         return Ok(users);
@@ -41,7 +55,7 @@ public class UsersController : ControllerBase
     /// Get a specific user by ID.
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserResponseDto>> GetUser(int id)
+    public async Task<ActionResult<UserDto>> GetUser(int id)
     {
         var user = await _context.Users.FindAsync(id);
 
@@ -50,14 +64,14 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        return Ok(UserResponseDto.FromUser(user));
+        return Ok(MapToDto(user));
     }
 
     /// <summary>
     /// Get user by email.
     /// </summary>
     [HttpGet("by-email/{email}")]
-    public async Task<ActionResult<UserResponseDto>> GetUserByEmail(string email)
+    public async Task<ActionResult<UserDto>> GetUserByEmail(string email)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email);
@@ -67,7 +81,7 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        return Ok(UserResponseDto.FromUser(user));
+        return Ok(MapToDto(user));
     }
 
     /// <summary>
@@ -75,7 +89,7 @@ public class UsersController : ControllerBase
     /// If a user with the same email exists (including soft-deleted), reactivates and updates them.
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<UserResponseDto>> UpsertUser(CreateUserDto dto)
+    public async Task<ActionResult<UserDto>> UpsertUser(CreateUser dto)
     {
         // Check for existing user (including soft-deleted)
         var existingUser = await _context.Users
@@ -100,11 +114,11 @@ public class UsersController : ControllerBase
 
             _logger.LogInformation("Upserted user {UserId}: {Email} (reactivated)", existingUser.Id, existingUser.Email);
 
-            return Ok(UserResponseDto.FromUser(existingUser));
+            return Ok(MapToDto(existingUser));
         }
 
         // Create new user
-        var user = new User
+        var user = new Aspire_Full.Api.Models.User
         {
             Email = dto.Email,
             DisplayName = dto.DisplayName,
@@ -118,14 +132,14 @@ public class UsersController : ControllerBase
 
         _logger.LogInformation("Created user {UserId}: {Email}", user.Id, user.Email);
 
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, UserResponseDto.FromUser(user));
+        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, MapToDto(user));
     }
 
     /// <summary>
     /// Update user details.
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<ActionResult<UserResponseDto>> UpdateUser(int id, UpdateUserDto dto)
+    public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUser dto)
     {
         var user = await _context.Users.FindAsync(id);
 
@@ -156,7 +170,7 @@ public class UsersController : ControllerBase
 
         _logger.LogInformation("Updated user {UserId}", user.Id);
 
-        return Ok(UserResponseDto.FromUser(user));
+        return Ok(MapToDto(user));
     }
 
     /// <summary>
@@ -189,7 +203,7 @@ public class UsersController : ControllerBase
     /// Record user login.
     /// </summary>
     [HttpPost("{id}/login")]
-    public async Task<ActionResult<UserResponseDto>> RecordLogin(int id)
+    public async Task<ActionResult<UserDto>> RecordLogin(int id)
     {
         var user = await _context.Users.FindAsync(id);
 
@@ -203,6 +217,6 @@ public class UsersController : ControllerBase
 
         _logger.LogInformation("Recorded login for user {UserId}", id);
 
-        return Ok(UserResponseDto.FromUser(user));
+        return Ok(MapToDto(user));
     }
 }

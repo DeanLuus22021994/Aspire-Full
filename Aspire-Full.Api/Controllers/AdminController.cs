@@ -1,5 +1,6 @@
 using Aspire_Full.Api.Data;
 using Aspire_Full.Api.Models;
+using Aspire_Full.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

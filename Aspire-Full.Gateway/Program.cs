@@ -11,6 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 // Add services to the container.
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, Aspire_Full.Shared.AppJsonContext.Default);
+});
 builder.Services.AddOpenApi();
 
 // Database

@@ -1,7 +1,8 @@
 using System.Linq;
 using System.Text.Json;
+using Aspire_Full.Shared;
+using Aspire_Full.Shared.Models;
 using Aspire_Full.Tensor;
-using Aspire_Full.Tensor.Models;
 using Aspire_Full.Tensor.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -12,8 +13,6 @@ namespace Aspire_Full.Api.Controllers;
 [Route("api/tensor-tasks")]
 public sealed class TensorTasksController : ControllerBase
 {
-    private static readonly JsonSerializerOptions StreamSerializerOptions = new(JsonSerializerDefaults.Web);
-
     private readonly ITensorJobStore _jobStore;
     private readonly ITensorJobCoordinator _coordinator;
     private readonly IReadOnlyList<TensorModelDescriptor> _models;
@@ -29,9 +28,9 @@ public sealed class TensorTasksController : ControllerBase
     }
 
     [HttpGet("catalog")]
-    public ActionResult<IEnumerable<TensorModelSummaryDto>> GetCatalog()
+    public ActionResult<IEnumerable<TensorModelSummary>> GetCatalog()
     {
-        var summaries = _models.Select(model => new TensorModelSummaryDto
+        var summaries = _models.Select(model => new TensorModelSummary
         {
             Id = model.Id,
             DisplayName = model.DisplayName,
@@ -44,10 +43,10 @@ public sealed class TensorTasksController : ControllerBase
     }
 
     [HttpGet("jobs")]
-    public async Task<ActionResult<IEnumerable<TensorJobSummaryDto>>> GetJobs([FromQuery] int limit = 25, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IEnumerable<TensorJobSummary>>> GetJobs([FromQuery] int limit = 25, CancellationToken cancellationToken = default)
     {
         var jobs = await _jobStore.GetRecentAsync(limit, cancellationToken).ConfigureAwait(false);
-        var summaries = jobs.Select(job => new TensorJobSummaryDto
+        var summaries = jobs.Select(job => new TensorJobSummary
         {
             Id = job.Id,
             ModelId = job.ModelId,
@@ -62,7 +61,7 @@ public sealed class TensorTasksController : ControllerBase
     }
 
     [HttpGet("jobs/{id:guid}")]
-    public async Task<ActionResult<TensorJobStatusDto>> GetJob(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<TensorJobStatus>> GetJob(Guid id, CancellationToken cancellationToken = default)
     {
         var job = await _jobStore.GetAsync(id, cancellationToken).ConfigureAwait(false);
         if (job is null)
@@ -74,7 +73,7 @@ public sealed class TensorTasksController : ControllerBase
     }
 
     [HttpPost("jobs")]
-    public async Task<ActionResult<TensorJobStatusDto>> SubmitJob([FromBody] TensorJobSubmissionDto submission, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<TensorJobStatus>> SubmitJob([FromBody] TensorJobSubmission submission, CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
         {
@@ -105,7 +104,7 @@ public sealed class TensorTasksController : ControllerBase
         Response.ContentType = "application/x-ndjson";
         foreach (var chunk in job.Output.OrderBy(chunk => chunk.Sequence))
         {
-            var payload = JsonSerializer.Serialize(chunk, StreamSerializerOptions);
+            var payload = JsonSerializer.Serialize(chunk, AppJsonContext.Default.TensorInferenceChunk);
             await Response.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
             await Response.WriteAsync("\n", cancellationToken).ConfigureAwait(false);
             await Response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);

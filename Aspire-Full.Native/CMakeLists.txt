@@ -18,7 +18,11 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 86)
 endif()
 
-add_library(AspireFullNative SHARED tensor_ops.cu)
+# Include directories
+include_directories(include)
+
+# Add library with source from src/
+add_library(AspireFullNative SHARED src/tensor_ops.cu)
 
 set_target_properties(AspireFullNative PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON

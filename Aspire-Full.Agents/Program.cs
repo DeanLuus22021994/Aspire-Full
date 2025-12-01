@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Aspire_Full.Subagents;
+using Aspire_Full.Shared;
+using Aspire_Full.Shared.Models;
 
 var inputPath = GetOption("--input") ?? "subagents.update.json";
 var outputPathOverride = GetOption("--output");
@@ -11,14 +13,7 @@ if (!File.Exists(inputPath))
     return 1;
 }
 
-var serializerOptions = new JsonSerializerOptions
-{
-    WriteIndented = true,
-    PropertyNameCaseInsensitive = true,
-};
-serializerOptions.Converters.Add(new JsonStringEnumConverter());
-
-var agentInput = JsonSerializer.Deserialize<AgentInput>(File.ReadAllText(inputPath), serializerOptions);
+var agentInput = JsonSerializer.Deserialize(File.ReadAllText(inputPath), AppJsonContext.Default.AgentInput);
 if (agentInput is null)
 {
     Console.Error.WriteLine("Unable to parse agent input.");
@@ -40,7 +35,7 @@ var delegationPlan = service.CreateDelegationPlan(update);
 var agentOutput = new AgentOutput(definition, retrospective, delegationPlan);
 var outputPath = outputPathOverride ?? agentInput.OutputPath ?? Path.ChangeExtension(inputPath, ".output.json");
 
-File.WriteAllText(outputPath, JsonSerializer.Serialize(agentOutput, serializerOptions));
+File.WriteAllText(outputPath, JsonSerializer.Serialize(agentOutput, AppJsonContext.Default.AgentOutput));
 
 Console.WriteLine($"Subagent retrospective generated for {definition.Name}.");
 Console.WriteLine($"Highlights: {string.Join(", ", retrospective.Highlights)}");
@@ -63,18 +58,3 @@ string? GetOption(string name)
 
     return null;
 }
-
-internal sealed record AgentInput
-{
-    public SubagentRole Role { get; init; }
-    public IReadOnlyList<string>? Completed { get; init; }
-    public IReadOnlyList<string>? Risks { get; init; }
-    public IReadOnlyList<string>? Next { get; init; }
-    public IReadOnlyList<string>? Delegations { get; init; }
-    public string? OutputPath { get; init; }
-}
-
-internal sealed record AgentOutput(
-    SubagentDefinition Definition,
-    SubagentRetrospective Retrospective,
-    SubagentDelegationPlan Delegation);

@@ -1,3 +1,5 @@
+using Aspire_Full.Shared.Models;
+
 namespace Aspire_Full.Gateway.Models;
 
 /// <summary>
@@ -48,61 +50,3 @@ public class User
     /// </summary>
     public DateTime? LastLoginAt { get; set; }
 }
-
-/// <summary>
-/// User roles for authorization.
-/// </summary>
-public enum UserRole
-{
-    User = 0,
-    Admin = 1
-}
-
-#region DTOs
-
-/// <summary>
-/// DTO for creating a new user (upsert operation).
-/// </summary>
-public class CreateUserDto
-{
-    public required string Email { get; set; }
-    public required string DisplayName { get; set; }
-    public UserRole Role { get; set; } = UserRole.User;
-}
-
-/// <summary>
-/// DTO for updating an existing user.
-/// </summary>
-public class UpdateUserDto
-{
-    public string? DisplayName { get; set; }
-    public bool? IsActive { get; set; }
-}
-
-/// <summary>
-/// DTO for user responses (excludes sensitive data).
-/// </summary>
-public class UserResponseDto
-{
-    public int Id { get; set; }
-    public required string Email { get; set; }
-    public required string DisplayName { get; set; }
-    public UserRole Role { get; set; }
-    public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-    public DateTime? LastLoginAt { get; set; }
-
-    public static UserResponseDto FromUser(User user) => new()
-    {
-        Id = user.Id,
-        Email = user.Email,
-        DisplayName = user.DisplayName,
-        Role = user.Role,
-        IsActive = user.IsActive,
-        CreatedAt = user.CreatedAt,
-        UpdatedAt = user.UpdatedAt,
-        LastLoginAt = user.LastLoginAt
-    };
-}
-#endregion

@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Configuration;
+using Aspire_Full.Shared;
+using Aspire_Full.Shared.Models;
 
 namespace Aspire_Full.WebAssembly.Services;
 
@@ -16,28 +18,19 @@ public sealed class RegistryApiClient
         _environmentKey = configuration["FRONTEND_ENVIRONMENT_KEY"] ?? FrontendEnvironmentKeys.DevelopmentDocs;
     }
 
-    public async Task<IReadOnlyList<DockerRegistryRepositoryDto>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<DockerRegistryRepository>> GetRepositoriesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var env = _registry.GetByKey(_environmentKey);
             var uri = new Uri(new Uri(env.ApiBaseAddress), "/api/docker-registry/repositories");
-            var repositories = await _httpClient.GetFromJsonAsync<List<DockerRegistryRepositoryDto>>(uri, cancellationToken)
+            var repositories = await _httpClient.GetFromJsonAsync(uri, AppJsonContext.Default.ListDockerRegistryRepository, cancellationToken)
                 .ConfigureAwait(false);
-            return repositories ?? new List<DockerRegistryRepositoryDto>();
+            return repositories ?? new List<DockerRegistryRepository>();
         }
         catch
         {
-            return Array.Empty<DockerRegistryRepositoryDto>();
+            return Array.Empty<DockerRegistryRepository>();
         }
     }
-}
-
-public sealed class DockerRegistryRepositoryDto
-{
-    public string Repository { get; set; } = string.Empty;
-    public bool MatchesPattern { get; set; }
-    public string? Service { get; set; }
-    public string? Environment { get; set; }
-    public string? Architecture { get; set; }
 }

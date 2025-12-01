@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aspire-Full.Subagents\Aspire-Full.Subagents.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

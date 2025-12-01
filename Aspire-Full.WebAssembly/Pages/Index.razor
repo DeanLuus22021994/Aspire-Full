@@ -1,5 +1,6 @@
 @page "/"
 @using Aspire_Full.WebAssembly.Components
+@using Aspire_Full.Shared.Models
 @using Microsoft.AspNetCore.Components.Web
 @inject FrontendEnvironmentRegistry Registry
 @inject RegistryApiClient RegistryClient
@@ -34,7 +35,7 @@
 
 @code {
     private IReadOnlyCollection<FrontendEnvironmentDefinition> _definitions = Array.Empty<FrontendEnvironmentDefinition>();
-    private IReadOnlyList<DockerRegistryRepositoryDto> _repositories = Array.Empty<DockerRegistryRepositoryDto>();
+    private IReadOnlyList<DockerRegistryRepository> _repositories = Array.Empty<DockerRegistryRepository>();
     private IReadOnlyList<TensorModelDescriptor> _tensorModels = Array.Empty<TensorModelDescriptor>();
     private TensorCapabilityResponse? _capabilities;
     private bool _tensorBusy;

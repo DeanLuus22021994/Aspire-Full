@@ -1,13 +1,13 @@
-using Aspire_Full.Gateway.Models;
+using Aspire_Full.Shared.Models;
 
 namespace Aspire_Full.Gateway.Tests.Business;
 
 public class UserBusinessTests
 {
     [Fact]
-    public void CreateUserDto_SetsDefaultRole()
+    public void CreateUser_SetsDefaultRole()
     {
-        var dto = new CreateUserDto
+        var dto = new CreateUser
         {
             Email = "test@example.com",
             DisplayName = "Test"

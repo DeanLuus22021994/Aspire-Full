@@ -23,7 +23,11 @@ builder.AddNpgsqlDbContext<AppDbContext>("aspiredb");
 builder.AddRedisDistributedCache("redis");
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, Aspire_Full.Shared.AppJsonContext.Default);
+    });
 builder.Services.AddOpenApi();
 builder.Services.AddDockerRegistryClient(builder.Configuration);
 
