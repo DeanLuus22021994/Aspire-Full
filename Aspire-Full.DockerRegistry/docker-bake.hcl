@@ -1,5 +1,5 @@
 variable "REGISTRY" {
-  default = "localhost:5001"
+  default = "host.docker.internal:5001"
 }
 
 variable "NAMESPACE" {
