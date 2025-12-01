@@ -21,6 +21,16 @@ public static class ProcessUtils
         foreach (var arg in args) startInfo.ArgumentList.Add(arg);
 
         using var process = new Process { StartInfo = startInfo };
+
+        if (!silent)
+        {
+            process.StartInfo.RedirectStandardOutput = false;
+            process.StartInfo.RedirectStandardError = false;
+            process.Start();
+            await process.WaitForExitAsync();
+            return (process.ExitCode, "");
+        }
+
         process.Start();
 
         var outputTask = process.StandardOutput.ReadToEndAsync();
