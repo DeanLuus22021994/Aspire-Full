@@ -67,53 +67,27 @@ target-version = "py314"
 line-length = 120
 src = ["src"]
 
+[tool.ruff.lint]
+select = ["I", "E", "W", "F"]
+ignore = ["E203", "E501"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
 
+[tool.ruff.lint.isort]
+known-first-party = ["aspire_agents"]
+force-single-line = false
+lines-after-imports = 2
+
 [tool.black]
 line-length = 120
-target-version = ["py312"]
-
-[tool.pylint.master]
-ignore = "CVS"
-persistent = true
-jobs = 1
-unsafe-load-any-extension = false
-
-[tool.pylint."messages control"]
-disable = [
-    "C0114",
-    "C0115",
-    "C0116",
-    "R0903",
-    "R0913",
-    "R0914",
-    "E0401",
-    "E0611",
-    "W0718",
-    "W1203",
-    "R0912",
-    "R0915",
-    "R0916",
-    "W0621",
-    "W0613",
-    "C0411",
-    "C2801",
-    "line-too-long",
-]
-
-[tool.pylint.reports]
-output-format = "text"
-reports = false
-score = false
-
-[tool.pylint.format]
-max-line-length = 120
+target-version = ["py313"]
+preview = true
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.15"
 files = "src"
 strict = true
 warn_unused_ignores = true

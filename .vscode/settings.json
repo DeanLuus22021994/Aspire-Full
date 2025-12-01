@@ -9,14 +9,6 @@
     "**/bin": true,
     "**/obj": true
   },
-  "python.linting.ignorePatterns": [
-    ".vscode",
-    ".vscode/**",
-    ".vscode-test",
-    ".vscode-test/**",
-    ".vscode-*",
-    ".vscode-*/**"
-  ],
   "python.envFile": "${workspaceFolder}/.config/python/.env",
   "github.copilot.chat.codeGeneration.useReferencedFiles": true,
   "github.copilot.chat.codesearch.enabled": true,
@@ -51,7 +43,20 @@
   "nsight.compute.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2025.2.1\\host\\windows-desktop-win7-x64\\ncu-ui.exe",
   "nsight.systems.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Systems 2025.6.1\\host-windows-x64\\nsys-ui.exe",
   "python.analysis.typeCheckingMode": "strict",
-  "flake8.args": ["--config=${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.flake8"],
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportUnusedImport": "warning",
+    "reportUnusedVariable": "warning",
+    "reportUnusedParameter": "none",
+    "reportMissingParameterType": "none",
+    "reportUnknownMemberType": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnnecessaryTypeIgnoreComment": "none",
+    "reportPrivateUsage": "none"
+  },
+  "pylint.enabled": false,
+  "flake8.enabled": false,
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
