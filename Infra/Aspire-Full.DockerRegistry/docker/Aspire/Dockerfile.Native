@@ -3,14 +3,14 @@ FROM base-native AS build
 WORKDIR /src
 
 # Copy Native Project
-COPY ["Aspire-Full.Tensor/Native/", "Aspire-Full.Tensor/Native/"]
+COPY ["AI/Aspire-Full.Tensor/Native/", "AI/Aspire-Full.Tensor/Native/"]
 
 # Build Native Library
-WORKDIR /src/Aspire-Full.Tensor/Native
+WORKDIR /src/AI/Aspire-Full.Tensor/Native
 RUN mkdir -p build && cd build && \
     cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release && \
     ninja
 
 # Stage 2: Export
 FROM scratch AS export
-COPY --from=build /src/Aspire-Full.Tensor/Native/build/libAspireFullNative.so /
+COPY --from=build /src/AI/Aspire-Full.Tensor/Native/build/libAspireFullNative.so /
