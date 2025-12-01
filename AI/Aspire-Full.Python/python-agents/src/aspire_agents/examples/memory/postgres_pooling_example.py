@@ -17,6 +17,11 @@ from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
+else:
+    try:
+        from sqlalchemy.ext.asyncio import AsyncEngine
+    except ImportError:
+        AsyncEngine = Any
 
 try:
     from sqlalchemy import text  # type: ignore
@@ -38,7 +43,7 @@ class PostgreSQLSessionManager:
     """
 
     def __init__(self) -> None:
-        self._engine: Any | None = None
+        self._engine: AsyncEngine | None = None
         self._connection_url = self._build_connection_url()
 
     def _build_connection_url(self) -> str:
@@ -51,7 +56,7 @@ class PostgreSQLSessionManager:
 
         return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
 
-    def get_engine(self) -> Any:
+    def get_engine(self) -> AsyncEngine:
         """Get or create the singleton engine instance."""
         if self._engine is None:
             if create_async_engine is None:
@@ -79,7 +84,7 @@ class PostgreSQLSessionManager:
                     "timeout": 10,  # Connection timeout
                 },
             )
-        return self._engine
+        return cast(AsyncEngine, self._engine)
 
     async def get_pool_status(self) -> dict[str, Any]:
         """Get current connection pool statistics."""
