@@ -11,6 +11,7 @@ from agents import Agent, OpenAIConversationsSession, Runner
 
 
 async def main():
+    """Run the OpenAI session example."""
     # Create an agent
     agent = Agent(
         name="Assistant",

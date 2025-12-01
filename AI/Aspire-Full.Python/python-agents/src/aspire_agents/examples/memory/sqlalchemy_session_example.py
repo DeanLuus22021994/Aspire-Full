@@ -1,3 +1,5 @@
+"""Example demonstrating SQLAlchemy session memory functionality."""
+
 import asyncio
 
 from agents import Agent, Runner
@@ -5,6 +7,7 @@ from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
 
 
 async def main():
+    """Run the SQLAlchemy session example."""
     # Create an agent
     agent = Agent(
         name="Assistant",

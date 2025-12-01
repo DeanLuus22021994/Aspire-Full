@@ -362,7 +362,8 @@ spec:
 
     print("\n2. Start Dapr sidecar:")
     print(
-        "   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
+        "   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 "
+        "--resources-path ./components"
     )
     print(
         "\n   IMPORTANT: Always specify --dapr-http-port 3500 to avoid connection errors!"

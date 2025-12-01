@@ -29,7 +29,7 @@ except ImportError:
     create_async_engine = None  # type: ignore
 
 
-async def test_postgres_connection():
+async def test_postgres_connection() -> None:
     """Test PostgreSQL connection and basic operations."""
     if create_async_engine is None or text is None:
         print("Skipping test: sqlalchemy not installed")

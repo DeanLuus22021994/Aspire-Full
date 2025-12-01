@@ -15,6 +15,7 @@ from agents.extensions.memory import RedisSession
 
 
 async def main():
+    """Run the Redis session example."""
     # Create an agent
     agent = Agent(
         name="Assistant",
@@ -79,7 +80,9 @@ async def main():
 
         print("=== Conversation Complete ===")
         print("Notice how the agent remembered the context from previous turns!")
-        print("Redis session automatically handles conversation history with persistence.")
+        print(
+            "Redis session automatically handles conversation history with persistence."
+        )
 
         # Demonstrate session persistence
         print("\n=== Session Persistence Demo ===")
@@ -141,7 +144,7 @@ async def main():
         # Close the main session
         await session.close()
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
         print("Make sure Redis is running on localhost:6379")
 
@@ -168,7 +171,7 @@ async def demonstrate_advanced_features():
             print("Session with custom key prefix created successfully")
 
         await tenant_session.close()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Advanced features error: {e}")
 
 

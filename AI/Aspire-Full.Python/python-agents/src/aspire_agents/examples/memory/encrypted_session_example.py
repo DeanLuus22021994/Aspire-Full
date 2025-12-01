@@ -15,6 +15,7 @@ from agents.extensions.memory.encrypt_session import EncryptedEnvelope
 
 
 async def main():
+    """Run the encrypted session example."""
     # Create an agent
     agent = Agent(
         name="Assistant",
