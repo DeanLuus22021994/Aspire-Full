@@ -3,7 +3,7 @@ namespace Aspire_Full.Pipeline.Constants;
 public static class PathConstants
 {
     public const string PidFile = ".aspire.pid";
-    public const string SolutionFile = "Aspire-Full.slnf";
+    public const string SolutionFilter = "Aspire-Full.slnf";
     public const string AppHostProject = "Aspire-Full/Aspire-Full.csproj";
     public const string AppHostProjectName = "Aspire-Full";
 
