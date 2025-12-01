@@ -1,4 +1,4 @@
-namespace Aspire_Full.Qdrant;
+namespace Aspire_Full.VectorStore;
 
 /// <summary>
 /// Strongly typed configuration for connecting to a Qdrant instance.

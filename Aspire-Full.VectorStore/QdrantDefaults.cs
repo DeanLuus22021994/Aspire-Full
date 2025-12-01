@@ -1,4 +1,4 @@
-namespace Aspire_Full.Qdrant;
+namespace Aspire_Full.VectorStore;
 
 /// <summary>
 /// Provides shared constants for configuring Qdrant services.

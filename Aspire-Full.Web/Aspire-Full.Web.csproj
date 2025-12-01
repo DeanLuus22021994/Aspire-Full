@@ -1,3 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="..\Aspire-Full.Native\build\Release\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Native\build\Release\AspireFullNative.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -8,3 +16,5 @@
       <Link>libAspireFullNative.so</Link>
     </Content>
   </ItemGroup>
+
+</Project>

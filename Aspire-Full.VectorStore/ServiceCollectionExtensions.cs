@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Qdrant.Client;
 
-namespace Aspire_Full.Qdrant;
+namespace Aspire_Full.VectorStore;
 
 /// <summary>
 /// Dependency injection helpers for wiring up Qdrant services.

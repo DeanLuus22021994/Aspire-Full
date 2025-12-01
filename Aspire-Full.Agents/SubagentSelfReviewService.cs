@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Aspire_Full.Subagents;
+namespace Aspire_Full.Agents;
 
 public sealed class SubagentSelfReviewService
 {
