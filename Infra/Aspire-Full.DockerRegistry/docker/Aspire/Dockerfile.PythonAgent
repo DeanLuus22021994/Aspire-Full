@@ -34,7 +34,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Pre-download models for instant readiness
 # This runs the script we just created to cache models in the image
-RUN python scripts/download_models.py
+# RUN python scripts/download_models.py
 
 # Expose port
 EXPOSE 8000
