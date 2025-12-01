@@ -1,3 +1,7 @@
+"""
+This module demonstrates output guardrails.
+"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,3 +1,7 @@
+"""
+This module demonstrates deterministic agent behavior.
+"""
+
 import asyncio
 
 from agents import Agent, Runner, trace

@@ -12,12 +12,38 @@ for storing data across 30+ databases with built-in telemetry, tracing, encrypti
 data isolation and lifecycle management via time-to-live (TTL).
 See: https://docs.dapr.io/developing-applications/building-blocks/state-management/
 
-WHEN TO USE DaprSession:
-- Horizontally scaled deployments (multiple agent instances behind a load balancer)
-- Multi-region requirements (agents run in different geographic regions)
-- Existing Dapr adoption (your team already uses Dapr for other services)
-- Backend flexibility (switch state stores without code changes)
-- Enterprise governance (centralized control over state management policies)
+# ...existing code...
+# WHEN TO USE DaprSession:
+# - Horizontally scaled deployments (multiple agent instances behind a load balancer)
+# - Multi-region requirements (agents run in different geographic regions)
+# - Existing Dapr adoption (your team already uses Dapr for other services)
+# - Backend flexibility (switch state stores without code changes)
+# - Enterprise governance (centralized control over state management policies)
+# ...existing code...
+        print("=== Conversation Complete ===")
+        print("Notice how the agent remembered the context from previous turns!")
+        print(
+            "Dapr session automatically handles conversation history with "
+            "backend flexibility."
+        )
+
+        # Demonstrate session persistence
+# ...existing code...
+    async with DaprSession.from_address(
+        "ttl_demo_session",
+        state_store_name=DEFAULT_STATE_STORE,
+        dapr_address=f"localhost:{grpc_port}",
+        ttl=3600,  # 1 hour TTL
+    ) as ttl_session:
+# ...existing code...
+    print(
+        "   If you recreate PostgreSQL while daprd is running, restart daprd or "
+        "touch the component YAML"
+    )
+    print(
+        "   to trigger a reload, otherwise you may see 'relation "
+# ...existing code...
+
 
 WHEN TO CONSIDER ALTERNATIVES:
 - Use SQLiteSession for single-instance agents (desktop app, CLI tool)

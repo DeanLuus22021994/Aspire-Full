@@ -1,3 +1,7 @@
+"""
+This module demonstrates a simple hello world agent.
+"""
+
 import asyncio
 
 from agents import Agent, Runner

@@ -6,15 +6,33 @@ import queue
 import threading
 import time
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, List, cast
+from typing import TYPE_CHECKING, Any, List, cast
 
 import torch
-from transformers import AutoModel, AutoTokenizer  # type: ignore
-
-if TYPE_CHECKING:
-    from transformers import PreTrainedModel, PreTrainedTokenizerBase  # type: ignore
 
 from .gpu import ensure_tensor_core_gpu
+
+if TYPE_CHECKING:
+
+    class PreTrainedTokenizerBase:
+        def __call__(
+            self, text: List[str], padding: bool, truncation: bool, return_tensors: str
+        ) -> Any: ...
+
+    class PreTrainedModel(torch.nn.Module):
+        def __call__(self, **kwargs: Any) -> Any: ...
+        def to(self, *args: Any, **kwargs: Any) -> "PreTrainedModel": ...
+        def eval(self) -> "PreTrainedModel": ...
+
+    class AutoTokenizer:
+        @staticmethod
+        def from_pretrained(model_name: str) -> PreTrainedTokenizerBase: ...
+
+    class AutoModel:
+        @staticmethod
+        def from_pretrained(model_name: str) -> PreTrainedModel: ...
+else:
+    from transformers import AutoModel, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -54,21 +72,19 @@ class BatchComputeService:
 
         try:
             # Load tokenizer and model directly to GPU
-            # type: ignore[no-untyped-call]
-            self.tokenizer = cast(
-                "PreTrainedTokenizerBase",
-                AutoTokenizer.from_pretrained(model_name),  # type: ignore
-            )
-            self.model = cast(
-                "PreTrainedModel",
-                AutoModel.from_pretrained(model_name).to(self.device),  # type: ignore
-            )
+            if TYPE_CHECKING:
+                self.tokenizer = cast(PreTrainedTokenizerBase, None)
+                self.model = cast(PreTrainedModel, None)
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.model = AutoModel.from_pretrained(model_name).to(self.device)
+
             self.model.eval()
 
             # Optimize model with torch.compile for Python 3.14+ performance
             # Note: This requires a compatible backend. We try/except to be safe.
             try:
-                self.model = torch.compile(self.model)  # type: ignore
+                self.model = cast(PreTrainedModel, torch.compile(self.model))
                 logger.info(
                     "Model compiled with torch.compile() for maximum efficiency."
                 )
@@ -187,7 +203,7 @@ class BatchComputeService:
             # Inference with mixed precision for Tensor Core utilization
             # Only use autocast if on CUDA
             if self.device.type == "cuda":
-                with torch.no_grad(), torch.amp.autocast(  # type: ignore
+                with torch.no_grad(), torch.autocast(
                     device_type="cuda", dtype=torch.float16
                 ):
                     outputs = self.model(**inputs)

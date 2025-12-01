@@ -1,3 +1,7 @@
+"""
+This module demonstrates a hello world agent using GPT-5.
+"""
+
 import asyncio
 
 from agents import Agent, ModelSettings, Runner

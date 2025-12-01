@@ -4,8 +4,6 @@ import asyncio
 import random
 import uuid
 
-from pydantic import BaseModel
-
 from agents import (
     Agent,
     HandoffOutputItem,
@@ -21,8 +19,9 @@ from agents import (
     trace,
 )
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
+from pydantic import BaseModel
 
-### CONTEXT
+# CONTEXT
 
 
 class AirlineAgentContext(BaseModel):
@@ -32,23 +31,33 @@ class AirlineAgentContext(BaseModel):
     flight_number: str | None = None
 
 
-### TOOLS
+# TOOLS
 
 
 @function_tool(
-    name_override="faq_lookup_tool", description_override="Lookup frequently asked questions."
+    name_override="faq_lookup_tool",
+    description_override="Lookup frequently asked questions.",
 )
 async def faq_lookup_tool(question: str) -> str:
     question_lower = question.lower()
     if any(
         keyword in question_lower
-        for keyword in ["bag", "baggage", "luggage", "carry-on", "hand luggage", "hand carry"]
+        for keyword in [
+            "bag",
+            "baggage",
+            "luggage",
+            "carry-on",
+            "hand luggage",
+            "hand carry",
+        ]
     ):
         return (
             "You are allowed to bring one bag on the plane. "
             "It must be under 50 pounds and 22 inches x 14 inches x 9 inches."
         )
-    elif any(keyword in question_lower for keyword in ["seat", "seats", "seating", "plane"]):
+    elif any(
+        keyword in question_lower for keyword in ["seat", "seats", "seating", "plane"]
+    ):
         return (
             "There are 120 seats on the plane. "
             "There are 22 business class seats and 98 economy seats. "
@@ -57,7 +66,14 @@ async def faq_lookup_tool(question: str) -> str:
         )
     elif any(
         keyword in question_lower
-        for keyword in ["wifi", "internet", "wireless", "connectivity", "network", "online"]
+        for keyword in [
+            "wifi",
+            "internet",
+            "wireless",
+            "connectivity",
+            "network",
+            "online",
+        ]
     ):
         return "We have free wifi on the plane, join Airline-Wifi"
     return "I'm sorry, I don't know the answer to that question."
@@ -65,12 +81,15 @@ async def faq_lookup_tool(question: str) -> str:
 
 @function_tool
 async def update_seat(
-    context: RunContextWrapper[AirlineAgentContext], confirmation_number: str, new_seat: str
+    context: RunContextWrapper[AirlineAgentContext],
+    confirmation_number: str,
+    new_seat: str,
 ) -> str:
     """
     Update the seat for a given confirmation number.
 
     Args:
+        context: The run context.
         confirmation_number: The confirmation number for the flight.
         new_seat: The new seat to update to.
     """
@@ -82,15 +101,18 @@ async def update_seat(
     return f"Updated seat to {new_seat} for confirmation number {confirmation_number}"
 
 
-### HOOKS
+# HOOKS
 
 
-async def on_seat_booking_handoff(context: RunContextWrapper[AirlineAgentContext]) -> None:
+async def on_seat_booking_handoff(
+    context: RunContextWrapper[AirlineAgentContext],
+) -> None:
+    """Handle handoff to seat booking agent."""
     flight_number = f"FLT-{random.randint(100, 999)}"
     context.context.flight_number = flight_number
 
 
-### AGENTS
+# AGENTS
 
 faq_agent = Agent[AirlineAgentContext](
     name="FAQ Agent",
@@ -109,7 +131,8 @@ seat_booking_agent = Agent[AirlineAgentContext](
     name="Seat Booking Agent",
     handoff_description="A helpful agent that can update a seat on a flight.",
     instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
-    You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
+    You are a seat booking agent. If you are speaking to a customer, you probably
+    were transferred to from the triage agent.
     Use the following routine to support the customer.
     # Routine
     1. Ask for their confirmation number.
@@ -136,10 +159,11 @@ faq_agent.handoffs.append(triage_agent)
 seat_booking_agent.handoffs.append(triage_agent)
 
 
-### RUN
+# RUN
 
 
 async def main():
+    """Run the customer service example."""
     current_agent: Agent[AirlineAgentContext] = triage_agent
     input_items: list[TResponseInputItem] = []
     context = AirlineAgentContext()

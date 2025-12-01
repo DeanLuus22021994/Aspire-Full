@@ -16,14 +16,31 @@ def fetch_random_image() -> ToolOutputImage | ToolOutputImageDict:
     """Fetch a random image."""
 
     print("Image tool called")
+    """
+This module demonstrates how to return an image from a tool.
+"""
+
+import asyncio
+
+from agents import (
+# ...existing code...
     if return_typed_dict:
         return {
             "type": "image",
-            "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg",
+            "image_url": (
+                "https://upload.wikimedia.org/wikipedia/commons/0/0c/"
+                "GoldenGateBridge-001.jpg"
+            ),
             "detail": "auto",
         }
 
     return ToolOutputImage(
+# ...existing code...
+async def main():
+    """Run the image tool output example."""
+    agent = Agent(
+        name="Assistant",
+# ...existing code...
         image_url=(
             "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
         ),

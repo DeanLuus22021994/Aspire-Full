@@ -1,3 +1,7 @@
+"""
+This module demonstrates using agents as tools with conditional logic.
+"""
+
 import asyncio
 
 from agents import Agent, RunContextWrapper, Runner, trace

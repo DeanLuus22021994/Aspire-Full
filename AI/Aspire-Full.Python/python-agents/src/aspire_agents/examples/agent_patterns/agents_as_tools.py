@@ -1,3 +1,7 @@
+"""
+This module demonstrates using agents as tools.
+"""
+
 import asyncio
 
 from agents import Agent, ItemHelpers, MessageOutputItem, Runner, trace

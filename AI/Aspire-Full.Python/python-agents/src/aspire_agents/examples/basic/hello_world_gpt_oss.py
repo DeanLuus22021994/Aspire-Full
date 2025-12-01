@@ -1,3 +1,7 @@
+"""
+This module demonstrates a hello world agent using GPT-OSS.
+"""
+
 import asyncio
 import logging
 

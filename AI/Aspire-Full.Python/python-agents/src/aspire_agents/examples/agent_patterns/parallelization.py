@@ -1,3 +1,7 @@
+"""
+This module demonstrates parallelization of agent tasks.
+"""
+
 import asyncio
 
 from agents import Agent, ItemHelpers, Runner, trace

@@ -14,6 +14,7 @@ from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
 
 
 async def main():
+    """Run the PostgreSQL session example."""
     # Get connection details from environment (set in docker-compose.yml)
     pg_user = os.getenv("POSTGRES_USER", "postgres")
     pg_password = os.getenv("POSTGRES_PASSWORD", "postgres")

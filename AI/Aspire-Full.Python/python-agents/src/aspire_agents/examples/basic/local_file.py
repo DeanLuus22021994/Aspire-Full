@@ -1,3 +1,7 @@
+"""
+This module demonstrates using a local file with an agent.
+"""
+
 import asyncio
 import base64
 import os

@@ -6,10 +6,9 @@ import asyncio
 import queue
 import sys
 import threading
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-import sounddevice as sd
 from agents import function_tool
 from agents.realtime import (
     RealtimeAgent,
@@ -20,6 +19,34 @@ from agents.realtime import (
 )
 from agents.realtime.model import RealtimeModelConfig
 from aspire_agents.gpu import ensure_tensor_core_gpu
+
+if TYPE_CHECKING:
+
+    class SoundDeviceInputStream:
+        read_available: int
+        active: bool
+
+        def start(self) -> None: ...
+        def stop(self) -> None: ...
+        def close(self) -> None: ...
+        def read(self, frames: int) -> tuple[np.ndarray, bool]: ...
+
+    class SoundDeviceOutputStream:
+        active: bool
+
+        def start(self) -> None: ...
+        def stop(self) -> None: ...
+        def close(self) -> None: ...
+
+    class SoundDeviceModule:
+        InputStream: type[SoundDeviceInputStream]
+        OutputStream: type[SoundDeviceOutputStream]
+
+        def query_devices(self, kind: str = "") -> dict[str, Any]: ...
+
+    sd: SoundDeviceModule
+else:
+    import sounddevice as sd
 
 # Audio configuration
 CHUNK_LENGTH_S = 0.04  # 40ms aligns with realtime defaults
@@ -66,8 +93,12 @@ class NoUIDemo:
 
     def __init__(self) -> None:
         self.session: RealtimeSession | None = None
-        self.audio_stream: sd.InputStream | None = None
-        self.audio_player: sd.OutputStream | None = None
+        if TYPE_CHECKING:
+            self.audio_stream: SoundDeviceInputStream | None = None
+            self.audio_player: SoundDeviceOutputStream | None = None
+        else:
+            self.audio_stream: sd.InputStream | None = None
+            self.audio_player: sd.OutputStream | None = None
         self.recording = False
 
         # Playback tracker lets the model know our real playback progress
@@ -86,11 +117,13 @@ class NoUIDemo:
         self.prebuffering = True
         self.prebuffer_target_chunks = PREBUFFER_CHUNKS
         self.fading = False
-        self.fade_total_samples = 0
-        self.fade_done_samples = 0
+        self.fade_total_samples: int = 0
+        self.fade_done_samples: int = 0
         self.fade_samples = int(SAMPLE_RATE * (FADE_OUT_MS / 1000.0))
 
-    def _output_callback(self, outdata, _frames: int, _time, status) -> None:
+    def _output_callback(
+        self, outdata: np.ndarray, _frames: int, _time: Any, status: Any
+    ) -> None:
         """Callback for audio output - handles continuous audio stream from server."""
         if status:
             print(f"Output callback status: {status}")
@@ -235,14 +268,17 @@ class NoUIDemo:
 
         # Initialize audio player with callback
         chunk_size = int(SAMPLE_RATE * CHUNK_LENGTH_S)
-        self.audio_player = sd.OutputStream(
-            channels=CHANNELS,
-            samplerate=SAMPLE_RATE,
-            dtype=FORMAT,
-            callback=self._output_callback,
-            blocksize=chunk_size,  # Match our chunk timing for better alignment
-        )
-        self.audio_player.start()
+        if TYPE_CHECKING:
+            self.audio_player = cast(SoundDeviceOutputStream, None)
+        else:
+            self.audio_player = sd.OutputStream(
+                channels=CHANNELS,
+                samplerate=SAMPLE_RATE,
+                dtype=FORMAT,
+                callback=self._output_callback,
+                blocksize=chunk_size,  # Match our chunk timing for better alignment
+            )
+            self.audio_player.start()
 
         try:
             runner = RealtimeRunner(agent)
@@ -283,13 +319,16 @@ class NoUIDemo:
     async def start_audio_recording(self) -> None:
         """Start recording audio from the microphone."""
         # Set up audio input stream
-        self.audio_stream = sd.InputStream(
-            channels=CHANNELS,
-            samplerate=SAMPLE_RATE,
-            dtype=FORMAT,
-        )
+        if TYPE_CHECKING:
+            self.audio_stream = cast(SoundDeviceInputStream, None)
+        else:
+            self.audio_stream = sd.InputStream(
+                channels=CHANNELS,
+                samplerate=SAMPLE_RATE,
+                dtype=FORMAT,
+            )
+            self.audio_stream.start()
 
-        self.audio_stream.start()
         self.recording = True
 
         # Start audio capture task

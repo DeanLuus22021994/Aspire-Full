@@ -1,13 +1,16 @@
+"""
+This example demonstrates how to use the hosted MCP support in the OpenAI Responses API, with
+approvals not required for any tools. You should only use this for trusted MCP servers.
+"""
+
 import argparse
 import asyncio
 
 from agents import Agent, HostedMCPTool, Runner
 
-"""This example demonstrates how to use the hosted MCP support in the OpenAI Responses API, with
-approvals not required for any tools. You should only use this for trusted MCP servers."""
-
 
 async def main(verbose: bool, stream: bool):
+    """Run the hosted MCP example."""
     agent = Agent(
         name="Assistant",
         tools=[
@@ -31,7 +34,8 @@ async def main(verbose: bool, stream: bool):
     else:
         res = await Runner.run(
             agent,
-            "Which language is this repo written in? Your MCP server should know what the repo is.",
+            "Which language is this repo written in? Your MCP server should know "
+            "what the repo is.",
         )
         print(res.final_output)
         # The repository is primarily written in multiple languages, including Rust and TypeScript...
