@@ -5,7 +5,7 @@ using Aspire_Full.Pipeline.Utils;
 
 namespace Aspire_Full.Pipeline.Modules.Dev;
 
-public class DevModule : IModule
+public class DevModule
 {
     private const string PidFileName = ".aspire.pid";
 
