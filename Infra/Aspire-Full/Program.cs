@@ -198,46 +198,46 @@ void ConfigureGateway<T>(IResourceBuilder<T> gateway) where T : IResourceWithEnv
            .WaitFor(qdrant);
 }
 
-void ConfigureFrontend<T, U>(IResourceBuilder<T> frontend, IResourceBuilder<U> api)
-    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-    where U : IResourceWithEndpoints
-{
-    frontend.WithReference(api.GetEndpoint("http"));
-    ((dynamic)frontend).WaitFor(api);
-}
+//void ConfigureFrontend<T, U>(IResourceBuilder<T> frontend, IResourceBuilder<U> api)
+//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+//    where U : IResourceWithEndpoints
+//{
+//    frontend.WithReference(api.GetEndpoint("http"));
+//    ((dynamic)frontend).WaitFor(api);
+//}
 
-void ConfigureWasmDocs<T, U>(IResourceBuilder<T> wasmDocs, IResourceBuilder<U> api)
-    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-    where U : IResourceWithEndpoints
-{
-    wasmDocs.WithReference(api.GetEndpoint("http"));
-    ((dynamic)wasmDocs).WaitFor(api);
+//void ConfigureWasmDocs<T, U>(IResourceBuilder<T> wasmDocs, IResourceBuilder<U> api)
+//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+//    where U : IResourceWithEndpoints
+//{
+//    wasmDocs.WithReference(api.GetEndpoint("http"));
+//    ((dynamic)wasmDocs).WaitFor(api);
+//
+//    wasmDocs.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "docs")
+//            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5175");
+//}
 
-    wasmDocs.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "docs")
-            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5175");
-}
+//void ConfigureWasmUat<T, U>(IResourceBuilder<T> wasmUat, IResourceBuilder<U> api)
+//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+//    where U : IResourceWithEndpoints
+//{
+//    wasmUat.WithReference(api.GetEndpoint("http"));
+//    ((dynamic)wasmUat).WaitFor(api);
+//
+//    wasmUat.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "uat")
+//           .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5176");
+//}
 
-void ConfigureWasmUat<T, U>(IResourceBuilder<T> wasmUat, IResourceBuilder<U> api)
-    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-    where U : IResourceWithEndpoints
-{
-    wasmUat.WithReference(api.GetEndpoint("http"));
-    ((dynamic)wasmUat).WaitFor(api);
-
-    wasmUat.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "uat")
-           .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5176");
-}
-
-void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> api)
-    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-    where U : IResourceWithEndpoints
-{
-    wasmProd.WithReference(api.GetEndpoint("http"));
-    ((dynamic)wasmProd).WaitFor(api);
-
-    wasmProd.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "prod")
-            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5177");
-}
+//void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> api)
+//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
+//    where U : IResourceWithEndpoints
+//{
+//    wasmProd.WithReference(api.GetEndpoint("http"));
+//    ((dynamic)wasmProd).WaitFor(api);
+//
+//    wasmProd.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "prod")
+//            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5177");
+//}
 
 void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
 {
