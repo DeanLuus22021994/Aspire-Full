@@ -16,6 +16,7 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__aspiredb=Host=postgres;Database=aspiredb;Username=postgres;Password=postgres
       - ConnectionStrings__redis=redis:6379
+      - DockerRegistry__BaseAddress=http://registry:5000/
     ports:
       - "5000:8080"
     depends_on:
