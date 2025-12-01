@@ -1,5 +1,4 @@
 using Aspire_Full.VectorStore;
-using Qdrant.Client.Grpc;
 
 namespace Aspire_Full.Gateway.Services;
 
