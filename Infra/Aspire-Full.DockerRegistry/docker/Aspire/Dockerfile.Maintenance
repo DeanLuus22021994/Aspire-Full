@@ -1,26 +1,32 @@
 # Syntax=docker/dockerfile:1
+# =============================================================================
+# Maintenance Image: TensorCore-Optimized for Package Compilation
+# Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN for dependency resolution
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS maintenance
 
-# Maintenance Image: Tensor-Optimized for Package Compilation & Dependency Resolution
-# Uses NVIDIA CUDA Devel image to ensure CUDA libraries are available for source builds of PyTorch/NumPy
-FROM nvidia/cuda:13.0.0-devel-ubuntu24.04 AS maintenance
-
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=0 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    UV_LINK_MODE=copy
+# Python 3.15 Free-Threading + TensorCore Configuration
+ENV PYTHON_GIL=0
+ENV PYTHON_JIT=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=0
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV UV_LINK_MODE=copy
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 WORKDIR /workspace
 
-# Install Python 3.14 (Bleeding Edge) and system dependencies
+# Enable apt caching for faster rebuilds
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Install system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    python3-pip \
     build-essential \
     git \
     curl \
@@ -29,16 +35,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
+# Install uv (Astral's ultra-fast Python package manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install Python 3.14t via uv
-RUN uv python install 3.14t
+# Install Python 3.15t (free-threaded)
+RUN uv python install 3.15t
 
-# Environment variables for strict GPU usage during compilation
-ENV NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-    TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9 9.0+PTX"
+# Named volumes for cache persistence across builds
+VOLUME ["/root/.cache/uv", "/root/.cache/huggingface", "/workspace"]
 
-# Default command: Run uv lock with upgrade and prerelease
+# Default command: Run uv lock with upgrade
 CMD ["uv", "lock", "--upgrade", "--prerelease=allow"]

@@ -13,6 +13,10 @@ COPY tools/github-mcp .
 RUN npm run build && npm prune --omit=dev
 
 FROM node:22-slim AS runtime
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Full GitHub MCP Server (CPU)"
+LABEL org.opencontainers.image.licenses="MIT"
+
 WORKDIR /opt/github-mcp
 ENV NODE_ENV=production \
     GITHUB_MCP_PORT=17071
@@ -29,6 +33,9 @@ COPY --from=base /workspace/tools/github-mcp/node_modules ./node_modules
 COPY tools/github-mcp/README.md ./README.md
 
 USER node
+
+# Named volumes for persistence across builds
+VOLUME ["/opt/github-mcp/data", "/var/log/github-mcp", "/home/node/.cache/github-mcp"]
 
 EXPOSE 17071
 ENTRYPOINT ["/usr/bin/tini", "--"]

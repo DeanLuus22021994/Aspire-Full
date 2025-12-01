@@ -1,9 +1,18 @@
-FROM nvidia/cuda:12.6.0-devel-ubuntu24.04
+# =============================================================================
+# Base Native Image with CUDA 13.0 TensorCore Support
+# CMake + Ninja + CUDA for native library compilation
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Base Native Image"
+LABEL org.opencontainers.image.description="Aspire Full Base Native Image with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Enable apt caching
+# TensorCore Configuration
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+# Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install CMake 3.28 (stable) and build tools

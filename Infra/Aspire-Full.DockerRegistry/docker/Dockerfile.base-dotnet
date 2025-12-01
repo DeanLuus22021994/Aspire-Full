@@ -1,16 +1,31 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0
+# =============================================================================
+# Base .NET 10 Image with CUDA TensorCore Support
+# .NET 10 SDK for Aspire applications
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Base .NET Image"
+LABEL org.opencontainers.image.description="Aspire Full Base .NET Image with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Enable apt caching
+# TensorCore Configuration
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_NOLOGO=1
+
+# Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Install .NET 10 Preview SDK
+# Install .NET 10 SDK
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y wget && \
+    apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && \
     wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh && \
     chmod +x dotnet-install.sh && \
-    ./dotnet-install.sh --channel 10.0 --quality preview --install-dir /usr/share/dotnet
+    ./dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet && \
+    rm dotnet-install.sh && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV DOTNET_ROOT=/usr/share/dotnet
 ENV PATH="/usr/share/dotnet:$PATH"

@@ -1,20 +1,34 @@
-FROM nvidia/cuda:13.0.0-devel-ubuntu24.04
+# =============================================================================
+# NVIDIA CUDA 13.0 Development Image with TensorCore Support
+# Base image for CUDA kernel development and native library builds
+# =============================================================================
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full NVIDIA CUDA 13.0 Development Image"
+LABEL org.opencontainers.image.description="Aspire Full NVIDIA CUDA 13.0 with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Enable apt caching
+# TensorCore Configuration for all GPU architectures
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+ENV NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545"
+
+# Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Install basic build tools
+# Install build tools with cache mount
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
+    ninja-build \
     git \
     wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Named volume mount points for build artifacts
+VOLUME ["/build/cache", "/build/output"]
 
 CMD ["/bin/bash"]

@@ -28,15 +28,20 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "Aspire-Full.Api.csproj" -c Release -r linux-x64 --self-contained true -o /app/publish /p:UseAppHost=true
 
-# Stage 3: Runtime
-FROM nvidia/cuda:12.6.0-runtime-ubuntu24.04 AS final
+# Stage 3: Runtime with TensorCore Support
+FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS final
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full API with Docker Registry Integration"
+LABEL org.opencontainers.image.description="Aspire Full API with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+
+# TensorCore Configuration
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 WORKDIR /app
 
-# Enable apt caching
+# Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install .NET Runtime Dependencies (Self-contained app needs these)
@@ -58,6 +63,9 @@ COPY --from=dotnet-build --chown=appuser:appuser /app/publish .
 # Configure Environment
 ENV LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH"
 ENV ASPNETCORE_URLS="http://+:8080"
+
+# Named volumes for persistence across builds
+VOLUME ["/app/data", "/app/logs"]
 
 USER appuser
 
