@@ -20,16 +20,17 @@ COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/py
 
 # Install dependencies
 # We use --system because we are in a container
+# We use --prerelease=allow to ensure we get the latest bleeding edge versions compatible with 3.14
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv export --frozen --format requirements-txt --extra tracing --no-emit-project --output-file requirements.txt && \
-    uv pip install --system --no-cache-dir -r requirements.txt
+    uv pip install --system --no-cache-dir --prerelease=allow -r requirements.txt
 
 # Copy source code
 COPY AI/Aspire-Full.Python/python-agents/ .
 
 # Install the project itself
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --no-cache-dir -e .[tracing]
+    uv pip install --system --no-cache-dir --prerelease=allow -e .[tracing]
 
 # Pre-download models for instant readiness
 # This runs the script we just created to cache models in the image

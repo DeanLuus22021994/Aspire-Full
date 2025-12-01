@@ -1,5 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM python:3.13-bookworm
+FROM python:3.14.0a3-bookworm
+
+# Enable Python 3.14 Free-Threading
+# ENV PYTHON_GIL=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies for Playwright and general build tools
 # We install these in a separate layer to cache them effectively
