@@ -3,7 +3,7 @@ services:
     build:
       context: ..
       dockerfile: Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Api
-    image: aspire-full-api:native-nvidia
+    image: localhost:5001/aspire/api-dev:1.0.0-linux-x64
     deploy:
       resources:
         reservations:
@@ -46,3 +46,7 @@ volumes:
   aspire-postgres-data:
   aspire-redis-data:
   aspire-registry-data:
+  aspire-nuget-cache:
+  aspire-pip-cache:
+  aspire-apt-cache:
+  aspire-model-cache:
