@@ -40,7 +40,7 @@ public static class UserEndpoints
         [FromBody] CreateUserDto dto,
         GatewayDbContext db,
         IEmbeddingService embeddingService,
-        IVectorStoreService vectorStore,
+        IUserVectorService vectorStore,
         ILogger<Program> logger)
     {
         var existingUser = await db.Users
@@ -91,7 +91,7 @@ public static class UserEndpoints
         return TypedResults.Ok(UserResponseDto.FromUser(user));
     }
 
-    static async Task<IResult> DownsertUser(int id, GatewayDbContext db, IVectorStoreService vectorStore)
+    static async Task<IResult> DownsertUser(int id, GatewayDbContext db, IUserVectorService vectorStore)
     {
         var user = await db.Users.FindAsync(id);
         if (user is null)
@@ -122,7 +122,7 @@ public static class UserEndpoints
     static async Task<IResult> SearchUsers(
         [FromBody] string query,
         IEmbeddingService embeddingService,
-        IVectorStoreService vectorStore)
+        IUserVectorService vectorStore)
     {
         var embedding = await embeddingService.GenerateEmbeddingAsync(query);
         var results = await vectorStore.SearchAsync(embedding);
