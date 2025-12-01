@@ -4,10 +4,10 @@ This module demonstrates the usage of the ComputerTool with a local Playwright b
 
 import asyncio
 import base64
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 # pylint: disable=import-error
-from agents import (  # type: ignore
+from agents import (
     Agent,
     AsyncComputer,
     Button,
@@ -17,11 +17,10 @@ from agents import (  # type: ignore
     Runner,
     trace,
 )
-
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore # pylint: disable=import-error
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
-    from playwright.async_api import (  # type: ignore
+    from playwright.async_api import (
         Browser,
         Page,
         Playwright,
@@ -105,7 +104,9 @@ class LocalPlaywrightComputer(AsyncComputer):
         """
         width, height = self.dimensions
         launch_args = [f"--window-size={width},{height}"]
-        browser = await self.playwright.chromium.launch(headless=False, args=launch_args)
+        browser = await self.playwright.chromium.launch(
+            headless=False, args=launch_args
+        )
         page = await browser.new_page()
         await page.set_viewport_size({"width": width, "height": height})
         await page.goto("https://www.bing.com")
@@ -166,7 +167,7 @@ class LocalPlaywrightComputer(AsyncComputer):
 
         # Playwright only supports left, middle, right buttons
         if button in ("left", "right", "middle"):
-            playwright_button = button  # type: ignore
+            playwright_button = cast(Literal["left", "middle", "right"], button)
 
         await self.page.mouse.click(x, y, button=playwright_button)
 

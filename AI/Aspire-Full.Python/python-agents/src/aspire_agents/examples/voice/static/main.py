@@ -4,21 +4,21 @@ This module implements a static voice agent example.
 
 import asyncio
 import random
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
-from agents import Agent, function_tool  # type: ignore # pylint: disable=import-error
-from agents.extensions.handoff_prompt import (  # type: ignore # pylint: disable=import-error
+from agents import Agent, function_tool
+from agents.extensions.handoff_prompt import (
     prompt_with_handoff_instructions,
 )
-from agents.voice import (  # type: ignore # pylint: disable=import-error
+from agents.voice import (
     AudioInput,
     SingleAgentVoiceWorkflow,
     SingleAgentWorkflowCallbacks,
     VoicePipeline,
 )
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 from .util import AudioPlayer, record_audio
 
@@ -44,7 +44,7 @@ def get_weather(city: str) -> str:
     return f"The weather in {city} is {random.choice(choices)}."
 
 
-spanish_agent = Agent(  # type: ignore
+spanish_agent = Agent(
     name="Spanish",
     handoff_description="A spanish speaking agent.",
     instructions=prompt_with_handoff_instructions(
@@ -53,7 +53,7 @@ spanish_agent = Agent(  # type: ignore
     model="gpt-5-mini",
 )
 
-agent = Agent(  # type: ignore
+agent = Agent(
     name="Assistant",
     instructions=prompt_with_handoff_instructions(
         "You're speaking to a human, so be polite and concise. "
@@ -70,9 +70,7 @@ class WorkflowCallbacks(SingleAgentWorkflowCallbacks):
     Callbacks for the workflow.
     """
 
-    def on_run(  # pylint: disable=unused-argument
-        self, workflow: SingleAgentVoiceWorkflow, transcription: str
-    ) -> None:
+    def on_run(self, workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:
         """Callback for when the workflow runs."""
         print(f"[debug] on_run called with transcription: {transcription}")
 
@@ -83,7 +81,9 @@ async def main() -> None:
     """
     ensure_tensor_core_gpu()
 
-    pipeline = VoicePipeline(workflow=SingleAgentVoiceWorkflow(agent, callbacks=WorkflowCallbacks()))
+    pipeline = VoicePipeline(
+        workflow=SingleAgentVoiceWorkflow(agent, callbacks=WorkflowCallbacks())
+    )
 
     audio_input = AudioInput(buffer=record_audio())
 
@@ -93,7 +93,7 @@ async def main() -> None:
         async for event in result.stream():
             if event.type == "voice_stream_event_audio":
                 if event.data is not None:
-                    player.add_audio(cast(np.ndarray[Any, np.dtype[np.int16]], event.data))
+                    player.add_audio(cast(np.ndarray, event.data))
                 print("Received audio")
             elif event.type == "voice_stream_event_lifecycle":
                 print(f"Received lifecycle event: {event.event}")

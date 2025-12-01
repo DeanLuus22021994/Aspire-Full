@@ -4,8 +4,8 @@ This module demonstrates the usage of the FileSearchTool with an Agent.
 
 import asyncio
 
-from agents import Agent, FileSearchTool, Runner, trace  # type: ignore # pylint: disable=import-error
-from openai import OpenAI  # type: ignore # pylint: disable=import-error
+from agents import Agent, FileSearchTool, Runner, trace
+from openai import OpenAI
 
 
 async def main() -> None:
@@ -41,7 +41,10 @@ async def main() -> None:
     # Create an agent that can search the vector store
     agent = Agent(
         name="FileSearch Agent",
-        instructions=("You are a helpful agent. " "You answer only based on the information in the vector store."),
+        instructions=(
+            "You are a helpful agent. "
+            "You answer only based on the information in the vector store."
+        ),
         model="gpt-4o",
         tools=[
             FileSearchTool(
@@ -53,7 +56,9 @@ async def main() -> None:
     )
 
     with trace("File search example"):
-        result = await Runner.run(agent, "Be concise, and tell me 1 sentence about Arrakis I might not know.")
+        result = await Runner.run(
+            agent, "Be concise, and tell me 1 sentence about Arrakis I might not know."
+        )
 
         print("\n### Final output:\n")
         print(result.final_output)

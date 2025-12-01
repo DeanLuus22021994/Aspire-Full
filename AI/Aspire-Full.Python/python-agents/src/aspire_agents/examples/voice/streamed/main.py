@@ -8,15 +8,15 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import sounddevice as sd  # type: ignore # pylint: disable=import-error
-from agents.voice import StreamedAudioInput, VoicePipeline  # type: ignore # pylint: disable=import-error
-from textual import events  # type: ignore # pylint: disable=import-error
-from textual.app import App, ComposeResult  # type: ignore # pylint: disable=import-error
-from textual.containers import Container  # type: ignore # pylint: disable=import-error
-from textual.reactive import reactive  # type: ignore # pylint: disable=import-error
-from textual.widgets import Button, RichLog, Static  # type: ignore # pylint: disable=import-error
+import sounddevice as sd
+from agents.voice import StreamedAudioInput, VoicePipeline
+from textual import events
+from textual.app import App, ComposeResult
+from textual.containers import Container
+from textual.reactive import reactive
+from textual.widgets import Button, RichLog, Static
 
-from aspire_agents.gpu import ensure_tensor_core_gpu  # type: ignore
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 # Import MyWorkflow class - handle both module and package use cases
 if TYPE_CHECKING:
@@ -53,7 +53,9 @@ class AudioStatusIndicator(Static):
 
     def render(self) -> str:
         status = (
-            "🔴 Recording... (Press K to stop)" if self.is_recording else "⚪ Press K to start recording (Q to quit)"
+            "🔴 Recording... (Press K to stop)"
+            if self.is_recording
+            else "⚪ Press K to start recording (Q to quit)"
         )
         return status
 
@@ -133,8 +135,10 @@ class RealtimeApp(App[None]):
         self.should_send_audio = asyncio.Event()
         self.connected = asyncio.Event()
         self.result = None
-        self.pipeline = VoicePipeline(workflow=MyWorkflow(secret_word="dog", on_start=self._on_transcription))
-        self._audio_input = StreamedAudioInput()  # type: ignore [no-untyped-call]
+        self.pipeline = VoicePipeline(
+            workflow=MyWorkflow(secret_word="dog", on_start=self._on_transcription)
+        )
+        self._audio_input = StreamedAudioInput()
         self.audio_player = sd.OutputStream(
             samplerate=SAMPLE_RATE,
             channels=CHANNELS,
@@ -144,8 +148,10 @@ class RealtimeApp(App[None]):
     def _on_transcription(self, transcription: str) -> None:
         """Callback for when transcription is received."""
         try:
-            self.query_one("#bottom-pane", RichLog).write(f"Transcription: {transcription}")
-        except Exception:  # pylint: disable=broad-exception-caught
+            self.query_one("#bottom-pane", RichLog).write(
+                f"Transcription: {transcription}"
+            )
+        except Exception:
             pass
 
     def compose(self) -> ComposeResult:
@@ -175,7 +181,7 @@ class RealtimeApp(App[None]):
                     bottom_pane.write(msg)
                 elif event.type == "voice_stream_event_lifecycle":
                     bottom_pane.write(f"Lifecycle event: {event.event}")
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             bottom_pane = self.query_one("#bottom-pane", RichLog)
             bottom_pane.write(f"Error: {e}")
         finally:

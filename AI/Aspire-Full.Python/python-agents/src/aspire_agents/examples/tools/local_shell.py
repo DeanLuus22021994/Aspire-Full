@@ -6,7 +6,7 @@ import asyncio
 import os
 import subprocess
 
-from agents import (  # type: ignore # pylint: disable=import-error
+from agents import (
     Agent,
     LocalShellCommandRequest,
     LocalShellTool,

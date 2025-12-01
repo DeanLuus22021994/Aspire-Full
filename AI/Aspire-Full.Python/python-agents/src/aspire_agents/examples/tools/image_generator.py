@@ -5,14 +5,14 @@ import subprocess
 import sys
 import tempfile
 
-from agents import Agent, ImageGenerationTool, Runner, trace  # type: ignore # pylint: disable=import-error
+from agents import Agent, ImageGenerationTool, Runner, trace
 
 
 def open_file(path: str) -> None:
     if sys.platform.startswith("darwin"):
         subprocess.run(["open", path], check=False)  # macOS
     elif os.name == "nt":  # Windows
-        os.startfile(path)  # type: ignore
+        os.startfile(path)
     elif os.name == "posix":
         subprocess.run(["xdg-open", path], check=False)  # Linux/Unix
     else:
@@ -35,7 +35,9 @@ async def main() -> None:
 
     with trace("Image generation example"):
         print("Generating image, this may take a while...")
-        result = await Runner.run(agent, "Create an image of a frog eating a pizza, comic book style.")
+        result = await Runner.run(
+            agent, "Create an image of a frog eating a pizza, comic book style."
+        )
         print(result.final_output)
         for item in result.new_items:
             if (

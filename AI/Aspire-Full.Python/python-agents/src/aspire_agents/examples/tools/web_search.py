@@ -4,7 +4,7 @@ This module demonstrates the usage of the WebSearchTool with an Agent.
 
 import asyncio
 
-from agents import Agent, Runner, WebSearchTool, trace  # type: ignore # pylint: disable=import-error
+from agents import Agent, Runner, WebSearchTool, trace
 
 
 async def main() -> None:
@@ -14,7 +14,9 @@ async def main() -> None:
     agent = Agent(
         name="Web searcher",
         instructions="You are a helpful agent.",
-        tools=[WebSearchTool(user_location={"type": "approximate", "city": "New York"})],
+        tools=[
+            WebSearchTool(user_location={"type": "approximate", "city": "New York"})
+        ],
     )
 
     with trace("Web search example"):
