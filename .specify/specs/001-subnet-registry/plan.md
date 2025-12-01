@@ -11,6 +11,6 @@
     - [x] Create `scripts/provision-agents.ps1` (Build & Push script).
 
 - [ ] **Phase 3: Integration**
-    - [ ] Update `Aspire-Full/AppHost.cs` to use the containerized agent.
+    - [x] Update `Aspire-Full/AppHost.cs` to use the containerized agent.
     - [ ] Verify GPU access inside container.
     - [ ] Verify "Instant Readiness" (measure startup time).
