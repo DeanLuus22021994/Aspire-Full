@@ -17,29 +17,29 @@ var settings = ConfigLoader.LoadSettings(".aspire/settings.json");
 var runtimeConfig = ConfigLoader.LoadRuntimeConfig(".config/config.yaml");
 
 // External network for container-to-container communication
-const string networkName = "aspire-network";
-const string dockerDebuggerImage = "docker/debugger:latest";
+const string networkName = AppHostConstants.NetworkName;
+const string dockerDebuggerImage = AppHostConstants.Images.DockerDebugger;
 
 // -----------------------------------------------------------------------------
 // Dev Infrastructure - Docker-in-Docker daemon + dashboard + devcontainer
 // -----------------------------------------------------------------------------
-var dockerDaemon = builder.AddContainer("docker", "docker:27-dind")
-    .WithVolume("aspire-docker-data", "/var/lib/docker")
-    .WithVolume("aspire-docker-certs", "/certs")
+var dockerDaemon = builder.AddContainer(AppHostConstants.Resources.DockerDaemon, AppHostConstants.Images.DockerDind)
+    .WithVolume(AppHostConstants.Volumes.DockerData, "/var/lib/docker")
+    .WithVolume(AppHostConstants.Volumes.DockerCerts, "/certs")
     .WithEnvironment("DOCKER_TLS_CERTDIR", "/certs")
     .WithContainerRuntimeArgs("--host=tcp://0.0.0.0:2376", "--host=unix:///var/run/docker.sock")
     .WithContainerRuntimeArgs("--network", networkName)
-    .WithHttpEndpoint(name: "engine", port: 2376, targetPort: 2376)
+    .WithHttpEndpoint(name: "engine", port: AppHostConstants.Ports.DockerEngine, targetPort: 2376)
     .WithLifetime(ContainerLifetime.Persistent);
 
-var dockerDebugger = builder.AddContainer("docker-debugger", dockerDebuggerImage)
+var dockerDebugger = builder.AddContainer(AppHostConstants.Resources.DockerDebugger, dockerDebuggerImage)
     .WaitFor(dockerDaemon)
-    .WithVolume("aspire-docker-certs", "/certs")
-    .WithEnvironment("DOCKER_HOST", "tcp://docker:2376")
+    .WithVolume(AppHostConstants.Volumes.DockerCerts, "/certs")
+    .WithEnvironment("DOCKER_HOST", $"tcp://{AppHostConstants.Resources.DockerDaemon}:2376")
     .WithEnvironment("DOCKER_TLS_VERIFY", "1")
     .WithEnvironment("DOCKER_CERT_PATH", "/certs/client")
     .WithEnvironment("DOCKER_DEBUGGER_TARGET_NETWORK", networkName)
-    .WithHttpEndpoint(name: "debugger-ui", port: 9393, targetPort: 9393)
+    .WithHttpEndpoint(name: "debugger-ui", port: AppHostConstants.Ports.DockerDebuggerUi, targetPort: 9393)
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
