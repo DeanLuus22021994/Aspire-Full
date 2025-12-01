@@ -151,4 +151,82 @@ RUNNER_GROUP=Default
 
         await ProcessUtils.RunAsync("docker", args.ToArray(), workDir, silent: false);
     }
+
+    private async Task EnsureGhExtensionAsync(string extensionName)
+    {
+        var (code, output) = await ProcessUtils.RunAsync("gh", ["extension", "list"], silent: true);
+        if (!output.Contains(extensionName))
+        {
+            AnsiConsole.MarkupLine($"[yellow]Installing gh extension: {extensionName}...[/]");
+            await ProcessUtils.RunAsync("gh", ["extension", "install", extensionName], silent: false);
+        }
+    }
+
+    private async Task<string> GetGhRepoAsync()
+    {
+        var (code, output) = await ProcessUtils.RunAsync("gh", ["repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"], silent: true);
+        return output.Trim();
+    }
+
+    private async Task CacheListAsync()
+    {
+        await EnsureGhExtensionAsync("actions/gh-actions-cache");
+        var repo = await GetGhRepoAsync();
+        AnsiConsole.MarkupLine($"[yellow]Listing caches for {repo}...[/]");
+        await ProcessUtils.RunAsync("gh", ["actions-cache", "list", "-R", repo], silent: false);
+    }
+
+    private async Task CacheDeleteAsync(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            AnsiConsole.MarkupLine("[red]Cache key is required. Use --key <key>[/]");
+            return;
+        }
+
+        await EnsureGhExtensionAsync("actions/gh-actions-cache");
+        var repo = await GetGhRepoAsync();
+        AnsiConsole.MarkupLine($"[yellow]Deleting cache {key} from {repo}...[/]");
+        await ProcessUtils.RunAsync("gh", ["actions-cache", "delete", key, "-R", repo, "--confirm"], silent: false);
+    }
+
+    private async Task CacheClearAsync()
+    {
+        await EnsureGhExtensionAsync("actions/gh-actions-cache");
+        var repo = await GetGhRepoAsync();
+
+        if (!AnsiConsole.Confirm($"Are you sure you want to clear ALL caches for {repo}?")) return;
+
+        AnsiConsole.MarkupLine($"[red]Clearing all caches for {repo}...[/]");
+
+        // List keys first
+        var (code, output) = await ProcessUtils.RunAsync("gh", ["actions-cache", "list", "-R", repo, "--json", "key", "-q", ".[].key"], silent: true);
+        var keys = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var key in keys)
+        {
+            AnsiConsole.MarkupLine($"Deleting {key}...");
+            await ProcessUtils.RunAsync("gh", ["actions-cache", "delete", key, "-R", repo, "--confirm"], silent: false);
+        }
+        AnsiConsole.MarkupLine("[green]All caches cleared.[/]");
+    }
+
+    private async Task GenerateSbomAsync(string output)
+    {
+        await EnsureGhExtensionAsync("advanced-security/gh-sbom");
+        var repo = await GetGhRepoAsync();
+        AnsiConsole.MarkupLine($"[cyan]Generating SBOM for {repo}...[/]");
+
+        // gh sbom outputs to stdout, we need to capture it
+        var (code, sbomContent) = await ProcessUtils.RunAsync("gh", ["sbom", "-r", repo], silent: true);
+
+        if (code != 0)
+        {
+            AnsiConsole.MarkupLine("[red]Failed to generate SBOM.[/]");
+            return;
+        }
+
+        await File.WriteAllTextAsync(output, sbomContent);
+        AnsiConsole.MarkupLine($"[green]SBOM generated: {output}[/]");
+    }
 }
