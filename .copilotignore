@@ -4,12 +4,14 @@ obj/
 out/
 publish/
 artifacts/
-Aspire-Full.Tensor/build/
+AI/Aspire-Full.Tensor/build/
 
 # Dependencies
 node_modules/
 packages/
+.venv/
 *.nupkg
+*.lock
 
 # Binary files
 *.dll
@@ -40,6 +42,12 @@ Thumbs.db
 .idea/
 *.suo
 *.user
+.vscode/
 
-# Generated code (optional, depending on preference)
-# **/Migrations/
+# Generated code
+**/Migrations/
+**/wwwroot/
+TestResults/
+coverage/
+.aspire/
+

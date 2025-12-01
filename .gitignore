@@ -66,7 +66,7 @@ __pycache__/
 *.onnx
 
 # Native Build Artifacts
-Aspire-Full.Tensor/build/
+AI/Aspire-Full.Tensor/build/
 *.so
 *.dylib
 *.dll
