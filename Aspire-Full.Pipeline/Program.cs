@@ -11,15 +11,8 @@ Console.Title = "Aspire-Full.Pipeline";
 
 var rootCommand = new RootCommand("Aspire-Full Pipeline Tool");
 
-// Command: Discover
-var discoverCommand = new Command("discover", "Discover environment and tools");
-discoverCommand.SetHandler(async () =>
-{
-    await new DiscoveryModule().RunAsync();
-});
-rootCommand.AddCommand(discoverCommand);
-
 // Register Modules
+rootCommand.AddCommand(new DiscoveryModule().GetCommand());
 rootCommand.AddCommand(new InfraModule().GetCommand());
 rootCommand.AddCommand(new CiModule().GetCommand());
 rootCommand.AddCommand(new DevModule().GetCommand());

@@ -17,18 +17,18 @@ public class DocsService
 
             // Build first
             AnsiConsole.MarkupLine("Building project...");
-            await ProcessUtils.RunAsync("dotnet", ["build", PathConstants.SolutionFilter, "--configuration", "Release"], root, silent: false);
+            await ProcessUtils.RunAsync(CliConstants.Dotnet, ["build", PathConstants.SolutionFilter, "--configuration", "Release"], root, silent: false);
 
-            var dllPath = Path.Combine(root, "Aspire-Full", "bin", "Release", "net10.0", "Aspire-Full.dll");
-            var outputPath = Path.Combine(root, "docs", "api");
+            var dllPath = Path.Combine(root, PathConstants.AspireFullDll);
+            var outputPath = Path.Combine(root, PathConstants.ApiDocsDir);
 
             if (File.Exists(dllPath))
             {
                 // Check xmldoc2md
-                await ProcessUtils.RunAsync("dotnet", ["tool", "install", "-g", "XMLDoc2Markdown"], silent: true);
+                await ProcessUtils.RunAsync(CliConstants.Dotnet, ["tool", "install", "-g", "XMLDoc2Markdown"], silent: true);
 
                 AnsiConsole.MarkupLine($"Generating docs to {outputPath}...");
-                await ProcessUtils.RunAsync("xmldoc2md", [dllPath, "--output", outputPath, "--github-pages", "--back-button", "--structure", "tree"], root, silent: false);
+                await ProcessUtils.RunAsync(CliConstants.XmlDoc2Md, [dllPath, "--output", outputPath, "--github-pages", "--back-button", "--structure", "tree"], root, silent: false);
                 AnsiConsole.MarkupLine("[green]API docs generated.[/]");
             }
             else
@@ -138,6 +138,6 @@ public class DocsService
         }
 
         AnsiConsole.MarkupLine("[cyan]Generating Changelog...[/]");
-        await ProcessUtils.RunAsync("gh", args.ToArray(), root, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Gh, args.ToArray(), root, silent: false);
     }
 }

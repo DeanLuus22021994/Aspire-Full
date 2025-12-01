@@ -13,29 +13,29 @@ public class DevModule
         var command = new Command(CommandConstants.Dev.Name, CommandConstants.Dev.Description);
 
         // Start
-        var startCommand = new Command(CommandConstants.Dev.Start, "Start Aspire AppHost");
+        var startCommand = new Command(CommandConstants.Dev.Start, CommandConstants.Dev.StartDesc);
         var waitOption = new Option<bool>(["--wait", "-w"], "Wait for process to exit (blocking)");
         startCommand.AddOption(waitOption);
         startCommand.SetHandler(async (wait) => await _service.StartAspireAsync(wait), waitOption);
         command.AddCommand(startCommand);
 
         // Stop
-        var stopCommand = new Command(CommandConstants.Dev.Stop, "Stop Aspire AppHost");
+        var stopCommand = new Command(CommandConstants.Dev.Stop, CommandConstants.Dev.StopDesc);
         stopCommand.SetHandler(async () => await _service.StopAspireAsync());
         command.AddCommand(stopCommand);
 
         // Status
-        var statusCommand = new Command(CommandConstants.Dev.Status, "Check Aspire AppHost status");
+        var statusCommand = new Command(CommandConstants.Dev.Status, CommandConstants.Dev.StatusDesc);
         statusCommand.SetHandler(async () => await _service.StatusAspireAsync());
         command.AddCommand(statusCommand);
 
         // Build
-        var buildCommand = new Command(CommandConstants.Dev.Build, "Build the solution with GPU optimizations");
+        var buildCommand = new Command(CommandConstants.Dev.Build, CommandConstants.Dev.BuildDesc);
         buildCommand.SetHandler(async () => await _service.BuildSolutionAsync());
         command.AddCommand(buildCommand);
 
         // Test
-        var testCommand = new Command(CommandConstants.Dev.Test, "Run tests");
+        var testCommand = new Command(CommandConstants.Dev.Test, CommandConstants.Dev.TestDesc);
         var unitOption = new Option<bool>(["--unit", "-u"], "Run unit tests only");
         var e2eOption = new Option<bool>(["--e2e", "-e"], "Run E2E tests only");
         var aspireOption = new Option<bool>(["--aspire", "-a"], "Run Aspire integration tests only");
@@ -54,7 +54,7 @@ public class DevModule
         command.AddCommand(testCommand);
 
         // Cleanup
-        var cleanupCommand = new Command(CommandConstants.Dev.Cleanup, "Clean up local branches");
+        var cleanupCommand = new Command(CommandConstants.Dev.Cleanup, CommandConstants.Dev.CleanupDesc);
         var dryRunOption = new Option<bool>(["--dry-run", "-n"], "Dry run");
         var forceOption = new Option<bool>(["--force", "-f"], "Force delete");
 

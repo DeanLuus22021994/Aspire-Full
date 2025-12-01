@@ -18,15 +18,7 @@ public class CiService
 
         // Ensure Infra (Network and Volumes)
         await DockerUtils.CreateNetworkAsync(DockerConstants.NetworkName);
-        await DockerUtils.CreateVolumeAsync("github-runner-data"); // This one wasn't in DockerConstants, maybe I should add it or just leave it here if it's specific.
-        // Actually "aspire-runner-data" is in DockerConstants. "github-runner-data" seems to be a mistake in CiModule or a different one.
-        // Looking at InfraModule, it had "aspire-runner-data".
-        // Looking at CiModule, it had "github-runner-data".
-        // I should probably standardize. Let's use "aspire-runner-data" if possible, or stick to what was there if it matters.
-        // The docker-compose.yml likely uses "github-runner-data" or similar.
-        // I'll stick to what was in CiModule for now to avoid breaking changes, but I should probably check docker-compose.yml.
-        // For now, I'll just use the string literal or add it to constants if I want to be strict.
-        // I'll add it to DockerConstants as a separate one if needed, or just use "github-runner-data".
+        await DockerUtils.CreateVolumeAsync(DockerConstants.Volume.RunnerData);
 
         // Create .env file
         var root = GitUtils.GetRepositoryRoot();
@@ -53,7 +45,7 @@ RUNNER_GROUP=Default
         var workDir = Path.GetDirectoryName(composeFile)!;
 
         AnsiConsole.MarkupLine("[green]Starting runner service...[/]");
-        await ProcessUtils.RunAsync("docker", ["compose", "up", "-d", DockerConstants.RunnerContainerName], workDir, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Docker, ["compose", "up", "-d", DockerConstants.RunnerContainerName], workDir, silent: false);
     }
 
     public async Task StopRunnerAsync()
@@ -63,7 +55,7 @@ RUNNER_GROUP=Default
         var workDir = Path.GetDirectoryName(composeFile)!;
 
         AnsiConsole.MarkupLine("[yellow]Stopping runner service...[/]");
-        await ProcessUtils.RunAsync("docker", ["compose", "stop", DockerConstants.RunnerContainerName], workDir, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Docker, ["compose", "stop", DockerConstants.RunnerContainerName], workDir, silent: false);
     }
 
     public async Task StatusRunnerAsync()
@@ -72,7 +64,7 @@ RUNNER_GROUP=Default
         var composeFile = Path.Combine(root, PathConstants.DevContainerCompose);
         var workDir = Path.GetDirectoryName(composeFile)!;
 
-        await ProcessUtils.RunAsync("docker", ["compose", "ps", DockerConstants.RunnerContainerName], workDir, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Docker, ["compose", "ps", DockerConstants.RunnerContainerName], workDir, silent: false);
     }
 
     public async Task LogsRunnerAsync(bool follow)
@@ -86,7 +78,7 @@ RUNNER_GROUP=Default
         else args.AddRange(["--tail", "100"]);
         args.Add(DockerConstants.RunnerContainerName);
 
-        await ProcessUtils.RunAsync("docker", args.ToArray(), workDir, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Docker, args.ToArray(), workDir, silent: false);
     }
 
     public async Task CacheListAsync()
@@ -94,7 +86,7 @@ RUNNER_GROUP=Default
         await GhUtils.EnsureExtensionAsync("actions/gh-actions-cache");
         var repo = await GhUtils.GetRepoAsync();
         AnsiConsole.MarkupLine($"[yellow]Listing caches for {repo}...[/]");
-        await ProcessUtils.RunAsync("gh", ["actions-cache", "list", "-R", repo], silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Gh, ["actions-cache", "list", "-R", repo], silent: false);
     }
 
     public async Task CacheDeleteAsync(string key)
@@ -108,7 +100,7 @@ RUNNER_GROUP=Default
         await GhUtils.EnsureExtensionAsync("actions/gh-actions-cache");
         var repo = await GhUtils.GetRepoAsync();
         AnsiConsole.MarkupLine($"[yellow]Deleting cache {key} from {repo}...[/]");
-        await ProcessUtils.RunAsync("gh", ["actions-cache", "delete", key, "-R", repo, "--confirm"], silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Gh, ["actions-cache", "delete", key, "-R", repo, "--confirm"], silent: false);
     }
 
     public async Task CacheClearAsync()
@@ -121,13 +113,13 @@ RUNNER_GROUP=Default
         AnsiConsole.MarkupLine($"[red]Clearing all caches for {repo}...[/]");
 
         // List keys first
-        var (code, output) = await ProcessUtils.RunAsync("gh", ["actions-cache", "list", "-R", repo, "--json", "key", "-q", ".[].key"], silent: true);
+        var (code, output) = await ProcessUtils.RunAsync(CliConstants.Gh, ["actions-cache", "list", "-R", repo, "--json", "key", "-q", ".[].key"], silent: true);
         var keys = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var key in keys)
         {
             AnsiConsole.MarkupLine($"Deleting {key}...");
-            await ProcessUtils.RunAsync("gh", ["actions-cache", "delete", key, "-R", repo, "--confirm"], silent: false);
+            await ProcessUtils.RunAsync(CliConstants.Gh, ["actions-cache", "delete", key, "-R", repo, "--confirm"], silent: false);
         }
         AnsiConsole.MarkupLine("[green]All caches cleared.[/]");
     }
@@ -139,7 +131,7 @@ RUNNER_GROUP=Default
         AnsiConsole.MarkupLine($"[cyan]Generating SBOM for {repo}...[/]");
 
         // gh sbom outputs to stdout, we need to capture it
-        var (code, sbomContent) = await ProcessUtils.RunAsync("gh", ["sbom", "-r", repo], silent: true);
+        var (code, sbomContent) = await ProcessUtils.RunAsync(CliConstants.Gh, ["sbom", "-r", repo], silent: true);
 
         if (code != 0)
         {
@@ -156,7 +148,7 @@ RUNNER_GROUP=Default
         await GhUtils.EnsureExtensionAsync("nektos/gh-act");
 
         // Check Docker
-        var (code, _) = await ProcessUtils.RunAsync("docker", ["info"], silent: true);
+        var (code, _) = await ProcessUtils.RunAsync(CliConstants.Docker, ["info"], silent: true);
         if (code != 0)
         {
             AnsiConsole.MarkupLine("[red]Docker is not running. Please start Docker Desktop.[/]");
@@ -168,7 +160,7 @@ RUNNER_GROUP=Default
         if (list)
         {
             AnsiConsole.MarkupLine("[yellow]Available workflows:[/]");
-            await ProcessUtils.RunAsync("gh", ["act", "-l"], root, silent: false);
+            await ProcessUtils.RunAsync(CliConstants.Gh, ["act", "-l"], root, silent: false);
             return;
         }
 
@@ -204,6 +196,6 @@ RUNNER_GROUP=Default
         }
 
         AnsiConsole.MarkupLine($"[cyan]Running: gh {string.Join(" ", args)}[/]");
-        await ProcessUtils.RunAsync("gh", args.ToArray(), root, silent: false);
+        await ProcessUtils.RunAsync(CliConstants.Gh, args.ToArray(), root, silent: false);
     }
 }

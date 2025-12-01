@@ -2,7 +2,7 @@ using Aspire_Full.Pipeline.Modules.Discovery.Components;
 using Aspire_Full.Pipeline.Modules.Discovery;
 using Spectre.Console;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using Aspire_Full.Pipeline.Constants;
 
 namespace Aspire_Full.Pipeline.Services;
 
@@ -74,23 +74,23 @@ public class DiscoveryService
         var rootConfig = new RootEnvironmentConfig { Environment = config };
         var envYaml = serializer.Serialize(rootConfig);
         AnsiConsole.WriteLine(envYaml);
-        await SaveConfigurationAsync("environment.yaml", envYaml);
+        await SaveConfigurationAsync(PathConstants.EnvironmentYaml, envYaml);
 
         // 2. python-config.yaml
         var toolingConfig = GeneratePythonToolingConfig(config.Repository.Root);
         var toolingYaml = serializer.Serialize(toolingConfig);
 
         // Save to Aspire-Full.Python project root
-        var pythonProjectRoot = Path.Combine(config.Repository.Root, "Aspire-Full.Python");
+        var pythonProjectRoot = Path.Combine(config.Repository.Root, PathConstants.PythonProjectRoot);
         if (Directory.Exists(pythonProjectRoot))
         {
-            var pythonConfigPath = Path.Combine(pythonProjectRoot, "python-config.yaml");
+            var pythonConfigPath = Path.Combine(pythonProjectRoot, PathConstants.PythonConfigYaml);
             await File.WriteAllTextAsync(pythonConfigPath, toolingYaml);
             AnsiConsole.MarkupLine($"\n[green]Python configuration saved to: {pythonConfigPath}[/]");
         }
         else
         {
-             await SaveConfigurationAsync("python-config.yaml", toolingYaml);
+             await SaveConfigurationAsync(PathConstants.PythonConfigYaml, toolingYaml);
         }
     }
 
@@ -118,16 +118,16 @@ public class DiscoveryService
 
         // Discover lint roots
         var lintRoots = new List<string>();
-        if (Directory.Exists(Path.Combine(rootPath, "Aspire-Full.Python", "python-agents"))) lintRoots.Add("Aspire-Full.Python/python-agents");
-        if (Directory.Exists(Path.Combine(rootPath, "sandboxes"))) lintRoots.Add("sandboxes");
-        if (Directory.Exists(Path.Combine(rootPath, "scripts"))) lintRoots.Add("scripts");
-        if (Directory.Exists(Path.Combine(rootPath, "tools"))) lintRoots.Add("tools");
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsDir))) lintRoots.Add(PathConstants.PythonAgentsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir))) lintRoots.Add(PathConstants.SandboxesDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsDir))) lintRoots.Add(PathConstants.ScriptsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ToolsDir))) lintRoots.Add(PathConstants.ToolsDir);
 
         // Discover test roots
         var testRoots = new List<string>();
-        if (Directory.Exists(Path.Combine(rootPath, "Aspire-Full.Python", "python-agents", "tests"))) testRoots.Add("Aspire-Full.Python/python-agents/tests");
-        if (Directory.Exists(Path.Combine(rootPath, "sandboxes"))) testRoots.Add("sandboxes");
-        if (Directory.Exists(Path.Combine(rootPath, "scripts", "tests"))) testRoots.Add("scripts/tests");
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.PythonAgentsTestsDir))) testRoots.Add(PathConstants.PythonAgentsTestsDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.SandboxesDir))) testRoots.Add(PathConstants.SandboxesDir);
+        if (Directory.Exists(Path.Combine(rootPath, PathConstants.ScriptsTestsDir))) testRoots.Add(PathConstants.ScriptsTestsDir);
 
         var pytestAddOpts = new List<string> { "-q" };
 
@@ -196,7 +196,7 @@ public class DiscoveryService
         try
         {
             var root = RepoComponent.LocateRepositoryRoot();
-            var configDir = Path.Combine(root, ".config", "recommended");
+            var configDir = Path.Combine(root, PathConstants.RecommendedConfigDir);
             if (!Directory.Exists(configDir)) Directory.CreateDirectory(configDir);
 
             var configPath = Path.Combine(configDir, fileName);

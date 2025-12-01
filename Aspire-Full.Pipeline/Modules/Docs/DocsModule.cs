@@ -13,7 +13,7 @@ public class DocsModule
         var command = new Command(CommandConstants.Docs.Name, CommandConstants.Docs.Description);
 
         // Generate
-        var generateCommand = new Command(CommandConstants.Docs.Generate, "Generate documentation");
+        var generateCommand = new Command(CommandConstants.Docs.Generate, CommandConstants.Docs.GenerateDesc);
         var apiOption = new Option<bool>(["--api", "-a"], "Generate API documentation");
         var llmsOption = new Option<bool>(["--llms", "-l"], "Update llms.txt");
         var allOption = new Option<bool>(["--all"], "Generate all documentation");
@@ -28,7 +28,7 @@ public class DocsModule
         command.AddCommand(generateCommand);
 
         // Changelog
-        var changelogCommand = new Command(CommandConstants.Docs.Changelog, "Generate changelog");
+        var changelogCommand = new Command(CommandConstants.Docs.Changelog, CommandConstants.Docs.ChangelogDesc);
         var versionOption = new Option<string>(["--next-version", "-v"], "Next version number");
 
         changelogCommand.AddOption(versionOption);

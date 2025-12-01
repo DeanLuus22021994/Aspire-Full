@@ -13,7 +13,7 @@ public class AiModule
         var command = new Command(CommandConstants.Ai.Name, CommandConstants.Ai.Description);
 
         // Provision
-        var provisionCommand = new Command(CommandConstants.Ai.Provision, "Provision Aspire Agents");
+        var provisionCommand = new Command(CommandConstants.Ai.Provision, CommandConstants.Ai.ProvisionDesc);
         var registryOption = new Option<string>(["--registry", "-r"], () => "localhost:5000", "Registry URL");
         var imageOption = new Option<string>(["--image", "-i"], () => "aspire-agents", "Image name");
         var tagOption = new Option<string>(["--tag", "-t"], () => "latest", "Image tag");
@@ -28,7 +28,7 @@ public class AiModule
         command.AddCommand(provisionCommand);
 
         // Models
-        var modelsCommand = new Command(CommandConstants.Ai.Models, "Interact with GitHub Models");
+        var modelsCommand = new Command(CommandConstants.Ai.Models, CommandConstants.Ai.ModelsDesc);
         var listModelsCommand = new Command("list", "List available models");
         listModelsCommand.SetHandler(async () => await _service.ModelsListAsync());
 
@@ -49,7 +49,7 @@ public class AiModule
         command.AddCommand(modelsCommand);
 
         // Workflows (Agentic)
-        var workflowsCommand = new Command(CommandConstants.Ai.Workflows, "Manage Agentic Workflows");
+        var workflowsCommand = new Command(CommandConstants.Ai.Workflows, CommandConstants.Ai.WorkflowsDesc);
 
         var wfInitCommand = new Command("init", "Initialize agentic workflows");
         wfInitCommand.SetHandler(async () => await _service.WorkflowsInitAsync());
@@ -85,7 +85,7 @@ public class AiModule
         command.AddCommand(workflowsCommand);
 
         // Copilot
-        var copilotCommand = new Command(CommandConstants.Ai.Copilot, "GitHub Copilot CLI");
+        var copilotCommand = new Command(CommandConstants.Ai.Copilot, CommandConstants.Ai.CopilotDesc);
 
         var suggestCommand = new Command("suggest", "Get command suggestions");
         var queryArg = new Argument<string>("query", "Query string");
