@@ -1,0 +1,8 @@
+handoffs:
+  - id: web.release.health
+    description: "Provides an executive-level health summary for the next Aspire-Full.Web release."
+  - id: web.release.checklist
+    description: "Expands the checklist with dependency, CDN, and telemetry gates so other agents can pick tasks."
+triggers:
+  - vscode-task: "web:agent:release-health"
+    command: "uv run python -m aspire_agents.cli run --config ..\\Aspire-Full.Web\\python-agents\\site_health.agent.yaml --input '{input}'"

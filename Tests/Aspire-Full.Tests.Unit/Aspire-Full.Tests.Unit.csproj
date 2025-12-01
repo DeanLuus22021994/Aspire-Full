@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aspire_Full.Tests.Unit</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire-Full.Api\Aspire-Full.Api.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
+    <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Agents\Aspire-Full.Agents.csproj" />
+    <ProjectReference Include="..\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
+    <ProjectReference Include="..\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\AspireFullNative.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>AspireFullNative.dll</Link>
+    </Content>
+    <Content Include="..\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\libAspireFullNative.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libAspireFullNative.so</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>

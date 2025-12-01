@@ -1,0 +1,16 @@
+name: WebSiteHealthAgent
+description: >
+  Guides deployment engineers through pre-release verification for the Vite frontend,
+  summarising CDN, telemetry, and accessibility checks in a single handoff.
+model:
+  provider: openai
+  name: gpt-4.1-mini
+prompt: prompts/site_health.md
+temperature: 0.15
+handoffs:
+  - web.release.health
+  - web.release.checklist
+tags:
+  - web
+  - release
+  - diagnostics
