@@ -16,22 +16,22 @@
     <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.0.1" />
 
     <!-- Microsoft Extensions -->
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.JSInterop" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-alpha.1.25208.3" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.JSInterop" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-rtm.25513.102" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.0.0-alpha.1.25208.3" />
     <PackageVersion Include="Microsoft.Extensions.VectorData.Abstractions" Version="9.7.0" />
     <PackageVersion Include="Microsoft.Extensions.Features" Version="10.0.1-servicing.25561.5" />
@@ -73,14 +73,14 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="13.0.1" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0-alpha.1.25208.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0-rtm.25513.102" />
     <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Playwright.NUnit" Version="1.56.0" />
     <PackageVersion Include="NUnit" Version="4.3.2" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.6.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0-alpha.1.25208.3" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-alpha.1.25208.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0-rtm.25513.102" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-rtm.25513.102" />
     <PackageVersion Include="Moq" Version="4.20.72" />
   </ItemGroup>
 </Project>

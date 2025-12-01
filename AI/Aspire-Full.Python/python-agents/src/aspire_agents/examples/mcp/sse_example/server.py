@@ -1,7 +1,11 @@
+"""
+Example MCP server using SSE transport.
+"""
+
 import random
 
-import requests
-from mcp.server.fastmcp import FastMCP
+import requests  # type: ignore # pylint: disable=import-error
+from mcp.server.fastmcp import FastMCP  # type: ignore # pylint: disable=import-error
 
 # Create server
 mcp = FastMCP("Echo Server")
@@ -16,12 +20,14 @@ def add(a: int, b: int) -> int:
 
 @mcp.tool()
 def get_secret_word() -> str:
+    """Get a secret word."""
     print("[debug-server] get_secret_word()")
     return random.choice(["apple", "banana", "cherry"])
 
 
 @mcp.tool()
 def get_current_weather(city: str) -> str:
+    """Get the current weather for a city."""
     print(f"[debug-server] get_current_weather({city})")
 
     endpoint = "https://wttr.in"

@@ -8,8 +8,9 @@ history across multiple agent runs with support for various backend stores
 WHAT IS DAPR?
 Dapr (https://dapr.io) is a portable, event-driven runtime that simplifies building
 resilient applications. Its state management building block provides a unified API
-for storing data across 30+ databases with built-in telemetry, tracing, encryption, data
-isolation and lifecycle management via time-to-live (TTL). See: https://docs.dapr.io/developing-applications/building-blocks/state-management/
+for storing data across 30+ databases with built-in telemetry, tracing, encryption,
+data isolation and lifecycle management via time-to-live (TTL).
+See: https://docs.dapr.io/developing-applications/building-blocks/state-management/
 
 WHEN TO USE DaprSession:
 - Horizontally scaled deployments (multiple agent instances behind a load balancer)
@@ -37,13 +38,16 @@ PREREQUISITES:
 2. Install Docker (for running Redis and optionally Dapr containers)
 3. Install openai-agents with dapr in your environment:
         pip install openai-agents[dapr]
-4. Use the built-in helper to create components and start containers (Creates ./components with Redis + PostgreSQL and starts containers if Docker is available.):
+4. Use the built-in helper to create components and start containers (Creates ./components
+   with Redis + PostgreSQL and starts containers if Docker is available.):
         python examples/memory/dapr_session_example.py --setup-env --only-setup
 5. As always, ensure that the OPENAI_API_KEY environment variable is set.
 6. Optionally, if planning on using other Dapr features, run: dapr init
      - This installs Redis, Zipkin, and Placement service locally
-     - Useful for workflows, actors, pub/sub, and other Dapr building blocks that are incredible useful for agents.
-7. Start dapr sidecar (The app-id is the name of the application that will be running the agent. It can be any name you want. You can check the app-id with `dapr list`.):
+     - Useful for workflows, actors, pub/sub, and other Dapr building blocks that are
+       incredible useful for agents.
+7. Start dapr sidecar (The app-id is the name of the application that will be running
+   the agent. It can be any name you want. You can check the app-id with `dapr list`.):
         dapr run --app-id openai-agents-example --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components
 
 COMMON ISSUES:
@@ -69,10 +73,15 @@ import shutil
 import subprocess
 from pathlib import Path
 
-os.environ["GRPC_VERBOSITY"] = "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
+os.environ["GRPC_VERBOSITY"] = (
+    "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
+)
 
-from agents import Agent, Runner  # pylint: disable=wrong-import-position
-from agents.extensions.memory import (  # pylint: disable=wrong-import-position
+from agents import (  # pylint: disable=wrong-import-position,import-error # type: ignore # noqa: E402
+    Agent,
+    Runner,
+)
+from agents.extensions.memory import (  # pylint: disable=wrong-import-position,import-error # type: ignore # noqa: E402
     DAPR_CONSISTENCY_EVENTUAL,
     DAPR_CONSISTENCY_STRONG,
     DaprSession,
@@ -82,7 +91,9 @@ grpc_port = os.environ.get("DAPR_GRPC_PORT", "50001")
 DEFAULT_STATE_STORE = os.environ.get("DAPR_STATE_STORE", "statestore")
 
 
-async def ping_with_retry(session: DaprSession, timeout_seconds: float = 5.0, interval_seconds: float = 0.5) -> bool:
+async def ping_with_retry(
+    session: DaprSession, timeout_seconds: float = 5.0, interval_seconds: float = 0.5
+) -> bool:
     """Retry session.ping() until success or timeout."""
     now = asyncio.get_running_loop().time
     deadline = now() + timeout_seconds
@@ -96,6 +107,7 @@ async def ping_with_retry(session: DaprSession, timeout_seconds: float = 5.0, in
 
 
 async def main():
+    """Run the Dapr session example."""
     # Create an agent
     agent = Agent(
         name="Assistant",
@@ -109,7 +121,8 @@ async def main():
     print("########################################################")
     print()
     print(
-        "Start Dapr with: dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
+        "Start Dapr with: dapr run --app-id myapp --dapr-http-port 3500 "
+        "--dapr-grpc-port 50001 --resources-path ./components"
     )  # noqa: E501
     print()
 
@@ -123,11 +136,14 @@ async def main():
             dapr_address=f"localhost:{grpc_port}",
         ) as session:
             # Test Dapr connectivity
-            if not await ping_with_retry(session, timeout_seconds=5.0, interval_seconds=0.5):
+            if not await ping_with_retry(
+                session, timeout_seconds=5.0, interval_seconds=0.5
+            ):
                 print("Dapr sidecar is not available!")
                 print("Please start Dapr sidecar and try again.")
                 print(
-                    "Command: dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
+                    "Command: dapr run --app-id myapp --dapr-http-port 3500 "
+                    "--dapr-grpc-port 50001 --resources-path ./components"
                 )  # noqa: E501
                 return
 
@@ -171,7 +187,9 @@ async def main():
 
             print("=== Conversation Complete ===")
             print("Notice how the agent remembered the context from previous turns!")
-            print("Dapr session automatically handles conversation history with backend flexibility.")
+            print(
+                "Dapr session automatically handles conversation history with backend flexibility."
+            )
 
             # Demonstrate session persistence
             print("\n=== Session Persistence Demo ===")
@@ -217,7 +235,8 @@ async def main():
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
         print(
-            "Make sure Dapr sidecar is running with: dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
+            "Make sure Dapr sidecar is running with: dapr run --app-id myapp "
+            "--dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
         )  # noqa: E501
 
 
@@ -254,8 +273,12 @@ async def demonstrate_advanced_features():
             consistency=DAPR_CONSISTENCY_EVENTUAL,
         ) as eventual_session:
             if await eventual_session.ping():
-                print("Eventual consistency: Better performance, may have slight delays")
-                await eventual_session.add_items([{"role": "user", "content": "Test eventual"}])
+                print(
+                    "Eventual consistency: Better performance, may have slight delays"
+                )
+                await eventual_session.add_items(
+                    [{"role": "user", "content": "Test eventual"}]
+                )
 
         # Strong consistency (guaranteed read-after-write)
         async with DaprSession.from_address(
@@ -266,7 +289,9 @@ async def demonstrate_advanced_features():
         ) as strong_session:
             if await strong_session.ping():
                 print("Strong consistency: Guaranteed immediate consistency")
-                await strong_session.add_items([{"role": "user", "content": "Test strong"}])
+                await strong_session.add_items(
+                    [{"role": "user", "content": "Test strong"}]
+                )
 
         # Multi-tenancy example
         print("\n3. Multi-tenancy with Session Prefixes:")
@@ -282,11 +307,15 @@ async def demonstrate_advanced_features():
         async with get_tenant_session("tenant-a", "user-123") as tenant_a_session:
             async with get_tenant_session("tenant-b", "user-123") as tenant_b_session:
                 if await tenant_a_session.ping() and await tenant_b_session.ping():
-                    await tenant_a_session.add_items([{"role": "user", "content": "Tenant A data"}])
-                    await tenant_b_session.add_items([{"role": "user", "content": "Tenant B data"}])
+                    await tenant_a_session.add_items(
+                        [{"role": "user", "content": "Tenant A data"}]
+                    )
+                    await tenant_b_session.add_items(
+                        [{"role": "user", "content": "Tenant B data"}]
+                    )
                     print("Multi-tenant sessions created with isolated data")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Advanced features error: {e}")
 
 
@@ -326,17 +355,28 @@ spec:
     print("   Start both Redis and PostgreSQL for this multi-store demo:")
     print("   docker run -d -p 6379:6379 redis:7-alpine")
     print(
-        "   docker run -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=dapr postgres:16-alpine"
+        "   docker run -d -p 5432:5432 -e POSTGRES_USER=postgres "
+        "-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=dapr postgres:16-alpine"
     )
 
     print("\n   NOTE: Always use secret references for passwords/keys in production!")
     print("   See: https://docs.dapr.io/operations/components/component-secrets/")
 
     print("\n2. Start Dapr sidecar:")
-    print("   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components")
-    print("\n   IMPORTANT: Always specify --dapr-http-port 3500 to avoid connection errors!")
-    print("   If you recreate PostgreSQL while daprd is running, restart daprd or touch the component YAML")
-    print("   to trigger a reload, otherwise you may see 'relation " + '\\"state\\"' + " does not exist'.")
+    print(
+        "   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./components"
+    )
+    print(
+        "\n   IMPORTANT: Always specify --dapr-http-port 3500 to avoid connection errors!"
+    )
+    print(
+        "   If you recreate PostgreSQL while daprd is running, restart daprd or touch the component YAML"
+    )
+    print(
+        "   to trigger a reload, otherwise you may see 'relation "
+        + '\\"state\\"'
+        + " does not exist'."
+    )
 
     print("\n3. Run this example:")
     print("   python examples/memory/dapr_session_example.py")
@@ -379,8 +419,12 @@ async def demonstrate_multi_store():
                 dapr_address=f"localhost:{grpc_port}",
             ) as pg_session,
         ):
-            ok_redis = await ping_with_retry(redis_session, timeout_seconds=5.0, interval_seconds=0.5)
-            ok_pg = await ping_with_retry(pg_session, timeout_seconds=5.0, interval_seconds=0.5)
+            ok_redis = await ping_with_retry(
+                redis_session, timeout_seconds=5.0, interval_seconds=0.5
+            )
+            ok_pg = await ping_with_retry(
+                pg_session, timeout_seconds=5.0, interval_seconds=0.5
+            )
             if not (ok_redis and ok_pg):
                 print(
                     "----------------------------------------\n"
@@ -395,8 +439,12 @@ async def demonstrate_multi_store():
             await redis_session.clear_session()
             await pg_session.clear_session()
 
-            await redis_session.add_items([{"role": "user", "content": "Hello from Redis"}])
-            await pg_session.add_items([{"role": "user", "content": "Hello from PostgreSQL"}])
+            await redis_session.add_items(
+                [{"role": "user", "content": "Hello from Redis"}]
+            )
+            await pg_session.add_items(
+                [{"role": "user", "content": "Hello from PostgreSQL"}]
+            )
 
             r_items = await redis_session.get_items()
             p_items = await pg_session.get_items()
@@ -407,7 +455,7 @@ async def demonstrate_multi_store():
             print(f"{redis_store}: {len(r_items)} items; example: {r_example}")
             print(f"{pg_store}: {len(p_items)} items; example: {p_example}")
             print("Data is isolated per state store.")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Multi-store demo error: {e}")
 
 
@@ -439,7 +487,7 @@ def _container_running(name: str):
         if result.returncode != 0:
             return None
         return result.stdout.strip().lower() == "true"
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return None
 
 
@@ -463,7 +511,9 @@ def _ensure_container(name: str, run_args: list[str]) -> None:
     print(f"Created and started container '{name}'.")
 
 
-def setup_environment(components_dir: str = "./components", overwrite: bool = False) -> None:
+def setup_environment(
+    components_dir: str = "./components", overwrite: bool = False
+) -> None:
     """Create Redis/PostgreSQL component files and start containers if available."""
     components_path = Path(components_dir)
     components_path.mkdir(parents=True, exist_ok=True)
@@ -511,8 +561,12 @@ spec:
     value: ""
 """.lstrip()
 
-    _write_text_file(components_path / "statestore-redis.yaml", redis_component, overwrite)
-    _write_text_file(components_path / "statestore-postgres.yaml", postgres_component, overwrite)
+    _write_text_file(
+        components_path / "statestore-redis.yaml", redis_component, overwrite
+    )
+    _write_text_file(
+        components_path / "statestore-postgres.yaml", postgres_component, overwrite
+    )
     _write_text_file(components_path / "statestore.yaml", default_component, overwrite)
 
     print(f"Components written under: {components_path.resolve()}")
