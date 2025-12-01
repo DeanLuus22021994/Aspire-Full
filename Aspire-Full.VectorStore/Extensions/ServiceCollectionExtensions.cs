@@ -1,4 +1,4 @@
-using Aspire_Full.Qdrant;
+using Aspire_Full.VectorStore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
