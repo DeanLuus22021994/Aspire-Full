@@ -22,13 +22,20 @@ TestResults/
 **/node_modules
 **/.venv
 pip-wheel-metadata/
-python-agents/.ruff_cache/
-python-agents/.mypy_cache/
-tools/github-mcp/dist/
-tools/github-mcp/.turbo/
+AI/Aspire-Full.Python/python-agents/.ruff_cache/
+AI/Aspire-Full.Python/python-agents/.mypy_cache/
+
+# Native Build Artifacts
+AI/Aspire-Full.Tensor/build/
 
 # Misc. caches
 npm-debug.log*
 *.pyc
 *.pyo
 *.vsix
+
+# OS & IDE
+**/.DS_Store
+**/Thumbs.db
+**/*.user
+**/*.suo
