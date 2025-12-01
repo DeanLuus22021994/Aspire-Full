@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
     <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
@@ -11,9 +11,13 @@
     <Message Importance="High" Text="Building Native Library via Docker..." />
     <Exec Command="docker buildx bake -f Aspire-Full.DockerRegistry/docker-bake.hcl native-lib" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
     <ItemGroup>
-      <Content Include="build/libAspireFullNative.so">
+      <Content Include="build/libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT'">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <Link>libAspireFullNative.so</Link>
+      </Content>
+      <Content Include="build/AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT'">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Link>AspireFullNative.dll</Link>
       </Content>
     </ItemGroup>
   </Target>
