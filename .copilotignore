@@ -1,0 +1,45 @@
+# Build outputs
+bin/
+obj/
+out/
+publish/
+artifacts/
+Aspire-Full.Tensor/build/
+
+# Dependencies
+node_modules/
+packages/
+*.nupkg
+
+# Binary files
+*.dll
+*.so
+*.dylib
+*.exe
+*.pdb
+*.onnx
+*.tflite
+*.pb
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Large data files
+*.csv
+*.jsonl
+*.parquet
+*.db
+*.sqlite
+
+# IDE settings
+.vs/
+.idea/
+*.suo
+*.user
+
+# Generated code (optional, depending on preference)
+# **/Migrations/

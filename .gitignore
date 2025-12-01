@@ -63,3 +63,12 @@ __pycache__/
 
 # Models
 *.onnx
+
+# Native Build Artifacts
+Aspire-Full.Tensor/build/
+*.so
+*.dylib
+*.dll
+!**/runtimes/**/*.dll
+!**/runtimes/**/*.so
+!**/runtimes/**/*.dylib

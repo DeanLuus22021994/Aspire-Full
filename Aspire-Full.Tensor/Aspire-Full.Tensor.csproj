@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <RootNamespace>Aspire_Full.Tensor</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Skip native build if requested or if Docker is not available (optional check) -->
+    <SkipNativeBuild Condition="'$(SkipNativeBuild)' == ''">false</SkipNativeBuild>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
@@ -14,20 +16,45 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
   </ItemGroup>
 
-  <Target Name="BuildNative" BeforeTargets="Build;AssignTargetPaths">
-    <Message Importance="High" Text="Building Native Library via Docker..." />
+  <!-- Define Native Source Files for Incremental Build -->
+  <ItemGroup>
+    <NativeSourceFiles Include="Native\src\**\*" />
+    <NativeSourceFiles Include="Native\include\**\*" />
+    <NativeSourceFiles Include="Native\CMakeLists.txt" />
+    <NativeBuildConfig Include="..\Aspire-Full.DockerRegistry\docker-bake.hcl" />
+    <NativeBuildConfig Include="..\Aspire-Full.DockerRegistry\docker\Aspire\Dockerfile.Native" />
+  </ItemGroup>
+
+  <Target Name="BuildNative"
+          BeforeTargets="Build"
+          Condition="'$(SkipNativeBuild)' != 'true'"
+          Inputs="@(NativeSourceFiles);@(NativeBuildConfig)"
+          Outputs="build/libAspireFullNative.so">
+
+    <Message Importance="High" Text="Building Native Library via Docker (Incremental)..." />
     <Exec Command="docker buildx bake -f Aspire-Full.DockerRegistry/docker-bake.hcl native-lib" WorkingDirectory="$(MSBuildProjectDirectory)/.." />
-    <ItemGroup>
-      <Content Include="build/libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT'">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <Link>libAspireFullNative.so</Link>
-      </Content>
-      <Content Include="build/AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('build/AspireFullNative.dll')">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <Link>AspireFullNative.dll</Link>
-      </Content>
-    </ItemGroup>
+
   </Target>
+
+  <ItemGroup>
+    <!-- Include Native Library in Output -->
+    <!-- Linux / Docker -->
+    <Content Include="build/libAspireFullNative.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libAspireFullNative.so</Link>
+      <Visible>false</Visible>
+      <!-- Also copy to runtimes folder for NuGet/Portable packaging -->
+      <PackagePath>runtimes/linux-x64/native/</PackagePath>
+    </Content>
+
+    <!-- Windows (Placeholder if manual build exists) -->
+    <Content Include="build/AspireFullNative.dll" Condition="Exists('build/AspireFullNative.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>AspireFullNative.dll</Link>
+      <Visible>false</Visible>
+      <PackagePath>runtimes/win-x64/native/</PackagePath>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="Native\src\**\*" />

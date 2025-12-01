@@ -43,6 +43,7 @@ dotnet run --project Aspire-Full
 | EF Core | 10.0.0-preview | ORM with PostgreSQL |
 | Docker | 28.x | Containerization |
 | React | 19.x | Frontend SPA |
+| CUDA | 12.x | GPU Acceleration |
 
 ## Project Structure
 
@@ -52,6 +53,9 @@ Aspire-Full/
 ├── .github/workflows/      # CI/CD pipelines
 ├── Aspire-Full/            # AppHost project
 ├── Aspire-Full.Api/        # REST API with EF Core
+├── Aspire-Full.Tensor/     # High-performance Tensor operations (C# + CUDA)
+│   ├── Native/             # C++ CUDA kernels and CMake build
+│   └── Services/           # Managed GpuTensor<T> wrappers
 ├── Aspire-Full.Web/        # React frontend
 ├── Aspire-Full.Tests.Unit/ # Unit tests (xUnit)
 ├── Aspire-Full.Tests.E2E/  # E2E tests (NUnit)
@@ -60,7 +64,16 @@ Aspire-Full/
 └── llms.txt                # AI documentation index
 ```
 
-## API Endpoints
+## Tensor Operations (Aspire-Full.Tensor)
+
+The `Aspire-Full.Tensor` project provides high-performance GPU-accelerated tensor operations using a hybrid C#/.NET 10 and C++/CUDA architecture.
+
+### Key Components
+- **GpuTensor<T>**: A generic RAII wrapper for GPU memory management. Supports `float` and `long`.
+- **TensorComputeService**: High-level service for executing operations like Matrix Multiplication, Mean Pooling, and ReLU.
+- **Native Build**: Uses `docker buildx bake` to compile CUDA kernels (`.cpp` files) into a shared library (`.so`/`.dll`) which is P/Invoked by the managed layer.
+
+### API Endpoints
 
 ### Items API
 - `GET /api/items` - List items
