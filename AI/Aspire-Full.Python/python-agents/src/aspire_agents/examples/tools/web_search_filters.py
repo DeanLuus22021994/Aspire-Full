@@ -5,8 +5,8 @@ This module demonstrates the usage of the WebSearchTool with filters and an Agen
 import asyncio
 from datetime import datetime
 
-from agents import Agent, ModelSettings, Runner, WebSearchTool, trace  # type: ignore # pylint: disable=import-error
-from openai.types.shared.reasoning import Reasoning  # type: ignore # pylint: disable=import-error
+from agents import Agent, ModelSettings, Runner, WebSearchTool, trace
+from openai.types.shared.reasoning import Reasoning
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -55,9 +55,14 @@ async def main() -> None:
         print()
         for item in result.new_items:
             if item.type == "tool_call_item":
-                if item.raw_item.type == "web_search_call":
-                    for source in item.raw_item.action.sources:  # type: ignore [union-attr]
-                        print(f"- {source.url}")
+                raw_item = item.raw_item
+                if getattr(raw_item, "type", None) == "web_search_call":
+                    action = getattr(raw_item, "action", None)
+                    if action:
+                        sources = getattr(action, "sources", [])
+                        if sources:
+                            for source in sources:
+                                print(f"- {source.url}")
         print()
         print("### Final output ###")
         print()
