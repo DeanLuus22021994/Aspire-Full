@@ -171,7 +171,7 @@ class NoUIDemo:
                 remaining_fade = self.fade_total_samples - self.fade_done_samples
                 n = min(remaining_output, remaining_fade)
 
-                src = samples[self.chunk_position : self.chunk_position + n].astype(
+                src = samples[self.chunk_position:self.chunk_position + n].astype(
                     np.float32
                 )
                 # Linear ramp from current level down to 0 across remaining fade samples
@@ -180,7 +180,7 @@ class NoUIDemo:
                 )
                 gain = 1.0 - (idx / float(self.fade_total_samples))
                 ramped = np.clip(src * gain, -32768.0, 32767.0).astype(np.int16)
-                outdata[samples_filled : samples_filled + n, 0] = ramped
+                outdata[samples_filled:samples_filled + n, 0] = ramped
 
                 # Optionally report played bytes (ramped) to playback tracker
                 try:
@@ -243,10 +243,10 @@ class NoUIDemo:
 
             if samples_to_copy > 0:
                 chunk_data = samples[
-                    self.chunk_position : self.chunk_position + samples_to_copy
+                    self.chunk_position:self.chunk_position + samples_to_copy
                 ]
                 # More efficient: direct assignment for mono audio instead of reshape
-                outdata[samples_filled : samples_filled + samples_to_copy, 0] = (
+                outdata[samples_filled:samples_filled + samples_to_copy, 0] = (
                     chunk_data
                 )
                 samples_filled += samples_to_copy

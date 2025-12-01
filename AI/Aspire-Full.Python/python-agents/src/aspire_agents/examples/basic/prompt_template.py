@@ -15,7 +15,6 @@ except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
         """Ensure that the tensor core GPU is available."""
-        pass
 
 
 # NOTE: This example will not work out of the box, because the default prompt ID will not be available

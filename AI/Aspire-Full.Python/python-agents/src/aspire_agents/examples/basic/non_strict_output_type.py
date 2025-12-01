@@ -20,7 +20,6 @@ except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
         """Ensure that the tensor core GPU is available."""
-        pass
 
 
 # This example demonstrates how to use an output type that is not in strict mode. Strict mode
@@ -103,7 +102,7 @@ async def main() -> None:
     try:
         result = await Runner.run(agent, user_input)
         raise AssertionError("Should have raised an exception")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error (expected): {e}")
 
     # Now let's try again with a non-strict output type. This should work.

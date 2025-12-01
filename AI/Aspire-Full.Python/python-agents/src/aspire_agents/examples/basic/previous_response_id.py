@@ -13,7 +13,6 @@ except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
         """Ensure that the tensor core GPU is available."""
-        pass
 
 # This demonstrates usage of the `previous_response_id` parameter to continue a conversation.
 # The second run passes the previous response ID to the model, which allows it to continue the

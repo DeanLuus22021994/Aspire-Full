@@ -11,7 +11,6 @@ except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
         """Ensure that the tensor core GPU is available."""
-        pass
 
 
 from openai.types.responses import ResponseTextDeltaEvent

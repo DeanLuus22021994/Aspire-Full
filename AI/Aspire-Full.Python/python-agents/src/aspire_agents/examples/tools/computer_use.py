@@ -28,7 +28,11 @@ except ImportError:
 if TYPE_CHECKING:
 
     class Page:
+        """Page stub."""
+
         class Mouse:
+            """Mouse stub."""
+
             async def click(self, x: int, y: int, button: str = "left") -> None:
                 _ = (x, y, button)
 
@@ -45,6 +49,8 @@ if TYPE_CHECKING:
                 pass
 
         class Keyboard:
+            """Keyboard stub."""
+
             async def type(self, text: str) -> None:
                 _ = text
 
@@ -72,6 +78,8 @@ if TYPE_CHECKING:
             return None
 
     class Browser:
+        """Browser stub."""
+
         async def new_page(self) -> Page:
             return cast(Any, None)
 
@@ -79,7 +87,11 @@ if TYPE_CHECKING:
             pass
 
     class Playwright:
+        """Playwright stub."""
+
         class Chromium:
+            """Chromium stub."""
+
             async def launch(
                 self, headless: bool = True, args: list[str] | None = None
             ) -> Browser:
@@ -92,6 +104,8 @@ if TYPE_CHECKING:
             pass
 
     class AsyncPlaywrightContextManager:
+        """AsyncPlaywrightContextManager stub."""
+
         async def start(self) -> Playwright:
             return cast(Any, None)
 

@@ -13,7 +13,6 @@ except ImportError:
 
     def ensure_tensor_core_gpu() -> Any:  # type: ignore
         """Ensure that the tensor core GPU is available."""
-        pass
 
 
 URL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
