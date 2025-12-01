@@ -21,3 +21,8 @@
 - [x] Move Tensor Orchestration logic (`TensorJobCoordinator`, `TensorJobStore`, `TensorDtos`) from `Aspire-Full.Api` to `Aspire-Full.Tensor`.
 - [x] Move `TensorVectorBridge` to `Aspire-Full.Connectors` to decouple Tensor core from Connectors.
 - [x] Update `Aspire-Full.Api` to consume Tensor services from the shared library.
+
+## Phase 5: Gateway & API Dependency Cleanup
+- [x] Remove unused `Qdrant.Client.Grpc` using in `UserVectorService.cs`.
+- [x] Remove direct reference to `Aspire-Full.Qdrant` from `Aspire-Full.Gateway.csproj` (Enforce abstraction).
+- [x] Remove direct reference to `Aspire-Full.Qdrant` from `Aspire-Full.Api.csproj` (Enforce abstraction).
