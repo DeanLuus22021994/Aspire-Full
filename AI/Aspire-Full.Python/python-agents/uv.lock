@@ -88,6 +88,7 @@ tracing = [
 [package.dev-dependencies]
 dev = [
     { name = "types-pyyaml" },
+    { name = "types-requests" },
 ]
 
 [package.metadata]
@@ -127,7 +128,10 @@ requires-dist = [
 provides-extras = ["dev", "tracing"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "types-pyyaml", specifier = ">=6.0.12.20250915" }]
+dev = [
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
+    { name = "types-requests", specifier = ">=2.32.4.20250913" },
+]
 
 [[package]]
 name = "asyncpg"
