@@ -5,11 +5,13 @@
     - [ ] Migrate `init-docker-infra.ps1` and `setup-volumes.ps1` to `pipeline infra init`.
     - [ ] Implement Docker checks (network/volume) in C#.
 
-- [ ] **Phase 2: CI/CD Migration**
-    - [ ] Migrate `manage-runner.ps1` and `get-runner-token.ps1` to `pipeline ci runner`.
-    - [ ] Migrate `actions-cache.ps1` to `pipeline ci cache`.
-    - [ ] Migrate `generate-sbom.ps1` to `pipeline ci sbom`.
-    - [ ] Migrate `run-actions-*.ps1` to `pipeline ci run-local`.
+- [x] **Phase 2: CI/CD Migration**
+  - [x] Create `CiModule` in `Modules/Ci/`.
+  - [x] Migrate `manage-runner.ps1` to `pipeline ci runner`.
+  - [x] Migrate `actions-cache.ps1` to `pipeline ci cache`.
+  - [x] Migrate `generate-sbom.ps1` to `pipeline ci sbom`.
+  - [x] Migrate `run-actions-locally.ps1` to `pipeline ci run-local`.
+
 
 - [ ] **Phase 3: Development & Docs Migration**
     - [ ] Migrate `cleanup-branches.ps1` to `pipeline dev cleanup`.
