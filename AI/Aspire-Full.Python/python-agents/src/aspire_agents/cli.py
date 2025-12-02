@@ -17,9 +17,7 @@ console = Console()
 
 @app.command()
 def run(
-    config: Path = typer.Option(
-        ..., exists=True, help="Path to the agent YAML configuration"
-    ),
+    config: Path = typer.Option(..., exists=True, help="Path to the agent YAML configuration"),
     input_text: str | None = typer.Option(
         None,
         "--input",
@@ -48,7 +46,7 @@ def run(
     info = runner.tensor_info
     console.log(
         f"Tensor GPU: cuda:{info.device_index} :: {info.name} "
-        f"(cc {info.compute_capability}, {info.total_memory_gb:.2f} GiB)"
+        + f"(cc {info.compute_capability}, {info.total_memory_gb:.2f} GiB)"
     )
 
     result = asyncio.run(runner.arun(payload))

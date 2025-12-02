@@ -263,7 +263,7 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
     if not torch.cuda.is_available():
         raise TensorCoreUnavailableError(
             "CUDA GPU not detected. Ensure the devcontainer/host exposes an NVIDIA device. "
-            "Check: nvidia-smi, NVIDIA_VISIBLE_DEVICES env var, Docker --gpus flag."
+            + "Check: nvidia-smi, NVIDIA_VISIBLE_DEVICES env var, Docker --gpus flag."
         )
 
     device_index = 0
@@ -276,8 +276,8 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
     if major < 7:
         raise TensorCoreUnavailableError(
             f"Detected GPU '{gpu_name}' lacks Tensor Cores "
-            f"(compute capability {capability_str} < 7.0). "
-            f"Minimum requirement: Volta V100 or newer."
+            + f"(compute capability {capability_str} < 7.0). "
+            + "Minimum requirement: Volta V100 or newer."
         )
 
     tf32_enabled, cudnn_tf32_enabled = _configure_torch_runtime(device_index)
@@ -326,7 +326,7 @@ def get_gpu_memory_info() -> dict[str, float]:
 
     allocated = torch.cuda.memory_allocated()
     reserved = torch.cuda.memory_reserved()
-    total = torch.cuda.get_device_properties(0).total_memory
+    total: int = torch.cuda.get_device_properties(0).total_memory
 
     return {
         "allocated_gb": _format_mem(allocated),

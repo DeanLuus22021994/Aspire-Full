@@ -149,6 +149,7 @@ class AgentRunner:
         if config is not None:
             self.config = config
         else:
+            super().__init__()
             self.config = AgentConfig(
                 name="default-agent",
                 description="Default agent configuration",
@@ -156,9 +157,7 @@ class AgentRunner:
                 model=ModelConfig(name="gpt-4o-mini"),
             )
 
-        self.compute_service: BatchComputeService = (
-            compute_service or get_compute_service()
-        )
+        self.compute_service: BatchComputeService = compute_service or get_compute_service()
 
         # Initialize agent and runner (lazy - created on first run)
         self._agent: Agent | None = None
@@ -254,9 +253,7 @@ class AgentRunner:
             Tuple of (AgentResult, embedding tensor)
         """
         # Run embedding computation concurrently with agent
-        embedding_task = asyncio.create_task(
-            self.compute_service.compute_embedding(prompt)
-        )
+        embedding_task = asyncio.create_task(self.compute_service.compute_embedding(prompt))
 
         result = await self.run(prompt)
         embedding = await embedding_task

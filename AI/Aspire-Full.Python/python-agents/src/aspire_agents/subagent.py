@@ -29,9 +29,10 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Final
+from typing import Any, Final
 
 import torch
+from agents import Agent as BaseAgent
 
 from .config import AgentConfig
 from .core import Agent
@@ -196,9 +197,10 @@ class SubAgentOrchestrator:
             thread_name_prefix="SubAgent-Worker",
         )
         self.semaphore = asyncio.Semaphore(self.config.max_concurrent)
-        self._agents: dict[str, Agent] = {}
+        self._agents: dict[str, BaseAgent[Any] | Agent] = {}
         self._agents_lock = threading.Lock()
         self._stats_lock = threading.Lock()
+        super().__init__()
         self._total_executions = 0
         self._total_failures = 0
         self._initialized = False
@@ -210,7 +212,7 @@ class SubAgentOrchestrator:
         self._initialized = True
         logger.info(
             "SubAgentOrchestrator initialized: max_concurrent=%d, thread_pool=%d, "
-            "compute_mode=%s, gpu_share=%s, GIL=%s",
+            + "compute_mode=%s, gpu_share=%s, GIL=%s",
             self.config.max_concurrent,
             self.config.thread_pool_size,
             self.config.compute_mode,
@@ -238,14 +240,14 @@ class SubAgentOrchestrator:
         except Exception as e:
             logger.warning("Could not configure GPU memory sharing: %s", e)
 
-    def register_agent(self, name: str, agent: Agent) -> None:
+    def register_agent(self, name: str, agent: BaseAgent[Any] | Agent) -> None:
         """Register a sub-agent for orchestration.
 
         Thread-safe registration with lock protection.
 
         Args:
             name: Unique name for the sub-agent
-            agent: The Agent instance to register
+            agent: The Agent instance to register (accepts agents.Agent or aspire_agents.Agent)
         """
         with self._agents_lock:
             self._agents[name] = agent
@@ -305,11 +307,21 @@ class SubAgentOrchestrator:
 
             try:
                 # Create runner for this execution
+                # Handle instructions that may be a callable
+                instructions_str = agent.instructions if isinstance(agent.instructions, str) else ""
+                # Handle model that may be str, Model, or None
+                model_name = (
+                    agent.model
+                    if isinstance(agent.model, str)
+                    else getattr(agent.model, "name", None) if agent.model else None
+                )
+                from .config import ModelConfig
+
                 runner = AgentRunner(
                     AgentConfig(
                         name=agent.name,
-                        prompt=agent.instructions or "",
-                        model=agent.model,
+                        prompt=instructions_str,
+                        model=ModelConfig.from_string(model_name or "gpt-4o-mini"),
                     )
                 )
                 result = await runner.run(prompt)

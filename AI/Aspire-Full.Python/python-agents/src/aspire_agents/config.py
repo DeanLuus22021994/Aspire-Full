@@ -24,7 +24,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, cast
 
 import yaml
 
@@ -76,10 +76,10 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     Raises:
         ValueError: If root is not a mapping
     """
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
+    raw_data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(raw_data, dict):
         raise ValueError("Agent config root must be a mapping")
-    return data
+    return cast("dict[str, Any]", raw_data)
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,12 +189,14 @@ class ModelConfig:
         if not isinstance(data, dict):
             raise ValueError("model section must be a string or mapping")
 
+        # Cast dict values to proper types
+        data_dict = cast("dict[str, Any]", data)
         return cls(
-            provider=data.get("provider", DEFAULT_PROVIDER),
-            name=str(data.get("name", data.get("deployment", DEFAULT_MODEL))),
-            deployment=data.get("deployment"),
-            endpoint=data.get("endpoint"),
-            api_version=data.get("api_version"),
+            provider=str(data_dict.get("provider", DEFAULT_PROVIDER)),  # type: ignore[arg-type]
+            name=str(data_dict.get("name", data_dict.get("deployment", DEFAULT_MODEL))),
+            deployment=str(data_dict.get("deployment")) if data_dict.get("deployment") else None,
+            endpoint=str(data_dict.get("endpoint")) if data_dict.get("endpoint") else None,
+            api_version=str(data_dict.get("api_version")) if data_dict.get("api_version") else None,
         )
 
     def with_name(self, name: str) -> ModelConfig:

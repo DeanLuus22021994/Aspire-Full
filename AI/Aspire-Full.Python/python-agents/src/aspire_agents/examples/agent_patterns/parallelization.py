@@ -17,7 +17,6 @@ import asyncio
 from agents import Agent, ItemHelpers, Runner, trace
 from aspire_agents import (
     ASPIRE_SUBAGENT_MAX_CONCURRENT,
-    SubAgentOrchestrator,
     get_orchestrator,
 )
 

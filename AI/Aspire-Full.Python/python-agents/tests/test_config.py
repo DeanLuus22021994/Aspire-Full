@@ -15,8 +15,8 @@ from textwrap import dedent
 # Add src to path so we can import aspire_agents
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
-import pytest  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position
-from aspire_agents.config import (  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position, import-error
+import pytest  # noqa: E402 # pylint: disable=wrong-import-position
+from aspire_agents.config import (  # noqa: E402 # pylint: disable=wrong-import-position, import-error
     AgentConfig,
     ModelConfig,
     TensorConfig,

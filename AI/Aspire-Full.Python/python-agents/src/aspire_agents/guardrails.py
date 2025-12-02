@@ -202,6 +202,7 @@ class GuardrailService:
             restricted_concepts: Custom categories and phrases to block.
                                 Defaults to DEFAULT_CONCEPTS if not provided.
         """
+        super().__init__()
         self.compute = get_compute_service()
         self._initialized = False
         self.concept_embeddings: dict[str, torch.Tensor] = {}
@@ -211,8 +212,7 @@ class GuardrailService:
             self.restricted_concepts = self.DEFAULT_CONCEPTS
         else:
             self.restricted_concepts = {
-                k: tuple(v) if isinstance(v, list) else v
-                for k, v in restricted_concepts.items()
+                k: tuple(v) if isinstance(v, list) else v for k, v in restricted_concepts.items()
             }
 
         self._precompute_embeddings()
@@ -225,9 +225,7 @@ class GuardrailService:
         """
         for category, phrases in self.restricted_concepts.items():
             phrase_list = list(phrases)  # Convert tuple to list for compute
-            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(
-                phrase_list
-            )
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrase_list)
             logger.debug(
                 "Pre-computed %d embeddings for category '%s'",
                 len(phrases),
@@ -291,9 +289,7 @@ class GuardrailService:
         """
         results: dict[str, tuple[bool, float]] = {}
         for category in self.restricted_concepts:
-            blocked, score = await self.check_semantic_similarity(
-                text, category, threshold
-            )
+            blocked, score = await self.check_semantic_similarity(text, category, threshold)
             results[category] = (blocked, score)
         return results
 
@@ -353,9 +349,7 @@ def semantic_input_guardrail(
         service = get_guardrail_service()
         args_str = str(data.context.tool_arguments)
 
-        blocked, score = await service.check_semantic_similarity(
-            args_str, category, threshold
-        )
+        blocked, score = await service.check_semantic_similarity(args_str, category, threshold)
 
         if blocked:
             return ToolGuardrailFunctionOutput.reject_content(
@@ -402,9 +396,7 @@ def semantic_output_guardrail(
         service = get_guardrail_service()
         output_str = str(data.output)
 
-        blocked, score = await service.check_semantic_similarity(
-            output_str, category, threshold
-        )
+        blocked, score = await service.check_semantic_similarity(output_str, category, threshold)
 
         if blocked:
             # For output guardrails, raise exception to prevent data leakage

@@ -48,7 +48,7 @@ def _load_semantic_kernel() -> tuple[Any, Any, Any]:
     except ImportError as exc:
         raise SemanticKernelUnavailableError(
             "semantic-kernel is not installed. Run `uv pip install aspire-agents` "
-            "or `uv pip install .` from python-agents/."
+            + "or `uv pip install .` from python-agents/."
         ) from exc
 
     return (
@@ -185,10 +185,10 @@ def build_kernel(agent: AgentConfig) -> Any:
     if provider == "anthropic":
         # Anthropic requires separate connector (future support)
         raise ValueError(
-            f"Provider '{provider}' is not yet supported in Semantic Kernel. " "Use the direct Anthropic SDK instead."
+            f"Provider '{provider}' is not yet supported in Semantic Kernel. " + "Use the direct Anthropic SDK instead."
         )
 
-    raise ValueError(f"Unknown provider: {provider}. " f"Supported: openai, azure, github, local")
+    raise ValueError(f"Unknown provider: {provider}. Supported: openai, azure, github, local")
 
 
 def build_kernel_with_plugins(

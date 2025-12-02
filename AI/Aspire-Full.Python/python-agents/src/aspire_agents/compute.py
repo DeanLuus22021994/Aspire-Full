@@ -25,6 +25,7 @@ import queue
 import sys
 import threading
 import time
+from collections.abc import Sequence
 from concurrent.futures import Future
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final, Protocol, cast
@@ -34,7 +35,6 @@ import torch
 from .gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
-    from typing import Sequence
 
     # pylint: disable=too-few-public-methods,missing-class-docstring,missing-function-docstring
 
@@ -207,6 +207,7 @@ class BatchComputeService:
                 max_latency_ms=max_latency_ms or 10,
             )
 
+        super().__init__()
         self.device = self._enforce_gpu()
         self._queue: queue.Queue[tuple[str, Future[torch.Tensor]]] = queue.Queue()
         self._shutdown_event = threading.Event()

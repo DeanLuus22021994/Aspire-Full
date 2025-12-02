@@ -21,7 +21,8 @@ from __future__ import annotations
 import functools
 import inspect
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Final, ParamSpec, TypeVar, cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Final, ParamSpec, TypeVar, cast
 
 from agents import Agent as OpenAIAgent
 from agents import Runner as OpenAIRunner
@@ -69,6 +70,7 @@ class _ToolContext:
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
     ) -> None:
+        super().__init__()
         self.tool_name: str = name
         self.tool_arguments: dict[str, Any] | tuple[Any, ...] = kwargs if kwargs else args
 
