@@ -1,3 +1,43 @@
+debug = false
+root = "/var/lib/buildkit"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OCI Worker Configuration - PRIVILEGED GPU with Maximum BuildKit Performance
+# ─────────────────────────────────────────────────────────────────────────────
+[worker.oci]
+  enabled = true
+  gc = true
+  gckeepstorage = 100000000000  # 100GB
+
+  # NVIDIA Container Runtime - Privileged GPU access
+  runtime = "nvidia"
+  runtimeArgs = [
+    "--privileged",
+    "--gpus=all",
+    "--ipc=host"
+  ]
+
+  platforms = ["linux/amd64", "linux/arm64"]
+  maxParallelism = 8
+  snapshotter = "overlayfs"
+  networkMode = "host"
+
+  [[worker.oci.gcpolicy]]
+    keepBytes = 50000000000
+    keepDuration = 2592000
+    filters = ["type==source.local", "type==exec.cachemount"]
+
+  [[worker.oci.gcpolicy]]
+    all = true
+    keepBytes = 100000000000
+
 [registry."host.docker.internal:5001"]
   http = true
   insecure = true
+
+[registry."localhost:5001"]
+  http = true
+  insecure = true
+
+[grpc]
+  address = ["unix:///run/buildkit/buildkitd.sock", "tcp://0.0.0.0:1234"]

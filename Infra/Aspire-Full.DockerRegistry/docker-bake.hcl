@@ -43,8 +43,13 @@ group "native-libs" {
   targets = ["native-lib-linux-x64", "native-lib-linux-arm64"]
 }
 
+group "runtime-minimal" {
+  targets = ["api-minimal", "gateway-minimal"]
+}
+
 # =============================================================================
 # CUDA Bootstrap Targets - Root of all TensorCore images
+# Privileged GPU access for CUDA compilation
 # =============================================================================
 
 target "cuda-bootstrap-devel" {
@@ -53,11 +58,21 @@ target "cuda-bootstrap-devel" {
   target = "cuda-bootstrap-devel"
   tags = ["${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel:latest"]
   platforms = [TARGET_PLATFORMS]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-devel-cache:latest,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
   args = {
     BUILDKIT_INLINE_CACHE = "1"
+    BUILDKIT_CONTEXT_KEEP_GIT_DIR = "1"
   }
+  # Privileged for GPU during build
+  ssh = ["default"]
+  secret = ["id=cuda_cache,src=/var/cache/cuda"]
 }
 
 target "cuda-bootstrap-runtime" {
@@ -66,8 +81,14 @@ target "cuda-bootstrap-runtime" {
   target = "cuda-bootstrap-runtime"
   tags = ["${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime:latest"]
   platforms = [TARGET_PLATFORMS]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/cuda-bootstrap-runtime-cache:latest,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
   args = {
     BUILDKIT_INLINE_CACHE = "1"
   }
@@ -75,6 +96,7 @@ target "cuda-bootstrap-runtime" {
 
 # =============================================================================
 # Base Image Targets - Inherit from CUDA Bootstrap
+# Enhanced caching for low-latency rebuilds
 # =============================================================================
 
 target "base-native" {
@@ -84,8 +106,17 @@ target "base-native" {
     "cuda-bootstrap-devel" = "target:cuda-bootstrap-devel"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/base-native:latest"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/base-native-cache:latest,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "base-dotnet" {
@@ -95,8 +126,17 @@ target "base-dotnet" {
     "cuda-bootstrap-runtime" = "target:cuda-bootstrap-runtime"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/base-dotnet:latest"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/base-dotnet-cache:latest,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "base-python" {
@@ -106,8 +146,14 @@ target "base-python" {
     "cuda-bootstrap-devel" = "target:cuda-bootstrap-devel"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/base-python:latest"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/base-python-cache:latest,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
   args = {
     BUILDKIT_INLINE_CACHE = "1"
   }
@@ -120,8 +166,14 @@ target "native-lib" {
     "base-native" = "target:base-native"
   }
   output = ["type=local,dest=Infra/Aspire-Full.Tensor.Core/build/"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:latest,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
 }
 
 # Architecture-specific native library builds for NuGet package
@@ -133,8 +185,14 @@ target "native-lib-linux-x64" {
   }
   platforms = ["linux/amd64"]
   output = ["type=local,dest=Infra/Aspire-Full.Tensor.Core/runtimes/linux-x64/native/"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-x64"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-x64,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-x64",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-x64,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
 }
 
 target "native-lib-linux-arm64" {
@@ -145,9 +203,19 @@ target "native-lib-linux-arm64" {
   }
   platforms = ["linux/arm64"]
   output = ["type=local,dest=Infra/Aspire-Full.Tensor.Core/runtimes/linux-arm64/native/"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-arm64"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-arm64,mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-arm64",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/native-lib-cache:linux-arm64,mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
 }
+
+# =============================================================================
+# Application Targets - Standard builds
+# =============================================================================
 
 target "api" {
   context = "."
@@ -158,8 +226,76 @@ target "api" {
     "native-lib" = "target:native-lib"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/api-${ENVIRONMENT}:${VERSION}-${ARCH}"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/api-cache:${ENVIRONMENT}"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/api-cache:${ENVIRONMENT},mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/api-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/api-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
+}
+
+# =============================================================================
+# Minimal Runtime Targets - Ultra-low RAM footprint for production
+# =============================================================================
+
+target "api-minimal" {
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Api"
+  target = "runtime-minimal"
+  contexts = {
+    "base-dotnet" = "target:base-dotnet"
+  }
+  tags = [
+    "${REGISTRY}/${NAMESPACE}/api-minimal-${ENVIRONMENT}:${VERSION}-${ARCH}",
+    "${REGISTRY}/${NAMESPACE}/api-minimal:latest"
+  ]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/api-minimal-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/api-minimal-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+    # Minimal GC settings for low RAM
+    DOTNET_GCHeapHardLimit = "268435456"
+    DOTNET_gcServer = "0"
+    DOTNET_GCConserveMemory = "9"
+  }
+}
+
+target "gateway-minimal" {
+  context = "."
+  dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Gateway"
+  target = "runtime-minimal"
+  contexts = {
+    "base-dotnet" = "target:base-dotnet"
+  }
+  tags = [
+    "${REGISTRY}/${NAMESPACE}/gateway-minimal-${ENVIRONMENT}:${VERSION}-${ARCH}",
+    "${REGISTRY}/${NAMESPACE}/gateway-minimal:latest"
+  ]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/gateway-minimal-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/gateway-minimal-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+    DOTNET_GCHeapHardLimit = "134217728"
+    DOTNET_gcServer = "0"
+    DOTNET_GCConserveMemory = "9"
+  }
 }
 
 target "gateway" {
@@ -171,16 +307,34 @@ target "gateway" {
     "native-lib" = "target:native-lib"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/gateway-${ENVIRONMENT}:${VERSION}-${ARCH}"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/gateway-cache:${ENVIRONMENT}"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/gateway-cache:${ENVIRONMENT},mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/gateway-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/gateway-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "web" {
   context = "."
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Web"
   tags = ["${REGISTRY}/${NAMESPACE}/web-${ENVIRONMENT}:${VERSION}-${ARCH}"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/web-cache:${ENVIRONMENT}"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/web-cache:${ENVIRONMENT},mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/web-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/web-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "web-assembly" {
@@ -190,17 +344,34 @@ target "web-assembly" {
     "base-dotnet" = "target:base-dotnet"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/web-assembly-${ENVIRONMENT}:${VERSION}-${ARCH}"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/web-assembly-cache:${ENVIRONMENT}"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/web-assembly-cache:${ENVIRONMENT},mode=max"]
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/web-assembly-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/web-assembly-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
+  args = {
+    BUILDKIT_INLINE_CACHE = "1"
+  }
 }
 
 target "python-agents" {
   context = "."
   dockerfile = "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.PythonAgent"
+  contexts = {
+    "base-python" = "target:base-python"
+  }
   tags = ["${REGISTRY}/${NAMESPACE}/python-agents-${ENVIRONMENT}:${VERSION}-${ARCH}"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT}"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT},mode=max"]
-  # TensorCore acceleration - all dependencies baked with CUDA support
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/python-agents-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
   args = {
     BUILDKIT_INLINE_CACHE = "1"
   }
@@ -214,9 +385,14 @@ target "tensor-compute" {
     "cuda-bootstrap-runtime" = "target:cuda-bootstrap-runtime"
   }
   tags = ["${REGISTRY}/${NAMESPACE}/tensor-compute-${ENVIRONMENT}:${VERSION}-${ARCH}"]
-  cache-from = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT}"]
-  cache-to = ["type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max"]
-  # TensorCore acceleration - Python 3.15t free-threaded with CUDA
+  cache-from = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT}",
+    "type=local,src=/tmp/.buildx-cache"
+  ]
+  cache-to = [
+    "type=registry,ref=${REGISTRY}/${NAMESPACE}/tensor-compute-cache:${ENVIRONMENT},mode=max",
+    "type=local,dest=/tmp/.buildx-cache-new,mode=max"
+  ]
   args = {
     BUILDKIT_INLINE_CACHE = "1"
   }

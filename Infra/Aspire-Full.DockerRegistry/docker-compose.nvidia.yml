@@ -1,23 +1,85 @@
 services:
-  aspire-full-api:
-    build:
-      context: ..
-      dockerfile: Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Api
-    image: localhost:5001/aspire/api-dev:1.0.0-linux-x64
+  # =============================================================================
+  # BuildKit Builder - Privileged GPU access for CUDA compilation
+  # Maximum parallelism, aggressive caching, zero-latency rebuilds
+  # =============================================================================
+  buildkitd:
+    image: moby/buildkit:master
+    container_name: aspire-buildkit
+    privileged: true
     restart: unless-stopped
+    command:
+      - --config=/etc/buildkit/buildkitd.toml
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [gpu, compute, utility]
+    environment:
+      - BUILDKIT_STEP_LOG_MAX_SIZE=50000000
+      - BUILDKIT_STEP_LOG_MAX_SPEED=10000000
+    volumes:
+      - ./docker/buildkitd.toml:/etc/buildkit/buildkitd.toml:ro
+      - buildkit-state:/var/lib/buildkit
+      - aspire-cuda-cache:/var/cache/cuda
+      - aspire-nvidia-cache:/root/.nv
+      - aspire-ccache:/root/.ccache
+      - aspire-nuget-cache:/root/.nuget/packages
+      - aspire-uv-cache:/root/.cache/uv
+      - aspire-pip-cache:/root/.cache/pip
+      - aspire-npm-cache:/root/.npm
+      - aspire-apt-cache:/var/cache/apt
+      - aspire-gobuild-cache:/root/.cache/go-build
+    ports:
+      - "1234:1234"
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    ipc: host
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "buildctl", "debug", "workers"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # =============================================================================
+  # API Service - Minimal runtime RAM with GPU inference
+  # =============================================================================
+  aspire-full-api:
+    build:
+      context: ..
+      dockerfile: Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Api
+    image: localhost:5001/aspire/api-dev:1.0.0-linux-x64
+    container_name: aspire-api
+    privileged: true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute]
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__aspiredb=Host=postgres;Database=aspiredb;Username=postgres;Password=postgres
       - ConnectionStrings__redis=redis:6379
       - DockerRegistry__BaseAddress=http://registry:5000/
+      # Minimal GC for low RAM
+      - DOTNET_GCHeapHardLimit=268435456
+      - DOTNET_gcServer=0
+      - DOTNET_GCConserveMemory=9
+    volumes:
+      - aspire-models:/volumes/models:ro
+      - aspire-logs:/volumes/logs
     ports:
       - "5000:8080"
     depends_on:
@@ -36,17 +98,32 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
 
+  # =============================================================================
+  # PostgreSQL - Minimal RAM footprint
+  # =============================================================================
   postgres:
-    image: postgres:latest
+    image: postgres:17-alpine
+    container_name: aspire-postgres
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=aspiredb
+      - POSTGRES_INITDB_ARGS=--data-checksums
+      # Minimal memory settings
+      - POSTGRES_SHARED_BUFFERS=32MB
+      - POSTGRES_WORK_MEM=4MB
+      - POSTGRES_MAINTENANCE_WORK_MEM=32MB
     volumes:
-      - aspire-postgres-data:/var/lib/postgresql
+      - aspire-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -55,12 +132,23 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
 
+  # =============================================================================
+  # Redis - Minimal RAM with persistence
+  # =============================================================================
   redis:
-    image: redis:latest
+    image: redis:7-alpine
+    container_name: aspire-redis
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    command: redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru --save 60 1
     volumes:
       - aspire-redis-data:/data
     healthcheck:
@@ -71,16 +159,27 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
 
+  # =============================================================================
+  # Registry - Minimal footprint local registry
+  # =============================================================================
   registry:
     image: registry:2
+    container_name: aspire-registry
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
     ports:
       - "5001:5000"
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
+      REGISTRY_STORAGE_CACHE_BLOBDESCRIPTOR: "inmemory"
     volumes:
       - aspire-registry-data:/var/lib/registry
     healthcheck:
@@ -92,14 +191,94 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "5m"
+        max-file: "2"
 
+  # =============================================================================
+  # Qdrant - Vector DB with GPU acceleration
+  # =============================================================================
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: aspire-qdrant
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, compute]
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__STORAGE__STORAGE_PATH=/qdrant/storage
+      - QDRANT__STORAGE__ON_DISK_PAYLOAD=true
+    volumes:
+      - aspire-qdrant:/qdrant/storage
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# =============================================================================
+# Named Volumes - All persistent data
+# =============================================================================
 volumes:
-  aspire-postgres-data:
-  aspire-redis-data:
-  aspire-registry-data:
+  # BuildKit state
+  buildkit-state:
+    name: aspire-buildkit-state
+
+  # GPU/CUDA caches
+  aspire-cuda-cache:
+    name: aspire-cuda-cache
+  aspire-nvidia-cache:
+    name: aspire-nvidia-cache
+
+  # Build tool caches
+  aspire-ccache:
+    name: aspire-ccache
+  aspire-gobuild-cache:
+    name: aspire-gobuild-cache
+
+  # Package manager caches
   aspire-nuget-cache:
+    name: aspire-nuget-cache
+  aspire-uv-cache:
+    name: aspire-uv-cache
   aspire-pip-cache:
+    name: aspire-pip-cache
+  aspire-npm-cache:
+    name: aspire-npm-cache
   aspire-apt-cache:
-  aspire-model-cache:
+    name: aspire-apt-cache
+
+  # Database storage
+  aspire-postgres-data:
+    name: aspire-postgres-data
+  aspire-redis-data:
+    name: aspire-redis-data
+  aspire-registry-data:
+    name: aspire-registry-data
+  aspire-qdrant:
+    name: aspire-qdrant
+
+  # AI/ML storage
+  aspire-models:
+    name: aspire-models
+  aspire-tensor-cache:
+    name: aspire-tensor-cache
+
+  # Logs
+  aspire-logs:
+    name: aspire-logs

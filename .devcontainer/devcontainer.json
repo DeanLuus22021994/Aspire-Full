@@ -23,15 +23,18 @@
   ],
 
   // Named volumes for all persistent data - zero codebase pollution
+  // Aligned with docker-compose.nvidia.yml for shared caching
   "mounts": [
-    // Package caches - persist across rebuilds
+    // Package caches - persist across rebuilds (shared with buildkit)
     { "type": "volume", "source": "aspire-nuget-cache", "target": "/volumes/nuget" },
     { "type": "volume", "source": "aspire-dotnet-cli", "target": "/volumes/dotnet-cli" },
     { "type": "volume", "source": "aspire-npm-cache", "target": "/volumes/npm" },
     { "type": "volume", "source": "aspire-uv-cache", "target": "/volumes/uv" },
     { "type": "volume", "source": "aspire-pip-cache", "target": "/volumes/pip" },
-    // GPU/CUDA caches
+    // GPU/CUDA caches (shared with buildkit for zero-latency builds)
     { "type": "volume", "source": "aspire-cuda-cache", "target": "/volumes/cuda-cache" },
+    { "type": "volume", "source": "aspire-nvidia-cache", "target": "/volumes/nvidia-cache" },
+    { "type": "volume", "source": "aspire-ccache", "target": "/volumes/ccache" },
     // AI/ML model storage
     { "type": "volume", "source": "aspire-models", "target": "/volumes/models" },
     { "type": "volume", "source": "aspire-tensor-cache", "target": "/volumes/tensor-cache" },
@@ -42,7 +45,9 @@
     { "type": "volume", "source": "aspire-testresults", "target": "/volumes/testresults" },
     // Logs and temp
     { "type": "volume", "source": "aspire-logs", "target": "/volumes/logs" },
-    { "type": "volume", "source": "aspire-tmp", "target": "/volumes/tmp" }
+    { "type": "volume", "source": "aspire-tmp", "target": "/volumes/tmp" },
+    // BuildKit cache (shared with buildkitd for layer reuse)
+    { "type": "volume", "source": "aspire-buildkit-state", "target": "/var/lib/buildkit" }
   ],
 
   "features": {
