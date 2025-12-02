@@ -13,7 +13,7 @@ try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
 
-    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+    def ensure_tensor_core_gpu() -> Any:
         """Ensure that the tensor core GPU is available."""
 
 
@@ -39,6 +39,7 @@ class DynamicContext:
     """
 
     def __init__(self, prompt_id: str):
+        super().__init__()
         self.prompt_id = prompt_id
         self.poem_style = random.choice(["limerick", "haiku", "ballad"])
         print(f"[debug] DynamicContext initialized with poem_style: {self.poem_style}")
@@ -73,9 +74,7 @@ async def dynamic_prompt(prompt_id: str) -> None:
         prompt=_get_dynamic_prompt,
     )
 
-    result = await Runner.run(
-        agent, "Tell me about recursion in programming.", context=context
-    )
+    result = await Runner.run(agent, "Tell me about recursion in programming.", context=context)
     print(result.final_output)
 
 

@@ -12,8 +12,8 @@ import time
 from datetime import datetime
 from typing import Any
 
-from agents import function_tool  # type: ignore # pylint: disable=import-error
-from agents.realtime import (  # type: ignore # pylint: disable=import-error
+from agents import function_tool  # pylint: disable=import-error
+from agents.realtime import (  # pylint: disable=import-error
     RealtimeAgent,
     RealtimePlaybackTracker,
     RealtimeRunner,
@@ -57,6 +57,7 @@ class TwilioHandler:
         Args:
             twilio_websocket: The WebSocket connection from Twilio.
         """
+        super().__init__()
         self.twilio_websocket = twilio_websocket
         self._message_loop_task: asyncio.Task[None] | None = None
         self.session: RealtimeSession | None = None
@@ -237,7 +238,7 @@ class TwilioHandler:
 
                 # Update playback tracker
                 self.playback_tracker.on_play_bytes(item_id, item_content_index, audio_bytes)
-                print(f"Playback tracker updated: {item_id}, index {item_content_index}, " f"{byte_count} bytes")
+                print(f"Playback tracker updated: {item_id}, index {item_content_index}, {byte_count} bytes")
 
                 # Clean up the stored data
                 del self._mark_data[mark_id]

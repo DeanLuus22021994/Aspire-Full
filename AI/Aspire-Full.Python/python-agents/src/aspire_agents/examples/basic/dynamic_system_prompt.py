@@ -3,7 +3,7 @@ import random
 from dataclasses import dataclass
 from typing import Literal
 
-from agents import Agent, RunContextWrapper, Runner  # type: ignore # pylint: disable=import-error
+from agents import Agent, RunContextWrapper, Runner  # pylint: disable=import-error
 
 
 @dataclass

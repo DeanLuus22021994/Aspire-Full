@@ -5,7 +5,7 @@ This module demonstrates how to use an output type that is not in strict mode.
 import asyncio
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, override
 
 from agents import (
     Agent,
@@ -18,7 +18,7 @@ try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
 
-    def ensure_tensor_core_gpu() -> Any:  # type: ignore
+    def ensure_tensor_core_gpu() -> Any:
         """Ensure that the tensor core GPU is available."""
 
 
@@ -47,35 +47,38 @@ class OutputType:
 class CustomOutputSchema(AgentOutputSchemaBase):
     """A demonstration of a custom output schema."""
 
+    @override
     def is_plain_text(self) -> bool:
         """
         Check if the output is plain text.
         """
         return False
 
+    @override
     def name(self) -> str:
         """
         Get the name of the schema.
         """
         return "CustomOutputSchema"
 
+    @override
     def json_schema(self) -> dict[str, Any]:
         """
         Get the JSON schema.
         """
         return {
             "type": "object",
-            "properties": {
-                "jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}
-            },
+            "properties": {"jokes": {"type": "object", "properties": {"joke": {"type": "string"}}}},
         }
 
+    @override
     def is_strict_json_schema(self) -> bool:
         """
         Check if the schema is strict JSON.
         """
         return False
 
+    @override
     def validate_json(self, json_str: str) -> Any:
         """
         Validate the JSON string.

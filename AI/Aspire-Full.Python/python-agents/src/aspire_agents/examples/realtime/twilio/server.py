@@ -3,8 +3,9 @@ This module implements a FastAPI server for handling Twilio Media Streams.
 """
 
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
@@ -31,6 +32,7 @@ class TwilioWebSocketManager:
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self.active_handlers: dict[str, TwilioHandler] = {}
 
     async def new_session(self, websocket: WebSocket) -> TwilioHandler:
