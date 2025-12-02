@@ -22,6 +22,29 @@
     "--security-opt=seccomp=unconfined"
   ],
 
+  // Named volumes for all persistent data - zero codebase pollution
+  "mounts": [
+    // Package caches - persist across rebuilds
+    { "type": "volume", "source": "aspire-nuget-cache", "target": "/volumes/nuget" },
+    { "type": "volume", "source": "aspire-dotnet-cli", "target": "/volumes/dotnet-cli" },
+    { "type": "volume", "source": "aspire-npm-cache", "target": "/volumes/npm" },
+    { "type": "volume", "source": "aspire-uv-cache", "target": "/volumes/uv" },
+    { "type": "volume", "source": "aspire-pip-cache", "target": "/volumes/pip" },
+    // GPU/CUDA caches
+    { "type": "volume", "source": "aspire-cuda-cache", "target": "/volumes/cuda-cache" },
+    // AI/ML model storage
+    { "type": "volume", "source": "aspire-models", "target": "/volumes/models" },
+    { "type": "volume", "source": "aspire-tensor-cache", "target": "/volumes/tensor-cache" },
+    // Database storage
+    { "type": "volume", "source": "aspire-qdrant", "target": "/volumes/qdrant" },
+    // Build artifacts - keeps bin/obj out of workspace
+    { "type": "volume", "source": "aspire-artifacts", "target": "/volumes/artifacts" },
+    { "type": "volume", "source": "aspire-testresults", "target": "/volumes/testresults" },
+    // Logs and temp
+    { "type": "volume", "source": "aspire-logs", "target": "/volumes/logs" },
+    { "type": "volume", "source": "aspire-tmp", "target": "/volumes/tmp" }
+  ],
+
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest",
@@ -31,13 +54,31 @@
 
   "customizations": {
     "vscode": {
-      "extensions": ["ms-dotnettools.csharp", "ms-dotnettools.csdevkit", "GitHub.copilot", "GitHub.copilot-chat"],
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
+      ],
       "settings": {
         "dotnet.defaultSolution": "Aspire-Full.slnx",
         "editor.formatOnSave": true,
         "files.exclude": {
           "**/bin": true,
-          "**/obj": true
+          "**/obj": true,
+          "**/.git": true,
+          "**/node_modules": true,
+          "**/__pycache__": true,
+          "**/*.pyc": true
+        },
+        "files.watcherExclude": {
+          "**/bin/**": true,
+          "**/obj/**": true,
+          "**/node_modules/**": true,
+          "**/.git/objects/**": true
         }
       }
     }
@@ -53,8 +94,8 @@
     "18888": { "label": "Aspire Dashboard", "onAutoForward": "openBrowser" }
   },
 
-  "postCreateCommand": "dotnet restore",
-  "postStartCommand": "echo '🚀 GPU Tensor Compute Ready | 9GB RAM | CUDA/Hybrid Mode | Dynamic Batching Enabled'",
+  "postCreateCommand": "dotnet restore && npm install --prefix Web/Aspire-Full.Web 2>/dev/null || true",
+  "postStartCommand": "echo '🚀 GPU Tensor Compute Ready | 9GB RAM | Named Volumes | Zero Pollution'",
 
   "remoteEnv": {
     "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
@@ -63,7 +104,11 @@
     "ASPIRE_OFFLOAD_STRATEGY": "Full",
     "ASPIRE_FALLBACK_TO_CPU": "true",
     "ASPIRE_MAX_BATCH_SIZE": "64",
-    "ASPIRE_ENABLE_DYNAMIC_BATCHING": "true"
+    "ASPIRE_ENABLE_DYNAMIC_BATCHING": "true",
+    // Redirect build outputs to volumes
+    "BaseOutputPath": "/volumes/artifacts/bin/",
+    "BaseIntermediateOutputPath": "/volumes/artifacts/obj/",
+    "VSTestResultsDirectory": "/volumes/testresults/"
   },
 
   "containerEnv": {
@@ -73,6 +118,13 @@
     "DOTNET_gcServer": "1",
     "DOTNET_TieredPGO": "1",
     "OMP_NUM_THREADS": "8",
-    "OPENBLAS_NUM_THREADS": "8"
+    "OPENBLAS_NUM_THREADS": "8",
+    // Volume paths
+    "NUGET_PACKAGES": "/volumes/nuget",
+    "DOTNET_CLI_HOME": "/volumes/dotnet-cli",
+    "npm_config_cache": "/volumes/npm",
+    "UV_CACHE_DIR": "/volumes/uv",
+    "PIP_CACHE_DIR": "/volumes/pip",
+    "CUDA_CACHE_PATH": "/volumes/cuda-cache"
   }
 }
