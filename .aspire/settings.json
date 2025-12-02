@@ -65,7 +65,7 @@
     },
 
     // ========================================================================
-    // Qdrant Vector Database
+    // Qdrant Vector Database - 1GB VRAM, Same Subnet as Workers
     // ========================================================================
     "qdrant": {
       "type": "container.v1",
@@ -73,7 +73,11 @@
       "env": {
         "QDRANT__SERVICE__GRPC_PORT": "6334",
         "QDRANT__STORAGE__STORAGE_PATH": "/qdrant/storage",
-        "QDRANT__STORAGE__ON_DISK_PAYLOAD": "true"
+        "QDRANT__STORAGE__ON_DISK_PAYLOAD": "true",
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "QDRANT__STORAGE__PERFORMANCE__ASYNC_SCORER": "true",
+        "CUDA_VISIBLE_DEVICES": "0",
+        "ASPIRE_VRAM_LIMIT_MB": "1024"
       },
       "bindings": {
         "http": {
@@ -130,8 +134,8 @@
     },
 
     // ========================================================================
-    // Python Agent Workers - Hot Standby Pool for Zero-Latency
-    // 2 explicit workers for guaranteed zero-latency acquisition
+    // Python Agent Workers - 2 x 1GB VRAM, GPU-Only, No CPU Fallback
+    // Same subnet as Qdrant for vector operations
     // ========================================================================
     "agent-worker-1": {
       "type": "container.v1",
@@ -140,13 +144,16 @@
         "NVIDIA_VISIBLE_DEVICES": "all",
         "ASPIRE_TARGET": "agent",
         "ASPIRE_WORKER_ID": "1",
-        "COMPUTE_MODE": "{compute.mode}",
+        "ASPIRE_WORKER_VRAM_MB": "1024",
+        "ASPIRE_GPU_ONLY": "true",
+        "COMPUTE_MODE": "gpu",
         "AGENT_POOL_MODE": "hot-standby",
         "AGENT_WARMUP_ON_START": "true",
         "AGENT_PRELOAD_MODELS": "true",
         "MODEL_CACHE_DIR": "/volumes/models",
         "UV_CACHE_DIR": "/volumes/uv",
-        "OMP_NUM_THREADS": "4"
+        "OMP_NUM_THREADS": "4",
+        "CUDA_VISIBLE_DEVICES": "0"
       },
       "bindings": {
         "grpc": {
