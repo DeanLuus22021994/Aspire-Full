@@ -29,9 +29,10 @@
     "*.cuh": "cuda-cpp"
   },
 
-  // Python Configuration - Portable paths
-  "python.envFile": "${workspaceFolder}/.config/python/.env",
-  "python.defaultInterpreterPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/bin/python",
+  // Python Configuration - Portable paths (cross-platform)
+  // Windows: .venv/Scripts/python.exe | Unix: .venv/bin/python
+  // VS Code auto-detects the correct path based on the .venv structure
+  "python.defaultInterpreterPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
   "python.analysis.typeCheckingMode": "strict",
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUnusedImport": "warning",

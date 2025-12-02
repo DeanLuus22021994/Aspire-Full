@@ -27,6 +27,8 @@ import torch
 from .gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
+    from typing import Sequence
+
     # pylint: disable=too-few-public-methods,missing-class-docstring,missing-function-docstring
 
     class PreTrainedTokenizerBase(Protocol):
@@ -34,10 +36,12 @@ if TYPE_CHECKING:
 
         def __call__(
             self,
-            text: List[str],
-            padding: bool,
-            truncation: bool,
-            return_tensors: str,
+            text: str | Sequence[str],
+            padding: bool | str = ...,
+            truncation: bool | str = ...,
+            max_length: int | None = ...,
+            return_tensors: str | None = ...,
+            **kwargs: Any,
         ) -> Any:
             """Tokenize input text."""
             ...
@@ -65,7 +69,7 @@ if TYPE_CHECKING:
         """Stub for HuggingFace AutoTokenizer."""
 
         @staticmethod
-        def from_pretrained(model_name: str) -> PreTrainedTokenizerBase:
+        def from_pretrained(_model_name: str) -> PreTrainedTokenizerBase:
             """Load pretrained tokenizer."""
             ...
 
@@ -73,7 +77,7 @@ if TYPE_CHECKING:
         """Stub for HuggingFace AutoModel."""
 
         @staticmethod
-        def from_pretrained(model_name: str) -> PreTrainedModel:
+        def from_pretrained(_model_name: str) -> PreTrainedModel:
             """Load pretrained model."""
             ...
 
@@ -433,7 +437,7 @@ class BatchComputeService:
             return {
                 "total_requests": self._total_requests,
                 "total_batches": self._total_batches,
-                "avg_batch_size": (self._total_requests / self._total_batches if self._total_batches > 0 else 0.0),
+                "avg_batch_size": self._total_requests / self._total_batches if self._total_batches > 0 else 0.0,
                 "queue_size": self._queue.qsize(),
             }
 
