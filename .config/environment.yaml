@@ -1,5 +1,5 @@
 repository:
-  root: "C:/Users/Dean/source/Aspire-Full - 1"
+  root: "."  # Relative to workspace root - fully portable
   branch: "master"
 dotnet:
   sdk: "10.0.100"

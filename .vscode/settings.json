@@ -1,52 +1,37 @@
 {
+  // =============================================================================
+  // Aspire-Full VS Code Settings - Fully Portable
+  // No host dependencies - all paths relative to ${workspaceFolder}
+  // =============================================================================
+
+  // .NET Configuration
   "dotnet.defaultSolution": "Aspire-Full.slnx",
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
   "omnisharp.enableRoslynAnalyzers": true,
+
+  // Editor Settings
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
   },
+
+  // File Exclusions
   "files.exclude": {
     "**/bin": true,
-    "**/obj": true
+    "**/obj": true,
+    "**/artifacts": true,
+    "**/.git": true,
+    "**/node_modules": true
   },
-  "python.envFile": "${workspaceFolder}/.config/python/.env",
-  "github.copilot.chat.codeGeneration.useReferencedFiles": true,
-  "github.copilot.chat.codesearch.enabled": true,
-  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
   "files.associations": {
-    ".pycodestyle": "ini"
+    ".pycodestyle": "ini",
+    "*.cu": "cuda-cpp",
+    "*.cuh": "cuda-cpp"
   },
-  "cSpell.words": [
-    "addopts",
-    "ASPNETCORE",
-    "AUTHMODE",
-    "CERTDIR",
-    "chelnak",
-    "CUDA",
-    "Dind",
-    "Instrumentor",
-    "llms",
-    "nektos",
-    "pgvector",
-    "pylint",
-    "pytest",
-    "qdrant",
-    "seachicken",
-    "Serilog",
-    "triaging",
-    "xmldoc"
-  ],
-  "python.defaultInterpreterPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
 
-  // CMake configuration for native CUDA builds
-  "cmake.cmakePath": "C:\\Program Files\\CMake\\bin\\cmake.exe",
-  "cmake.sourceDirectory": "${workspaceFolder}/AI/Aspire-Full.Tensor/Native",
-  "cmake.configureOnOpen": false,
-
-  "nsight.server.connection.port": 4500,
-  "nsight.server.connection.host": "localhost",
-  "nsight.compute.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Compute 2025.2.1\\host\\windows-desktop-win7-x64\\ncu-ui.exe",
-  "nsight.systems.path": "C:\\Program Files\\NVIDIA Corporation\\Nsight Systems 2025.6.1\\host-windows-x64\\nsys-ui.exe",
+  // Python Configuration - Portable paths
+  "python.envFile": "${workspaceFolder}/.config/python/.env",
+  "python.defaultInterpreterPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/bin/python",
   "python.analysis.typeCheckingMode": "strict",
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUnusedImport": "warning",
@@ -65,5 +50,43 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
-  }
+  },
+
+  // CMake Configuration - Uses system cmake (installed in DevContainer)
+  "cmake.sourceDirectory": "${workspaceFolder}/AI/Aspire-Full.Tensor/Native",
+  "cmake.buildDirectory": "${workspaceFolder}/AI/Aspire-Full.Tensor/Native/build",
+  "cmake.configureOnOpen": false,
+  "cmake.configureOnEdit": false,
+
+  // NVIDIA Tools - Auto-detected from PATH in container
+  "nsight.server.connection.port": 4500,
+  "nsight.server.connection.host": "localhost",
+
+  // GitHub Copilot
+  "github.copilot.chat.codeGeneration.useReferencedFiles": true,
+  "github.copilot.chat.codesearch.enabled": true,
+
+  // Spell Checker
+  "cSpell.words": [
+    "addopts",
+    "ASPNETCORE",
+    "AUTHMODE",
+    "CERTDIR",
+    "chelnak",
+    "CUDA",
+    "Dind",
+    "Instrumentor",
+    "llms",
+    "nektos",
+    "pgvector",
+    "pylint",
+    "pytest",
+    "qdrant",
+    "seachicken",
+    "Serilog",
+    "triaging",
+    "xmldoc",
+    "devcontainer",
+    "tensorcore"
+  ]
 }

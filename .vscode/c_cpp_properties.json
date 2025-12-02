@@ -1,15 +1,49 @@
 {
+  // =============================================================================
+  // C/C++ Properties - Multi-Platform CUDA Configuration
+  // Uses environment variables for portability
+  // =============================================================================
   "configurations": [
     {
-      "name": "Win32",
-      "includePath": ["${workspaceFolder}/**", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/include"],
-      "defines": ["_DEBUG", "UNICODE", "_UNICODE", "__CUDACC__", "_MSC_VER=1930"],
-      "windowsSdkVersion": "10.0.22000.0",
-      "compilerPath": "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin/nvcc.exe",
-      "compilerArgs": ["--cuda-path=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0"],
+      "name": "Linux-CUDA",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/AI/Aspire-Full.Tensor/Native/include",
+        "/usr/local/cuda/include"
+      ],
+      "defines": [
+        "_DEBUG",
+        "__CUDACC__",
+        "__GNUC__"
+      ],
+      "compilerPath": "/usr/local/cuda/bin/nvcc",
+      "compilerArgs": ["--cuda-path=/usr/local/cuda"],
       "cStandard": "c17",
       "cppStandard": "c++20",
-      "intelliSenseMode": "windows-msvc-x64"
+      "intelliSenseMode": "linux-gcc-x64",
+      "configurationProvider": "ms-vscode.cmake-tools"
+    },
+    {
+      "name": "Win32-CUDA",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/AI/Aspire-Full.Tensor/Native/include",
+        "${env:CUDA_PATH}/include"
+      ],
+      "defines": [
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE",
+        "__CUDACC__",
+        "_MSC_VER=1930"
+      ],
+      "windowsSdkVersion": "10.0.22000.0",
+      "compilerPath": "${env:CUDA_PATH}/bin/nvcc.exe",
+      "compilerArgs": ["--cuda-path=${env:CUDA_PATH}"],
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "windows-msvc-x64",
+      "configurationProvider": "ms-vscode.cmake-tools"
     }
   ],
   "version": 4
