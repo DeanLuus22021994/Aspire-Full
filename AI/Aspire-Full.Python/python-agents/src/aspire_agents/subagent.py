@@ -103,7 +103,6 @@ class SubAgentConfig:
     def uses_gpu(self) -> bool:
         """GPU is always required - no CPU fallback."""
         return True
-        return self.compute_mode == "hybrid"
 
 
 # ============================================================================
