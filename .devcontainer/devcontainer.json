@@ -100,14 +100,16 @@
   },
 
   "postCreateCommand": "dotnet restore && npm install --prefix Web/Aspire-Full.Web 2>/dev/null || true",
-  "postStartCommand": "echo '🚀 GPU Tensor Compute Ready | 9GB RAM | Named Volumes | Zero Pollution'",
+  "postStartCommand": "docker compose -f .devcontainer/docker-compose.yml up -d gpu-worker-1 gpu-worker-2 2>/dev/null || echo '🚀 GPU Workers: start manually with scripts/start-gpu-workers.ps1'",
 
   "remoteEnv": {
     "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
     "DOTNET_ENVIRONMENT": "Development",
-    "ASPIRE_COMPUTE_MODE": "Hybrid",
+    "ASPIRE_COMPUTE_MODE": "gpu",
     "ASPIRE_OFFLOAD_STRATEGY": "Full",
-    "ASPIRE_FALLBACK_TO_CPU": "true",
+    "ASPIRE_FALLBACK_TO_CPU": "false",
+    "ASPIRE_GPU_ONLY": "true",
+    "PYTHON_GIL": "0",
     "ASPIRE_MAX_BATCH_SIZE": "64",
     "ASPIRE_ENABLE_DYNAMIC_BATCHING": "true",
     // Redirect build outputs to volumes

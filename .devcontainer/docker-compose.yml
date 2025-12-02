@@ -188,6 +188,98 @@ services:
     depends_on:
       - aspire-dashboard
 
+  # =============================================================================
+  # GPU Automation Workers - Python 3.15t Free-Threaded with CuPy
+  # 2 x 1GB VRAM workers + 1GB Qdrant = 3GB total VRAM allocation
+  # Privileged access for direct GPU compute, zero-latency kernel dispatch
+  # =============================================================================
+  gpu-worker-1:
+    image: mcr.microsoft.com/devcontainers/python:3.12
+    container_name: aspire-gpu-worker-1
+    privileged: true
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu", "utility", "compute"]
+        limits:
+          memory: 2g
+    environment:
+      - PYTHON_GIL=0
+      - ASPIRE_WORKER_ID=1
+      - ASPIRE_WORKER_VRAM_MB=1024
+      - ASPIRE_GPU_ONLY=true
+      - ASPIRE_COMPUTE_MODE=gpu
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
+      - CUDA_VISIBLE_DEVICES=0
+      - AGENT_POOL_MODE=hot-standby
+      - AGENT_WARMUP_ON_START=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+    volumes:
+      - aspire-models:/volumes/models:ro
+      - aspire-uv-cache:/volumes/uv
+      - aspire-cuda-cache:/volumes/cuda-cache
+      - aspire-logs:/volumes/logs
+      - type: bind
+        source: ${SHARED_HOST_PATH:-C:/SHARED}
+        target: /shared
+        read_only: false
+    networks:
+      - aspire-network
+    restart: unless-stopped
+    command: sleep infinity
+    depends_on:
+      - aspire-dashboard
+
+  gpu-worker-2:
+    image: mcr.microsoft.com/devcontainers/python:3.12
+    container_name: aspire-gpu-worker-2
+    privileged: true
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu", "utility", "compute"]
+        limits:
+          memory: 2g
+    environment:
+      - PYTHON_GIL=0
+      - ASPIRE_WORKER_ID=2
+      - ASPIRE_WORKER_VRAM_MB=1024
+      - ASPIRE_GPU_ONLY=true
+      - ASPIRE_COMPUTE_MODE=gpu
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
+      - CUDA_VISIBLE_DEVICES=0
+      - AGENT_POOL_MODE=hot-standby
+      - AGENT_WARMUP_ON_START=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+    volumes:
+      - aspire-models:/volumes/models:ro
+      - aspire-uv-cache:/volumes/uv
+      - aspire-cuda-cache:/volumes/cuda-cache
+      - aspire-logs:/volumes/logs
+      - type: bind
+        source: ${SHARED_HOST_PATH:-C:/SHARED}
+        target: /shared
+        read_only: false
+    networks:
+      - aspire-network
+    restart: unless-stopped
+    command: sleep infinity
+    depends_on:
+      - aspire-dashboard
+      - gpu-worker-1
+
 # =============================================================================
 # Named Volumes
 # =============================================================================
@@ -236,6 +328,11 @@ volumes:
   aspire-github-mcp-cache:
     external: true
   aspire-uv-cache:
+    external: true
+  # GPU Worker volumes
+  aspire-models:
+    external: true
+  aspire-logs:
     external: true
 
 networks:
