@@ -85,9 +85,11 @@
         "type": "Project",
         "dependencies": {
           "Aspire-Full.Shared": "[1.0.0, )",
+          "Microsoft.Extensions.Configuration.Abstractions": "[10.0.0, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.0, )",
           "Microsoft.Extensions.Options": "[10.0.0, )",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.0, )",
           "System.Numerics.Tensors": "[10.0.0, )"
         }
       },

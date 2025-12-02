@@ -10,8 +10,8 @@ namespace Aspire_Full.Configuration;
 
 public static class ConfigLoader
 {
-    private const string UnifiedConfigPath = ".config/aspire-config.yaml";
-    private const string LegacyRuntimeConfigPath = ".config/config.yaml";
+    private const string UnifiedConfigPath = "Infra/.config/aspire-config.yaml";
+    private const string LegacyRuntimeConfigPath = "Infra/.config/config.yaml";
 
     private static readonly Lazy<IDeserializer> s_yamlDeserializer = new(() =>
         new DeserializerBuilder()

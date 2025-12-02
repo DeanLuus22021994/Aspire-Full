@@ -8,8 +8,8 @@
   <Project Path="Aspire-Full.Agents/Aspire-Full.Agents.csproj" />
   <Project Path="Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj" />
   <Project Path="Aspire-Full.Tensor/Aspire-Full.Tensor.csproj" />
-  <Project Path="Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
   <Project Path="Aspire-Full.Python/Aspire-Full.Python.csproj" />
 
   <Project Path="../Core/Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
+  <Project Path="../Infra/Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
 </Solution>

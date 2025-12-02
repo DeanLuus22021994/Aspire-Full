@@ -10,14 +10,14 @@
   <Project Path="Infra/Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj" />
   <Project Path="Infra/Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj" />
   <Project Path="Infra/Aspire-Full.Tensor.Core/Aspire-Full.Tensor.Core.csproj" />
-  <Project Path="Core/Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
+  <Project Path="Infra/Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
+  <Project Path="Infra/Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
   <Project Path="Core/Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
   <Project Path="Core/Aspire-Full.Github/Aspire-Full.Github.csproj" />
   <Project Path="Core/Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
   <Project Path="AI/Aspire-Full.Agents/Aspire-Full.Agents.csproj" />
   <Project Path="AI/Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj" />
   <Project Path="AI/Aspire-Full.Tensor/Aspire-Full.Tensor.csproj" />
-  <Project Path="AI/Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj" />
   <Project Path="AI/Aspire-Full.Python/Aspire-Full.Python.csproj" />
 
   <Project Path="Web/Aspire-Full.Api/Aspire-Full.Api.csproj" />

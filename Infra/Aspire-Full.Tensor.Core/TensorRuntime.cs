@@ -266,58 +266,33 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
         if (IsGpuAvailable && requests.Length >= 2)
         {
-            // GPU batch processing - allocate all buffers upfront
-            var buffers = new GpuBufferScope[requests.Length * 3]; // A, B, C for each request
-
-            try
+            // GPU batch processing - process sequentially due to ref struct constraints
+            for (int i = 0; i < requests.Length; i++)
             {
-                // Allocate and copy all inputs
-                for (int i = 0; i < requests.Length; i++)
-                {
-                    var req = requests[i];
-                    var aSize = (nuint)(req.M * req.K * sizeof(float));
-                    var bSize = (nuint)(req.K * req.N * sizeof(float));
-                    var cSize = (nuint)(req.M * req.N * sizeof(float));
+                var req = requests[i];
+                var aSize = (nuint)(req.M * req.K * sizeof(float));
+                var bSize = (nuint)(req.K * req.N * sizeof(float));
+                var cSize = (nuint)(req.M * req.N * sizeof(float));
 
-                    buffers[i * 3] = new GpuBufferScope(_memoryPool, aSize);
-                    buffers[i * 3 + 1] = new GpuBufferScope(_memoryPool, bSize);
-                    buffers[i * 3 + 2] = new GpuBufferScope(_memoryPool, cSize);
+                using var aBuffer = new GpuBufferScope(_memoryPool, aSize);
+                using var bBuffer = new GpuBufferScope(_memoryPool, bSize);
+                using var cBuffer = new GpuBufferScope(_memoryPool, cSize);
 
-                    req.A.Span.CopyTo(buffers[i * 3].Buffer.AsSpan<float>());
-                    req.B.Span.CopyTo(buffers[i * 3 + 1].Buffer.AsSpan<float>());
-                }
+                req.A.Span.CopyTo(aBuffer.Buffer.AsSpan<float>());
+                req.B.Span.CopyTo(bBuffer.Buffer.AsSpan<float>());
 
-                // Execute all matrix multiplies
-                for (int i = 0; i < requests.Length; i++)
-                {
-                    var req = requests[i];
-                    var metrics = new NativeTensorContext.TensorMetrics();
+                var metrics = new NativeTensorContext.TensorMetrics();
+                NativeTensorContext.MatrixMultiply_GPU(
+                    aBuffer.Buffer.DevicePointer,
+                    bBuffer.Buffer.DevicePointer,
+                    cBuffer.Buffer.DevicePointer,
+                    req.M, req.N, req.K, ref metrics);
 
-                    NativeTensorContext.MatrixMultiply_GPU(
-                        buffers[i * 3].Buffer.DevicePointer,
-                        buffers[i * 3 + 1].Buffer.DevicePointer,
-                        buffers[i * 3 + 2].Buffer.DevicePointer,
-                        req.M, req.N, req.K, ref metrics);
+                s_operationDuration.Record(metrics.compute_time_ms, new KeyValuePair<string, object?>("batch_index", i));
 
-                    s_operationDuration.Record(metrics.compute_time_ms, new KeyValuePair<string, object?>("batch_index", i));
-                }
-
-                // Copy results back
-                for (int i = 0; i < requests.Length; i++)
-                {
-                    var req = requests[i];
-                    var result = new float[req.M * req.N];
-                    buffers[i * 3 + 2].Buffer.AsSpan<float>().CopyTo(result);
-                    results[i] = result;
-                }
-            }
-            finally
-            {
-                // Dispose all buffers
-                foreach (var buffer in buffers)
-                {
-                    buffer.Dispose();
-                }
+                var result = new float[req.M * req.N];
+                cBuffer.Buffer.AsSpan<float>().CopyTo(result);
+                results[i] = result;
             }
         }
         else

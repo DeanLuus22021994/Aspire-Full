@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\AI\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
     <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
   </ItemGroup>
 

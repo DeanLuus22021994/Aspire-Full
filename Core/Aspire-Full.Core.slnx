@@ -5,9 +5,9 @@
     <File Path="../global.json" />
     <File Path="../NuGet.config" />
   </Folder>
-  <Project Path="Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
   <Project Path="Aspire-Full.Pipeline/Aspire-Full.Pipeline.csproj" />
   <Project Path="Aspire-Full.Github/Aspire-Full.Github.csproj" />
   <Project Path="Aspire-Full.Shared/Aspire-Full.Shared.csproj" />
   <Project Path="../Infra/Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj" />
+  <Project Path="../Infra/Aspire-Full.Connectors/Aspire-Full.Connectors.csproj" />
 </Solution>

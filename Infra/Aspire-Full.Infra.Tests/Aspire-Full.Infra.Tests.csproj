@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aspire_Full.Infra.Tests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
+    <ProjectReference Include="..\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Tensor.Core\Aspire-Full.Tensor.Core.csproj" />
+    <ProjectReference Include="..\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
+    <ProjectReference Include="..\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
+  </ItemGroup>
+
+</Project>
