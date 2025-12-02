@@ -5,16 +5,23 @@ This module demonstrates the use of dynamic prompt templates.
 import argparse
 import asyncio
 import random
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from agents import Agent, GenerateDynamicPromptData, Runner
+
+if TYPE_CHECKING:
+    from aspire_agents.gpu import TensorCoreInfo
+
+
+def _noop_ensure_tensor_core_gpu() -> "TensorCoreInfo | None":
+    """Fallback when aspire_agents.gpu is unavailable."""
+    return None
+
 
 try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:
-        """Ensure that the tensor core GPU is available."""
+    ensure_tensor_core_gpu = _noop_ensure_tensor_core_gpu  # type: ignore[assignment]
 
 
 # NOTE: This example will not work out of the box, because the default prompt ID will not be available

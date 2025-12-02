@@ -20,7 +20,8 @@
   ],
 
   "ignore": [
-    "**/migrations/**"
+    "**/migrations/**",
+    "AI/Aspire-Full.Python/python-agents/tests/**"
   ],
 
   "strict": [
@@ -31,8 +32,11 @@
     "AI/Aspire-Full.Python/python-agents/src"
   ],
 
+  "venvPath": "AI/Aspire-Full.Python/python-agents",
+  "venv": ".venv",
+
   "pythonVersion": "3.15",
-  "pythonPlatform": "Linux",
+  "pythonPlatform": "All",
 
   "typeCheckingMode": "strict",
 

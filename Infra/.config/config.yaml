@@ -5,7 +5,7 @@ environment:
     sdk: "10.0.100"
     preview: true
   python:
-    version: "3.14.0"
+    version: "3.15.0"
     manager: "uv"
     torch:
       device: "cuda"
@@ -68,7 +68,8 @@ contexts:
         exclude: *vendor_globs
         extra_paths:
           - Aspire-Full.Python/python-agents/src
-          - Aspire-Full.Python/python-agents/.venv/Lib/site-packages
+        venv_path: Aspire-Full.Python/python-agents
+        venv: .venv
 
       runner:
         auto_targets: *lint_roots

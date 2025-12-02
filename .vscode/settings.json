@@ -36,10 +36,14 @@
   // =============================================================================
   // Uses Python 3.15t (free-threaded) from .python-version
   // PYTHON_GIL=0 environment disables GIL for true parallel threading (PEP 703/803)
-  // Windows: .venv/Scripts/python.exe | Unix: .venv/bin/python
-  // NOTE: VS Code auto-detects the venv. If detection fails, the path below is used.
+  // NOTE: VS Code auto-detects the venv via .python-version and pyproject.toml
+  // The python.defaultInterpreterPath is a fallback only - uv manages the actual venv
   "python.defaultInterpreterPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
   "python.envFile": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.env",
+
+  // Cross-platform venv detection (VS Code uses this to find the correct interpreter)
+  "python.venvPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents",
+  "python.venvFolders": [".venv"],
 
   // Pylance Language Server Configuration (Microsoft's official Python language server)
   // NOTE: typeCheckingMode and diagnosticSeverityOverrides are configured in pyrightconfig.json
@@ -52,6 +56,9 @@
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.inlayHints.variableTypes": true,
   "python.analysis.inlayHints.pytestParameters": true,
+  "python.analysis.ignore": ["AI/Aspire-Full.Python/python-agents/tests/**"],
+  "python.analysis.exclude": ["AI/Aspire-Full.Python/python-agents/tests/**"],
+  "python.analysis.extraPaths": ["${workspaceFolder}/AI/Aspire-Full.Python/python-agents/src"],
 
   // Disable third-party linters (use Microsoft tooling only)
   "pylint.enabled": false,

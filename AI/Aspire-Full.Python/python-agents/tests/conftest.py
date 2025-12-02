@@ -45,9 +45,10 @@ if str(SRC_ROOT) not in sys.path:
 # ============================================================================
 
 if TYPE_CHECKING:
-    from aspire_agents import SubAgentConfig, TensorConfig
-    from aspire_agents.compute import ComputeConfig
-    from aspire_agents.subagent import SubAgentOrchestrator
+    # Path configured at runtime via sys.path.insert()
+    from aspire_agents import SubAgentConfig, TensorConfig  # pyright: ignore[reportMissingImports]
+    from aspire_agents.compute import ComputeConfig  # pyright: ignore[reportMissingImports]
+    from aspire_agents.subagent import SubAgentOrchestrator  # pyright: ignore[reportMissingImports]
 
 # ============================================================================
 # Thread-Safe Initialization Lock
@@ -314,9 +315,10 @@ def reset_singletons() -> Generator[None, None, None]:
 
     Thread-safe: Uses locks from each module.
     """
-    from aspire_agents.compute import reset_compute_service
-    from aspire_agents.guardrails import reset_guardrail_service
-    from aspire_agents.subagent import reset_orchestrator
+    # Path configured at runtime via sys.path.insert()
+    from aspire_agents.compute import reset_compute_service  # pyright: ignore[reportMissingImports]
+    from aspire_agents.guardrails import reset_guardrail_service  # pyright: ignore[reportMissingImports]
+    from aspire_agents.subagent import reset_orchestrator  # pyright: ignore[reportMissingImports]
 
     # Reset before test
     reset_compute_service()

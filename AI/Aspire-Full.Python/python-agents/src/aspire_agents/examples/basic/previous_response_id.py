@@ -3,16 +3,23 @@ This module demonstrates using the previous_response_id to continue a conversati
 """
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING
 
 from agents import Agent, Runner
+
+if TYPE_CHECKING:
+    from aspire_agents.gpu import TensorCoreInfo
+
+
+def _noop_ensure_tensor_core_gpu() -> "TensorCoreInfo | None":
+    """Fallback when aspire_agents.gpu is unavailable."""
+    return None
+
 
 try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:
-        """Ensure that the tensor core GPU is available."""
+    ensure_tensor_core_gpu = _noop_ensure_tensor_core_gpu  # type: ignore[assignment]
 
 
 # This demonstrates usage of the `previous_response_id` parameter to continue a conversation.

@@ -5,7 +5,7 @@ This module demonstrates how to use an output type that is not in strict mode.
 import asyncio
 import json
 from dataclasses import dataclass
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 from agents import (
     Agent,
@@ -14,12 +14,19 @@ from agents import (
     Runner,
 )
 
+if TYPE_CHECKING:
+    from aspire_agents.gpu import TensorCoreInfo
+
+
+def _noop_ensure_tensor_core_gpu() -> "TensorCoreInfo | None":
+    """Fallback when aspire_agents.gpu is unavailable."""
+    return None
+
+
 try:
     from aspire_agents.gpu import ensure_tensor_core_gpu
 except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:
-        """Ensure that the tensor core GPU is available."""
+    ensure_tensor_core_gpu = _noop_ensure_tensor_core_gpu  # type: ignore[assignment]
 
 
 # This example demonstrates how to use an output type that is not in strict mode. Strict mode

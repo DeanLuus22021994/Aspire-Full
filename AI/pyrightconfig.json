@@ -16,7 +16,12 @@
     ".vscode-test",
     ".vscode-test/**",
     ".vscode-*",
-    ".vscode-*/**"
+    ".vscode-*/**",
+    "Aspire-Full.Python/python-agents/tests"
+  ],
+
+  "ignore": [
+    "Aspire-Full.Python/python-agents/tests/**"
   ],
 
   "strict": [
@@ -24,9 +29,11 @@
   ],
 
   "extraPaths": [
-    "Aspire-Full.Python/python-agents/src",
-    "Aspire-Full.Python/python-agents/.venv/Lib/site-packages"
+    "Aspire-Full.Python/python-agents/src"
   ],
+
+  "venvPath": "Aspire-Full.Python/python-agents",
+  "venv": ".venv",
 
   "pythonVersion": "3.15",
   "pythonPlatform": "All",

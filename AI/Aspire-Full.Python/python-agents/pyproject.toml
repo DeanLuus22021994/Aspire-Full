@@ -82,14 +82,16 @@ explicit = false
 pythonVersion = "3.15"
 pythonPlatform = "All"
 typeCheckingMode = "strict"
-include = ["src", "tests"]
+include = ["src"]
 exclude = [
     "**/__pycache__",
     "**/.venv",
     "**/dist",
     "**/build",
     "**/*.egg-info",
+    "tests",
 ]
+ignore = ["tests/**"]
 extraPaths = ["src"]
 
 # Strict inference settings
