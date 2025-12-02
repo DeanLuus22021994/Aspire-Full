@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\Web\Aspire-Full.Api\Aspire-Full.Api.csproj" />
     <ProjectReference Include="..\..\Infra\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
     <ProjectReference Include="..\..\Infra\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.Agents.Core\Aspire-Full.Agents.Core.csproj" />
     <ProjectReference Include="..\..\AI\Aspire-Full.Agents\Aspire-Full.Agents.csproj" />
     <ProjectReference Include="..\..\Infra\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
     <ProjectReference Include="..\..\Web\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />

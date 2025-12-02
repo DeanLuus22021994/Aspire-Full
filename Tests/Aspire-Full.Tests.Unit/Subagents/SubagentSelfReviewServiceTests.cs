@@ -1,4 +1,5 @@
-using Aspire_Full.Agents;
+using Aspire_Full.Agents.Core.Catalog;
+using Aspire_Full.Agents.Core.Services;
 using Aspire_Full.Shared.Abstractions;
 using Aspire_Full.Shared.Models;
 using Aspire_Full.Tests.Unit.Fixtures;
@@ -8,11 +9,12 @@ namespace Aspire_Full.Tests.Unit.Agents;
 public class SubagentSelfReviewServiceTests
 {
     private readonly FakeTimeProvider _timeProvider = new(DateTimeOffset.UnixEpoch);
+    private readonly ISubagentCatalog _catalog = new SubagentCatalog();
 
     [Fact]
     public void GetDefinitionReturnsCatalogEntry()
     {
-        var service = new SubagentSelfReviewService(_timeProvider);
+        var service = new SubagentSelfReviewService(_catalog, _timeProvider);
 
         var definition = service.GetDefinition(SubagentRole.VectorStore);
 
@@ -24,7 +26,7 @@ public class SubagentSelfReviewServiceTests
     public void CreateRetrospectiveFallsBackToDefaults()
     {
         var update = SubagentUpdate.Normalize(SubagentRole.UsersKernel, null, null, null, null);
-        var service = new SubagentSelfReviewService(_timeProvider);
+        var service = new SubagentSelfReviewService(_catalog, _timeProvider);
 
         var retrospective = service.CreateRetrospective(update);
 
@@ -37,7 +39,7 @@ public class SubagentSelfReviewServiceTests
     public void CreateDelegationPlanMarksGpuRequestsHigh()
     {
         var update = SubagentUpdate.Normalize(SubagentRole.EmbeddingService, null, null, null, new[] { "GPU driver upgrade" });
-        var service = new SubagentSelfReviewService(_timeProvider);
+        var service = new SubagentSelfReviewService(_catalog, _timeProvider);
 
         var plan = service.CreateDelegationPlan(update);
 

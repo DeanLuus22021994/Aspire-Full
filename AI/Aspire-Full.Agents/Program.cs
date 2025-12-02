@@ -1,5 +1,7 @@
 using System.Text.Json;
-using Aspire_Full.Agents;
+using Aspire_Full.Agents.Core.Catalog;
+using Aspire_Full.Agents.Core.Maintenance;
+using Aspire_Full.Agents.Core.Services;
 using Aspire_Full.Shared;
 using Aspire_Full.Shared.Abstractions;
 using Aspire_Full.Shared.Models;
@@ -43,7 +45,9 @@ var update = SubagentUpdate.Normalize(
     agentInput.Next,
     agentInput.Delegations);
 
-ISubagentSelfReviewService service = new SubagentSelfReviewService();
+// Use Infra implementations
+ISubagentCatalog catalog = new SubagentCatalog();
+ISubagentSelfReviewService service = new SubagentSelfReviewService(catalog);
 var definition = service.GetDefinition(update.Role);
 var retrospective = service.CreateRetrospective(update);
 var delegationPlan = service.CreateDelegationPlan(update);

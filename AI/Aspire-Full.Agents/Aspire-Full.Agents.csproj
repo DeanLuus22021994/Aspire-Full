@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
+    <ProjectReference Include="..\..\Infra\Aspire-Full.Agents.Core\Aspire-Full.Agents.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
