@@ -67,7 +67,7 @@ class SafeOpenProtocol(Protocol):
             metadata = f.metadata()
     """
 
-    def __init__(  # pyright: ignore[reportMissingSuperCall]
+    def __init__(
         self,
         filename: str,
         framework: str,
@@ -80,7 +80,7 @@ class SafeOpenProtocol(Protocol):
             framework: Target framework ("pt", "tf", "np", "jax", "paddle")
             device: Optional device for tensor loading (e.g., "cpu", "cuda:0")
         """
-        ...
+        super().__init__()
 
     def __enter__(self) -> "SafeOpenProtocol":
         """Enter context manager.

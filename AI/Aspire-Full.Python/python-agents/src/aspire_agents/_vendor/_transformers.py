@@ -11,6 +11,7 @@ from typing import (
     Final,
     Protocol,
     Self,
+    cast,
     runtime_checkable,
 )
 
@@ -232,19 +233,24 @@ class AutoTokenizer:
             **kwargs: Additional arguments
 
         Returns:
-            Loaded tokenizer
+            Loaded tokenizer implementing PreTrainedTokenizer protocol.
+
+        Raises:
+            RuntimeError: If transformers package is not installed.
         """
         try:
-            from transformers import AutoTokenizer as _AutoTokenizer  # type: ignore[import-not-found]
+            from transformers import AutoTokenizer as _AutoTokenizer
 
-            return _AutoTokenizer.from_pretrained(  # type: ignore[no-any-return]
+            tokenizer = _AutoTokenizer.from_pretrained(
                 model_name_or_path,
                 use_fast=use_fast,
                 trust_remote_code=trust_remote_code,
                 **kwargs,
             )
+            return cast(PreTrainedTokenizer, tokenizer)
         except ImportError as e:
-            raise RuntimeError("transformers package required. Install with: pip install transformers") from e
+            msg = "transformers package required. Install with: pip install transformers"
+            raise RuntimeError(msg) from e
 
 
 class AutoModel:
@@ -269,20 +275,25 @@ class AutoModel:
             **kwargs: Additional arguments
 
         Returns:
-            Loaded model
+            Loaded model implementing PreTrainedModel protocol.
+
+        Raises:
+            RuntimeError: If transformers package is not installed.
         """
         try:
-            from transformers import AutoModel as _AutoModel  # type: ignore[import-not-found]
+            from transformers import AutoModel as _AutoModel
 
-            return _AutoModel.from_pretrained(  # type: ignore[no-any-return]
+            model = _AutoModel.from_pretrained(
                 model_name_or_path,
                 trust_remote_code=trust_remote_code,
                 torch_dtype=torch_dtype,
                 device_map=device_map,
                 **kwargs,
             )
+            return cast(PreTrainedModel, model)
         except ImportError as e:
-            raise RuntimeError("transformers package required. Install with: pip install transformers") from e
+            msg = "transformers package required. Install with: pip install transformers"
+            raise RuntimeError(msg) from e
 
 
 # ============================================================================

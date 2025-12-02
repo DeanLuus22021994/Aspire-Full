@@ -24,6 +24,7 @@ from typing import (
     Final,
     Protocol,
     TypeVar,
+    cast,
     runtime_checkable,
 )
 
@@ -47,8 +48,9 @@ def is_gil_disabled() -> bool:
         True if running in free-threaded mode (PYTHON_GIL=0)
     """
     # Python 3.13+ has sys._is_gil_enabled()
-    if hasattr(sys, "_is_gil_enabled"):
-        return not sys._is_gil_enabled()  # type: ignore[attr-defined]
+    is_gil_enabled = getattr(sys, "_is_gil_enabled", None)
+    if is_gil_enabled is not None:
+        return not is_gil_enabled()
     return False
 
 
@@ -872,11 +874,20 @@ def create_condition(
         lock: Optional lock to use
 
     Returns:
-        Condition instance
+        Condition instance implementing ConditionProtocol.
     """
-    from threading import Condition
+    from threading import Condition, Lock, RLock
 
-    return Condition(lock)  # type: ignore[arg-type]
+    # Convert protocol types to stdlib types
+    if lock is None:
+        stdlib_lock = None
+    elif isinstance(lock, (Lock, RLock)):
+        stdlib_lock = lock
+    else:
+        # Protocol-compatible lock - use cast for type assertion
+        stdlib_lock = cast(Lock | RLock, lock)
+
+    return cast(ConditionProtocol, Condition(stdlib_lock))
 
 
 def create_barrier(

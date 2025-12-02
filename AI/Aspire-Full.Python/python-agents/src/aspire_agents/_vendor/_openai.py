@@ -196,7 +196,7 @@ def create_openai_client(
     api_key: str | None = None,
     base_url: str | None = None,
     timeout: float = 60.0,
-) -> OpenAIClient | Any:
+) -> OpenAIClient:
     """Create OpenAI client.
 
     Args:
@@ -205,18 +205,23 @@ def create_openai_client(
         timeout: Request timeout
 
     Returns:
-        OpenAI client instance (type depends on whether openai is installed)
+        OpenAI client instance implementing OpenAIClient protocol.
+
+    Raises:
+        RuntimeError: If openai package is not installed.
     """
     try:
-        from openai import AsyncOpenAI  # type: ignore[import-not-found]
+        from openai import AsyncOpenAI as _AsyncOpenAI
 
-        return AsyncOpenAI(  # type: ignore[no-any-return]
+        client: OpenAIClient = _AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
             timeout=timeout,
         )
+        return client
     except ImportError as e:
-        raise RuntimeError("openai package required. Install with: pip install openai") from e
+        msg = "openai package required. Install with: pip install openai"
+        raise RuntimeError(msg) from e
 
 
 # ============================================================================

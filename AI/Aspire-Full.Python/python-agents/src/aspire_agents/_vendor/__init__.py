@@ -154,6 +154,9 @@ from ._enums import (
     # Threading
     ThreadState,
     ToolType,
+    # Torch
+    TorchDeviceType,
+    TorchDtypeEnum,
     # Factory
     VendorCategory,
 )
@@ -185,12 +188,22 @@ from ._openai import (
     OpenAIClient,
 )
 from ._profiler import (
+    CodeQualityAnalyzer,
+    CodeQualityAnalyzerProtocol,
+    CodeQualityMetrics,
+    ComputeProfile,
     FunctionProfile,
     ProfileProtocol,
     StatsProfile,
     StatsProtocol,
+    TensorComputeProfiler,
+    TensorComputeProfilerProtocol,
+    TensorMetrics,
     create_profile,
+    create_quality_analyzer,
     create_stats,
+    create_tensor_profiler,
+    profile_context,
 )
 from ._profiler import (
     run as profile_run,
@@ -389,6 +402,9 @@ __all__: Final[list[str]] = [
     # Threading
     "ThreadState",
     "LockState",
+    # Torch
+    "TorchDeviceType",
+    "TorchDtypeEnum",
     # =========================================================================
     # Torch abstractions
     # =========================================================================
@@ -535,15 +551,26 @@ __all__: Final[list[str]] = [
     # Profiler - Data Classes
     "FunctionProfile",
     "StatsProfile",
+    "TensorMetrics",
+    "ComputeProfile",
+    "CodeQualityMetrics",
     # Profiler - Protocols
     "ProfileProtocol",
     "StatsProtocol",
+    "TensorComputeProfilerProtocol",
+    "CodeQualityAnalyzerProtocol",
+    # Profiler - Classes
+    "TensorComputeProfiler",
+    "CodeQualityAnalyzer",
     # Profiler - Convenience Functions
     "profile_run",
     "profile_runctx",
+    "profile_context",
     # Profiler - Factory Functions
     "create_profile",
     "create_stats",
+    "create_tensor_profiler",
+    "create_quality_analyzer",
     # Docker Model Runner - Exceptions
     "DockerModelRunnerError",
     "ModelNotFoundError",

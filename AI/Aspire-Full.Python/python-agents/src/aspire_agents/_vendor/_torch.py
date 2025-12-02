@@ -9,12 +9,14 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from typing import (
+    TYPE_CHECKING,
     Any,
     Final,
     Literal,
     Protocol,
     Self,
     TypeAlias,
+    cast,
     override,
     runtime_checkable,
 )
@@ -253,13 +255,19 @@ class TorchOptimizer(Protocol):
 _torch_available: bool = False
 _torch: Any = None
 
-try:
-    import torch as _torch_import  # pyright: ignore[reportMissingImports]
+if TYPE_CHECKING:
+    import torch as _torch_import
 
     _torch = _torch_import
     _torch_available = True
-except ImportError:
-    pass
+else:
+    try:
+        import torch as _torch_import
+
+        _torch = _torch_import
+        _torch_available = True
+    except ImportError:
+        pass
 
 
 def cuda_is_available() -> bool:
@@ -288,12 +296,31 @@ def cuda_empty_cache() -> None:
         _torch.cuda.empty_cache()
 
 
+_VALID_DEVICE_TYPES: Final[frozenset[str]] = frozenset({"cpu", "cuda", "mps"})
+
+
 def get_device(device_str: str) -> TorchDevice:
-    """Parse device string to TorchDevice."""
+    """Parse device string to TorchDevice.
+
+    Args:
+        device_str: Device string like "cuda", "cuda:0", "cpu", "mps".
+
+    Returns:
+        TorchDevice instance.
+
+    Raises:
+        ValueError: If device type is not recognized.
+    """
     if ":" in device_str:
         dtype, idx = device_str.split(":")
-        return TorchDevice(type=dtype, index=int(idx))  # type: ignore[arg-type]
-    return TorchDevice(type=device_str, index=None)  # type: ignore[arg-type]
+        if dtype not in _VALID_DEVICE_TYPES:
+            msg = f"Unknown device type: {dtype}"
+            raise ValueError(msg)
+        return TorchDevice(type=cast(DeviceType, dtype), index=int(idx))
+    if device_str not in _VALID_DEVICE_TYPES:
+        msg = f"Unknown device type: {device_str}"
+        raise ValueError(msg)
+    return TorchDevice(type=cast(DeviceType, device_str), index=None)
 
 
 # ============================================================================
@@ -361,7 +388,8 @@ class no_grad:
 
     __slots__ = ("_prev",)
 
-    def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
+    def __init__(self) -> None:
+        super().__init__()
         self._prev: bool = True
 
     def __enter__(self) -> Self:
@@ -380,12 +408,13 @@ class autocast:
 
     __slots__ = ("device_type", "dtype", "enabled", "_ctx")
 
-    def __init__(  # pyright: ignore[reportMissingSuperCall]
+    def __init__(
         self,
         device_type: DeviceType = "cuda",
         dtype: TorchDtype = "float16",
         enabled: bool = True,
     ) -> None:
+        super().__init__()
         self.device_type = device_type
         self.dtype = dtype
         self.enabled = enabled

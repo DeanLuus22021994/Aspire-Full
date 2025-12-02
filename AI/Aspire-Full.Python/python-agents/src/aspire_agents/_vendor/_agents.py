@@ -300,10 +300,13 @@ def create_agent(
         output_type: Expected output type
 
     Returns:
-        Agent instance (type depends on whether openai-agents is installed)
+        Agent instance implementing AgentProtocol.
+
+    Raises:
+        RuntimeError: If openai-agents package is not installed.
     """
     try:
-        from agents import Agent  # type: ignore[import-not-found]
+        from agents import Agent
 
         # Cast output_type to Any to avoid strict type checking issues
         # between our AgentOutputSchema and the SDK's AgentOutputSchemaBase
@@ -320,24 +323,29 @@ def create_agent(
             ),
         )
     except ImportError as e:
-        raise RuntimeError("openai-agents package required. Install with: pip install openai-agents") from e
+        msg = "openai-agents package required. Install with: pip install openai-agents"
+        raise RuntimeError(msg) from e
 
 
-def function_tool(func: Callable[..., Any]) -> Callable[..., Any]:
+def function_tool(func: Callable[..., Any]) -> FunctionToolProtocol:
     """Decorator to register a function as a tool.
 
     Args:
         func: Function to register
 
     Returns:
-        Decorated function
+        Decorated function implementing FunctionToolProtocol.
+
+    Raises:
+        RuntimeError: If openai-agents package is not installed.
     """
     try:
-        from agents import function_tool as _function_tool  # type: ignore[import-not-found]
+        from agents import function_tool as _function_tool
 
-        return _function_tool(func)  # type: ignore[return-value]
+        return cast(FunctionToolProtocol, _function_tool(func))
     except ImportError as e:
-        raise RuntimeError("openai-agents package required. Install with: pip install openai-agents") from e
+        msg = "openai-agents package required. Install with: pip install openai-agents"
+        raise RuntimeError(msg) from e
 
 
 # ============================================================================

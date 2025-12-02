@@ -20,6 +20,7 @@ from typing import (
     Protocol,
     TypeVar,
     overload,
+    override,
     runtime_checkable,
 )
 
@@ -194,7 +195,8 @@ class StructureProtocol(CDataProtocol, Protocol):
         """Get field value by name."""
         ...
 
-    def __setattr__(self, name: str, value: Any) -> None:  # type: ignore[override]
+    @override
+    def __setattr__(self, name: str, value: object) -> None:
         """Set field value by name."""
         ...
 
@@ -218,7 +220,8 @@ class UnionProtocol(CDataProtocol, Protocol):
         """Get field value by name."""
         ...
 
-    def __setattr__(self, name: str, value: Any) -> None:  # type: ignore[override]
+    @override
+    def __setattr__(self, name: str, value: object) -> None:
         """Set field value by name."""
         ...
 
