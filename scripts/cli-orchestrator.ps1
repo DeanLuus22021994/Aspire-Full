@@ -168,13 +168,18 @@ function Invoke-Test {
             $testArgs += '--filter', $Filter
         }
 
-        # Filter by project type
+        # Target specific test projects based on type
         if ($Unit) {
-            $testArgs += '--filter', 'FullyQualifiedName~Tests.Unit'
+            Write-Info "Running Unit tests only"
+            $testArgs += 'Tests/Aspire-Full.Tests.Unit/Aspire-Full.Tests.Unit.csproj'
         } elseif ($E2E) {
-            $testArgs += '--filter', 'Category=E2E|Category=Integration'
+            Write-Info "Running E2E tests only"
+            $testArgs += 'Tests/Aspire-Full.Tests.E2E/Aspire-Full.Tests.E2E.csproj'
         } elseif ($Integration) {
+            Write-Info "Running Integration tests only"
             $testArgs += '--filter', 'Category=Integration'
+        } else {
+            Write-Info "Running all tests"
         }
 
         Write-Step "Executing test suite" 1 3
