@@ -1,18 +1,43 @@
 {
   "$schema": "https://json.schemastore.org/aspire-8.0.json",
+
+  // ==========================================================================
+  // Named Volumes - Aligned with devcontainer.json & docker-compose.nvidia.yml
+  // ==========================================================================
+  "volumes": {
+    "nuget": "aspire-nuget-cache",
+    "npm": "aspire-npm-cache",
+    "uv": "aspire-uv-cache",
+    "pip": "aspire-pip-cache",
+    "cuda": "aspire-cuda-cache",
+    "nvidia": "aspire-nvidia-cache",
+    "ccache": "aspire-ccache",
+    "models": "aspire-models",
+    "tensorCache": "aspire-tensor-cache",
+    "qdrant": "aspire-qdrant",
+    "artifacts": "aspire-artifacts",
+    "logs": "aspire-logs",
+    "buildkit": "aspire-buildkit-state",
+    "registry": "aspire-registry-data"
+  },
+
   "resources": {
+    // ========================================================================
+    // Tensor Compute Service - GPU-accelerated inference
+    // ========================================================================
     "tensor-compute": {
       "type": "container.v1",
-      "image": "localhost:5001/aspire/tensor-compute:latest",
+      "image": "localhost:5001/aspire/runtime:latest",
       "env": {
         "NVIDIA_VISIBLE_DEVICES": "all",
         "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
-        "CUDA_VISIBLE_DEVICES": "0",
+        "ASPIRE_TARGET": "tensor",
         "COMPUTE_MODE": "{compute.mode}",
-        "SHARED_STORAGE_PATH": "/shared",
         "OTLP_ENDPOINT": "{telemetry.otlpEndpoint}",
-        "MODEL_CACHE_DIR": "/shared/models",
-        "VECTOR_STORE_PATH": "/shared/qdrant"
+        "MODEL_CACHE_DIR": "/volumes/models",
+        "VECTOR_STORE_PATH": "/volumes/qdrant",
+        "DOTNET_GCHeapHardLimit": "536870912",
+        "DOTNET_gcServer": "0"
       },
       "bindings": {
         "grpc": {
@@ -32,21 +57,23 @@
           "external": false
         }
       },
-      "bindMounts": [
-        {
-          "source": "C:\\SHARED",
-          "target": "/shared",
-          "readOnly": false
-        }
-      ],
-      "volumes": []
+      "volumes": [
+        { "name": "aspire-models", "target": "/volumes/models", "readOnly": true },
+        { "name": "aspire-tensor-cache", "target": "/volumes/tensor-cache", "readOnly": false },
+        { "name": "aspire-cuda-cache", "target": "/volumes/cuda-cache", "readOnly": false }
+      ]
     },
+
+    // ========================================================================
+    // Qdrant Vector Database
+    // ========================================================================
     "qdrant": {
       "type": "container.v1",
       "image": "qdrant/qdrant:latest",
       "env": {
         "QDRANT__SERVICE__GRPC_PORT": "6334",
-        "QDRANT__STORAGE__STORAGE_PATH": "/shared/qdrant/storage"
+        "QDRANT__STORAGE__STORAGE_PATH": "/qdrant/storage",
+        "QDRANT__STORAGE__ON_DISK_PAYLOAD": "true"
       },
       "bindings": {
         "http": {
@@ -66,25 +93,25 @@
           "external": false
         }
       },
-      "bindMounts": [
-        {
-          "source": "C:\\SHARED",
-          "target": "/shared",
-          "readOnly": false
-        }
-      ],
-      "volumes": []
+      "volumes": [{ "name": "aspire-qdrant", "target": "/qdrant/storage", "readOnly": false }]
     },
+
+    // ========================================================================
+    // Embedding Service - ONNX GPU inference
+    // ========================================================================
     "embedding-service": {
       "type": "container.v1",
-      "image": "localhost:5001/aspire/embedding-service:latest",
+      "image": "localhost:5001/aspire/runtime:latest",
       "env": {
         "NVIDIA_VISIBLE_DEVICES": "all",
+        "ASPIRE_TARGET": "embeddings",
         "COMPUTE_MODE": "{compute.mode}",
-        "MODEL_PATH": "/shared/models/all-MiniLM-L6-v2.onnx",
-        "VOCAB_PATH": "/shared/models/vocab.txt",
+        "MODEL_PATH": "/volumes/models/all-MiniLM-L6-v2.onnx",
+        "VOCAB_PATH": "/volumes/models/vocab.txt",
         "EMBEDDING_DIMENSION": "384",
-        "BATCH_SIZE": "32"
+        "BATCH_SIZE": "64",
+        "DOTNET_GCHeapHardLimit": "268435456",
+        "DOTNET_gcServer": "0"
       },
       "bindings": {
         "grpc": {
@@ -96,20 +123,106 @@
           "external": false
         }
       },
-      "bindMounts": [
-        {
-          "source": "C:\\SHARED",
-          "target": "/shared",
-          "readOnly": false
+      "volumes": [
+        { "name": "aspire-models", "target": "/volumes/models", "readOnly": true },
+        { "name": "aspire-cuda-cache", "target": "/volumes/cuda-cache", "readOnly": false }
+      ]
+    },
+
+    // ========================================================================
+    // Python Agent Workers - Hot Standby Pool for Zero-Latency
+    // 2 explicit workers for guaranteed zero-latency acquisition
+    // ========================================================================
+    "agent-worker-1": {
+      "type": "container.v1",
+      "image": "localhost:5001/aspire/runtime:latest",
+      "env": {
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "ASPIRE_TARGET": "agent",
+        "ASPIRE_WORKER_ID": "1",
+        "COMPUTE_MODE": "{compute.mode}",
+        "AGENT_POOL_MODE": "hot-standby",
+        "AGENT_WARMUP_ON_START": "true",
+        "AGENT_PRELOAD_MODELS": "true",
+        "MODEL_CACHE_DIR": "/volumes/models",
+        "UV_CACHE_DIR": "/volumes/uv",
+        "OMP_NUM_THREADS": "4"
+      },
+      "bindings": {
+        "grpc": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http2",
+          "targetPort": 50053,
+          "port": 50053,
+          "external": false
+        },
+        "health": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 8080,
+          "port": 8081,
+          "external": false
         }
-      ],
-      "volumes": []
+      },
+      "volumes": [
+        { "name": "aspire-models", "target": "/volumes/models", "readOnly": true },
+        { "name": "aspire-uv-cache", "target": "/volumes/uv", "readOnly": false },
+        { "name": "aspire-pip-cache", "target": "/volumes/pip", "readOnly": false },
+        { "name": "aspire-logs", "target": "/volumes/logs", "readOnly": false }
+      ]
+    },
+
+    "agent-worker-2": {
+      "type": "container.v1",
+      "image": "localhost:5001/aspire/runtime:latest",
+      "env": {
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "ASPIRE_TARGET": "agent",
+        "ASPIRE_WORKER_ID": "2",
+        "COMPUTE_MODE": "{compute.mode}",
+        "AGENT_POOL_MODE": "hot-standby",
+        "AGENT_WARMUP_ON_START": "true",
+        "AGENT_PRELOAD_MODELS": "true",
+        "MODEL_CACHE_DIR": "/volumes/models",
+        "UV_CACHE_DIR": "/volumes/uv",
+        "OMP_NUM_THREADS": "4"
+      },
+      "bindings": {
+        "grpc": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http2",
+          "targetPort": 50053,
+          "port": 50054,
+          "external": false
+        },
+        "health": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 8080,
+          "port": 8082,
+          "external": false
+        }
+      },
+      "volumes": [
+        { "name": "aspire-models", "target": "/volumes/models", "readOnly": true },
+        { "name": "aspire-uv-cache", "target": "/volumes/uv", "readOnly": false },
+        { "name": "aspire-pip-cache", "target": "/volumes/pip", "readOnly": false },
+        { "name": "aspire-logs", "target": "/volumes/logs", "readOnly": false }
+      ]
     }
   },
+
+  // ==========================================================================
+  // Compute Configuration - Aligned with devcontainer & docker-compose
+  // ==========================================================================
   "compute": {
-    "mode": "gpu",
+    "mode": "hybrid",
     "offloadStrategy": "full",
-    "fallbackToCpu": false,
+    "fallbackToCpu": true,
     "runtimeToggle": {
       "enabled": true,
       "endpoint": "/api/compute/mode",
@@ -119,66 +232,141 @@
       "deviceId": 0,
       "memoryFraction": 0.9,
       "allowGrowth": true,
-      "computeCapability": "8.6"
+      "computeCapability": "8.6",
+      "tensorCoreAlignment": 128
     },
     "batching": {
       "enabled": true,
-      "maxBatchSize": 32,
-      "batchTimeoutMs": 50,
+      "maxBatchSize": 64,
+      "batchTimeoutMs": 25,
       "dynamicBatching": true
     }
   },
-  "sharedStorage": {
-    "hostPath": "C:\\SHARED",
-    "containerPath": "/shared",
-    "subdirectories": {
-      "models": "models",
-      "vectorStore": "qdrant",
-      "cache": "cache",
-      "logs": "logs",
-      "tmp": "tmp"
+
+  // ==========================================================================
+  // Agent Configuration - Hot Standby for Zero-Latency
+  // ==========================================================================
+  "agents": {
+    "replicas": 2,
+    "minHotStandby": 2,
+    "maxScale": 8,
+    "gpu": true,
+    "pythonWorkers": 4,
+    "timeoutSeconds": 120,
+    "warmup": {
+      "enabled": true,
+      "preloadModels": true,
+      "healthCheckIntervalMs": 5000,
+      "idleTimeoutSeconds": 0
     },
-    "security": {
-      "maxPathDepth": 10,
-      "blockSymlinks": true,
-      "readOnlyMode": false
+    "pool": {
+      "mode": "hot-standby",
+      "acquireTimeoutMs": 50,
+      "maxQueueDepth": 100,
+      "loadBalancing": "least-latency"
+    },
+    "scaling": {
+      "enabled": true,
+      "targetConcurrency": 4,
+      "scaleUpThresholdPercent": 70,
+      "scaleDownThresholdPercent": 20,
+      "cooldownSeconds": 60
     }
   },
+
+  // ==========================================================================
+  // Tensor Runtime Configuration
+  // ==========================================================================
+  "tensor": {
+    "preferGpu": true,
+    "maxBufferCount": 32,
+    "defaultBufferSizeMb": 128,
+    "enableMetrics": true,
+    "memoryPool": {
+      "enabled": true,
+      "preallocateBuffers": 8,
+      "maxPoolSizeMb": 1024
+    },
+    "orchestration": {
+      "maxConcurrentJobs": 16,
+      "jobTimeoutSeconds": 300,
+      "priorityQueue": true
+    }
+  },
+
+  // ==========================================================================
+  // Embeddings Configuration
+  // ==========================================================================
+  "embeddings": {
+    "provider": "onnx",
+    "model": "all-MiniLM-L6-v2",
+    "dimension": 384,
+    "gpuAccelerated": true,
+    "batchSize": 64,
+    "cacheEnabled": true
+  },
+
+  // ==========================================================================
+  // Registry & BuildKit Configuration
+  // ==========================================================================
   "registry": {
     "host": "localhost",
     "port": 5001,
     "volumeName": "aspire-registry-data",
     "allowInsecure": true
   },
-  "agents": {
-    "replicas": 1,
-    "gpu": true,
-    "pythonWorkers": 4,
-    "timeoutSeconds": 120
+
+  "buildkit": {
+    "enabled": true,
+    "address": "tcp://localhost:1234",
+    "privileged": true,
+    "maxParallelism": 8,
+    "cacheMode": "max"
   },
-  "tensor": {
-    "preferGpu": true,
-    "maxBufferCount": 32,
-    "defaultBufferSizeMb": 128,
-    "enableMetrics": true,
-    "orchestration": {
-      "maxConcurrentJobs": 16,
-      "jobTimeoutSeconds": 300
-    }
-  },
-  "embeddings": {
-    "provider": "onnx",
-    "model": "all-MiniLM-L6-v2",
-    "dimension": 384,
-    "gpuAccelerated": true
-  },
+
+  // ==========================================================================
+  // Telemetry & Health Checks
+  // ==========================================================================
   "telemetry": {
     "otlpEndpoint": "http://aspire-dashboard:18889",
-    "gpuSnapshotIntervalSeconds": 5
+    "gpuSnapshotIntervalSeconds": 5,
+    "metricsEnabled": true,
+    "tracingEnabled": true
   },
+
   "healthChecks": {
     "requireGpu": false,
     "warningVramThresholdPercent": 80,
-    "criticalVramThresholdPercent": 95
+    "criticalVramThresholdPercent": 95,
+    "agentReadinessProbe": {
+      "enabled": true,
+      "initialDelaySeconds": 5,
+      "periodSeconds": 10
+    }
+  },
+
+  // ==========================================================================
+  // Kubernetes / NVIDIA Device Plugin Configuration
+  // ==========================================================================
+  "kubernetes": {
+    "enabled": false,
+    "namespace": "aspire-system",
+    "nvidia": {
+      "devicePlugin": true,
+      "timeSlicing": {
+        "enabled": true,
+        "replicas": 4
+      },
+      "mig": {
+        "enabled": false,
+        "strategy": "mixed"
+      }
+    },
+    "resources": {
+      "gpu": {
+        "request": "nvidia.com/gpu",
+        "limit": "nvidia.com/gpu"
+      }
+    }
   }
 }
