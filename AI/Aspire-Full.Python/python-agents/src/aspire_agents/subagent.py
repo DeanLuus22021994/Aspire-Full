@@ -36,7 +36,7 @@ from typing import Any, Final, Unpack
 import torch
 from agents import Agent as BaseAgent
 
-from ._kwargs import SubAgentKwargs
+from .kwargs import SubAgentKwargs
 from ._typing import is_gil_disabled, set_cuda_memory_fraction
 from .config import AgentConfig
 from .core import Agent

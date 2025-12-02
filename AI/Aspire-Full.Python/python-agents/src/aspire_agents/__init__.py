@@ -96,7 +96,7 @@ from .subagent import (
 )
 
 # Type-safe kwargs patterns for thread-safe configuration
-from ._kwargs import (
+from .kwargs import (
     AgentKwargs,
     AgentRunKwargs,
     BatchEmbeddingKwargs,

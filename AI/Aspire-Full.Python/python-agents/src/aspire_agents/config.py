@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal, Unpack, cast
 import yaml
 
 if TYPE_CHECKING:
-    from ._kwargs import AgentKwargs, ModelKwargs, TensorConfigKwargs
+    from .kwargs import AgentKwargs, ModelKwargs, TensorConfigKwargs
 
 # Type alias for supported providers
 ProviderLiteral = Literal["openai", "azure", "github", "anthropic", "local"]

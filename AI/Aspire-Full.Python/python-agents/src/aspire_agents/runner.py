@@ -29,7 +29,7 @@ from .gpu import TensorCoreInfo, ensure_tensor_core_gpu
 if TYPE_CHECKING:
     from agents import RunResult
 
-    from ._kwargs import RunKwargs
+    from .kwargs import RunKwargs
     from .compute import BatchComputeService
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)

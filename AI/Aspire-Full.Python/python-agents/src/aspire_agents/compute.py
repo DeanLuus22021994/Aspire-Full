@@ -29,7 +29,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final, Protocol, Unpack, cast
 
-from ._kwargs import ComputeKwargs
+from .kwargs import ComputeKwargs
 
 import torch
 
