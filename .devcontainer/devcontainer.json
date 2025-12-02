@@ -1,104 +1,54 @@
 {
-  "name": "Aspire Full - .NET 10 + Docker",
-  "dockerComposeFile": "./docker-compose.yml",
-  "service": "devcontainer",
-  "workspaceFolder": "/workspace",
-  "shutdownAction": "stopCompose",
+  "name": "Aspire-Full Lightweight",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
 
   "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": true,
-      "installOhMyZsh": true,
-      "configureZshAsDefaultShell": true,
-      "username": "vscode"
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true,
+      "dockerDashComposeVersion": "v2"
     }
   },
 
   "customizations": {
     "vscode": {
-      "extensions": [
-        "ms-dotnettools.csharp",
-        "ms-dotnettools.csdevkit",
-        "ms-dotnettools.dotnet-interactive-vscode",
-        "ms-azuretools.vscode-docker",
-        "GitHub.copilot",
-        "GitHub.copilot-chat",
-        "GitHub.vscode-pull-request-github",
-        "eamodio.gitlens",
-        "streetsidesoftware.code-spell-checker",
-        "EditorConfig.EditorConfig"
-      ],
+      "extensions": ["ms-dotnettools.csharp", "ms-dotnettools.csdevkit", "GitHub.copilot", "GitHub.copilot-chat"],
       "settings": {
-        "dotnet.defaultSolution": "Aspire-Full.slnf",
-        "omnisharp.enableRoslynAnalyzers": true,
-        "omnisharp.enableImportCompletion": true,
+        "dotnet.defaultSolution": "Aspire-Full.slnx",
         "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.organizeImports": "explicit"
-        },
         "files.exclude": {
           "**/bin": true,
-          "**/obj": true
-        },
-        "terminal.integrated.defaultProfile.linux": "zsh"
+          "**/obj": true,
+          "**/artifacts": true
+        }
       }
     }
   },
 
-  "forwardPorts": [18888, 18889, 16036, 17071, 5000, 5001, 5173, 5174, 5432, 6379],
+  "forwardPorts": [5000, 5001, 5173, 5432, 6379, 6333, 18888],
   "portsAttributes": {
-    "18888": {
-      "label": "Aspire Dashboard",
-      "onAutoForward": "notify"
-    },
-    "18889": {
-      "label": "OTLP Endpoint",
-      "onAutoForward": "silent"
-    },
-    "16036": {
-      "label": "Aspire MCP Server",
-      "onAutoForward": "silent"
-    },
-    "17071": {
-      "label": "GitHub MCP",
-      "onAutoForward": "silent"
-    },
-    "5000": {
-      "label": "HTTP",
-      "onAutoForward": "notify"
-    },
-    "5001": {
-      "label": "HTTPS",
-      "protocol": "https",
-      "onAutoForward": "notify"
-    },
-    "5432": {
-      "label": "PostgreSQL",
-      "onAutoForward": "silent"
-    },
-    "6379": {
-      "label": "Redis",
-      "onAutoForward": "silent"
-    }
+    "5000": { "label": "API", "onAutoForward": "notify" },
+    "5001": { "label": "Gateway", "onAutoForward": "notify" },
+    "5173": { "label": "Frontend", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "6379": { "label": "Redis", "onAutoForward": "silent" },
+    "6333": { "label": "Qdrant", "onAutoForward": "silent" },
+    "18888": { "label": "Aspire Dashboard", "onAutoForward": "notify" }
   },
 
-  "postCreateCommand": "python3 /workspace/Infra/Aspire-Full.DevContainer/Scripts/post_create.py",
-  "postStartCommand": "python3 /workspace/Infra/Aspire-Full.DevContainer/Scripts/post_start.py",
+  "postCreateCommand": "dotnet restore && dotnet build",
+  "postStartCommand": "echo 'DevContainer ready. Run: dotnet run --project Infra/Aspire-Full'",
 
   "remoteEnv": {
-    "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://aspire-dashboard:18889",
-    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://aspire-dashboard:18889",
-    "ASPIRE_DASHBOARD_MCP_ENDPOINT_URL": "http://aspire-dashboard:16036",
     "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
-    "DOCKER_HOST": "tcp://docker:2376",
-    "DOCKER_TLS_VERIFY": "1",
-    "DOCKER_CERT_PATH": "/certs/client"
+    "DOTNET_ENVIRONMENT": "Development"
   },
 
   "containerEnv": {
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
-    "DOTNET_NOLOGO": "1",
-    "NVIDIA_VISIBLE_DEVICES": "all",
-    "NVIDIA_DRIVER_CAPABILITIES": "compute,utility"
+    "DOTNET_NOLOGO": "1"
   }
 }

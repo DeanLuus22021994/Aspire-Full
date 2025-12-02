@@ -8,42 +8,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>e295fd92-d08b-4657-a3f3-e0276265a4ff</UserSecretsId>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
-    <PackageReference Include="Aspire.Hosting.NodeJs" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.Qdrant" />
     <PackageReference Include="Aspire.Hosting.Redis" />
-    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Web\Aspire-Full.Api\Aspire-Full.Api.csproj" />
-    <ProjectReference Include="..\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj">
-      <IsAspireProjectResource>false</IsAspireProjectResource>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Web\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
     <ProjectReference Include="..\..\Web\Aspire-Full.Gateway\Aspire-Full.Gateway.csproj" />
-    <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj">
-      <IsAspireProjectResource>false</IsAspireProjectResource>
-    </ProjectReference>
-    <ProjectReference Include="..\..\AI\Aspire-Full.Agents\Aspire-Full.Agents.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="..\Aspire-Full.Native\build\Release\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Native\build\Release\AspireFullNative.dll')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
-    </Content>
-    <Content Include="..\Aspire-Full.Native\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\Aspire-Full.Native\build\libAspireFullNative.so')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
-    </Content>
+    <ProjectReference Include="..\..\Web\Aspire-Full.WebAssembly\Aspire-Full.WebAssembly.csproj" />
   </ItemGroup>
 
 </Project>

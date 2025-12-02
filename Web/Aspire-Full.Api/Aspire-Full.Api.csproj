@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="Aspire.StackExchange.Redis" />
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
@@ -20,23 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Infra\Aspire-Full.ServiceDefaults\Aspire-Full.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\..\Infra\Aspire-Full.DockerRegistry\Aspire-Full.DockerRegistry.csproj" />
-    <ProjectReference Include="..\..\Infra\Aspire-Full.Tensor.Core\Aspire-Full.Tensor.Core.csproj" />
-    <ProjectReference Include="..\..\Infra\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
-    <ProjectReference Include="..\..\AI\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
-    <ProjectReference Include="..\..\Infra\Aspire-Full.VectorStore\Aspire-Full.VectorStore.csproj" />
     <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
-    </Content>
-    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so" Condition="'$(OS)' != 'Windows_NT' And Exists('..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
-    </Content>
   </ItemGroup>
 
 </Project>

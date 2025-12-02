@@ -4,32 +4,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Aspire_Full.WebAssembly</RootNamespace>
-    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
-    <PublishReadyToRun>false</PublishReadyToRun>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AI\Aspire-Full.Tensor\Aspire-Full.Tensor.csproj" />
     <ProjectReference Include="..\..\Core\Aspire-Full.Shared\Aspire-Full.Shared.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="wwwroot\appsettings.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="wwwroot\appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" Condition=" '$(Configuration)' == 'Debug' " />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\..\AI\Aspire-Full.Tensor\build\AspireFullNative.dll*" Condition="'$(OS)' == 'Windows_NT'">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>AspireFullNative.dll</Link>
-    </Content>
-    <Content Include="..\..\AI\Aspire-Full.Tensor\build\libAspireFullNative.so*" Condition="'$(OS)' != 'Windows_NT'">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>libAspireFullNative.so</Link>
-    </Content>
   </ItemGroup>
 </Project>
