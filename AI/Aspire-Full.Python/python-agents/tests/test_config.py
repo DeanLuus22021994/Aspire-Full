@@ -79,10 +79,11 @@ def test_agent_config_from_file_loads_prompt(tmp_path: Path) -> None:
     assert cfg.description == "does things"
     assert cfg.prompt == "Keep calm"
     assert cfg.model.name == "gpt-4o-mini"
-    assert pytest.approx(cfg.temperature, rel=1e-6) == 0.3
-    assert pytest.approx(cfg.top_p, rel=1e-6) == 0.9
-    assert cfg.handoffs == ["escalate"]
-    assert cfg.tags == ["sandbox"]
+    assert abs(cfg.temperature - 0.3) < 1e-6
+    assert cfg.top_p is not None
+    assert abs(cfg.top_p - 0.9) < 1e-6
+    assert cfg.handoffs == ("escalate",)
+    assert cfg.tags == ("sandbox",)
 
 
 def test_agent_config_requires_prompt_key(tmp_path: Path) -> None:

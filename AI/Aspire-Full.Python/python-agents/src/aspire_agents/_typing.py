@@ -1,7 +1,7 @@
 """Type definitions and runtime utilities for Python 3.16+ free-threading.
 
 This module provides:
-- Type-safe wrappers for PyTorch CUDA functions with incomplete stubs
+- Type-safe wrappers for PyTorch CUDA functions
 - Free-threading detection via public Python 3.13+ APIs
 - Explicit type definitions for CUDA device properties
 
@@ -14,7 +14,11 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from typing import Final
+from typing import TYPE_CHECKING, Any, Final
+
+if TYPE_CHECKING:
+    from torch import nn
+
 
 # ============================================================================
 # Free-Threading Detection (Python 3.13+ public API)
@@ -61,7 +65,6 @@ class CudaDeviceProperties:
     """Type-safe representation of CUDA device properties.
 
     Provides explicit types for `torch.cuda.get_device_properties()` return.
-    The PyTorch stubs are incomplete, so we extract and type the values.
 
     Attributes:
         name: GPU device name (e.g., "NVIDIA GeForce RTX 4090")
@@ -86,7 +89,7 @@ def get_cuda_device_properties(device_index: int = 0) -> CudaDeviceProperties:
     """Get CUDA device properties with explicit typing.
 
     Wraps `torch.cuda.get_device_properties()` to provide fully-typed
-    return value without relying on incomplete PyTorch stubs.
+    return value.
 
     Args:
         device_index: CUDA device index (default: 0)
@@ -102,16 +105,16 @@ def get_cuda_device_properties(device_index: int = 0) -> CudaDeviceProperties:
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available")
 
-    # Get properties from PyTorch (untyped return)
-    props = torch.cuda.get_device_properties(device_index)
+    # Get properties from PyTorch - extract via getattr for type safety
+    props: Any = torch.cuda.get_device_properties(device_index)
 
-    # Extract and explicitly type each field
+    # Extract and explicitly type each field using getattr
     return CudaDeviceProperties(
-        name=str(props.name),
-        total_memory=int(props.total_memory),
-        major=int(props.major),
-        minor=int(props.minor),
-        multi_processor_count=int(props.multi_processor_count),
+        name=str(getattr(props, "name", "")),
+        total_memory=int(getattr(props, "total_memory", 0)),
+        major=int(getattr(props, "major", 0)),
+        minor=int(getattr(props, "minor", 0)),
+        multi_processor_count=int(getattr(props, "multi_processor_count", 0)),
     )
 
 
@@ -119,7 +122,7 @@ def set_cuda_memory_fraction(fraction: float, device_index: int = 0) -> None:
     """Set CUDA per-process memory fraction with explicit typing.
 
     Wraps `torch.cuda.set_per_process_memory_fraction()` to provide
-    explicit parameter types without relying on incomplete stubs.
+    explicit parameter types.
 
     Args:
         fraction: Memory fraction (0.0-1.0)
@@ -137,33 +140,25 @@ def set_cuda_memory_fraction(fraction: float, device_index: int = 0) -> None:
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available")
 
-    # Call with explicitly typed arguments
-    torch.cuda.set_per_process_memory_fraction(float(fraction), int(device_index))
+    # Call with explicitly typed arguments - the function accepts Any for fraction
+    torch.cuda.set_per_process_memory_fraction(fraction, device_index)
 
 
-def compile_model[T](
-    model: T,
-    *,
-    mode: str = "reduce-overhead",
-    fullgraph: bool = False,
-) -> T:
-    """Compile a PyTorch model with explicit typing.
+def compile_model(model: nn.Module, *, mode: str = "reduce-overhead", fullgraph: bool = False) -> nn.Module:
+    """Compile a PyTorch model with torch.compile.
 
-    Wraps `torch.compile()` to provide fully-typed interface without
-    relying on incomplete PyTorch stubs.
+    Wraps `torch.compile()` to provide typed interface.
 
     Args:
-        model: The model to compile (preserves type)
+        model: The nn.Module to compile
         mode: Compilation mode ('default', 'reduce-overhead', 'max-autotune')
         fullgraph: Whether to require full graph compilation
 
     Returns:
-        Compiled model with same type as input
-
-    Type Parameters:
-        T: Model type (preserved through compilation)
+        Compiled model as nn.Module
     """
     import torch
 
-    # torch.compile returns the same type as input
-    return torch.compile(model, mode=mode, fullgraph=fullgraph)  # type: ignore[return-value]
+    # torch.compile with explicit keyword args matching the overload
+    compiled: nn.Module = torch.compile(model, mode=mode, fullgraph=fullgraph)
+    return compiled

@@ -41,6 +41,13 @@ from importlib import metadata
 from typing import Final
 
 # Python 3.15+ thread-safe imports - all using frozen dataclasses
+from ._typing import (
+    CudaDeviceProperties,
+    get_cuda_device_properties,
+    get_gil_status_string,
+    is_gil_disabled,
+    set_cuda_memory_fraction,
+)
 from .compute import (
     BatchComputeService,
     ComputeConfig,
@@ -114,6 +121,12 @@ __all__: Final[tuple[str, ...]] = (
     "AgentConfig",
     "ModelConfig",
     "TensorConfig",
+    # Typing utilities
+    "CudaDeviceProperties",
+    "get_cuda_device_properties",
+    "get_gil_status_string",
+    "is_gil_disabled",
+    "set_cuda_memory_fraction",
     # Tensor compute
     "BatchComputeService",
     "ComputeConfig",

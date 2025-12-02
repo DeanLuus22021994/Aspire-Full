@@ -82,7 +82,7 @@ explicit = false
 pythonVersion = "3.15"
 pythonPlatform = "All"
 typeCheckingMode = "strict"
-include = ["src"]
+include = ["src", "tests"]
 exclude = [
     "**/__pycache__",
     "**/.venv",
@@ -90,6 +90,7 @@ exclude = [
     "**/build",
     "**/*.egg-info",
 ]
+extraPaths = ["src"]
 
 # Strict inference settings
 strictListInference = true
@@ -141,12 +142,12 @@ reportImplicitOverride = "warning"
 
 [tool.mypy]
 python_version = "3.15"
-files = "src"
+files = ["src", "tests"]
 strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-mypy_path = "src"
+mypy_path = ["src"]
 ignore_missing_imports = true
 cache_dir = ".cache/mypy"
 
