@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
-"""Handler for ms-dotnettools.csharp extension downloads."""
+"""Tensor-optimized handler for ms-dotnettools.csharp extension."""
 
 from __future__ import annotations
 
-import os
-import subprocess
 import sys
+from pathlib import Path
 
-from helper import get_context
+# Add parent to path for shared modules
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from base_handler import create_handler
+
+# Extension metadata
+EXTENSION_ID = "ms-dotnettools.csharp"
+IS_GPU_REQUIRED = False  # C# extension doesn't need GPU
 
 
 def main(argv: list[str] | None = None) -> None:
     """Download the C# VSIX into the cache."""
-    _ = argv or sys.argv[1:]
-    context = get_context()
-    env = os.environ.copy()
-    env.setdefault("PYTHON_GIL", "0")
-    env["EXTENSION_ID"] = context.extension_id
-    env["EXTENSION_CACHE"] = str(context.cache_dir)
-    subprocess.run(
-        [sys.executable, str(context.fetcher)],
-        check=True,
-        env=env,
-        cwd=context.extension_dir,
-    )
+    handler = create_handler(EXTENSION_ID, is_gpu_required=IS_GPU_REQUIRED)
+    handler.run(argv)
 
 
 if __name__ == "__main__":
