@@ -66,8 +66,8 @@ public enum EvictionPolicy
 /// </summary>
 public sealed class ModelRegistryOptions
 {
-    /// <summary>Directory where models are cached on disk.</summary>
-    public string CacheDirectory { get; set; } = "/models";
+    /// <summary>Directory where models are cached on disk. Uses shared mount.</summary>
+    public string CacheDirectory { get; set; } = "/shared/models";
 
     /// <summary>Maximum number of models to keep in memory.</summary>
     public int MaxCachedModels { get; set; } = 10;

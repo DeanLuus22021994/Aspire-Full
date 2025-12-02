@@ -1,5 +1,22 @@
 {
   "$schema": "https://json.schemastore.org/aspire-8.0.json",
+  "resources": {},
+  "sharedStorage": {
+    "hostPath": "C:\\SHARED",
+    "containerPath": "/shared",
+    "subdirectories": {
+      "models": "models",
+      "vectorStore": "qdrant",
+      "cache": "cache",
+      "logs": "logs",
+      "tmp": "tmp"
+    },
+    "security": {
+      "maxPathDepth": 10,
+      "blockSymlinks": true,
+      "readOnlyMode": false
+    }
+  },
   "registry": {
     "host": "localhost",
     "port": 5001,

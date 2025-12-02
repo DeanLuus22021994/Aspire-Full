@@ -15,9 +15,13 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
       - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - SHARED_STORAGE_PATH=/shared
     volumes:
-      - aspire-models:/root/.cache/huggingface
-      - aspire-data:/app/data
+      # SINGLE HOST MOUNT - All persistent storage through /shared
+      - type: bind
+        source: ${SHARED_HOST_PATH:-C:/SHARED}
+        target: /shared
+        read_only: false
     read_only: true
     tmpfs:
       - /tmp
@@ -30,8 +34,4 @@ services:
       retries: 3
       start_period: 10s
 
-volumes:
-  aspire-models:
-    name: aspire-models-cache
-  aspire-data:
-    name: aspire-agent-data
+# No named volumes - all storage goes through the single bind mount

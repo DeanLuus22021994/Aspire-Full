@@ -114,9 +114,9 @@ public sealed class TensorCoreOptions
     // --- Model Registry Options ---
 
     /// <summary>
-    /// Directory where models are cached on disk. Default is "/models".
+    /// Directory where models are cached on disk. Uses shared mount. Default is "/shared/models".
     /// </summary>
-    public string ModelCacheDirectory { get; set; } = "/models";
+    public string ModelCacheDirectory { get; set; } = "/shared/models";
 
     /// <summary>
     /// Maximum number of models to keep in memory. Default is 10.

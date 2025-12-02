@@ -4,7 +4,12 @@ services:
       context: ..
       dockerfile: Aspire-Full.DockerRegistry/docker/Dev/Dockerfile.DevContainer
     volumes:
-      # Named volumes only - NO host mounts for complete isolation
+      # SINGLE HOST MOUNT - All persistent storage through /shared
+      - type: bind
+        source: ${SHARED_HOST_PATH:-C:/SHARED}
+        target: /shared
+        read_only: false
+      # Named volumes for dev environment caches (container-internal, non-persistent)
       - aspire-nuget-cache:/home/vscode/.nuget
       - aspire-dotnet-tools:/home/vscode/.dotnet/tools
       - aspire-aspire-cli:/home/vscode/.aspire

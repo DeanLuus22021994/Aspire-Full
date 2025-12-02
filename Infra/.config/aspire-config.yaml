@@ -5,6 +5,25 @@
 version: 2
 
 # -----------------------------------------------------------------------------
+# Shared Storage Configuration (SINGLE HOST MOUNT)
+# This is the ONLY path that bridges host and container storage.
+# All persistent data (models, vectors, cache) must use this mount.
+# -----------------------------------------------------------------------------
+shared_storage:
+  host_path: "C:\\SHARED"          # Windows host path
+  container_path: "/shared"         # Container mount point
+  subdirectories:
+    models: "models"                # AI/ML models cache
+    vector_store: "qdrant"          # Vector database storage
+    cache: "cache"                  # General cache
+    logs: "logs"                    # Application logs
+    tmp: "tmp"                      # Temporary files
+  security:
+    max_path_depth: 10              # Prevent deep nesting attacks
+    block_symlinks: true            # Prevent symlink escape
+    read_only_mode: false           # Enable for production lockdown
+
+# -----------------------------------------------------------------------------
 # Repository Configuration
 # -----------------------------------------------------------------------------
 repository:
@@ -118,7 +137,7 @@ health_checks:
 # Model Registry Configuration
 # -----------------------------------------------------------------------------
 models:
-  cache_directory: "/models"
+  cache_directory: "/shared/models"   # Uses shared mount (was /models)
   preload:
     - name: "sentence-transformers/all-MiniLM-L6-v2"
       type: embedding
