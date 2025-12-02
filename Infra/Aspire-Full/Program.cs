@@ -107,6 +107,8 @@ var version = AppHostConstants.Configuration.Version;
 var arch = AppHostConstants.Configuration.Architecture;
 var envTag = AppHostConstants.Configuration.EnvironmentTag;
 
+IResourceBuilder<IResourceWithServiceDiscovery> gatewayResource;
+
 if (useBakedImages)
 {
     var api = builder.AddContainer(AppHostConstants.Resources.Api, $"{registryHost}/{namespaceName}/api-{envTag}", $"{version}-{arch}")
@@ -118,6 +120,7 @@ if (useBakedImages)
         .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Gateway, targetPort: 8080)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureGateway(gateway);
+    gatewayResource = gateway;
 
     var pythonAgents = builder.AddContainer(AppHostConstants.Resources.PythonAgents, $"{registryHost}/{namespaceName}/python-agents-{envTag}", $"{version}-{arch}")
         .WithHttpEndpoint(name: "http", targetPort: 8000)
@@ -131,6 +134,7 @@ else
 
     var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>(AppHostConstants.Resources.Gateway);
     ConfigureGateway(gateway);
+    gatewayResource = gateway;
 
     var agents = builder.AddProject<Projects.Aspire_Full_Agents>("agents")
         .WithReference(qdrant)
@@ -144,13 +148,16 @@ else
 }
 
 // -----------------------------------------------------------------------------
-// Maintenance Task - Tensor Optimized Package Management
+// Frontend Layer - React SPA + Blazor WebAssembly
 // -----------------------------------------------------------------------------
-var maintenance = builder.AddDockerfile("maintenance", "../../", "Infra/Aspire-Full.DockerRegistry/docker/Aspire/Dockerfile.Maintenance")
-    .WithContainerRuntimeArgs("--gpus", "all")
-    .WithContainerRuntimeArgs("--network", networkName)
-    .WithBindMount("../../", "/workspace")
-    .WithLifetime(ContainerLifetime.Persistent);
+var frontend = builder.AddNpmApp(AppHostConstants.Resources.Frontend, "../../Web/Aspire-Full.Web", "dev")
+    .WithHttpEndpoint(port: AppHostConstants.Ports.Frontend, targetPort: 5173, env: "VITE_PORT")
+    .WithExternalHttpEndpoints()
+    .WaitFor(gatewayResource);
+
+var webAssembly = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmDocs)
+    .WithReference(gatewayResource)
+    .WaitFor(gatewayResource)
 
 void ConfigureApi<T>(IResourceBuilder<T> api) where T : IResourceWithEnvironment, IResourceWithWaitSupport
 {

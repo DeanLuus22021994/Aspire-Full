@@ -11,7 +11,7 @@
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.0.1" />
     <PackageVersion Include="Aspire.StackExchange.Redis" Version="13.0.1" />
     <PackageVersion Include="Aspire.Hosting" Version="13.0.1" />
-    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.0.1" />
+    <PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
     <PackageVersion Include="Aspire.Hosting.Qdrant" Version="13.0.1" />
     <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.0.1" />
 
