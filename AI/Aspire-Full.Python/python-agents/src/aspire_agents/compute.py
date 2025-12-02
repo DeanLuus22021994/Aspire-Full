@@ -1,17 +1,16 @@
-"""Thread-safe tensor compute service for Python 3.15+ free-threaded runtime.
+"""Thread-safe tensor compute service for Python 3.16+ free-threaded runtime.
 
 This module provides a BatchComputeService that leverages:
-- Python 3.15 free-threading (PYTHON_GIL=0) for true parallelism
+- Python 3.16 free-threading (PYTHON_GIL=0) for true parallelism
 - NVIDIA Tensor Cores via torch.autocast with float16 precision
 - Dynamic batching with configurable latency bounds
 - Thread-safe singleton pattern using threading.Lock
 
-All embeddings are computed on GPU with automatic CPU fallback.
+ALL COMPUTE IS GPU-ONLY. NO CPU FALLBACK.
 
 Environment Variables (from Dockerfile):
-- ASPIRE_ALLOW_CPU_FALLBACK: Allow CPU fallback (default: false)
 - ASPIRE_TENSOR_BATCH_SIZE: Batch size for tensor ops (default: 32)
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu only (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
 - PYTORCH_CUDA_ALLOC_CONF: PyTorch memory allocator config
 """
@@ -110,28 +109,25 @@ _CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_A
 class ComputeConfig:
     """Immutable configuration for tensor compute service.
 
+    GPU-ONLY. No CPU fallback allowed.
     Default values are read from environment variables set in Dockerfiles.
 
     Attributes:
         model_name: HuggingFace model for embeddings
         batch_size: Batch size from ASPIRE_TENSOR_BATCH_SIZE
         max_latency_ms: Maximum latency before batch processing
-        allow_cpu_fallback: From ASPIRE_ALLOW_CPU_FALLBACK
         use_torch_compile: Enable torch.compile optimization
         use_mixed_precision: Enable FP16/BF16 mixed precision
-        compute_mode: From ASPIRE_COMPUTE_MODE (gpu|cpu|hybrid)
+        compute_mode: Always 'gpu' - no CPU fallback
         tensor_alignment: From CUDA_TENSOR_CORE_ALIGNMENT (default: 128)
     """
 
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     batch_size: int = field(default_factory=lambda: _ASPIRE_TENSOR_BATCH_SIZE)
     max_latency_ms: int = 10
-    allow_cpu_fallback: bool = field(
-        default_factory=lambda: os.environ.get("ASPIRE_ALLOW_CPU_FALLBACK", "").lower() in ("1", "true")
-    )
     use_torch_compile: bool = True
     use_mixed_precision: bool = True
-    compute_mode: str = field(default_factory=lambda: _ASPIRE_COMPUTE_MODE)
+    compute_mode: str = "gpu"  # GPU-only, no CPU fallback
     tensor_alignment: int = field(default_factory=lambda: _CUDA_TENSOR_CORE_ALIGNMENT)
 
     @classmethod
@@ -145,13 +141,8 @@ class ComputeConfig:
 
     @property
     def uses_gpu(self) -> bool:
-        """Check if this configuration uses GPU compute."""
-        return self.compute_mode in ("gpu", "hybrid")
-
-    @property
-    def is_hybrid(self) -> bool:
-        """Check if this configuration uses hybrid compute mode."""
-        return self.compute_mode == "hybrid"
+        """GPU is always required - no CPU fallback."""
+        return True
 
 
 class TensorCoreUnavailableError(RuntimeError):
@@ -236,15 +227,18 @@ class BatchComputeService:
 
             self.model.eval()
 
-            # Optimize model with torch.compile for Python 3.15+ free-threaded performance
+            # Optimize model with torch.compile for Python 3.16+ free-threaded performance
             # torch.compile provides significant speedups on modern GPUs with Tensor Cores
             if self.config.use_torch_compile:
                 try:
                     # Use 'reduce-overhead' mode for best latency in batched inference
-                    self.model = compile_model(
-                        self.model,
-                        mode="reduce-overhead",
-                        fullgraph=False,  # Allow graph breaks for HuggingFace models
+                    self.model = cast(
+                        PreTrainedModel,
+                        compile_model(
+                            self.model,
+                            mode="reduce-overhead",
+                            fullgraph=False,  # Allow graph breaks for HuggingFace models
+                        ),
                     )
                     logger.info("Model compiled with torch.compile(mode='reduce-overhead') for Tensor Core efficiency.")
                 except Exception as e:  # pylint: disable=broad-exception-caught
@@ -253,8 +247,10 @@ class BatchComputeService:
         except Exception as e:  # pylint: disable=broad-exception-caught
             raise TensorCoreUnavailableError(f"Failed to load model {self.config.model_name} on GPU: {e}") from e
 
-        # Verify model is actually on GPU (or CPU if fallback enabled)
-        param_device = next(self.model.parameters()).device
+        # Verify model is on GPU - use getattr for type-safe access
+        params_fn = getattr(self.model, "parameters")
+        first_param: object = next(params_fn())
+        param_device: torch.device = getattr(first_param, "device")
         if param_device.type != self.device.type:
             raise TensorCoreUnavailableError(f"Model loaded on {param_device} but expected {self.device}!")
 
@@ -273,18 +269,12 @@ class BatchComputeService:
         )
 
     def _enforce_gpu(self) -> torch.device:
-        """Ensure a Tensor Core GPU is available and return the device."""
-        if self.config.allow_cpu_fallback:
-            if torch.cuda.is_available():
-                logger.info("CPU fallback enabled but GPU available - using GPU.")
-                ensure_tensor_core_gpu()
-                return torch.device("cuda")
-            logger.warning("CPU fallback enabled via ASPIRE_ALLOW_CPU_FALLBACK - GPU unavailable.")
-            return torch.device("cpu")
-
-        ensure_tensor_core_gpu()
+        """Ensure a Tensor Core GPU is available - NO CPU FALLBACK."""
         if not torch.cuda.is_available():
-            raise TensorCoreUnavailableError("CUDA is not available. CPU fallback is strictly forbidden.")
+            raise TensorCoreUnavailableError(
+                "CUDA GPU required. NO CPU FALLBACK. " + "Ensure NVIDIA GPU is available with proper drivers."
+            )
+        ensure_tensor_core_gpu()
         return torch.device("cuda")
 
     def _process_batches(self) -> None:
@@ -376,16 +366,13 @@ class BatchComputeService:
 
             # Inference with mixed precision for Tensor Core utilization
             # torch.autocast enables TF32/FP16 matrix ops on Ampere+ GPUs
-            if self.device.type == "cuda" and self.config.use_mixed_precision:
-                with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.float16):
-                    outputs = self.model(**inputs)
-            else:
-                with torch.no_grad():
-                    outputs = self.model(**inputs)
+            # GPU-ONLY: always use CUDA autocast
+            with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.float16):
+                outputs: object = self.model(**inputs)
 
             # Mean pooling over token embeddings (masked)
             attention_mask = cast(torch.Tensor, inputs["attention_mask"])
-            token_embeddings = outputs.last_hidden_state
+            token_embeddings: torch.Tensor = getattr(outputs, "last_hidden_state")
             input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
 
             embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(

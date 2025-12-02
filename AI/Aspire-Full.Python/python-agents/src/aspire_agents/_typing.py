@@ -14,11 +14,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final
-
-if TYPE_CHECKING:
-    from torch import nn
-
+from typing import Final
 
 # ============================================================================
 # Free-Threading Detection (Python 3.13+ public API)
@@ -85,6 +81,24 @@ class CudaDeviceProperties:
 MIN_TENSOR_CORE_COMPUTE_CAPABILITY: Final[tuple[int, int]] = (7, 0)
 
 
+def _extract_device_props(props: object) -> CudaDeviceProperties:
+    """Extract typed properties from PyTorch device properties object.
+
+    Args:
+        props: The object returned by torch.cuda.get_device_properties()
+
+    Returns:
+        CudaDeviceProperties with all fields explicitly typed
+    """
+    return CudaDeviceProperties(
+        name=str(getattr(props, "name", "")),
+        total_memory=int(getattr(props, "total_memory", 0)),
+        major=int(getattr(props, "major", 0)),
+        minor=int(getattr(props, "minor", 0)),
+        multi_processor_count=int(getattr(props, "multi_processor_count", 0)),
+    )
+
+
 def get_cuda_device_properties(device_index: int = 0) -> CudaDeviceProperties:
     """Get CUDA device properties with explicit typing.
 
@@ -105,17 +119,10 @@ def get_cuda_device_properties(device_index: int = 0) -> CudaDeviceProperties:
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available")
 
-    # Get properties from PyTorch - extract via getattr for type safety
-    props: Any = torch.cuda.get_device_properties(device_index)
-
-    # Extract and explicitly type each field using getattr
-    return CudaDeviceProperties(
-        name=str(getattr(props, "name", "")),
-        total_memory=int(getattr(props, "total_memory", 0)),
-        major=int(getattr(props, "major", 0)),
-        minor=int(getattr(props, "minor", 0)),
-        multi_processor_count=int(getattr(props, "multi_processor_count", 0)),
-    )
+    # Use getattr to get the function and call it - avoids Unknown return type issue
+    get_props = getattr(torch.cuda, "get_device_properties")
+    props: object = get_props(device_index)
+    return _extract_device_props(props)
 
 
 def set_cuda_memory_fraction(fraction: float, device_index: int = 0) -> None:
@@ -140,25 +147,26 @@ def set_cuda_memory_fraction(fraction: float, device_index: int = 0) -> None:
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available")
 
-    # Call with explicitly typed arguments - the function accepts Any for fraction
-    torch.cuda.set_per_process_memory_fraction(fraction, device_index)
+    # Use getattr to call the function to avoid type checker issues with Unknown param
+    set_mem_frac = getattr(torch.cuda, "set_per_process_memory_fraction")
+    set_mem_frac(fraction, device_index)
 
 
-def compile_model(model: nn.Module, *, mode: str = "reduce-overhead", fullgraph: bool = False) -> nn.Module:
+def compile_model(model: object, *, mode: str = "reduce-overhead", fullgraph: bool = False) -> object:
     """Compile a PyTorch model with torch.compile.
 
     Wraps `torch.compile()` to provide typed interface.
 
     Args:
-        model: The nn.Module to compile
+        model: The model to compile
         mode: Compilation mode ('default', 'reduce-overhead', 'max-autotune')
         fullgraph: Whether to require full graph compilation
 
     Returns:
-        Compiled model as nn.Module
+        Compiled model
     """
     import torch
 
-    # torch.compile with explicit keyword args matching the overload
-    compiled: nn.Module = torch.compile(model, mode=mode, fullgraph=fullgraph)
-    return compiled
+    # Use getattr to get compile function to avoid overload resolution issues
+    compile_fn = getattr(torch, "compile")
+    return compile_fn(model, mode=mode, fullgraph=fullgraph)
