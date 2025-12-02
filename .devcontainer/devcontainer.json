@@ -8,15 +8,18 @@
     }
   },
 
-  // GPU passthrough for CUDA/CU compute - 9GB RAM optimized
+  // GPU passthrough for CUDA/CU compute - 9GB RAM optimized with full privileges
   "runArgs": [
+    "--privileged",
     "--gpus=all",
     "--memory=9g",
     "--memory-swap=12g",
     "--shm-size=2g",
     "--ulimit=memlock=-1:-1",
     "--ulimit=stack=67108864:67108864",
-    "--ipc=host"
+    "--ipc=host",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt=seccomp=unconfined"
   ],
 
   "features": {
