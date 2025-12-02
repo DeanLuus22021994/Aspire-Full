@@ -2,11 +2,14 @@
 This module implements a CLI demo for the Realtime Agent.
 """
 
+from __future__ import annotations
+
 import asyncio
 import queue
 import sys
 import threading
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from agents import function_tool
@@ -19,69 +22,25 @@ from agents.realtime import (
 )
 from agents.realtime.model import RealtimeModelConfig
 
+# Import GPU utilities with fallback
+_ensure_tensor_core_gpu: Callable[[], Any] | None = None
 try:
-    from aspire_agents.gpu import ensure_tensor_core_gpu
+    from aspire_agents.gpu import ensure_tensor_core_gpu as _gpu_func
+
+    _ensure_tensor_core_gpu = _gpu_func
 except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:
-        """Ensure that the tensor core GPU is available."""
-        return None
+    pass
 
 
-class SoundDeviceInputStream(Protocol):
-    """Protocol for sounddevice.InputStream."""
-
-    read_available: int
-    active: bool
-
-    def start(self) -> None:
-        """Start the input stream."""
-        ...
-
-    def stop(self) -> None:
-        """Stop the input stream."""
-        ...
-
-    def close(self) -> None:
-        """Close the input stream."""
-        ...
-
-    def read(self, _frames: int) -> tuple[np.ndarray, bool]:
-        """Read from the input stream."""
-        ...
-
-
-class SoundDeviceOutputStream(Protocol):
-    """Protocol for sounddevice.OutputStream."""
-
-    active: bool
-
-    def start(self) -> None:
-        """Start the output stream."""
-        ...
-
-    def stop(self) -> None:
-        """Stop the output stream."""
-        ...
-
-    def close(self) -> None:
-        """Close the output stream."""
-        ...
-
-
-class SoundDeviceModule(Protocol):
-    """Protocol for sounddevice module."""
-
-    InputStream: type[SoundDeviceInputStream]
-    OutputStream: type[SoundDeviceOutputStream]
-
-    def query_devices(self, _kind: str = "") -> dict[str, Any]:
-        """Query available devices."""
-        ...
+def ensure_gpu() -> Any:
+    """Ensure that the tensor core GPU is available."""
+    if _ensure_tensor_core_gpu is not None:
+        return _ensure_tensor_core_gpu()
+    return None
 
 
 if TYPE_CHECKING:
-    sd: SoundDeviceModule
+    import sounddevice as sd
 else:
     import sounddevice as sd
 
@@ -94,12 +53,6 @@ ENERGY_THRESHOLD = 0.015  # RMS threshold for barge‑in while assistant is spea
 PREBUFFER_CHUNKS = 3  # initial jitter buffer (~120ms with 40ms chunks)
 FADE_OUT_MS = 12  # short fade to avoid clicks when interrupting
 
-# Set up logging for OpenAI agents SDK
-# logging.basicConfig(
-#     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-# )
-# logger.logger.setLevel(logging.ERROR)
-
 
 @function_tool
 def get_weather(city: str) -> str:
@@ -109,29 +62,24 @@ def get_weather(city: str) -> str:
 
 agent = RealtimeAgent(
     name="Assistant",
-    # instructions="You always greet the user with 'Top of the morning to you'.",
     tools=[get_weather],
 )
 
 
 def _truncate_str(s: str, max_length: int) -> str:
-    """
-    Truncate a string to a maximum length.
-    """
+    """Truncate a string to a maximum length."""
     if len(s) > max_length:
         return s[:max_length] + "..."
     return s
 
 
 class NoUIDemo:
-    """
-    A demo class for running the Realtime Agent without a UI.
-    """
+    """A demo class for running the Realtime Agent without a UI."""
 
     def __init__(self) -> None:
         self.session: RealtimeSession | None = None
-        self.audio_stream: SoundDeviceInputStream | None = None
-        self.audio_player: SoundDeviceOutputStream | None = None
+        self.audio_stream: sd.InputStream | None = None
+        self.audio_player: sd.OutputStream | None = None
         self.recording = False
 
         # Playback tracker lets the model know our real playback progress
@@ -140,7 +88,7 @@ class NoUIDemo:
         # Audio output state for callback system
         # Store tuples: (samples_np, item_id, content_index)
         # Use an unbounded queue to avoid drops that sound like skipped words.
-        self.output_queue: queue.Queue[Any] = queue.Queue(maxsize=0)
+        self.output_queue: queue.Queue[tuple[np.ndarray, str, int]] = queue.Queue(maxsize=0)
         self.interrupt_event = threading.Event()
         self.current_audio_chunk: tuple[np.ndarray, str, int] | None = None
         self.chunk_position = 0
@@ -238,9 +186,6 @@ class NoUIDemo:
                     self.current_audio_chunk = self.output_queue.get_nowait()
                     self.chunk_position = 0
                 except queue.Empty:
-                    # No more audio data available - this causes choppiness
-                    # Uncomment next line to debug underruns:
-                    # print(f"Audio underrun: {samples_filled}/{len(outdata)} samples filled")
                     break
 
             # Copy data from current chunk to output buffer
@@ -253,7 +198,6 @@ class NoUIDemo:
 
             if samples_to_copy > 0:
                 chunk_data = samples[self.chunk_position : self.chunk_position + samples_to_copy]
-                # More efficient: direct assignment for mono audio instead of reshape
                 outdata[samples_filled : samples_filled + samples_to_copy, 0] = chunk_data
                 samples_filled += samples_to_copy
                 self.chunk_position += samples_to_copy
@@ -274,22 +218,17 @@ class NoUIDemo:
                     self.chunk_position = 0
 
     async def run(self) -> None:
-        """
-        Run the demo.
-        """
+        """Run the demo."""
         print("Connecting, may take a few seconds...")
 
         # Initialize audio player with callback
         chunk_size = int(SAMPLE_RATE * CHUNK_LENGTH_S)
-        self.audio_player = cast(
-            SoundDeviceOutputStream,
-            sd.OutputStream(
-                channels=CHANNELS,
-                samplerate=SAMPLE_RATE,
-                dtype=FORMAT,
-                callback=self._output_callback,
-                blocksize=chunk_size,  # Match our chunk timing for better alignment
-            ),
+        self.audio_player = sd.OutputStream(
+            channels=CHANNELS,
+            samplerate=SAMPLE_RATE,
+            dtype=FORMAT,
+            callback=self._output_callback,
+            blocksize=chunk_size,
         )
         self.audio_player.start()
 
@@ -310,16 +249,13 @@ class NoUIDemo:
                 self.session = session
                 print("Connected. Starting audio recording...")
 
-                # Start audio recording
                 await self.start_audio_recording()
                 print("Audio recording started. You can start speaking - expect lots of logs!")
 
-                # Process session events
                 async for event in session:
                     await self._on_event(event)
 
         finally:
-            # Clean up audio player
             if self.audio_player and self.audio_player.active:
                 self.audio_player.stop()
             if self.audio_player:
@@ -329,20 +265,13 @@ class NoUIDemo:
 
     async def start_audio_recording(self) -> None:
         """Start recording audio from the microphone."""
-        # Set up audio input stream
-        self.audio_stream = cast(
-            SoundDeviceInputStream,
-            sd.InputStream(
-                channels=CHANNELS,
-                samplerate=SAMPLE_RATE,
-                dtype=FORMAT,
-            ),
+        self.audio_stream = sd.InputStream(
+            channels=CHANNELS,
+            samplerate=SAMPLE_RATE,
+            dtype=FORMAT,
         )
         self.audio_stream.start()
-
         self.recording = True
-
-        # Start audio capture task
         asyncio.create_task(self.capture_audio())
 
     async def capture_audio(self) -> None:
@@ -350,43 +279,32 @@ class NoUIDemo:
         if not self.audio_stream or not self.session:
             return
 
-        # Buffer size in samples
         read_size = int(SAMPLE_RATE * CHUNK_LENGTH_S)
 
-        try:
-            # Simple energy-based barge-in: if user speaks while audio is playing, interrupt.
-            def rms_energy(samples: np.ndarray) -> float:
-                if samples.size == 0:
-                    return 0.0
-                # Normalize int16 to [-1, 1]
-                x = samples.astype(np.float32) / 32768.0
-                return float(np.sqrt(np.mean(x * x)))
+        def rms_energy(samples: np.ndarray) -> float:
+            if samples.size == 0:
+                return 0.0
+            x = samples.astype(np.float32) / 32768.0
+            return float(np.sqrt(np.mean(x * x)))
 
+        try:
             while self.recording:
-                # Check if there's enough data to read
                 if self.audio_stream.read_available < read_size:
                     await asyncio.sleep(0.01)
                     continue
 
-                # Read audio data
                 data, _ = self.audio_stream.read(read_size)
-
-                # Convert numpy array to bytes
                 audio_bytes = data.tobytes()
 
-                # Smart barge‑in: if assistant audio is playing, send only if mic has speech.
                 assistant_playing = self.current_audio_chunk is not None or not self.output_queue.empty()
                 if assistant_playing:
-                    # Compute RMS energy to detect speech while assistant is talking
                     samples = data.reshape(-1)
                     if rms_energy(samples) >= ENERGY_THRESHOLD:
-                        # Locally flush queued assistant audio for snappier interruption.
                         self.interrupt_event.set()
                         await self.session.send_audio(audio_bytes)
                 else:
                     await self.session.send_audio(audio_bytes)
 
-                # Yield control back to event loop
                 await asyncio.sleep(0)
 
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -413,21 +331,16 @@ class NoUIDemo:
             elif event.type == "audio_end":
                 print("Audio ended")
             elif event.type == "audio":
-                # Enqueue audio for callback-based playback with metadata
                 np_audio = np.frombuffer(event.audio.data, dtype=np.int16)
-                # Non-blocking put; queue is unbounded, so drops won't occur.
                 self.output_queue.put_nowait((np_audio, event.item_id, event.content_index))
             elif event.type == "audio_interrupted":
                 print("Audio interrupted")
-                # Begin graceful fade + flush in the audio callback and rebuild jitter buffer.
                 self.prebuffering = True
                 self.interrupt_event.set()
             elif event.type == "error":
                 print(f"Error: {event.error}")
-            elif event.type == "history_updated":
-                pass  # Skip these frequent events
-            elif event.type == "history_added":
-                pass  # Skip these frequent events
+            elif event.type in ("history_updated", "history_added"):
+                pass
             elif event.type == "raw_model_event":
                 print(f"Raw model event: {_truncate_str(str(event.data), 200)}")
             else:
@@ -437,7 +350,7 @@ class NoUIDemo:
 
 
 if __name__ == "__main__":
-    ensure_tensor_core_gpu()
+    ensure_gpu()
     demo = NoUIDemo()
     try:
         asyncio.run(demo.run())
