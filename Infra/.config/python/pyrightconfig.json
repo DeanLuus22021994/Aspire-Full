@@ -1,8 +1,9 @@
 {
-  "include": [
-    "Aspire-Full.Python/python-agents/src"
-  ],
+  "pythonVersion": "3.15",
+  "pythonPlatform": "Linux",
+  "typeCheckingMode": "strict",
 
+  "include": ["src"],
   "exclude": [
     "**/node_modules",
     "**/__pycache__",
@@ -10,28 +11,10 @@
     "**/venv",
     "**/dist",
     "**/build",
-    "**/*.egg-info",
-    ".vscode",
-    ".vscode/**",
-    ".vscode-test",
-    ".vscode-test/**",
-    ".vscode-*",
-    ".vscode-*/**"
+    "**/*.egg-info"
   ],
 
-  "strict": [
-    "Aspire-Full.Python/python-agents/src"
-  ],
-
-  "extraPaths": [
-    "Aspire-Full.Python/python-agents/src",
-    "Aspire-Full.Python/python-agents/.venv/Lib/site-packages"
-  ],
-
-  "pythonVersion": "3.15",
-  "pythonPlatform": "All",
-
-  "typeCheckingMode": "strict",
+  "strict": ["src"],
 
   "strictListInference": true,
   "strictDictionaryInference": true,

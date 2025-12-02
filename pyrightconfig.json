@@ -1,6 +1,6 @@
 {
   "include": [
-    "Aspire-Full.Python/python-agents/src"
+    "AI/Aspire-Full.Python/python-agents/src"
   ],
 
   "exclude": [
@@ -11,25 +11,28 @@
     "**/dist",
     "**/build",
     "**/*.egg-info",
+    ".git",
     ".vscode",
-    ".vscode/**",
     ".vscode-test",
-    ".vscode-test/**",
-    ".vscode-*",
-    ".vscode-*/**"
+    "tmp",
+    "sandboxes"
+  ],
+
+  "ignore": [
+    "**/migrations/**"
   ],
 
   "strict": [
-    "Aspire-Full.Python/python-agents/src"
+    "AI/Aspire-Full.Python/python-agents/src"
   ],
 
   "extraPaths": [
-    "Aspire-Full.Python/python-agents/src",
-    "Aspire-Full.Python/python-agents/.venv/Lib/site-packages"
+    "AI/Aspire-Full.Python/python-agents/src",
+    "AI/Aspire-Full.Python/python-agents/.venv/Lib/site-packages"
   ],
 
   "pythonVersion": "3.15",
-  "pythonPlatform": "All",
+  "pythonPlatform": "Linux",
 
   "typeCheckingMode": "strict",
 

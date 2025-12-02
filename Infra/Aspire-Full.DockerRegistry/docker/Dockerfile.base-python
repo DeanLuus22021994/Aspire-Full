@@ -2,15 +2,16 @@
 # =============================================================================
 # Base Python Image - Python 3.15t Free-Threaded with TensorCore
 # Inherits from CUDA Bootstrap Devel for GPU compilation support
+# Microsoft-Only Tooling: Pyright (Pylance backend) for type checking
 # =============================================================================
 # hadolint global ignore=DL3008,DL3013
 FROM cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Base Python 3.15t (Free-Threaded)"
+LABEL org.opencontainers.image.description="Aspire Base Python 3.15t (Free-Threaded) with Microsoft Pyright"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # =============================================================================
-# Python 3.15 Free-Threading Configuration
+# Python 3.15 Free-Threading Configuration (PEP 803)
 # PYTHON_GIL=0: Disables GIL for true parallel threading
 # PYTHON_JIT=1: Enables experimental JIT compilation
 # =============================================================================
@@ -20,10 +21,9 @@ ENV PYTHON_GIL=0 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8 \
     PYTHONHASHSEED=random \
-    # Strict formatting configuration
-    RUFF_LINE_LENGTH=120 \
-    RUFF_TARGET_VERSION=py315 \
-    BLACK_LINE_LENGTH=120 \
+    # Microsoft Pyright configuration
+    PYRIGHT_PYTHON_VERSION=3.15 \
+    PYRIGHT_TYPE_CHECKING_MODE=strict \
     # Virtual environment configuration
     UV_SYSTEM_PYTHON=0 \
     UV_PYTHON=3.15t \
@@ -49,34 +49,40 @@ RUN uv python install 3.15t \
     && uv venv /opt/venv --python 3.15t \
     && chmod -R 755 /opt/venv
 
-# Install strict formatting tools globally in the venv
+# Install Microsoft-only type checking tools in the venv
+# Pyright: Microsoft's official Python type checker (powers Pylance in VS Code)
+# mypy: Optional additional type checker for compatibility
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
     uv pip install \
-    ruff>=0.8.0 \
-    black>=24.0.0 \
-    mypy>=1.13.0 \
-    isort>=5.13.0
+    pyright>=1.1.407 \
+    mypy>=1.13.0
 
-# Create ruff configuration for strict formatting
+# Create Microsoft Pyright configuration for strict type checking
 RUN mkdir -p /etc/python && \
-    echo '[tool.ruff]' > /etc/python/ruff.toml && \
-    echo 'target-version = "py315"' >> /etc/python/ruff.toml && \
-    echo 'line-length = 120' >> /etc/python/ruff.toml && \
-    echo 'fix = true' >> /etc/python/ruff.toml && \
-    echo '' >> /etc/python/ruff.toml && \
-    echo '[tool.ruff.lint]' >> /etc/python/ruff.toml && \
-    echo 'select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "TCH", "RUF", "PTH", "PL"]' >> /etc/python/ruff.toml && \
-    echo 'ignore = ["E501", "PLR0913", "PLR2004"]' >> /etc/python/ruff.toml && \
-    echo '' >> /etc/python/ruff.toml && \
-    echo '[tool.ruff.lint.isort]' >> /etc/python/ruff.toml && \
-    echo 'known-first-party = ["aspire_agents"]' >> /etc/python/ruff.toml && \
-    echo 'combine-as-imports = true' >> /etc/python/ruff.toml && \
-    echo '' >> /etc/python/ruff.toml && \
-    echo '[tool.ruff.format]' >> /etc/python/ruff.toml && \
-    echo 'quote-style = "double"' >> /etc/python/ruff.toml && \
-    echo 'indent-style = "space"' >> /etc/python/ruff.toml && \
-    echo 'line-ending = "lf"' >> /etc/python/ruff.toml
+    echo '{' > /etc/python/pyrightconfig.json && \
+    echo '  "pythonVersion": "3.15",' >> /etc/python/pyrightconfig.json && \
+    echo '  "pythonPlatform": "Linux",' >> /etc/python/pyrightconfig.json && \
+    echo '  "typeCheckingMode": "strict",' >> /etc/python/pyrightconfig.json && \
+    echo '  "include": ["src"],' >> /etc/python/pyrightconfig.json && \
+    echo '  "exclude": ["**/__pycache__", "**/.venv", "**/dist", "**/build"],' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictListInference": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictDictionaryInference": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictSetInference": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "analyzeUnannotatedFunctions": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictParameterNoneValue": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "deprecateTypingAliases": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "enableReachabilityAnalysis": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "disableBytesTypePromotions": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportMissingImports": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportMissingTypeStubs": "warning",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportUnusedImport": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportUnusedVariable": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportUnknownParameterType": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportUnknownVariableType": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportMissingParameterType": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportMissingTypeArgument": "error"' >> /etc/python/pyrightconfig.json && \
+    echo '}' >> /etc/python/pyrightconfig.json
 
 # Named volume for uv cache persistence
 VOLUME ["/root/.cache/uv"]

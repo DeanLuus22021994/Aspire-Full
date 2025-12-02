@@ -1,7 +1,17 @@
 {
   "recommendations": [
+    // Microsoft C# / .NET
     "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
     "ms-azuretools.vscode-docker",
+
+    // Microsoft Python (Official Toolchain)
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.mypy-type-checker",
+
+    // C++ / CUDA
     "ms-vscode.cpptools",
     "ms-vscode.cmake-tools",
     "twxs.cmake",

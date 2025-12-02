@@ -47,7 +47,7 @@ dependencies = [
 dev = [
     "pytest>=8.3.3",
     "pytest-asyncio>=0.24.0",
-    "ruff>=0.7.3",
+    "pyright>=1.1.407",
     "mypy>=1.13.0",
     "types-requests>=2.31.0",
 ]
@@ -71,57 +71,72 @@ name = "pytorch-nightly"
 url = "https://download.pytorch.org/whl/nightly/cu126"
 explicit = false
 
-[tool.ruff]
-target-version = "py314"  # Python 3.15t compatible (using py314 until ruff supports py315)
-line-length = 120
-src = ["src"]
-fix = true
-force-exclude = true
-
-[tool.ruff.lint]
-select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # Pyflakes
-    "I",      # isort
-    "UP",     # pyupgrade (Python 3.15 patterns)
-    "B",      # flake8-bugbear
-    "C4",     # flake8-comprehensions
-    "SIM",    # flake8-simplify
-    "TCH",    # type-checking imports
-    "RUF",    # Ruff-specific rules
-    "PTH",    # pathlib
-    "PL",     # pylint
-    "PERF",   # performance
-]
-ignore = [
-    "E203",      # Whitespace before ':' (conflicts with black)
-    "E501",      # Line too long (handled by formatter)
-    "UP007",     # Use X | Y instead of Union (already using)
-    "PLR0913",   # Too many arguments
-    "PLR2004",   # Magic value comparison
-    "PLR0911",   # Too many return statements
+# =============================================================================
+# Microsoft Pyright Configuration (Python 3.15 Free-Threaded)
+# =============================================================================
+# Uses Microsoft's official type checker for strict Python analysis
+# PEP 803: Stable ABI for Free-Threaded Builds (abi3t wheel tag)
+# =============================================================================
+[tool.pyright]
+pythonVersion = "3.15"
+pythonPlatform = "All"
+typeCheckingMode = "strict"
+include = ["src"]
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "**/dist",
+    "**/build",
+    "**/*.egg-info",
 ]
 
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]           # Unused imports in __init__
-"conftest.py" = ["F401", "F811"]   # pytest fixtures
-"tests/**" = ["PLR2004"]           # Magic values in tests OK
+# Strict inference settings
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+analyzeUnannotatedFunctions = true
+strictParameterNoneValue = true
+deprecateTypingAliases = true
+enableReachabilityAnalysis = true
+disableBytesTypePromotions = true
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "lf"
-
-[tool.ruff.lint.isort]
-known-first-party = ["aspire_agents"]
-force-single-line = false
-lines-after-imports = 2
-
-[tool.black]
-line-length = 120
-target-version = ["py313"]  # Python 3.15t compatible (using py313 until black supports py315)
-preview = true
+# Error reporting (strict mode)
+reportMissingImports = "error"
+reportMissingTypeStubs = "warning"
+reportMissingModuleSource = "warning"
+reportInvalidTypeForm = "error"
+reportUndefinedVariable = "error"
+reportGeneralTypeIssues = "error"
+reportPropertyTypeMismatch = "error"
+reportFunctionMemberAccess = "error"
+reportImportCycles = "warning"
+reportUnusedImport = "error"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedVariable = "error"
+reportDuplicateImport = "error"
+reportWildcardImportFromLibrary = "error"
+reportPrivateUsage = "warning"
+reportPrivateImportUsage = "error"
+reportConstantRedefinition = "error"
+reportDeprecated = "warning"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportMissingSuperCall = "warning"
+reportUninitializedInstanceVariable = "warning"
+reportUnknownParameterType = "error"
+reportUnknownArgumentType = "error"
+reportUnknownLambdaType = "error"
+reportUnknownVariableType = "error"
+reportUnknownMemberType = "error"
+reportMissingParameterType = "error"
+reportMissingTypeArgument = "error"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryContains = "error"
+reportMatchNotExhaustive = "error"
+reportImplicitOverride = "warning"
 
 [tool.mypy]
 python_version = "3.15"

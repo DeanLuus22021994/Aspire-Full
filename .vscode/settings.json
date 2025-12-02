@@ -2,6 +2,7 @@
   // =============================================================================
   // Aspire-Full VS Code Settings - Fully Portable
   // No host dependencies - all paths relative to ${workspaceFolder}
+  // Microsoft-Only Python Tooling: Pylance + Pyright for type checking
   // =============================================================================
 
   // .NET Configuration
@@ -12,7 +13,8 @@
   // Editor Settings
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": "explicit"
+    "source.organizeImports": "explicit",
+    "source.fixAll.pylance": "explicit"
   },
 
   // File Exclusions
@@ -29,32 +31,71 @@
     "*.cuh": "cuda-cpp"
   },
 
-  // Python Configuration - Portable paths (cross-platform)
+  // =============================================================================
+  // Python Configuration - Microsoft Pylance (powered by Pyright)
+  // =============================================================================
   // Uses Python 3.15t (free-threaded) from .python-version
-  // PYTHON_GIL=0 environment disables GIL for true parallel threading
+  // PYTHON_GIL=0 environment disables GIL for true parallel threading (PEP 703/803)
   // Windows: .venv/Scripts/python.exe | Unix: .venv/bin/python
   // NOTE: VS Code auto-detects the venv. If detection fails, the path below is used.
-  // For Unix systems, change to: "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/bin/python"
   "python.defaultInterpreterPath": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.venv/Scripts/python.exe",
   "python.envFile": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.env",
+
+  // Pylance Language Server Configuration (Microsoft's official Python language server)
+  "python.languageServer": "Pylance",
+  "python.analysis.languageServerMode": "full",
   "python.analysis.typeCheckingMode": "strict",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoFormatStrings": true,
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.indexing": true,
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.inlayHints.pytestParameters": true,
+
+  // Pyright Diagnostic Overrides (strict mode with sensible warnings)
   "python.analysis.diagnosticSeverityOverrides": {
-    "reportUnusedImport": "warning",
-    "reportUnusedVariable": "warning",
-    "reportUnusedParameter": "none",
-    "reportMissingParameterType": "none",
-    "reportUnknownMemberType": "none",
-    "reportUnknownParameterType": "none",
-    "reportUnknownVariableType": "none",
-    "reportUnknownArgumentType": "none",
-    "reportUnnecessaryTypeIgnoreComment": "none",
-    "reportPrivateUsage": "none"
+    "reportUnusedImport": "error",
+    "reportUnusedVariable": "error",
+    "reportUnusedFunction": "error",
+    "reportUnusedClass": "error",
+    "reportMissingImports": "error",
+    "reportMissingTypeStubs": "warning",
+    "reportMissingModuleSource": "warning",
+    "reportGeneralTypeIssues": "error",
+    "reportPropertyTypeMismatch": "error",
+    "reportFunctionMemberAccess": "error",
+    "reportDuplicateImport": "error",
+    "reportPrivateUsage": "warning",
+    "reportPrivateImportUsage": "error",
+    "reportConstantRedefinition": "error",
+    "reportDeprecated": "warning",
+    "reportIncompatibleMethodOverride": "error",
+    "reportIncompatibleVariableOverride": "error",
+    "reportUnknownParameterType": "error",
+    "reportUnknownArgumentType": "error",
+    "reportUnknownVariableType": "error",
+    "reportUnknownMemberType": "error",
+    "reportMissingParameterType": "error",
+    "reportMissingTypeArgument": "error",
+    "reportUnnecessaryCast": "error",
+    "reportUnnecessaryComparison": "error",
+    "reportMatchNotExhaustive": "error",
+    "reportImplicitOverride": "warning"
   },
+
+  // Disable third-party linters (use Microsoft tooling only)
   "pylint.enabled": false,
   "flake8.enabled": false,
+
+  // Python Formatting - Microsoft Black Formatter extension
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll.pylance": "explicit"
+    }
   },
 
   // CMake Configuration - Uses system cmake (installed in DevContainer)
@@ -99,7 +140,9 @@
     "onnx",
     "pgvector",
     "pycache",
+    "pylance",
     "pylint",
+    "pyright",
     "pytest",
     "qdrant",
     "relu",

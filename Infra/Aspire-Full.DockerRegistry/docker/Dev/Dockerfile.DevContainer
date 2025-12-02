@@ -13,7 +13,7 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # =============================================================================
-# Python 3.15 Free-Threading + TensorCore + Strict Formatting Configuration
+# Python 3.15 Free-Threading + TensorCore + Microsoft Pyright Configuration
 # =============================================================================
 ENV PYTHON_GIL=0 \
     PYTHON_JIT=1 \
@@ -25,13 +25,9 @@ ENV PYTHON_GIL=0 \
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
-    # Strict formatting configuration (baked into image)
-    RUFF_LINE_LENGTH=120 \
-    RUFF_TARGET_VERSION=py315 \
-    RUFF_FORMAT_QUOTE_STYLE=double \
-    RUFF_FORMAT_INDENT_STYLE=space \
-    RUFF_FORMAT_LINE_ENDING=lf \
-    BLACK_LINE_LENGTH=120
+    # Microsoft Pyright configuration (strict type checking)
+    PYRIGHT_PYTHON_VERSION=3.15 \
+    PYRIGHT_TYPE_CHECKING_MODE=strict
 
 # Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
@@ -136,26 +132,31 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 # Precompile Python packages for instant import
 RUN . /opt/venv/bin/activate && python -m compileall -q /opt/venv/lib
 
-# Install strict formatting tools
+# Install Microsoft Pyright type checker (powers Pylance in VS Code)
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
-    uv pip install ruff>=0.8.0 black>=24.0.0 mypy>=1.13.0 isort>=5.13.0
+    uv pip install pyright>=1.1.407 mypy>=1.13.0
 
-# Create global ruff configuration for strict formatting
+# Create Microsoft Pyright configuration for strict type checking
 RUN mkdir -p /etc/python && \
-    echo '[tool.ruff]' > /etc/python/ruff.toml && \
-    echo 'target-version = "py315"' >> /etc/python/ruff.toml && \
-    echo 'line-length = 120' >> /etc/python/ruff.toml && \
-    echo 'fix = true' >> /etc/python/ruff.toml && \
-    echo '' >> /etc/python/ruff.toml && \
-    echo '[tool.ruff.lint]' >> /etc/python/ruff.toml && \
-    echo 'select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "TCH", "RUF"]' >> /etc/python/ruff.toml && \
-    echo 'ignore = ["E501"]' >> /etc/python/ruff.toml && \
-    echo '' >> /etc/python/ruff.toml && \
-    echo '[tool.ruff.format]' >> /etc/python/ruff.toml && \
-    echo 'quote-style = "double"' >> /etc/python/ruff.toml && \
-    echo 'indent-style = "space"' >> /etc/python/ruff.toml && \
-    echo 'line-ending = "lf"' >> /etc/python/ruff.toml
+    echo '{' > /etc/python/pyrightconfig.json && \
+    echo '  "pythonVersion": "3.15",' >> /etc/python/pyrightconfig.json && \
+    echo '  "pythonPlatform": "Linux",' >> /etc/python/pyrightconfig.json && \
+    echo '  "typeCheckingMode": "strict",' >> /etc/python/pyrightconfig.json && \
+    echo '  "include": ["src"],' >> /etc/python/pyrightconfig.json && \
+    echo '  "exclude": ["**/__pycache__", "**/.venv", "**/dist", "**/build"],' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictListInference": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictDictionaryInference": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictSetInference": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "analyzeUnannotatedFunctions": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "strictParameterNoneValue": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "deprecateTypingAliases": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "enableReachabilityAnalysis": true,' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportMissingImports": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportMissingTypeStubs": "warning",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportUnusedImport": "error",' >> /etc/python/pyrightconfig.json && \
+    echo '  "reportUnusedVariable": "error"' >> /etc/python/pyrightconfig.json && \
+    echo '}' >> /etc/python/pyrightconfig.json
 
 # Copy maintenance scripts
 COPY .devcontainer/scripts /opt/devcontainer-scripts
