@@ -1,0 +1,329 @@
+# syntax=docker/dockerfile:1.7-labs
+# =============================================================================
+# ASPIRE-FULL UNIFIED DOCKERFILE - Factory Pattern with K8s NVIDIA Plugin
+# Single multi-stage Dockerfile for all targets with ultra-low latency
+# Supports: api, gateway, tensor, python-agents, native, web, webassembly
+# =============================================================================
+# Build with: docker buildx bake <target> OR docker build --target <target>
+# =============================================================================
+
+ARG CUDA_VERSION=13.0.0
+ARG UBUNTU_VERSION=24.04
+ARG DOTNET_VERSION=10.0
+ARG PYTHON_VERSION=3.15t
+
+# =============================================================================
+# STAGE: cuda-base - NVIDIA K8s Device Plugin Compatible Base
+# Ultra-minimal CUDA runtime for K8s GPU scheduling
+# =============================================================================
+FROM nvidia/cuda:${CUDA_VERSION}-cudnn-runtime-ubuntu${UBUNTU_VERSION} AS cuda-base
+
+# K8s NVIDIA Device Plugin labels (required for GPU scheduling)
+LABEL io.k8s.display-name="Aspire CUDA Base"
+LABEL nvidia.com/gpu.deploy.container-toolkit=true
+LABEL nvidia.com/gpu.deploy.device-plugin=true
+LABEL nvidia.com/gpu.deploy.dcgm-exporter=true
+
+# NVIDIA K8s Device Plugin environment (zero-config GPU access)
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    NVIDIA_REQUIRE_CUDA="cuda>=${CUDA_VERSION}" \
+    # TensorCore alignment for Volta+ (128-byte)
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    CUDA_CACHE_PATH=/cache/cuda \
+    CUDA_CACHE_MAXSIZE=4294967296 \
+    # K8s-native GPU memory management
+    CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps \
+    CUDA_MPS_LOG_DIRECTORY=/cache/nvidia-mps
+
+# Enable apt caching
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Minimal runtime deps only
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
+# STAGE: cuda-devel - CUDA Development (NVCC, cuDNN headers)
+# =============================================================================
+FROM nvidia/cuda:${CUDA_VERSION}-cudnn-devel-ubuntu${UBUNTU_VERSION} AS cuda-devel
+
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
+    CUDA_HOME=/usr/local/cuda \
+    PATH="/usr/local/cuda/bin:${PATH}" \
+    LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}" \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake ninja-build git pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# =============================================================================
+# STAGE: dotnet-sdk - .NET 10 SDK Layer
+# =============================================================================
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-preview AS dotnet-sdk
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    NUGET_XMLDOC_MODE=skip
+
+RUN dotnet workload install aspire wasm-tools
+
+# =============================================================================
+# STAGE: native-build - C3 Native CUDA Kernels
+# Retained factory implementation for TensorCore ops
+# =============================================================================
+FROM cuda-devel AS native-build
+WORKDIR /src
+
+COPY AI/Aspire-Full.Tensor/Native/ ./Native/
+
+RUN --mount=type=cache,target=/root/.ccache \
+    cd Native && mkdir -p build && cd build && \
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CUDA_ARCHITECTURES="70;75;80;86;89;90" && \
+    ninja
+
+# =============================================================================
+# STAGE: dotnet-restore - Cached NuGet restore
+# =============================================================================
+FROM dotnet-sdk AS dotnet-restore
+WORKDIR /src
+
+COPY Aspire-Full.slnx Directory.Build.props Directory.Build.targets Directory.Packages.props NuGet.config ./
+COPY --parents **/**.csproj ./
+
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet restore Aspire-Full.slnx /p:NoWarn=NU1109
+
+# =============================================================================
+# STAGE: api-build - Build API service
+# =============================================================================
+FROM dotnet-restore AS api-build
+WORKDIR /src
+
+COPY Web/Aspire-Full.Api/ Web/Aspire-Full.Api/
+COPY Infra/Aspire-Full.ServiceDefaults/ Infra/Aspire-Full.ServiceDefaults/
+COPY Core/Aspire-Full.Shared/ Core/Aspire-Full.Shared/
+
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet publish Web/Aspire-Full.Api/Aspire-Full.Api.csproj \
+    -c Release -r linux-x64 --self-contained -o /app/publish
+
+# =============================================================================
+# STAGE: gateway-build - Build Gateway service
+# =============================================================================
+FROM dotnet-restore AS gateway-build
+WORKDIR /src
+
+COPY Web/Aspire-Full.Gateway/ Web/Aspire-Full.Gateway/
+COPY Infra/Aspire-Full.ServiceDefaults/ Infra/Aspire-Full.ServiceDefaults/
+COPY Core/Aspire-Full.Shared/ Core/Aspire-Full.Shared/
+
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
+    dotnet publish Web/Aspire-Full.Gateway/Aspire-Full.Gateway.csproj \
+    -c Release -r linux-x64 --self-contained -o /app/publish
+
+# =============================================================================
+# STAGE: python-build - Python AI Agents with uv
+# =============================================================================
+FROM cuda-devel AS python-build
+WORKDIR /build
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install Python 3.15t free-threaded
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv python install ${PYTHON_VERSION}
+
+RUN uv venv /opt/venv --python ${PYTHON_VERSION}
+
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    . /opt/venv/bin/activate && uv sync --frozen --all-extras
+
+COPY AI/Aspire-Full.Python/python-agents/ ./
+
+RUN . /opt/venv/bin/activate && python -m compileall -q .
+
+# =============================================================================
+# STAGE: web-build - React Frontend
+# =============================================================================
+FROM node:22-alpine AS web-build
+WORKDIR /app
+
+COPY Web/Aspire-Full.Web/package*.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline
+
+COPY Web/Aspire-Full.Web/ ./
+RUN npm run build
+
+# =============================================================================
+# TARGET: api - Production API with K8s GPU support
+# =============================================================================
+FROM cuda-base AS api
+
+LABEL io.k8s.display-name="Aspire API"
+LABEL nvidia.com/gpu.present=true
+
+# Minimal runtime GC for low RAM
+ENV DOTNET_GCHeapHardLimit=268435456 \
+    DOTNET_gcServer=0 \
+    DOTNET_GCConserveMemory=9 \
+    ASPNETCORE_URLS=http://+:8080
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    libicu74 libssl3 && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 aspire
+
+COPY --from=native-build --chown=aspire /src/Native/build/libAspireFullNative.so /app/
+COPY --from=api-build --chown=aspire /app/publish ./
+
+ENV LD_LIBRARY_PATH="/app:${LD_LIBRARY_PATH}"
+
+USER aspire
+EXPOSE 8080
+ENTRYPOINT ["./Aspire-Full.Api"]
+
+# =============================================================================
+# TARGET: gateway - Production Gateway with K8s GPU support
+# =============================================================================
+FROM cuda-base AS gateway
+
+LABEL io.k8s.display-name="Aspire Gateway"
+LABEL nvidia.com/gpu.present=true
+
+ENV DOTNET_GCHeapHardLimit=134217728 \
+    DOTNET_gcServer=0 \
+    DOTNET_GCConserveMemory=9 \
+    ASPNETCORE_URLS=http://+:8080
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    libicu74 libssl3 && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 aspire
+
+COPY --from=native-build --chown=aspire /src/Native/build/libAspireFullNative.so /app/
+COPY --from=gateway-build --chown=aspire /app/publish ./
+
+ENV LD_LIBRARY_PATH="/app:${LD_LIBRARY_PATH}"
+
+USER aspire
+EXPOSE 8080
+ENTRYPOINT ["./Aspire-Full.Gateway"]
+
+# =============================================================================
+# TARGET: tensor - TensorCore Python Agents
+# =============================================================================
+FROM cuda-base AS tensor
+
+LABEL io.k8s.display-name="Aspire Tensor Compute"
+LABEL nvidia.com/gpu.present=true
+LABEL nvidia.com/gpu.memory=high
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    VIRTUAL_ENV="/opt/venv" \
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    libportaudio2 libsndfile1 ffmpeg && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 aspire
+
+COPY --from=python-build --chown=aspire /opt/venv /opt/venv
+COPY --from=python-build --chown=aspire /build ./
+
+USER aspire
+ENTRYPOINT ["python", "-m", "aspire_agents.cli"]
+
+# =============================================================================
+# TARGET: native - Export native library only (scratch)
+# =============================================================================
+FROM scratch AS native
+
+COPY --from=native-build /src/Native/build/libAspireFullNative.so /
+
+# =============================================================================
+# TARGET: web - Static React frontend (nginx)
+# =============================================================================
+FROM nginx:alpine AS web
+
+COPY --from=web-build /app/dist /usr/share/nginx/html
+COPY Web/Aspire-Full.Web/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+# =============================================================================
+# TARGET: devcontainer - Full development environment
+# =============================================================================
+FROM dotnet-sdk AS devcontainer
+
+# K8s NVIDIA labels for dev GPU access
+LABEL nvidia.com/gpu.deploy.container-toolkit=true
+
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    DOTNET_GCHeapHardLimit=7516192768 \
+    DOTNET_gcServer=1
+
+# Install all dev tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    git curl wget jq htop nvtop unzip \
+    build-essential cmake ninja-build \
+    libgomp1 libnuma1 libopenblas0 libopenblas-dev \
+    python3.12 python3.12-venv python3-pip \
+    nodejs npm && rm -rf /var/lib/apt/lists/*
+
+# Install uv and ruff
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+ENV PATH="/root/.local/bin:${PATH}"
+
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+RUN if getent group ${USER_GID} >/dev/null 2>&1; then \
+        groupmod -n ${USERNAME} $(getent group ${USER_GID} | cut -d: -f1) 2>/dev/null || true; \
+    else groupadd --gid ${USER_GID} ${USERNAME}; fi && \
+    if getent passwd ${USER_UID} >/dev/null 2>&1; then \
+        usermod -l ${USERNAME} -d /home/${USERNAME} -m $(getent passwd ${USER_UID} | cut -d: -f1) 2>/dev/null || true; \
+    else useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME}; fi && \
+    echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}
+
+WORKDIR /workspace
+USER ${USERNAME}
+
+RUN dotnet dev-certs https --trust 2>/dev/null || true
+
+CMD ["sleep", "infinity"]

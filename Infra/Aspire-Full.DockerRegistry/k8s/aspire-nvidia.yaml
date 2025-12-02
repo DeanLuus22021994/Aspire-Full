@@ -1,0 +1,320 @@
+# =============================================================================
+# ASPIRE-FULL K8s Deployment with NVIDIA Device Plugin
+# Ultra-low latency GPU scheduling with official NVIDIA plugin
+# =============================================================================
+# Prerequisites:
+#   1. NVIDIA GPU Operator OR nvidia-device-plugin installed
+#   2. kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aspire
+  labels:
+    nvidia.com/gpu.deploy.device-plugin: "true"
+    nvidia.com/gpu.deploy.container-toolkit: "true"
+
+---
+# =============================================================================
+# ConfigMap - Shared configuration
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aspire-config
+  namespace: aspire
+data:
+  ASPIRE_COMPUTE_MODE: "gpu"
+  ASPIRE_TENSOR_OFFLOAD_ENABLED: "true"
+  CUDA_CACHE_PATH: "/cache/cuda"
+  DOTNET_GCConserveMemory: "9"
+  DOTNET_gcServer: "0"
+
+---
+# =============================================================================
+# API Deployment - Ultra-minimal RAM with GPU
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspire-api
+  namespace: aspire
+  labels:
+    app: aspire-api
+    nvidia.com/gpu.present: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspire-api
+  template:
+    metadata:
+      labels:
+        app: aspire-api
+        nvidia.com/gpu.present: "true"
+    spec:
+      runtimeClassName: nvidia  # Uses NVIDIA Container Runtime
+      containers:
+        - name: api
+          image: localhost:5001/aspire/api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: aspire-config
+          env:
+            - name: DOTNET_GCHeapHardLimit
+              value: "268435456"  # 256MB
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: cuda-cache
+              mountPath: /cache/cuda
+            - name: models
+              mountPath: /models
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: cuda-cache
+          persistentVolumeClaim:
+            claimName: aspire-cuda-cache
+        - name: models
+          persistentVolumeClaim:
+            claimName: aspire-models
+
+---
+# =============================================================================
+# Gateway Deployment - Minimal RAM
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspire-gateway
+  namespace: aspire
+  labels:
+    app: aspire-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspire-gateway
+  template:
+    metadata:
+      labels:
+        app: aspire-gateway
+    spec:
+      runtimeClassName: nvidia
+      containers:
+        - name: gateway
+          image: localhost:5001/aspire/gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: aspire-config
+          env:
+            - name: DOTNET_GCHeapHardLimit
+              value: "134217728"  # 128MB
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+---
+# =============================================================================
+# Tensor Compute Deployment - GPU-heavy workload
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspire-tensor
+  namespace: aspire
+  labels:
+    app: aspire-tensor
+    nvidia.com/gpu.present: "true"
+    nvidia.com/gpu.memory: "high"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspire-tensor
+  template:
+    metadata:
+      labels:
+        app: aspire-tensor
+        nvidia.com/gpu.present: "true"
+    spec:
+      runtimeClassName: nvidia
+      containers:
+        - name: tensor
+          image: localhost:5001/aspire/tensor:latest
+          imagePullPolicy: Always
+          command: ["python", "-m", "aspire_agents.server"]
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: aspire-config
+          env:
+            - name: PYTORCH_CUDA_ALLOC_CONF
+              value: "expandable_segments:True,max_split_size_mb:512"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "4000m"
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: cuda-cache
+              mountPath: /cache/cuda
+            - name: models
+              mountPath: /models
+            - name: huggingface
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: cuda-cache
+          persistentVolumeClaim:
+            claimName: aspire-cuda-cache
+        - name: models
+          persistentVolumeClaim:
+            claimName: aspire-models
+        - name: huggingface
+          persistentVolumeClaim:
+            claimName: aspire-huggingface
+
+---
+# =============================================================================
+# Services
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspire-api
+  namespace: aspire
+spec:
+  selector:
+    app: aspire-api
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspire-gateway
+  namespace: aspire
+spec:
+  selector:
+    app: aspire-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspire-tensor
+  namespace: aspire
+spec:
+  selector:
+    app: aspire-tensor
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+
+---
+# =============================================================================
+# Persistent Volume Claims - Named volumes for caching
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aspire-cuda-cache
+  namespace: aspire
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aspire-models
+  namespace: aspire
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: local-path
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aspire-huggingface
+  namespace: aspire
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: local-path
+
+---
+# =============================================================================
+# NVIDIA RuntimeClass (if not using GPU Operator)
+# =============================================================================
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
