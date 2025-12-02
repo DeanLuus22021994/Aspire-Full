@@ -28,12 +28,18 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final
 
 import torch
+
+from ._typing import (
+    CudaDeviceProperties,
+    get_cuda_device_properties,
+    is_gil_disabled,
+    set_cuda_memory_fraction,
+)
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -147,17 +153,6 @@ def _format_mem(bytes_total: int) -> float:
     return round(bytes_total / (1024**3), 2)
 
 
-def _is_gil_disabled() -> bool:
-    """Check if Python GIL is disabled (Python 3.15+ free-threaded).
-
-    Returns:
-        True if running in free-threaded mode (PYTHON_GIL=0)
-    """
-    if hasattr(sys, "_is_gil_enabled"):
-        return not sys._is_gil_enabled()
-    return False
-
-
 def _configure_torch_runtime(device_index: int) -> tuple[bool, bool]:
     """Configure PyTorch for optimal Tensor Core utilization.
 
@@ -201,8 +196,8 @@ def _configure_torch_runtime(device_index: int) -> tuple[bool, bool]:
     # Configure memory allocator for reduced fragmentation
     try:
         # Use expandable segments for better memory reuse
-        torch.cuda.memory.set_per_process_memory_fraction(0.95, device_index)
-    except (AttributeError, RuntimeError):
+        set_cuda_memory_fraction(0.95, device_index)
+    except (AttributeError, RuntimeError, ValueError):
         pass
 
     # Enable flash attention if available (PyTorch 2.0+)
@@ -267,10 +262,11 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
         )
 
     device_index = 0
-    props = torch.cuda.get_device_properties(device_index)
+    props: CudaDeviceProperties = get_cuda_device_properties(device_index)
     total_memory: int = props.total_memory
     gpu_name: str = props.name
-    major, minor = torch.cuda.get_device_capability(device_index)
+    major: int = props.major
+    minor: int = props.minor
     capability_str = f"{major}.{minor}"
 
     if major < 7:
@@ -281,7 +277,7 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
         )
 
     tf32_enabled, cudnn_tf32_enabled = _configure_torch_runtime(device_index)
-    gil_disabled = _is_gil_disabled()
+    gil_disabled = is_gil_disabled()
 
     # Warm up the GPU to avoid cold-start latency
     _warmup_gpu(device_index)
@@ -326,7 +322,8 @@ def get_gpu_memory_info() -> dict[str, float]:
 
     allocated = torch.cuda.memory_allocated()
     reserved = torch.cuda.memory_reserved()
-    total: int = torch.cuda.get_device_properties(0).total_memory
+    props: CudaDeviceProperties = get_cuda_device_properties(0)
+    total: int = props.total_memory
 
     return {
         "allocated_gb": _format_mem(allocated),

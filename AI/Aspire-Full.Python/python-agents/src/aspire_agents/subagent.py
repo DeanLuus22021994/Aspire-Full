@@ -34,6 +34,7 @@ from typing import Any, Final
 import torch
 from agents import Agent as BaseAgent
 
+from ._typing import is_gil_disabled, set_cuda_memory_fraction
 from .config import AgentConfig
 from .core import Agent
 
@@ -64,13 +65,6 @@ def _get_compute_mode() -> str:
         logger.warning("Invalid ASPIRE_COMPUTE_MODE '%s', defaulting to 'gpu'", mode)
         return "gpu"
     return mode
-
-
-def _is_gil_disabled() -> bool:
-    """Check if Python GIL is disabled (Python 3.15+ free-threaded)."""
-    if hasattr(sys, "_is_gil_enabled"):
-        return not sys._is_gil_enabled()
-    return False
 
 
 # ============================================================================
@@ -232,7 +226,7 @@ class SubAgentOrchestrator:
             # Reserve portion of memory for each sub-agent
             # Use 80% of total memory, divided by max concurrent
             memory_fraction = 0.8 / max(1, self.config.max_concurrent)
-            torch.cuda.set_per_process_memory_fraction(min(memory_fraction * self.config.max_concurrent, 0.95))
+            set_cuda_memory_fraction(min(memory_fraction * self.config.max_concurrent, 0.95))
             logger.debug(
                 "GPU memory sharing configured: %.1f%% per sub-agent",
                 memory_fraction * 100,

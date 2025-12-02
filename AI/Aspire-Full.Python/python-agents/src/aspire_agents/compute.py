@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any, Final, Protocol, cast
 
 import torch
 
+from ._typing import compile_model, get_gil_status_string
 from .gpu import ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
@@ -221,7 +222,7 @@ class BatchComputeService:
             self.config.model_name,
             sys.version_info.major,
             sys.version_info.minor,
-            "disabled" if not sys._is_gil_enabled() else "enabled" if hasattr(sys, "_is_gil_enabled") else "unknown",
+            get_gil_status_string(),
         )
 
         try:
@@ -242,7 +243,7 @@ class BatchComputeService:
                     # Use 'reduce-overhead' mode for best latency in batched inference
                     self.model = cast(
                         PreTrainedModel,
-                        torch.compile(
+                        compile_model(
                             self.model,
                             mode="reduce-overhead",
                             fullgraph=False,  # Allow graph breaks for HuggingFace models
