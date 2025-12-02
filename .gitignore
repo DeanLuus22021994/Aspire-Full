@@ -68,6 +68,11 @@ dist/
 *.whl
 .python-version
 
+# Node.js
+node_modules/
+.npm/
+.pnpm-store/
+
 .fake
 
 # Models
