@@ -214,20 +214,19 @@
         { "name": "aspire-logs", "target": "/volumes/logs", "readOnly": false }
       ]
     }
-
     // ========================================================================
-    // REMOVED: agent-worker-3 - Consolidated to 2 workers for VRAM budget
+    // Removed agent-worker-3: Consolidated to 2 workers for VRAM budget
     // Budget: 2 x 1GB VRAM + 1GB Qdrant = 3GB total
     // ========================================================================
   },
 
   // ==========================================================================
-  // Compute Configuration - Aligned with devcontainer & docker-compose
+  // Compute Configuration - GPU-ONLY, No CPU Fallback
   // ==========================================================================
   "compute": {
-    "mode": "hybrid",
+    "mode": "gpu",
     "offloadStrategy": "full",
-    "fallbackToCpu": true,
+    "fallbackToCpu": false,
     "runtimeToggle": {
       "enabled": true,
       "endpoint": "/api/compute/mode",
@@ -249,14 +248,16 @@
   },
 
   // ==========================================================================
-  // Agent Configuration - 3 Hot Standby Workers for Zero-Latency High-Throughput
+  // Agent Configuration - 2 Hot Standby Workers, 1GB VRAM Each
   // ==========================================================================
   "agents": {
-    "replicas": 3,
-    "minHotStandby": 3,
-    "maxScale": 8,
+    "replicas": 2,
+    "minHotStandby": 2,
+    "maxScale": 4,
     "gpu": true,
     "gpuDirect": true,
+    "gpuOnly": true,
+    "vramPerWorkerMB": 1024,
     "pythonWorkers": 4,
     "timeoutSeconds": 120,
     "warmup": {
