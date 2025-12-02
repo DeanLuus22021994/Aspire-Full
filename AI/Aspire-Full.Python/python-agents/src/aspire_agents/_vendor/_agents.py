@@ -84,7 +84,7 @@ class RunnerProtocol(Protocol):
     async def run(
         cls,
         agent: AgentProtocol,
-        input: str,  # noqa: A002
+        user_input: str,
         *,
         context: Any | None = None,
         previous_response_id: str | None = None,
@@ -94,7 +94,7 @@ class RunnerProtocol(Protocol):
 
         Args:
             agent: Agent to run
-            input: User input
+            user_input: User input message
             context: Optional context object
             previous_response_id: Previous response for conversation
             **kwargs: Additional arguments
@@ -108,7 +108,7 @@ class RunnerProtocol(Protocol):
     def run_streamed(
         cls,
         agent: AgentProtocol,
-        input: str,  # noqa: A002
+        user_input: str,
         *,
         context: Any | None = None,
         **kwargs: Any,
@@ -117,7 +117,7 @@ class RunnerProtocol(Protocol):
 
         Args:
             agent: Agent to run
-            input: User input
+            user_input: User input message
             context: Optional context object
             **kwargs: Additional arguments
 

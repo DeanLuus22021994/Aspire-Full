@@ -274,18 +274,14 @@ from ._redis import (
     PubSubError,
     PubSubProtocol,
     ReadOnlyError,
+    RedisConnectionError,
     RedisError,
     RedisProtocol,
+    RedisTimeoutError,
     ResponseError,
     SentinelConnectionPoolProtocol,
     SentinelProtocol,
     WatchError,
-)
-from ._redis import (
-    ConnectionError as RedisConnectionError,
-)
-from ._redis import (
-    TimeoutError as RedisTimeoutError,
 )
 from ._redis import (
     from_url as redis_from_url,

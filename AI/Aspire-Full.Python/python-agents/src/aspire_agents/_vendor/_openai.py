@@ -162,10 +162,19 @@ class EmbeddingsAPI(Protocol):
         self,
         *,
         model: str,
-        input: str | Sequence[str],  # noqa: A002
+        input_text: str | Sequence[str],
         **kwargs: Any,
     ) -> EmbeddingResponse:
-        """Create embeddings."""
+        """Create embeddings.
+
+        Args:
+            model: Embedding model name
+            input_text: Text or texts to embed
+            **kwargs: Additional arguments
+
+        Returns:
+            EmbeddingResponse with vectors
+        """
         ...
 
 

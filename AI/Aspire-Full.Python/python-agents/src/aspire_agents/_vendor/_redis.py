@@ -46,7 +46,7 @@ class RedisError(Exception):
     pass
 
 
-class ConnectionError(RedisError):  # noqa: A001 - shadows builtin
+class RedisConnectionError(RedisError):
     """Exception raised for connection failures.
 
     Raised when:
@@ -58,7 +58,7 @@ class ConnectionError(RedisError):  # noqa: A001 - shadows builtin
     pass
 
 
-class TimeoutError(RedisError):  # noqa: A001 - shadows builtin
+class RedisTimeoutError(RedisError):
     """Exception raised for operation timeouts.
 
     Raised when an operation exceeds its configured timeout.
@@ -67,7 +67,7 @@ class TimeoutError(RedisError):  # noqa: A001 - shadows builtin
     pass
 
 
-class AuthenticationError(ConnectionError):
+class AuthenticationError(RedisConnectionError):
     """Exception raised for authentication failures.
 
     Raised when:
@@ -735,8 +735,8 @@ def from_url(
 __all__: Final[list[str]] = [
     # Exceptions
     "RedisError",
-    "ConnectionError",
-    "TimeoutError",
+    "RedisConnectionError",
+    "RedisTimeoutError",
     "AuthenticationError",
     "AuthenticationWrongNumberOfArgsError",
     "DataError",
