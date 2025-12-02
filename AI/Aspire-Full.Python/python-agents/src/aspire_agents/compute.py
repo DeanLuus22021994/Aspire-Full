@@ -99,8 +99,7 @@ logger: Final = logging.getLogger(__name__)
 _INIT_LOCK: Final = threading.Lock()
 _compute_service: BatchComputeService | None = None
 
-# Environment variable configuration
-_ASPIRE_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
+# Environment variable configuration - GPU-ONLY, no CPU fallback
 _ASPIRE_TENSOR_BATCH_SIZE: Final[int] = int(os.environ.get("ASPIRE_TENSOR_BATCH_SIZE", "32"))
 _CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
 
