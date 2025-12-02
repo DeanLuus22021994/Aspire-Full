@@ -9,7 +9,7 @@ import queue
 import sys
 import threading
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 from agents import function_tool
@@ -39,10 +39,62 @@ def ensure_gpu() -> Any:
     return None
 
 
+# Protocol classes for sounddevice streams (no type stubs available)
+class InputStreamProtocol(Protocol):
+    """Protocol for sounddevice InputStream."""
+
+    @property
+    def read_available(self) -> int:
+        """Number of frames available without blocking."""
+        ...
+
+    @property
+    def active(self) -> bool:
+        """Whether the stream is active."""
+        ...
+
+    def start(self) -> None:
+        """Start the stream."""
+        ...
+
+    def stop(self) -> None:
+        """Stop the stream."""
+        ...
+
+    def close(self) -> None:
+        """Close the stream."""
+        ...
+
+    def read(self, frames: int) -> tuple[np.ndarray, bool]:
+        """Read frames from the stream."""
+        ...
+
+
+class OutputStreamProtocol(Protocol):
+    """Protocol for sounddevice OutputStream."""
+
+    @property
+    def active(self) -> bool:
+        """Whether the stream is active."""
+        ...
+
+    def start(self) -> None:
+        """Start the stream."""
+        ...
+
+    def stop(self) -> None:
+        """Stop the stream."""
+        ...
+
+    def close(self) -> None:
+        """Close the stream."""
+        ...
+
+
 if TYPE_CHECKING:
-    import sounddevice as sd
-else:
-    import sounddevice as sd
+    pass
+
+import sounddevice as sd  # type: ignore  # noqa: E402
 
 # Audio configuration
 CHUNK_LENGTH_S = 0.04  # 40ms aligns with realtime defaults
@@ -76,10 +128,10 @@ def _truncate_str(s: str, max_length: int) -> str:
 class NoUIDemo:
     """A demo class for running the Realtime Agent without a UI."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
         self.session: RealtimeSession | None = None
-        self.audio_stream: sd.InputStream | None = None
-        self.audio_player: sd.OutputStream | None = None
+        self.audio_stream: InputStreamProtocol | None = None
+        self.audio_player: OutputStreamProtocol | None = None
         self.recording = False
 
         # Playback tracker lets the model know our real playback progress
@@ -188,11 +240,13 @@ class NoUIDemo:
                 except queue.Empty:
                     break
 
+            # After the try block, current_audio_chunk is guaranteed to be set
+            # (otherwise we would have hit the break in except clause)
+            current_chunk = self.current_audio_chunk
+
             # Copy data from current chunk to output buffer
             remaining_output = len(outdata) - samples_filled
-            if self.current_audio_chunk is None:
-                break
-            samples, item_id, content_index = self.current_audio_chunk
+            samples, item_id, content_index = current_chunk
             remaining_chunk = len(samples) - self.chunk_position
             samples_to_copy = min(remaining_output, remaining_chunk)
 
@@ -223,12 +277,15 @@ class NoUIDemo:
 
         # Initialize audio player with callback
         chunk_size = int(SAMPLE_RATE * CHUNK_LENGTH_S)
-        self.audio_player = sd.OutputStream(
-            channels=CHANNELS,
-            samplerate=SAMPLE_RATE,
-            dtype=FORMAT,
-            callback=self._output_callback,
-            blocksize=chunk_size,
+        self.audio_player = cast(
+            OutputStreamProtocol,
+            sd.OutputStream(  # type: ignore[no-untyped-call]
+                channels=CHANNELS,
+                samplerate=SAMPLE_RATE,
+                dtype=FORMAT,
+                callback=self._output_callback,
+                blocksize=chunk_size,
+            ),
         )
         self.audio_player.start()
 
@@ -265,10 +322,13 @@ class NoUIDemo:
 
     async def start_audio_recording(self) -> None:
         """Start recording audio from the microphone."""
-        self.audio_stream = sd.InputStream(
-            channels=CHANNELS,
-            samplerate=SAMPLE_RATE,
-            dtype=FORMAT,
+        self.audio_stream = cast(
+            InputStreamProtocol,
+            sd.InputStream(  # type: ignore[no-untyped-call]
+                channels=CHANNELS,
+                samplerate=SAMPLE_RATE,
+                dtype=FORMAT,
+            ),
         )
         self.audio_stream.start()
         self.recording = True
