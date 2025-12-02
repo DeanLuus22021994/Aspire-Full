@@ -1,7 +1,9 @@
 using Aspire_Full.Tensor.Core;
 using Aspire_Full.Tensor.Core.Abstractions;
+using Aspire_Full.Tensor.Core.Compute;
 using Aspire_Full.Tensor.Core.Memory;
 using Aspire_Full.Tensor.Core.Models;
+using Aspire_Full.Tensor.Core.Orchestration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -54,6 +56,12 @@ public static class TensorCoreServiceCollectionExtensions
             registryOptions.TrackVersions = options.TrackModelVersions;
         });
         services.TryAddSingleton<IModelRegistry, ModelRegistry>();
+
+        // Register Compute services
+        services.TryAddSingleton<ITensorComputeService, TensorComputeService>();
+
+        // Register Orchestration services
+        services.TryAddSingleton<ITensorJobStore, InMemoryTensorJobStore>();
 
         return services;
     }

@@ -383,9 +383,19 @@
         "resolved": "8.0.1",
         "contentHash": "BVYuec3jV23EMRDeR7Dr1/qhx7369dZzJ9IWy2xylvb4YfXsrUxspWc4UWYid/tj4zZK58uGZqn2WQiaDMhmAg=="
       },
+      "aspire-full.connectors": {
+        "type": "Project",
+        "dependencies": {
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "Aspire-Full.Tensor": "[1.0.0, )",
+          "Aspire-Full.VectorStore": "[1.0.0, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.12.0, )"
+        }
+      },
       "aspire-full.embeddings": {
         "type": "Project",
         "dependencies": {
+          "Aspire-Full.Connectors": "[1.0.0, )",
           "Microsoft.Extensions.AI": "[10.0.1, )",
           "Microsoft.ML.OnnxRuntime.Gpu": "[1.20.1, )",
           "Microsoft.ML.Tokenizers": "[1.0.0, )",
@@ -412,6 +422,13 @@
       },
       "aspire-full.shared": {
         "type": "Project"
+      },
+      "aspire-full.tensor": {
+        "type": "Project",
+        "dependencies": {
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "Aspire-Full.Tensor.Core": "[1.0.0, )"
+        }
       },
       "aspire-full.tensor.core": {
         "type": "Project",

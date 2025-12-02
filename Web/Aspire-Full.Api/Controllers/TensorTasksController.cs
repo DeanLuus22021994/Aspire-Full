@@ -2,8 +2,7 @@ using System.Linq;
 using System.Text.Json;
 using Aspire_Full.Shared;
 using Aspire_Full.Shared.Models;
-using Aspire_Full.Tensor;
-using Aspire_Full.Tensor.Services;
+using Aspire_Full.Tensor.Core.Orchestration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 

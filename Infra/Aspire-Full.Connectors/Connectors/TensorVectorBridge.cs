@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Aspire_Full.Shared.Models;
-using Aspire_Full.Tensor.Services;
+using Aspire_Full.Tensor.Core.Orchestration;
 using Microsoft.Extensions.Logging;
 
 namespace Aspire_Full.Connectors;

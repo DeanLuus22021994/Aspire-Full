@@ -1,40 +1,14 @@
 using System.Runtime.CompilerServices;
+using Aspire_Full.Connectors.Embeddings;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
 namespace Aspire_Full.Embeddings;
 
 /// <summary>
-/// Service for generating text embeddings using Microsoft.Extensions.AI.
-/// Supports multiple embedding providers (OpenAI, Azure OpenAI, local models).
-/// Optimized for GPU-accelerated workloads with SIMD support.
-/// </summary>
-public interface IEmbeddingService
-{
-    /// <summary>
-    /// Generate embeddings for a single text input.
-    /// </summary>
-    Task<ReadOnlyMemory<float>> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Generate embeddings for multiple text inputs (batch processing for GPU efficiency).
-    /// </summary>
-    Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> texts, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Generate embeddings as async enumerable for streaming large batches.
-    /// </summary>
-    IAsyncEnumerable<ReadOnlyMemory<float>> GenerateEmbeddingsStreamAsync(IEnumerable<string> texts, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get the dimension size of the embedding model.
-    /// </summary>
-    int EmbeddingDimensions { get; }
-}
-
-/// <summary>
 /// Default implementation of IEmbeddingService using Microsoft.Extensions.AI.
 /// Uses IEmbeddingGenerator for modern .NET 10 compatible embedding generation.
+/// Implements the portable interface from Aspire_Full.Connectors.Embeddings.
 /// </summary>
 public class EmbeddingService : IEmbeddingService
 {

@@ -1,4 +1,4 @@
-using Aspire_Full.Tensor.Services;
+using Aspire_Full.Tensor.Core.Orchestration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

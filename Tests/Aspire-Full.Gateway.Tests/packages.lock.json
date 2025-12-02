@@ -668,9 +668,23 @@
           "xunit.extensibility.core": "[2.9.2]"
         }
       },
+      "aspire-full.connectors": {
+        "type": "Project",
+        "dependencies": {
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "Aspire-Full.Tensor": "[1.0.0, )",
+          "Aspire-Full.VectorStore": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.Options": "[10.0.0, )",
+          "Microsoft.Extensions.Options.DataAnnotations": "[10.0.0, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.12.0, )"
+        }
+      },
       "aspire-full.embeddings": {
         "type": "Project",
         "dependencies": {
+          "Aspire-Full.Connectors": "[1.0.0, )",
           "Microsoft.Extensions.AI": "[10.0.1, )",
           "Microsoft.ML.OnnxRuntime.Gpu": "[1.20.1, )",
           "Microsoft.ML.Tokenizers": "[1.0.0, )",
@@ -709,6 +723,19 @@
       },
       "aspire-full.shared": {
         "type": "Project"
+      },
+      "aspire-full.tensor": {
+        "type": "Project",
+        "dependencies": {
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "Aspire-Full.Tensor.Core": "[1.0.0, )",
+          "Microsoft.Extensions.Configuration.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.Options": "[10.0.0, )",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.0, )",
+          "Microsoft.JSInterop": "[10.0.0, )"
+        }
       },
       "aspire-full.tensor.core": {
         "type": "Project",
@@ -885,6 +912,16 @@
           "Microsoft.Extensions.Primitives": "10.0.0"
         }
       },
+      "Microsoft.Extensions.Options.DataAnnotations": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "nwyF0pUubUWgzxw5y0g1Vsp2n/Psv4V7HekgUTlFK/pNlzZaQOBp56ww5GFeg4GpaMK8Lu+02XIEjqzoIcFJGw==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Options": "10.0.0"
+        }
+      },
       "Microsoft.Extensions.ServiceDiscovery": {
         "type": "CentralTransitive",
         "requested": "[10.0.0, )",
@@ -903,6 +940,12 @@
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "9.5.0"
         }
+      },
+      "Microsoft.JSInterop": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "Qfs4KtmfMUQ/BtD4jdt753kiAa7frm1QVms8UHiFArOokoXBkBOOKE2N5APdt3BlAdTSFJNiuDFfgDzVq/3EZg=="
       },
       "Microsoft.ML.OnnxRuntime.Gpu": {
         "type": "CentralTransitive",

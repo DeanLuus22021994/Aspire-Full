@@ -1,4 +1,4 @@
-using Aspire_Full.Embeddings;
+using Aspire_Full.Connectors.Embeddings;
 using Aspire_Full.Gateway.Data;
 using Aspire_Full.Gateway.Models;
 using Aspire_Full.Gateway.Services;

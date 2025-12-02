@@ -1,28 +1,39 @@
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Aspire_Full.Shared.Models;
 using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Aspire_Full.Tensor.Services;
+namespace Aspire_Full.Tensor.Core.Orchestration;
 
+/// <summary>
+/// Interface for submitting tensor inference jobs.
+/// </summary>
 public interface ITensorJobCoordinator
 {
-    Task<TensorJobStatusDto> SubmitAsync(TensorJobSubmissionDto submission, CancellationToken cancellationToken = default);
+    Task<TensorJobStatus> SubmitAsync(TensorJobSubmission submission, CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Interface for persisting tensor job embeddings to vector storage.
+/// </summary>
 public interface ITensorVectorBridge
 {
-    Task<string?> TryPersistAsync(TensorJobStatusDto job, ReadOnlyMemory<float> embedding, CancellationToken cancellationToken);
+    Task<string?> TryPersistAsync(TensorJobStatus job, ReadOnlyMemory<float> embedding, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Coordinates tensor job submission, execution, and persistence.
+/// Uses native CUDA compute with automatic CPU fallback.
+/// </summary>
 public sealed class TensorJobCoordinator : ITensorJobCoordinator
 {
+    private static readonly ActivitySource s_activitySource = new("Aspire-Full.Tensor.Core");
+
     private readonly ITensorJobStore _store;
     private readonly ITensorVectorBridge _vectorBridge;
     private readonly ILogger<TensorJobCoordinator> _logger;
@@ -37,14 +48,14 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         _store = store;
         _vectorBridge = vectorBridge;
         _logger = logger;
-        var descriptorList = catalogOptions.Value.Models ?? new List<TensorModelDescriptor>();
+        var descriptorList = catalogOptions.Value.Models ?? [];
         _catalog = descriptorList.ToDictionary(model => model.Id, StringComparer.OrdinalIgnoreCase);
     }
 
-    public async Task<TensorJobStatusDto> SubmitAsync(TensorJobSubmissionDto submission, CancellationToken cancellationToken = default)
+    public async Task<TensorJobStatus> SubmitAsync(TensorJobSubmission submission, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(submission);
-        using var activity = TensorDiagnostics.ActivitySource.StartActivity("TensorJobCoordinator.Submit");
+        using var activity = s_activitySource.StartActivity("TensorJobCoordinator.Submit");
         activity?.SetTag("tensor.model_id", submission.ModelId);
         activity?.SetTag("tensor.persist", submission.PersistToVectorStore);
 
@@ -65,7 +76,14 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
 
         var chunks = BuildChunks(prompt, targetProvider, embedding);
 
-        var job = new TensorJobStatusDto
+        var metadata = new Dictionary<string, string>(submission.Metadata, StringComparer.OrdinalIgnoreCase)
+        {
+            ["compute_time_ms"] = metrics.compute_time_ms.ToString("F4", CultureInfo.InvariantCulture),
+            ["memory_usage_mb"] = metrics.memory_usage_mb.ToString("F2", CultureInfo.InvariantCulture),
+            ["active_kernels"] = metrics.active_kernels.ToString()
+        };
+
+        var job = new TensorJobStatus
         {
             Id = jobId,
             ModelId = model.Id,
@@ -78,13 +96,8 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             CompletedAt = now,
             VectorDocumentId = null,
             Output = chunks,
-            Metadata = new Dictionary<string, string>(submission.Metadata, StringComparer.OrdinalIgnoreCase)
+            Metadata = metadata
         };
-
-        // Add Real-time Metrics
-        job.Metadata["compute_time_ms"] = metrics.compute_time_ms.ToString("F4", CultureInfo.InvariantCulture);
-        job.Metadata["memory_usage_mb"] = metrics.memory_usage_mb.ToString("F2", CultureInfo.InvariantCulture);
-        job.Metadata["active_kernels"] = metrics.active_kernels.ToString();
 
         if (submission.PersistToVectorStore)
         {
@@ -102,7 +115,7 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         return job;
     }
 
-    private static string ChooseExecutionProvider(TensorJobSubmissionDto submission, TensorModelDescriptor model)
+    private static string ChooseExecutionProvider(TensorJobSubmission submission, TensorModelDescriptor model)
     {
         if (!string.IsNullOrWhiteSpace(submission.ExecutionProvider))
         {
@@ -117,30 +130,30 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         return "wasm-cpu";
     }
 
-    private static IList<TensorInferenceChunkDto> BuildChunks(string prompt, string provider, ReadOnlyMemory<float> embedding)
+    private static IList<TensorInferenceChunk> BuildChunks(string prompt, string provider, ReadOnlyMemory<float> embedding)
     {
         var vectorPreview = embedding.Span[..Math.Min(embedding.Length, 64)]
             .ToArray()
             .Select(value => Math.Round(value, 4))
             .ToArray();
 
-        return new List<TensorInferenceChunkDto>
-        {
-            new()
+        return
+        [
+            new TensorInferenceChunk
             {
                 Type = "text",
                 Content = $"Prompt processed via {provider}. Length={prompt.Length} chars.",
                 Sequence = 0,
                 Confidence = 0.9
             },
-            new()
+            new TensorInferenceChunk
             {
                 Type = "vector",
                 Content = JsonSerializer.Serialize(vectorPreview),
                 Sequence = 1,
                 Confidence = 0.95
             }
-        };
+        ];
     }
 
     private ReadOnlyMemory<float> GenerateNativeEmbedding(string prompt, int size, string modelId, out NativeTensorContext.TensorMetrics metrics)
@@ -164,7 +177,7 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             for (var index = 0; index < buffer.Length && cursor < finalSize; index += 4)
             {
                 var slice = BitConverter.ToUInt32(buffer, index);
-                seedData[cursor] = (slice / (float)uint.MaxValue); // 0..1
+                seedData[cursor] = slice / (float)uint.MaxValue; // 0..1
                 weightData[cursor] = (float)Math.Sin(cursor * 0.1f); // Simulated weights
                 cursor++;
             }
@@ -179,8 +192,7 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         catch (DllNotFoundException)
         {
             // Fallback to CPU simulation if DLL is missing
-            // _logger.LogWarning("AspireFull.Native.dll not found. Falling back to CPU simulation.");
-            for (int i = 0; i < finalSize; i++)
+            for (var i = 0; i < finalSize; i++)
             {
                 resultData[i] = seedData[i] + weightData[i];
             }
@@ -191,8 +203,10 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
         {
             _logger.LogError(ex, "Error executing native tensor op.");
             // Fallback
-            for (int i = 0; i < finalSize; i++)
+            for (var i = 0; i < finalSize; i++)
+            {
                 resultData[i] = seedData[i];
+            }
         }
 
         return new ReadOnlyMemory<float>(resultData);
@@ -210,5 +224,4 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
             ? prompt
             : string.Concat(prompt.AsSpan(0, previewLength), "…");
     }
-
 }

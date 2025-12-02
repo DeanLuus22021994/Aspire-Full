@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Infra\Aspire-Full.Connectors\Aspire-Full.Connectors.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\Aspire-Full.Tensor\build\AspireFullNative.dll" Condition="'$(OS)' == 'Windows_NT' And Exists('..\Aspire-Full.Tensor\build\AspireFullNative.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>AspireFullNative.dll</Link>

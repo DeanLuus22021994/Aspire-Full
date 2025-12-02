@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
+using Aspire_Full.Shared.Models;
 
 namespace Aspire_Full.Tensor.Core.Orchestration;
 
 /// <summary>
 /// Interface for tensor job persistence and retrieval.
+/// Uses <see cref="TensorJobStatus"/> from Aspire_Full.Shared.Models.
 /// </summary>
 public interface ITensorJobStore
 {
@@ -41,22 +43,4 @@ public sealed class InMemoryTensorJobStore : ITensorJobStore
 
         return Task.FromResult<IReadOnlyList<TensorJobStatus>>(items);
     }
-}
-
-/// <summary>
-/// Tensor job status record for tracking compute operations.
-/// </summary>
-public sealed record TensorJobStatus
-{
-    public required Guid Id { get; init; }
-    public required string ModelId { get; init; }
-    public required string Status { get; init; }
-    public string? Prompt { get; init; }
-    public string? PromptPreview { get; init; }
-    public string? InputImageUrl { get; init; }
-    public string? ExecutionProvider { get; init; }
-    public DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset? CompletedAt { get; init; }
-    public string? VectorDocumentId { get; init; }
-    public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 }

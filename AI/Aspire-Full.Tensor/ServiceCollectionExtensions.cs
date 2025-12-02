@@ -1,4 +1,5 @@
-using Aspire_Full.Tensor.Services;
+using Aspire_Full.Tensor.Core.Compute;
+using Aspire_Full.Tensor.Core.Orchestration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,8 +14,8 @@ public static class ServiceCollectionExtensions
             .ValidateOnStart();
 
         services.AddScoped<ITensorRuntimeService, TensorRuntimeService>();
-        services.AddScoped<ITensorComputeService, TensorComputeService>();
 
+        // TensorComputeService is now registered via AddTensorCore() in Infra
         return services;
     }
 
@@ -24,6 +25,8 @@ public static class ServiceCollectionExtensions
             .Bind(configuration.GetSection("TensorModels"))
             .ValidateOnStart();
 
+        // Job store and coordinator are now registered via AddTensorCore() in Infra
+        // This method is kept for backward compatibility
         services.AddSingleton<ITensorJobStore, InMemoryTensorJobStore>();
         services.AddSingleton<ITensorJobCoordinator, TensorJobCoordinator>();
 
