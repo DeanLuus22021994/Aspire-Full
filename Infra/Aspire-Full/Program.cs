@@ -42,18 +42,21 @@ var dockerDebugger = builder.AddContainer(AppHostConstants.Resources.DockerDebug
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
 
-var dashboard = builder.AddContainer(AppHostConstants.Resources.AspireDashboard, AppHostConstants.Images.AspireDashboard)
-    .WithVolume(AppHostConstants.Volumes.DashboardData, AppHostConstants.Paths.DashboardData)
-    .WithEnvironment(AppHostConstants.EnvironmentVariables.DotnetDashboardUnsecuredAllowAnonymous, "true")
-    .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardOtlpAuthMode, "Unsecured")
-    .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardFrontendAuthMode, "Unsecured")
-    .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardResourceServiceAuthMode, "Unsecured")
-    .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireDashboardMcpEndpointUrl, "http://0.0.0.0:16036")
-    .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireAllowUnsecuredTransport, "true")
-    .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.DashboardUi, targetPort: 18888)
-    .WithHttpEndpoint(name: "otlp", port: AppHostConstants.Ports.DashboardOtlp, targetPort: 18889)
-    .WithContainerRuntimeArgs("--network", networkName)
-    .WithLifetime(ContainerLifetime.Persistent);
+// Dashboard is provided automatically by Aspire in local dev mode
+// This containerized dashboard is only needed for Docker/Kubernetes deployments
+// Uncomment for production container deployments:
+// var dashboard = builder.AddContainer(AppHostConstants.Resources.AspireDashboard, AppHostConstants.Images.AspireDashboard)
+//     .WithVolume(AppHostConstants.Volumes.DashboardData, AppHostConstants.Paths.DashboardData)
+//     .WithEnvironment(AppHostConstants.EnvironmentVariables.DotnetDashboardUnsecuredAllowAnonymous, "true")
+//     .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardOtlpAuthMode, "Unsecured")
+//     .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardFrontendAuthMode, "Unsecured")
+//     .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardResourceServiceAuthMode, "Unsecured")
+//     .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireDashboardMcpEndpointUrl, "http://0.0.0.0:16036")
+//     .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireAllowUnsecuredTransport, "true")
+//     .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.DashboardUi, targetPort: 18888)
+//     .WithHttpEndpoint(name: "otlp", port: AppHostConstants.Ports.DashboardOtlp, targetPort: 18889)
+//     .WithContainerRuntimeArgs("--network", networkName)
+//     .WithLifetime(ContainerLifetime.Persistent);
 
 // -----------------------------------------------------------------------------
 // Internal Docker Registry - Local artifact cache
