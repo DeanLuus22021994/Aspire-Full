@@ -103,10 +103,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && curl -LsSf https://astral.sh/ruff/install.sh | sh
 
-# Install CuPy for hyper-virtual GPU compute (CUDA 12.x)
+# Install core Python packages for GPU compute
+# Note: CuPy requires CUDA toolkit at runtime - install it separately if needed
+# Using pip with proper quoting for version specifiers
 RUN /usr/local/bin/pip3.15t install --no-cache-dir \
-        cupy-cuda12x>=13.0.0 \
-        numpy>=2.0.0
+        "numpy>=2.0.0" \
+    && /usr/local/bin/pip3.15t install --no-cache-dir \
+        "cupy-cuda12x>=13.0.0" || echo "⚠️ CuPy installation skipped - will install at runtime with GPU"
 
 # =============================================================================
 # VOLUME MOUNT POINTS: Named volumes for all persistent/cache data
