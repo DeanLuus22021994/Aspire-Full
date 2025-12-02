@@ -25,7 +25,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -211,7 +210,7 @@ class SubAgentOrchestrator:
             self.config.thread_pool_size,
             self.config.compute_mode,
             "enabled" if self.config.gpu_share_enabled else "disabled",
-            "disabled" if _is_gil_disabled() else "enabled",
+            "disabled" if is_gil_disabled() else "enabled",
         )
 
     def _configure_gpu_sharing(self) -> None:

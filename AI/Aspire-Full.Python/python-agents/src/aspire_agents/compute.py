@@ -241,13 +241,10 @@ class BatchComputeService:
             if self.config.use_torch_compile:
                 try:
                     # Use 'reduce-overhead' mode for best latency in batched inference
-                    self.model = cast(
-                        PreTrainedModel,
-                        compile_model(
-                            self.model,
-                            mode="reduce-overhead",
-                            fullgraph=False,  # Allow graph breaks for HuggingFace models
-                        ),
+                    self.model = compile_model(
+                        self.model,
+                        mode="reduce-overhead",
+                        fullgraph=False,  # Allow graph breaks for HuggingFace models
                     )
                     logger.info("Model compiled with torch.compile(mode='reduce-overhead') for Tensor Core efficiency.")
                 except Exception as e:  # pylint: disable=broad-exception-caught

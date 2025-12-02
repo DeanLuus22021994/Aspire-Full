@@ -51,7 +51,7 @@ class AgentResult:
 
     output: str
     handoffs: tuple[str, ...] = field(default_factory=tuple)
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
     success: bool = True
     error: str | None = None
 
