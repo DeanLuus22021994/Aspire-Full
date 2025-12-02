@@ -42,9 +42,9 @@
   "python.envFile": "${workspaceFolder}/AI/Aspire-Full.Python/python-agents/.env",
 
   // Pylance Language Server Configuration (Microsoft's official Python language server)
+  // NOTE: typeCheckingMode and diagnosticSeverityOverrides are configured in pyrightconfig.json
   "python.languageServer": "Pylance",
   "python.analysis.languageServerMode": "full",
-  "python.analysis.typeCheckingMode": "strict",
   "python.analysis.autoImportCompletions": true,
   "python.analysis.autoFormatStrings": true,
   "python.analysis.completeFunctionParens": true,
@@ -52,37 +52,6 @@
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.inlayHints.variableTypes": true,
   "python.analysis.inlayHints.pytestParameters": true,
-
-  // Pyright Diagnostic Overrides (strict mode with sensible warnings)
-  "python.analysis.diagnosticSeverityOverrides": {
-    "reportUnusedImport": "error",
-    "reportUnusedVariable": "error",
-    "reportUnusedFunction": "error",
-    "reportUnusedClass": "error",
-    "reportMissingImports": "error",
-    "reportMissingTypeStubs": "warning",
-    "reportMissingModuleSource": "warning",
-    "reportGeneralTypeIssues": "error",
-    "reportPropertyTypeMismatch": "error",
-    "reportFunctionMemberAccess": "error",
-    "reportDuplicateImport": "error",
-    "reportPrivateUsage": "warning",
-    "reportPrivateImportUsage": "error",
-    "reportConstantRedefinition": "error",
-    "reportDeprecated": "warning",
-    "reportIncompatibleMethodOverride": "error",
-    "reportIncompatibleVariableOverride": "error",
-    "reportUnknownParameterType": "error",
-    "reportUnknownArgumentType": "error",
-    "reportUnknownVariableType": "error",
-    "reportUnknownMemberType": "error",
-    "reportMissingParameterType": "error",
-    "reportMissingTypeArgument": "error",
-    "reportUnnecessaryCast": "error",
-    "reportUnnecessaryComparison": "error",
-    "reportMatchNotExhaustive": "error",
-    "reportImplicitOverride": "warning"
-  },
 
   // Disable third-party linters (use Microsoft tooling only)
   "pylint.enabled": false,
