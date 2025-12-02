@@ -403,7 +403,6 @@ class DockerRegistryAnalyzer:
             tag = img.get("Tag", "")
             repo = img.get("Repository", "")
             if tag and tag != "<none>":
-                key = f"{repo}:{tag}"
                 if tag not in tag_repos:
                     tag_repos[tag] = []
                 tag_repos[tag].append(repo)
@@ -552,11 +551,11 @@ class RegistryAnalysisRunner:
         print(f"Workspace: {report.workspace}")
         print("-" * 70)
         print(f"Total Findings: {summary['total_findings']}")
-        print(f"  By Severity:")
+        print("  By Severity:")
         for sev, count in summary["by_severity"].items():
             if count > 0:
                 print(f"    {sev}: {count}")
-        print(f"  By Category:")
+        print("  By Category:")
         for cat, count in summary["by_category"].items():
             if count > 0:
                 print(f"    {cat}: {count}")

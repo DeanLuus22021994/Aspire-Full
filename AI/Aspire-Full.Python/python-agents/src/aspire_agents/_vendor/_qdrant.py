@@ -17,8 +17,9 @@ Python 3.15 Free-Threading:
 from __future__ import annotations
 
 import importlib
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Final, Protocol, Sequence, runtime_checkable
+from typing import TYPE_CHECKING, Any, Final, Protocol, runtime_checkable
 
 # Import centralized enums from _enums.py
 from ._enums import (

@@ -10,9 +10,9 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from shutil import which
-from typing import Iterable
 
 WORKSPACE = Path(os.environ.get("WORKSPACE_FOLDER", Path.cwd())).resolve()
 SOLUTION_FILTER = WORKSPACE / "Aspire-Full.slnf"
@@ -86,7 +86,7 @@ def _show_gpu_status() -> None:
     else:
         raise RuntimeError(
             "NVIDIA GPU utilities are not accessible in this container. "
-            "Tensor workloads strictly require CUDA."
+            + "Tensor workloads strictly require CUDA."
         )
 
 

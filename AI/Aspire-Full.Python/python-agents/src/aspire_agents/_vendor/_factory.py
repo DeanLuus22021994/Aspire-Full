@@ -348,6 +348,7 @@ class DockerModelRunnerInterfaces:
 
     from ._docker_model_runner import DockerModelRunnerProtocol as ClientProtocol
     from ._docker_model_runner import (
+        DockerRunnerProtocol,
         GpuDeviceInfo,
         InferenceProtocol,
         InferenceResult,
@@ -355,13 +356,12 @@ class DockerModelRunnerInterfaces:
         ModelManagerProtocol,
         ModelRunnerConfig,
         RunnerInfo,
-        RunnerProtocol,
         StreamChunk,
     )
 
     client: type = ClientProtocol
     model_manager: type = ModelManagerProtocol
-    runner: type = RunnerProtocol
+    runner: type = DockerRunnerProtocol
     inference: type = InferenceProtocol
     model_info: type = ModelInfo
     gpu_device_info: type = GpuDeviceInfo
