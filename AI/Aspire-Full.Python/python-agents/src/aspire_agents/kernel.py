@@ -74,9 +74,7 @@ def _require_env(name: str) -> str:
     """
     value = os.getenv(name)
     if not value:
-        raise OSError(
-            f"Environment variable '{name}' is required for this provider"
-        )
+        raise OSError(f"Environment variable '{name}' is required for this provider")
     return value
 
 
@@ -122,9 +120,7 @@ def build_kernel(agent: AgentConfig) -> Any:
         api_version = agent.model.api_version or "2024-02-01"
 
         if not endpoint:
-            raise OSError(
-                "Azure endpoint required: set AZURE_OPENAI_ENDPOINT or provide endpoint in config"
-            )
+            raise OSError("Azure endpoint required: set AZURE_OPENAI_ENDPOINT or provide endpoint in config")
 
         kernel.add_service(
             azure_chat_completion(
@@ -169,9 +165,7 @@ def build_kernel(agent: AgentConfig) -> Any:
         if provider == "local" and not base_url:
             base_url = agent.model.endpoint
             if not base_url:
-                raise OSError(
-                    "Local provider requires OPENAI_BASE_URL or endpoint in config"
-                )
+                raise OSError("Local provider requires OPENAI_BASE_URL or endpoint in config")
 
         kernel.add_service(
             openai_chat_completion(
@@ -191,14 +185,10 @@ def build_kernel(agent: AgentConfig) -> Any:
     if provider == "anthropic":
         # Anthropic requires separate connector (future support)
         raise ValueError(
-            f"Provider '{provider}' is not yet supported in Semantic Kernel. "
-            "Use the direct Anthropic SDK instead."
+            f"Provider '{provider}' is not yet supported in Semantic Kernel. " "Use the direct Anthropic SDK instead."
         )
 
-    raise ValueError(
-        f"Unknown provider: {provider}. "
-        f"Supported: openai, azure, github, local"
-    )
+    raise ValueError(f"Unknown provider: {provider}. " f"Supported: openai, azure, github, local")
 
 
 def build_kernel_with_plugins(
