@@ -4,21 +4,21 @@
     "net10.0": {
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "Direct",
-        "requested": "[10.0.0-rtm.25513.102, )",
-        "resolved": "10.0.0-rtm.25513.102",
-        "contentHash": "YZujvB6rIvRwrjD5dCujo/lpGYmQG/zJgNvCPUXlyQThAksvuhZKKlovoEbX7MqPc1JHNiWvVMPuQir8Cezk6g==",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "FU/IfjDfwaMuKr414SSQNTIti/69bHEMb+QKrskRb26oVqpx3lNFXMjs/RC9ZUuhBhcwDM2BwOgoMw+PZ+beqQ==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0-rtm.25513.102"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0"
         }
       },
       "Microsoft.Extensions.Options": {
         "type": "Direct",
-        "requested": "[10.0.0-rtm.25513.102, )",
-        "resolved": "10.0.0-rtm.25513.102",
-        "contentHash": "YU5l65BxzolOKA61TohtYpVdtM208beTXrCg2EPWhNI8vtsOIZjAyrZUjs4PYolGlQXnRL2PMtHNUnrOwKZ+Sg==",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "8oCAgXOow5XDrY9HaXX1QmH3ORsyZO/ANVHBlhLyCeWTH5Sg4UuqZeOTWJi6484M+LqSx0RqQXDJtdYy2BNiLQ==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0-rtm.25513.102",
-          "Microsoft.Extensions.Primitives": "10.0.0-rtm.25513.102"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Primitives": "10.0.0"
         }
       },
       "System.IO.Abstractions": {
@@ -33,8 +33,8 @@
       },
       "Microsoft.Extensions.Primitives": {
         "type": "Transitive",
-        "resolved": "10.0.0-rtm.25513.102",
-        "contentHash": "EA4pWB/htuJwK4BJ8r09T7OODmt52sV6jfLrURaWuAknoiUWy9IjpVqBMIoNEYyP/KAWfgXHRDOvZQReilQ1SQ=="
+        "resolved": "10.0.0",
+        "contentHash": "inRnbpCS0nwO/RuoZIAqxQUuyjaknOOnCEZB55KSMMjRhl0RQDttSmLSGsUJN3RQ3ocf5NDLFd2mOQViHqMK5w=="
       },
       "TestableIO.System.IO.Abstractions": {
         "type": "Transitive",
@@ -59,9 +59,9 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0-rtm.25513.102, )",
-        "resolved": "10.0.0-rtm.25513.102",
-        "contentHash": "lnT25oxtWnNe3Fb/MPzSzh8fRyCTQLELB4KbpXQlh3ZPbS6GveAdFDfMg38qvc0yNEY0NNyQ3KPno8lD125U9Q=="
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "L3AdmZ1WOK4XXT5YFPEwyt0ep6l8lGIPs7F5OOBZc77Zqeo01Of7XXICy47628sdVl0v/owxYJTe86DTgFwKCA=="
       }
     }
   }

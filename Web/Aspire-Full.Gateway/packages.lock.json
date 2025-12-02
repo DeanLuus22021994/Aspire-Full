@@ -149,14 +149,6 @@
           "Microsoft.Extensions.Telemetry.Abstractions": "10.0.0"
         }
       },
-      "Microsoft.Extensions.Telemetry.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "M17n6IpgutodXxwTZk1r5Jp2ZZ995FJTKMxiEQSr6vT3iwRfRq2HWzzrR1B6N3MpJhDfI2QuMdCOLUq++GCsQg==",
-        "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "10.0.0"
-        }
-      },
       "Microsoft.OpenApi": {
         "type": "Transitive",
         "resolved": "2.0.0",
@@ -286,6 +278,15 @@
           "Microsoft.Extensions.ServiceDiscovery.Abstractions": "10.0.0"
         }
       },
+      "Microsoft.Extensions.Telemetry.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "M17n6IpgutodXxwTZk1r5Jp2ZZ995FJTKMxiEQSr6vT3iwRfRq2HWzzrR1B6N3MpJhDfI2QuMdCOLUq++GCsQg==",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "10.0.0"
+        }
+      },
       "OpenTelemetry": {
         "type": "CentralTransitive",
         "requested": "[1.14.0, )",
@@ -343,8 +344,8 @@
       "Qdrant.Client": {
         "type": "CentralTransitive",
         "requested": "[1.16.1, )",
-        "resolved": "1.16.1",
-        "contentHash": "EJo50JXTdjY2JOUphCFLXoHukI/tz/ykLCmMnQHUjsKT22ZfL0XIdEziHOC3vjw2SOoY8WDVQ+AxixEonejOZA==",
+        "resolved": "1.15.1",
+        "contentHash": "sSfZ3Hb12hL9jaTRWIuus2OB3l47O2NwoxeRCX3AginukE8iydRuzUWGLo6VrQ+O49CU8i5bN9VJMZq5T56WkQ==",
         "dependencies": {
           "Google.Protobuf": "3.31.0",
           "Grpc.Net.Client": "2.71.0"
@@ -360,7 +361,6 @@
           "TestableIO.System.IO.Abstractions.Wrappers": "22.1.0"
         }
       }
-    },
-    "net10.0/win-x64": {}
+    }
   }
 }
