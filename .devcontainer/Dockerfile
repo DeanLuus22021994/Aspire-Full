@@ -1,6 +1,6 @@
 # =============================================================================
 # Aspire-Full High-Performance DevContainer - GPU Tensor Compute
-# CUDA/CU Runtime | 9GB Host RAM | Optimized Tensor Operations
+# CUDA/CU Runtime | 9GB Host RAM | Named Volume Persistence | Zero Pollution
 # =============================================================================
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS base
 
@@ -36,22 +36,60 @@ ENV ASPIRE_COMPUTE_MODE=Hybrid \
     CUDA_CACHE_DISABLE=0 \
     CUDA_FORCE_PTX_JIT=0
 
-# Install WASM workload, tensor compute dependencies, and dev tools
+# =============================================================================
+# BAKED TOOLCHAIN: Everything needed for builds - no runtime downloads
+# =============================================================================
 RUN dotnet workload install wasm-tools aspire \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
+        # Essential dev tools
         git \
         curl \
+        wget \
         jq \
         htop \
         nvtop \
+        unzip \
+        # Build essentials
+        build-essential \
+        cmake \
+        ninja-build \
+        # GPU/Tensor compute libs
         libgomp1 \
         libnuma1 \
         libopenblas0 \
+        libopenblas-dev \
+        # Python toolchain (for AI/ML)
+        python3.12 \
+        python3.12-venv \
+        python3-pip \
+        # Node.js (for React frontend)
+        nodejs \
+        npm \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create non-root user (minimal) - handle existing UID/GID gracefully
+# Install uv (fast Python package manager) and ruff (linter)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+# =============================================================================
+# VOLUME MOUNT POINTS: Named volumes for all persistent/cache data
+# These directories will be mounted as Docker named volumes
+# =============================================================================
+ENV NUGET_PACKAGES=/volumes/nuget \
+    DOTNET_CLI_HOME=/volumes/dotnet-cli \
+    npm_config_cache=/volumes/npm \
+    UV_CACHE_DIR=/volumes/uv \
+    PIP_CACHE_DIR=/volumes/pip \
+    CUDA_CACHE_PATH=/volumes/cuda-cache \
+    ASPIRE_MODEL_CACHE_DIR=/volumes/models \
+    QDRANT_STORAGE=/volumes/qdrant \
+    ASPIRE_TENSOR_CACHE=/volumes/tensor-cache \
+    ASPIRE_LOGS_DIR=/volumes/logs \
+    ASPIRE_TMP_DIR=/volumes/tmp
+
+# Create non-root user - handle existing UID/GID gracefully
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
@@ -70,6 +108,26 @@ RUN if getent group $USER_GID >/dev/null 2>&1; then \
     && mkdir -p /etc/sudoers.d \
     && echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Create all volume mount points with correct ownership
+RUN mkdir -p \
+        /volumes/nuget \
+        /volumes/dotnet-cli \
+        /volumes/npm \
+        /volumes/uv \
+        /volumes/pip \
+        /volumes/cuda-cache \
+        /volumes/models \
+        /volumes/qdrant \
+        /volumes/tensor-cache \
+        /volumes/logs \
+        /volumes/tmp \
+        /volumes/artifacts \
+        /volumes/testresults \
+    && chown -R $USER_UID:$USER_GID /volumes
+
+# Add cargo/uv to PATH for vscode user
+ENV PATH="/root/.local/bin:/home/$USERNAME/.local/bin:$PATH"
 
 WORKDIR /workspace
 USER $USERNAME
@@ -92,8 +150,6 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     # Memory pool settings
     ASPIRE_TENSOR_POOL_MAX_BUFFERS=32 \
     ASPIRE_TENSOR_POOL_DEFAULT_SIZE=134217728 \
-    # Model cache settings
-    ASPIRE_MODEL_CACHE_DIR=/shared/models \
     ASPIRE_MAX_CACHED_MODELS=20
 
 # Trust HTTPS dev certificates
