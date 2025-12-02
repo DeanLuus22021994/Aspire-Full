@@ -206,11 +206,11 @@ services:
               count: all
               capabilities: ["gpu", "utility", "compute"]
         limits:
-          memory: 2g
+          memory: 4g
     environment:
       - PYTHON_GIL=0
       - ASPIRE_WORKER_ID=1
-      - ASPIRE_WORKER_VRAM_MB=1024
+      - ASPIRE_WORKER_VRAM_MB=2048
       - ASPIRE_GPU_ONLY=true
       - ASPIRE_COMPUTE_MODE=gpu
       - NVIDIA_VISIBLE_DEVICES=all
@@ -249,11 +249,11 @@ services:
               count: all
               capabilities: ["gpu", "utility", "compute"]
         limits:
-          memory: 2g
+          memory: 4g
     environment:
       - PYTHON_GIL=0
       - ASPIRE_WORKER_ID=2
-      - ASPIRE_WORKER_VRAM_MB=1024
+      - ASPIRE_WORKER_VRAM_MB=2048
       - ASPIRE_GPU_ONLY=true
       - ASPIRE_COMPUTE_MODE=gpu
       - NVIDIA_VISIBLE_DEVICES=all

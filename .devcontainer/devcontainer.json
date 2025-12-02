@@ -8,12 +8,12 @@
     }
   },
 
-  // GPU passthrough for CUDA/CU compute - 9GB RAM optimized with full privileges
+  // GPU passthrough for CUDA/CU compute - 8GB RAM optimized with full privileges
   "runArgs": [
     "--privileged",
     "--gpus=all",
-    "--memory=9g",
-    "--memory-swap=12g",
+    "--memory=8g",
+    "--memory-swap=10g",
     "--shm-size=2g",
     "--ulimit=memlock=-1:-1",
     "--ulimit=stack=67108864:67108864",
@@ -121,7 +121,7 @@
   "containerEnv": {
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
     "DOTNET_NOLOGO": "1",
-    "DOTNET_GCHeapHardLimit": "7516192768",
+    "DOTNET_GCHeapHardLimit": "6871947674",
     "DOTNET_gcServer": "1",
     "DOTNET_TieredPGO": "1",
     "OMP_NUM_THREADS": "8",
