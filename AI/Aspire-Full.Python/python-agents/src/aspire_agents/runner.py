@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, Final
 from .compute import get_compute_service
 from .config import AgentConfig, ModelConfig
 from .core import Agent, Runner
+from .gpu import TensorCoreInfo, ensure_tensor_core_gpu
 
 if TYPE_CHECKING:
     from agents import RunResult
@@ -131,7 +132,7 @@ class AgentRunner:
         >>> result = runner.run_sync("Write a function")
     """
 
-    __slots__ = ("config", "compute_service", "_agent", "_runner")
+    __slots__ = ("config", "compute_service", "_agent", "_runner", "_tensor_info")
 
     def __init__(
         self,
@@ -155,17 +156,31 @@ class AgentRunner:
                 model=ModelConfig(name="gpt-4o-mini"),
             )
 
-        self.compute_service: BatchComputeService = compute_service or get_compute_service()
+        self.compute_service: BatchComputeService = (
+            compute_service or get_compute_service()
+        )
 
         # Initialize agent and runner (lazy - created on first run)
         self._agent: Agent | None = None
         self._runner: Runner | None = None
+        self._tensor_info: TensorCoreInfo | None = None
 
         logger.info(
             "AgentRunner initialized with model=%s, compute_service=%s",
             self.config.model.name,
             type(self.compute_service).__name__,
         )
+
+    @property
+    def tensor_info(self) -> TensorCoreInfo:
+        """Get tensor core GPU info.
+
+        Returns:
+            TensorCoreInfo with device metadata
+        """
+        if self._tensor_info is None:
+            self._tensor_info = ensure_tensor_core_gpu()
+        return self._tensor_info
 
     def _ensure_agent(self) -> Agent:
         """Ensure agent is initialized (lazy initialization).
@@ -215,6 +230,17 @@ class AgentRunner:
             logger.error("Agent run failed: %s", e)
             return AgentResult.from_error(e, f"Agent '{agent.name}' failed")
 
+    async def arun(self, prompt: str) -> AgentResult:
+        """Alias for run() for CLI compatibility.
+
+        Args:
+            prompt: The user prompt to process
+
+        Returns:
+            AgentResult with output and metadata
+        """
+        return await self.run(prompt)
+
     async def run_with_embedding(self, prompt: str) -> tuple[AgentResult, Any]:
         """Run agent and compute embedding for the prompt.
 
@@ -228,7 +254,9 @@ class AgentRunner:
             Tuple of (AgentResult, embedding tensor)
         """
         # Run embedding computation concurrently with agent
-        embedding_task = asyncio.create_task(self.compute_service.compute_embedding(prompt))
+        embedding_task = asyncio.create_task(
+            self.compute_service.compute_embedding(prompt)
+        )
 
         result = await self.run(prompt)
         embedding = await embedding_task
@@ -273,6 +301,21 @@ class AgentRunner:
         # No running loop - create one
         return asyncio.run(self.run(prompt))
 
+    def pretty_print(self, result: AgentResult) -> None:
+        """Pretty print the agent result to console.
+
+        Args:
+            result: The AgentResult to display
+        """
+        if result.success:
+            print(f"\n✅ Output:\n{result.output}")
+            if result.handoffs:
+                print(f"\n🔄 Handoffs: {', '.join(result.handoffs)}")
+            if result.metadata:
+                print(f"\n📊 Metadata: {result.metadata}")
+        else:
+            print(f"\n❌ Error: {result.error}")
+
     def get_compute_stats(self) -> dict[str, int | float]:
         """Get compute service statistics.
 
@@ -280,3 +323,22 @@ class AgentRunner:
             Dictionary with total_requests, total_batches, avg_batch_size, queue_size
         """
         return self.compute_service.get_stats()
+
+    def get_gpu_info(self) -> dict[str, Any]:
+        """Get GPU information for diagnostics.
+
+        Returns:
+            Dictionary with GPU name, compute capability, memory, etc.
+        """
+        info = self.tensor_info
+        return {
+            "name": info.name,
+            "compute_capability": info.compute_capability,
+            "total_memory_gb": info.total_memory_gb,
+            "supports_fp16": info.supports_fp16,
+            "supports_bf16": info.supports_bf16,
+            "supports_fp8": info.supports_fp8,
+            "tf32_enabled": info.tf32_enabled,
+            "gil_disabled": info.gil_disabled,
+            "tensor_core_generation": info.tensor_core_generation,
+        }

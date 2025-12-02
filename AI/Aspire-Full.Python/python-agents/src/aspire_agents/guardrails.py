@@ -24,14 +24,14 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final
+
+import torch
 
 from .compute import get_compute_service
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
-
-    import torch
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -204,14 +204,15 @@ class GuardrailService:
         """
         self.compute = get_compute_service()
         self._initialized = False
-        self.concept_embeddings: dict[str, Any] = {}  # torch.Tensor
+        self.concept_embeddings: dict[str, torch.Tensor] = {}
 
         # Normalize to tuple for immutability
         if restricted_concepts is None:
             self.restricted_concepts = self.DEFAULT_CONCEPTS
         else:
             self.restricted_concepts = {
-                k: tuple(v) if isinstance(v, list) else v for k, v in restricted_concepts.items()
+                k: tuple(v) if isinstance(v, list) else v
+                for k, v in restricted_concepts.items()
             }
 
         self._precompute_embeddings()
@@ -224,7 +225,9 @@ class GuardrailService:
         """
         for category, phrases in self.restricted_concepts.items():
             phrase_list = list(phrases)  # Convert tuple to list for compute
-            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrase_list)
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(
+                phrase_list
+            )
             logger.debug(
                 "Pre-computed %d embeddings for category '%s'",
                 len(phrases),
@@ -257,13 +260,8 @@ class GuardrailService:
         # Shape: (1, D) @ (N, D).T -> (1, N) -> squeeze -> (N,)
         category_embeddings = self.concept_embeddings[category]
 
-        # Import torch here to avoid issues if not installed
-        import torch
-
-        text_emb = cast(torch.Tensor, text_embedding)
-        cat_emb = cast(torch.Tensor, category_embeddings)
-
-        similarities = (text_emb.unsqueeze(0) @ cat_emb.t()).squeeze(0)
+        # Tensor operations - both are already torch.Tensor
+        similarities = (text_embedding.unsqueeze(0) @ category_embeddings.t()).squeeze(0)
         max_similarity: float = similarities.max().item()
 
         if max_similarity > threshold:
@@ -293,9 +291,15 @@ class GuardrailService:
         """
         results: dict[str, tuple[bool, float]] = {}
         for category in self.restricted_concepts:
-            blocked, score = await self.check_semantic_similarity(text, category, threshold)
+            blocked, score = await self.check_semantic_similarity(
+                text, category, threshold
+            )
             results[category] = (blocked, score)
         return results
+
+    def get_categories(self) -> tuple[str, ...]:
+        """Get all registered category names."""
+        return tuple(self.restricted_concepts.keys())
 
 
 def get_guardrail_service() -> GuardrailService:
@@ -349,7 +353,9 @@ def semantic_input_guardrail(
         service = get_guardrail_service()
         args_str = str(data.context.tool_arguments)
 
-        blocked, score = await service.check_semantic_similarity(args_str, category, threshold)
+        blocked, score = await service.check_semantic_similarity(
+            args_str, category, threshold
+        )
 
         if blocked:
             return ToolGuardrailFunctionOutput.reject_content(
@@ -396,7 +402,9 @@ def semantic_output_guardrail(
         service = get_guardrail_service()
         output_str = str(data.output)
 
-        blocked, score = await service.check_semantic_similarity(output_str, category, threshold)
+        blocked, score = await service.check_semantic_similarity(
+            output_str, category, threshold
+        )
 
         if blocked:
             # For output guardrails, raise exception to prevent data leakage

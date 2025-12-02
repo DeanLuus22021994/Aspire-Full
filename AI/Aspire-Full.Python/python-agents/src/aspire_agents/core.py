@@ -23,11 +23,9 @@ import inspect
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Final, ParamSpec, TypeVar, cast
 
-from agents import Agent as OpenAIAgent  # type: ignore[import-untyped]
-from agents import Runner as OpenAIRunner  # type: ignore[import-untyped]
-from agents import (
-    function_tool as _original_function_tool,  # type: ignore[import-untyped]
-)
+from agents import Agent as OpenAIAgent
+from agents import Runner as OpenAIRunner
+from agents import function_tool as _original_function_tool
 
 from .compute import get_compute_service
 from .guardrails import (
@@ -38,7 +36,7 @@ from .guardrails import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from .config import AgentConfig
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -188,6 +186,22 @@ class Agent(OpenAIAgent):
         # This guarantees GPU/Tensor Cores are ready before agent runs
         get_compute_service()
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def from_config(cls, config: AgentConfig) -> Agent:
+        """Create an Agent from an AgentConfig.
+
+        Args:
+            config: The agent configuration
+
+        Returns:
+            Configured Agent instance
+        """
+        return cls(
+            name=config.name,
+            instructions=config.prompt,
+            model=config.model.name,
+        )
 
 
 class Runner(OpenAIRunner):

@@ -3,26 +3,27 @@
 Provides immutable configuration classes using frozen dataclasses:
 - ModelConfig: Model provider settings (OpenAI, Azure, GitHub)
 - AgentConfig: Full agent configuration with prompt, model, and handoffs
+- TensorConfig: GPU compute configuration for tensor operations
 
 All configuration objects are immutable (frozen=True) and use __slots__
 for memory efficiency. Thread-safe by design - no mutable state.
 
 Python 3.15 Optimizations:
-- PEP 695 style type aliases (when stable)
 - Frozen dataclasses with __slots__ for zero-copy thread safety
 - Immutable tuple collections instead of lists
+- Type aliases for cleaner annotations
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Final, Literal, cast, overload
+from typing import Any, Final, Literal
 
 import yaml
 
 # Type alias for supported providers
-ProviderLiteral = Literal["openai", "azure", "github"]
+ProviderLiteral = Literal["openai", "azure", "github", "anthropic", "local"]
 
 # Default model for new agents - GPT-4.1 mini for cost efficiency
 DEFAULT_MODEL: Final[str] = "gpt-4.1-mini"
@@ -44,7 +45,9 @@ def _read_prompt(base: Path, prompt: str | None) -> str:
         FileNotFoundError: If prompt file doesn't exist
     """
     if not prompt:
-        raise ValueError("Agent config requires a 'prompt' field pointing to a text/markdown file.")
+        raise ValueError(
+            "Agent config requires a 'prompt' field pointing to a text/markdown file."
+        )
 
     prompt_path = (base / prompt).resolve()
     if not prompt_path.exists():
@@ -67,21 +70,48 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("Agent config root must be a mapping")
-    return cast(dict[str, Any], data)
+    return data
+
+
+@dataclass(frozen=True, slots=True)
+class TensorConfig:
+    """Immutable tensor compute configuration.
+
+    Controls GPU acceleration settings for embedding and inference.
+    Thread-safe due to immutability.
+
+    Attributes:
+        use_gpu: Enable GPU acceleration
+        use_tensor_cores: Enable Tensor Core optimizations (FP16/TF32)
+        use_flash_attention: Enable Flash Attention for transformers
+        batch_size: Default batch size for batched operations
+        max_sequence_length: Maximum token sequence length
+        use_torch_compile: Enable torch.compile() optimization
+        mixed_precision: Enable automatic mixed precision
+    """
+
+    use_gpu: bool = True
+    use_tensor_cores: bool = True
+    use_flash_attention: bool = True
+    batch_size: int = 32
+    max_sequence_length: int = 512
+    use_torch_compile: bool = True
+    mixed_precision: bool = True
 
 
 @dataclass(frozen=True, slots=True)
 class ModelConfig:
     """Immutable model provider configuration.
 
-    Supports OpenAI, Azure OpenAI, and GitHub-hosted models.
+    Supports OpenAI, Azure OpenAI, GitHub-hosted, and local models.
     Thread-safe due to immutability (frozen=True) and __slots__.
 
     Attributes:
-        provider: Model provider (openai, azure, github)
+        provider: Model provider (openai, azure, github, anthropic, local)
         name: Model name or deployment name
         deployment: Azure deployment name (optional)
         endpoint: Custom API endpoint (optional)
+        api_version: API version for Azure (optional)
 
     Examples:
         >>> ModelConfig()  # Default GPT-4.1-mini
@@ -94,6 +124,7 @@ class ModelConfig:
     name: str = DEFAULT_MODEL
     deployment: str | None = None
     endpoint: str | None = None
+    api_version: str | None = None
 
     @classmethod
     def from_string(cls, model_name: str) -> ModelConfig:
@@ -130,12 +161,22 @@ class ModelConfig:
         if not isinstance(data, dict):
             raise ValueError("model section must be a string or mapping")
 
-        data_dict = cast(dict[str, Any], data)
         return cls(
-            provider=cast(ProviderLiteral, data_dict.get("provider", DEFAULT_PROVIDER)),
-            name=str(data_dict.get("name", data_dict.get("deployment", DEFAULT_MODEL))),
-            deployment=cast(str | None, data_dict.get("deployment")),
-            endpoint=cast(str | None, data_dict.get("endpoint")),
+            provider=data.get("provider", DEFAULT_PROVIDER),
+            name=str(data.get("name", data.get("deployment", DEFAULT_MODEL))),
+            deployment=data.get("deployment"),
+            endpoint=data.get("endpoint"),
+            api_version=data.get("api_version"),
+        )
+
+    def with_name(self, name: str) -> ModelConfig:
+        """Create a copy with a different model name."""
+        return ModelConfig(
+            provider=self.provider,
+            name=name,
+            deployment=self.deployment,
+            endpoint=self.endpoint,
+            api_version=self.api_version,
         )
 
 
@@ -151,24 +192,34 @@ class AgentConfig:
         description: Human-readable description
         prompt: System prompt/instructions
         model: Model configuration
+        tensor: Tensor compute configuration
         temperature: Sampling temperature (0.0 = deterministic)
         top_p: Nucleus sampling parameter (optional)
         handoffs: Tuple of agent names for handoff capability
         tags: Tuple of tags for categorization
+        max_tokens: Maximum output tokens (optional)
 
     Examples:
         >>> AgentConfig.from_file(Path("agents/coder/agent.yaml"))
-        >>> AgentConfig(name="test", description="", prompt="Help me", model=ModelConfig())
+        >>> AgentConfig(name="test", prompt="Help me", model=ModelConfig())
     """
 
     name: str = "default-agent"
     description: str = ""
     prompt: str = "You are a helpful AI assistant."
     model: ModelConfig = field(default_factory=ModelConfig)
+    tensor: TensorConfig = field(default_factory=TensorConfig)
     temperature: float = 0.0
     top_p: float | None = None
     handoffs: tuple[str, ...] = field(default_factory=tuple)
     tags: tuple[str, ...] = field(default_factory=tuple)
+    max_tokens: int | None = None
+
+    # Alias for backwards compatibility
+    @property
+    def instructions(self) -> str:
+        """Alias for prompt (backwards compatibility)."""
+        return self.prompt
 
     @classmethod
     def from_file(cls, path: Path) -> AgentConfig:
@@ -186,18 +237,36 @@ class AgentConfig:
         """
         payload = _load_yaml(path)
         base = path.parent
-        prompt_body = _read_prompt(base, cast(str | None, payload.get("prompt")))
+        prompt_body = _read_prompt(base, payload.get("prompt"))
         model = ModelConfig.from_mapping(payload.get("model", {}))
 
+        # Parse tensor config if present
+        tensor_data = payload.get("tensor", {})
+        tensor = TensorConfig(
+            use_gpu=tensor_data.get("use_gpu", True),
+            use_tensor_cores=tensor_data.get("use_tensor_cores", True),
+            use_flash_attention=tensor_data.get("use_flash_attention", True),
+            batch_size=tensor_data.get("batch_size", 32),
+            max_sequence_length=tensor_data.get("max_sequence_length", 512),
+            use_torch_compile=tensor_data.get("use_torch_compile", True),
+            mixed_precision=tensor_data.get("mixed_precision", True),
+        )
+
         return cls(
-            name=cast(str, payload.get("name", base.name)),
-            description=cast(str, payload.get("description", "")),
+            name=payload.get("name", base.name),
+            description=payload.get("description", ""),
             prompt=prompt_body,
             model=model,
-            temperature=float(cast(float | str, payload.get("temperature", 0.0))),
-            top_p=(float(cast(float | str, payload["top_p"])) if payload.get("top_p") is not None else None),
+            tensor=tensor,
+            temperature=float(payload.get("temperature", 0.0)),
+            top_p=(
+                float(payload["top_p"])
+                if payload.get("top_p") is not None
+                else None
+            ),
             handoffs=tuple(payload.get("handoffs", [])),
             tags=tuple(payload.get("tags", [])),
+            max_tokens=payload.get("max_tokens"),
         )
 
     def as_prompt(self, user_input: str) -> str:
@@ -227,14 +296,37 @@ class AgentConfig:
         """
         if isinstance(model, str):
             model = ModelConfig.from_string(model)
-        # Use object.__new__ to bypass frozen restriction for copy
         return AgentConfig(
             name=self.name,
             description=self.description,
             prompt=self.prompt,
             model=model,
+            tensor=self.tensor,
             temperature=self.temperature,
             top_p=self.top_p,
             handoffs=self.handoffs,
             tags=self.tags,
+            max_tokens=self.max_tokens,
+        )
+
+    def with_tensor(self, tensor: TensorConfig) -> AgentConfig:
+        """Create a copy with different tensor configuration.
+
+        Args:
+            tensor: New TensorConfig
+
+        Returns:
+            New AgentConfig with updated tensor config
+        """
+        return AgentConfig(
+            name=self.name,
+            description=self.description,
+            prompt=self.prompt,
+            model=self.model,
+            tensor=tensor,
+            temperature=self.temperature,
+            top_p=self.top_p,
+            handoffs=self.handoffs,
+            tags=self.tags,
+            max_tokens=self.max_tokens,
         )
