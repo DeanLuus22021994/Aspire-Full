@@ -131,7 +131,7 @@ public class ItemsApiTests
 
         // Assert
         Assert.That(response.Headers.Location, Is.Not.Null);
-        Assert.That(response.Headers.Location?.ToString(), Does.Contain("/api/items/"));
+        Assert.That(response.Headers.Location?.ToString().ToLowerInvariant(), Does.Contain("/api/items/"));
     }
 
     #endregion
