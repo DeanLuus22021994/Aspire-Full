@@ -1,12 +1,23 @@
 {
-  "name": "Aspire-Full GPU Compute",
+  "name": "Aspire-Full GPU Tensor Compute",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": ".."
+    "context": "..",
+    "args": {
+      "BUILDKIT_INLINE_CACHE": "1"
+    }
   },
 
-  // GPU passthrough for CUDA/CU compute
-  "runArgs": ["--gpus=all", "--memory=2g", "--memory-swap=2g", "--shm-size=256m"],
+  // GPU passthrough for CUDA/CU compute - 9GB RAM optimized
+  "runArgs": [
+    "--gpus=all",
+    "--memory=9g",
+    "--memory-swap=12g",
+    "--shm-size=2g",
+    "--ulimit=memlock=-1:-1",
+    "--ulimit=stack=67108864:67108864",
+    "--ipc=host"
+  ],
 
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -40,18 +51,25 @@
   },
 
   "postCreateCommand": "dotnet restore",
-  "postStartCommand": "echo 'GPU Compute Ready | 2GB RAM | CUDA/CU Mode'",
+  "postStartCommand": "echo '🚀 GPU Tensor Compute Ready | 9GB RAM | CUDA/Hybrid Mode | Dynamic Batching Enabled'",
 
   "remoteEnv": {
     "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
     "DOTNET_ENVIRONMENT": "Development",
-    "ASPIRE_COMPUTE_MODE": "Gpu",
-    "ASPIRE_FALLBACK_TO_CPU": "false"
+    "ASPIRE_COMPUTE_MODE": "Hybrid",
+    "ASPIRE_OFFLOAD_STRATEGY": "Full",
+    "ASPIRE_FALLBACK_TO_CPU": "true",
+    "ASPIRE_MAX_BATCH_SIZE": "64",
+    "ASPIRE_ENABLE_DYNAMIC_BATCHING": "true"
   },
 
   "containerEnv": {
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
     "DOTNET_NOLOGO": "1",
-    "DOTNET_GCHeapHardLimit": "1610612736"
+    "DOTNET_GCHeapHardLimit": "7516192768",
+    "DOTNET_gcServer": "1",
+    "DOTNET_TieredPGO": "1",
+    "OMP_NUM_THREADS": "8",
+    "OPENBLAS_NUM_THREADS": "8"
   }
 }

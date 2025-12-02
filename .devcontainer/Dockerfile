@@ -1,37 +1,53 @@
 # =============================================================================
-# Aspire-Full Lightweight DevContainer - GPU-Only Compute
-# CUDA/CU Runtime | 2GB Host RAM Max | WASM Model Runner
+# Aspire-Full High-Performance DevContainer - GPU Tensor Compute
+# CUDA/CU Runtime | 9GB Host RAM | Optimized Tensor Operations
 # =============================================================================
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS base
 
 # =============================================================================
-# MEMORY CONSTRAINTS: 2GB Host RAM Max
-# All tensor/embedding compute offloaded to GPU via CUDA
+# MEMORY CONFIGURATION: 9GB Host RAM (9,663,676,416 bytes)
+# Optimized for tensor compute with GPU offload and host memory for batching
 # =============================================================================
-ENV DOTNET_GCHeapHardLimit=1610612736 \
-    DOTNET_GCHeapHardLimitPercent=0x50 \
-    DOTNET_gcServer=0 \
-    DOTNET_GCConserveMemory=9 \
+ENV DOTNET_GCHeapHardLimit=7516192768 \
+    DOTNET_GCHeapHardLimitPercent=0x52 \
+    DOTNET_gcServer=1 \
+    DOTNET_GCConserveMemory=5 \
     DOTNET_TieredCompilation=1 \
-    DOTNET_ReadyToRun=0
+    DOTNET_TieredPGO=1 \
+    DOTNET_ReadyToRun=1 \
+    DOTNET_TC_QuickJitForLoops=1
 
 # =============================================================================
-# GPU COMPUTE: CUDA/CU Only - No CPU Fallback
+# GPU COMPUTE: CUDA/CU with Hybrid Fallback for Maximum Throughput
 # =============================================================================
-ENV ASPIRE_COMPUTE_MODE=Gpu \
+ENV ASPIRE_COMPUTE_MODE=Hybrid \
     ASPIRE_OFFLOAD_STRATEGY=Full \
-    ASPIRE_FALLBACK_TO_CPU=false \
+    ASPIRE_FALLBACK_TO_CPU=true \
+    ASPIRE_MAX_BATCH_SIZE=64 \
+    ASPIRE_BATCH_TIMEOUT_MS=25 \
+    ASPIRE_GPU_MEMORY_FRACTION=0.90 \
+    ASPIRE_ENABLE_DYNAMIC_BATCHING=true \
+    ASPIRE_ENABLE_UNIFIED_MEMORY=true \
+    ASPIRE_PIN_HOST_MEMORY=true \
     CUDA_VISIBLE_DEVICES=all \
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,video \
+    NVIDIA_REQUIRE_CUDA="cuda>=12.0" \
+    CUDA_CACHE_DISABLE=0 \
+    CUDA_FORCE_PTX_JIT=0
 
-# Install WASM workload and minimal tools
-RUN dotnet workload install wasm-tools \
+# Install WASM workload, tensor compute dependencies, and dev tools
+RUN dotnet workload install wasm-tools aspire \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         curl \
         jq \
+        htop \
+        nvtop \
+        libgomp1 \
+        libnuma1 \
+        libopenblas0 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -59,13 +75,26 @@ WORKDIR /workspace
 USER $USERNAME
 
 # =============================================================================
-# Runtime Configuration
+# Runtime Configuration - Optimized for Tensor Compute
 # =============================================================================
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     DOTNET_RUNNING_IN_CONTAINER=true \
     NUGET_XMLDOC_MODE=skip \
-    ASPIRE_ALLOW_UNSECURED_TRANSPORT=true
+    ASPIRE_ALLOW_UNSECURED_TRANSPORT=true \
+    # Tensor/BLAS optimizations
+    OMP_NUM_THREADS=8 \
+    MKL_NUM_THREADS=8 \
+    OPENBLAS_NUM_THREADS=8 \
+    GOTO_NUM_THREADS=8 \
+    OMP_WAIT_POLICY=ACTIVE \
+    OMP_DYNAMIC=false \
+    # Memory pool settings
+    ASPIRE_TENSOR_POOL_MAX_BUFFERS=32 \
+    ASPIRE_TENSOR_POOL_DEFAULT_SIZE=134217728 \
+    # Model cache settings
+    ASPIRE_MODEL_CACHE_DIR=/shared/models \
+    ASPIRE_MAX_CACHED_MODELS=20
 
 # Trust HTTPS dev certificates
 RUN dotnet dev-certs https --trust 2>/dev/null || true
