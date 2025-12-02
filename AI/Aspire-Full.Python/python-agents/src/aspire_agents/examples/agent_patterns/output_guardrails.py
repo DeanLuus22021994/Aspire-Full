@@ -88,10 +88,8 @@ async def main() -> None:
     # This should trip the guardrail
     try:
         result = await Runner.run(agent, "My phone number is 650-123-4567. Where do you think I live?")
-        print(
-            f"Guardrail didn't trip - this is unexpected. Output: "
-            f"{json.dumps(result.final_output.model_dump(), indent=2)}"
-        )
+        output_json = json.dumps(result.final_output.model_dump(), indent=2)
+        print(f"Guardrail didn't trip - this is unexpected. Output: {output_json}")
 
     except OutputGuardrailTripwireTriggered as e:
         print(f"Guardrail tripped. Info: {e.guardrail_result.output.output_info}")
