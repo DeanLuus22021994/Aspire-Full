@@ -23,7 +23,7 @@
 .PARAMETER Config
     Configuration file path (required for run_agent)
 
-.PARAMETER AgentInput
+.PARAMETER AgentMessage
     Input message (required for run_agent)
 
 .PARAMETER Packages
@@ -64,7 +64,7 @@ param(
     [string]$Config,
 
     [Parameter()]
-    [string]$AgentInput,
+    [string]$AgentMessage,
 
     [Parameter()]
     [string]$Packages,
@@ -148,17 +148,17 @@ function Invoke-AbstractDependencyReport {
     )
 
     $scriptPath = Join-Path $ScriptDir "abstract_dependency_report.py"
-    $scriptArgs = @()
+    $pythonParams = @()
 
     if ($Packages) {
-        $scriptArgs += "--packages", $Packages
+        $pythonParams += "--packages", $Packages
     }
 
     if ($OutputDir) {
-        $scriptArgs += "--output-dir", $OutputDir
+        $pythonParams += "--output-dir", $OutputDir
     }
 
-    $scriptArgs += "--base-dir", $ProjectRoot
+    $pythonParams += "--base-dir", $ProjectRoot
 
     Write-Host "Running abstract_dependency_report..." -ForegroundColor Cyan
     Write-Host "  Cache Dir: $CacheDir" -ForegroundColor DarkGray
@@ -166,8 +166,8 @@ function Invoke-AbstractDependencyReport {
 
     Push-Location $ProjectRoot
     try {
-        if ($scriptArgs.Count -gt 0) {
-            uv run python $scriptPath @scriptArgs
+        if ($pythonParams.Count -gt 0) {
+            uv run python $scriptPath @pythonParams
         }
         else {
             uv run python $scriptPath --base-dir $ProjectRoot
@@ -224,19 +224,19 @@ function Invoke-RunAgent {
     #>
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Config,
+        [string]$ConfigPath,
 
         [Parameter(Mandatory = $true)]
-        [string]$AgentInput
+        [string]$AgentMessage
     )
 
     Write-Host "Running agent..." -ForegroundColor Cyan
-    Write-Host "  Config: $Config" -ForegroundColor DarkGray
-    Write-Host "  Input: $AgentInput" -ForegroundColor DarkGray
+    Write-Host "  Config: $ConfigPath" -ForegroundColor DarkGray
+    Write-Host "  Input: $AgentMessage" -ForegroundColor DarkGray
 
     Push-Location $ProjectRoot
     try {
-        uv run python -m aspire_agents.cli run --config $Config --input $AgentInput
+        uv run python -m aspire_agents.cli run --config $ConfigPath --input $AgentMessage
     }
     finally {
         Pop-Location
@@ -308,10 +308,10 @@ switch ($ScriptName) {
         if (-not $Config) {
             throw "Config parameter is required for run_agent"
         }
-        if (-not $AgentInput) {
-            throw "AgentInput parameter is required for run_agent"
+        if (-not $AgentMessage) {
+            throw "AgentMessage parameter is required for run_agent"
         }
-        Invoke-RunAgent -Config $Config -AgentInput $AgentInput
+        Invoke-RunAgent -ConfigPath $Config -AgentMessage $AgentMessage
     }
     "vector_cache" {
         Invoke-VectorCache -RedisUrl $RedisUrl -QdrantUrl $QdrantUrl -CollectionName $CollectionName
