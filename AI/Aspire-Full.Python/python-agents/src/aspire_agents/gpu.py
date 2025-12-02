@@ -23,12 +23,9 @@ import logging
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import Final
 
 import torch
-
-if TYPE_CHECKING:
-    from torch import Tensor
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 

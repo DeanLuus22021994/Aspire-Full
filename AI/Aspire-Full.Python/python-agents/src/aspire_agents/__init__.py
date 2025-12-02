@@ -29,18 +29,20 @@ from .compute import (
     get_compute_service,
     reset_compute_service,
 )
-from .config import AgentConfig, ModelConfig
+from .config import AgentConfig, ModelConfig, TensorConfig
 from .core import Agent, Runner, function_tool
-from .gpu import TensorCoreInfo, ensure_tensor_core_gpu
+from .gpu import TensorCoreInfo, ensure_tensor_core_gpu, get_gpu_memory_info, synchronize_cuda, empty_cache
 from .guardrails import (
     GuardrailService,
     ToolGuardrailFunctionOutput,
     ToolInputGuardrailData,
     ToolOutputGuardrailData,
     get_guardrail_service,
+    reset_guardrail_service,
     semantic_input_guardrail,
     semantic_output_guardrail,
 )
+from .kernel import build_kernel, build_kernel_with_plugins, SemanticKernelUnavailableError
 from .runner import AgentResult, AgentRunner
 
 
@@ -68,6 +70,7 @@ __all__: Final[tuple[str, ...]] = (
     # Configuration
     "AgentConfig",
     "ModelConfig",
+    "TensorConfig",
     # Tensor compute
     "BatchComputeService",
     "ComputeConfig",
@@ -76,12 +79,20 @@ __all__: Final[tuple[str, ...]] = (
     "get_compute_service",
     "reset_compute_service",
     "ensure_tensor_core_gpu",
+    "get_gpu_memory_info",
+    "synchronize_cuda",
+    "empty_cache",
     # Guardrails
     "GuardrailService",
     "ToolGuardrailFunctionOutput",
     "ToolInputGuardrailData",
     "ToolOutputGuardrailData",
     "get_guardrail_service",
+    "reset_guardrail_service",
     "semantic_input_guardrail",
     "semantic_output_guardrail",
+    # Semantic Kernel
+    "build_kernel",
+    "build_kernel_with_plugins",
+    "SemanticKernelUnavailableError",
 )
