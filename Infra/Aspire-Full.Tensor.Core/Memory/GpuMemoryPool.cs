@@ -36,7 +36,7 @@ public sealed class GpuMemoryPool : IDisposable
         s_totalMemory = s_meter.CreateObservableGauge("gpu.memory.total_bytes", () => Interlocked.Read(ref s_globalTotalBytes));
     }
 
-    public GpuMemoryPool(int maxBufferCount = 16, nuint defaultBufferSize = 64 * 1024 * 1024) // 64MB default
+    public GpuMemoryPool(int maxBufferCount = 32, nuint defaultBufferSize = 128 * 1024 * 1024) // 128MB default for 9GB RAM
     {
         _maxBufferCount = maxBufferCount;
         _defaultBufferSize = defaultBufferSize;

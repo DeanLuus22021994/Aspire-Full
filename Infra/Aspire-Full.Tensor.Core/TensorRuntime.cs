@@ -25,8 +25,8 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
     public TensorRuntime(
         ILogger<TensorRuntime> logger,
         IComputeModeService? computeModeService = null,
-        int maxBufferCount = 16,
-        nuint defaultBufferSize = 64 * 1024 * 1024)
+        int maxBufferCount = 32,
+        nuint defaultBufferSize = 128 * 1024 * 1024)
     {
         _logger = logger;
         _computeModeService = computeModeService;

@@ -107,14 +107,14 @@ public static class TensorCoreServiceCollectionExtensions
 public sealed class TensorCoreOptions
 {
     /// <summary>
-    /// Maximum number of buffers to pool. Default is 16.
+    /// Maximum number of buffers to pool. Default is 32 for 9GB RAM.
     /// </summary>
-    public int MaxBufferCount { get; set; } = 16;
+    public int MaxBufferCount { get; set; } = 32;
 
     /// <summary>
-    /// Default buffer size in bytes. Default is 64 MB.
+    /// Default buffer size in bytes. Default is 128 MB for tensor operations.
     /// </summary>
-    public nuint DefaultBufferSize { get; set; } = 64 * 1024 * 1024;
+    public nuint DefaultBufferSize { get; set; } = 128 * 1024 * 1024;
 
     /// <summary>
     /// Whether to prefer GPU operations when available. Default is true.
@@ -129,9 +129,9 @@ public sealed class TensorCoreOptions
     // --- Compute Mode Options ---
 
     /// <summary>
-    /// Compute execution mode. Default is GPU for full offload.
+    /// Compute execution mode. Default is Hybrid for flexibility.
     /// </summary>
-    public ComputeMode ComputeMode { get; set; } = ComputeMode.Gpu;
+    public ComputeMode ComputeMode { get; set; } = ComputeMode.Hybrid;
 
     /// <summary>
     /// Strategy for offloading operations. Default is Full.
@@ -139,9 +139,9 @@ public sealed class TensorCoreOptions
     public OffloadStrategy OffloadStrategy { get; set; } = OffloadStrategy.Full;
 
     /// <summary>
-    /// Whether to fallback to CPU when GPU fails. Default is false for strict GPU mode.
+    /// Whether to fallback to CPU when GPU fails. Default is true for resilience.
     /// </summary>
-    public bool FallbackToCpu { get; set; } = false;
+    public bool FallbackToCpu { get; set; } = true;
 
     /// <summary>
     /// GPU device ID to use. Default is 0.
@@ -149,7 +149,7 @@ public sealed class TensorCoreOptions
     public int GpuDeviceId { get; set; } = 0;
 
     /// <summary>
-    /// Fraction of GPU memory to allocate (0.0-1.0). Default is 0.9.
+    /// Fraction of GPU memory to allocate (0.0-1.0). Default is 0.9 for performance.
     /// </summary>
     public double MemoryFraction { get; set; } = 0.9;
 
@@ -164,14 +164,14 @@ public sealed class TensorCoreOptions
     public bool EnableDynamicBatching { get; set; } = true;
 
     /// <summary>
-    /// Maximum batch size for batched operations. Default is 32.
+    /// Maximum batch size for batched operations. Default is 64 for 9GB RAM.
     /// </summary>
-    public int MaxBatchSize { get; set; } = 32;
+    public int MaxBatchSize { get; set; } = 64;
 
     /// <summary>
-    /// Batch timeout in milliseconds before forcing execution. Default is 50.
+    /// Batch timeout in milliseconds before forcing execution. Default is 25.
     /// </summary>
-    public int BatchTimeoutMs { get; set; } = 50;
+    public int BatchTimeoutMs { get; set; } = 25;
 
     // --- Model Registry Options ---
 
@@ -181,9 +181,9 @@ public sealed class TensorCoreOptions
     public string ModelCacheDirectory { get; set; } = "/shared/models";
 
     /// <summary>
-    /// Maximum number of models to keep in memory. Default is 10.
+    /// Maximum number of models to keep in memory. Default is 20 for 9GB RAM.
     /// </summary>
-    public int MaxCachedModels { get; set; } = 10;
+    public int MaxCachedModels { get; set; } = 20;
 
     /// <summary>
     /// Whether to track version history for models. Default is true.
