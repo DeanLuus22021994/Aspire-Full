@@ -21,11 +21,12 @@ public sealed class UsersControllerTests : IDisposable
     private readonly AppDbContext _context;
     private readonly UsersController _controller;
     private readonly Mock<ILogger<UsersController>> _loggerMock = new();
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
 
     public UsersControllerTests()
     {
         _context = TestDbContextFactory.CreateContext();
-        _controller = new UsersController(_context, _loggerMock.Object);
+        _controller = new UsersController(_context, _loggerMock.Object, _timeProvider);
     }
 
     public void Dispose()

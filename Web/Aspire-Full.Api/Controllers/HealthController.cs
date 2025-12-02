@@ -6,17 +6,25 @@ namespace Aspire_Full.Api.Controllers;
 [Route("api/[controller]")]
 public class HealthController : ControllerBase
 {
-    private static readonly DateTime StartTime = DateTime.UtcNow;
+    private readonly TimeProvider _timeProvider;
+    private readonly DateTimeOffset _startTime;
+
+    public HealthController(TimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider;
+        _startTime = timeProvider.GetUtcNow();
+    }
 
     [HttpGet]
     public IActionResult GetHealth()
     {
-        var uptime = DateTime.UtcNow - StartTime;
+        var now = _timeProvider.GetUtcNow();
+        var uptime = now - _startTime;
         return Ok(new
         {
             status = "healthy",
             uptime = FormatUptime(uptime),
-            timestamp = DateTime.UtcNow
+            timestamp = now.UtcDateTime
         });
     }
 

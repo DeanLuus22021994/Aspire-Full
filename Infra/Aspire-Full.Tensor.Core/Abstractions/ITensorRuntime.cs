@@ -75,7 +75,8 @@ public interface ITensorRuntime : IAsyncDisposable
     /// Computes cosine similarity for a batch of vector pairs.
     /// More efficient than calling CosineSimilarity multiple times.
     /// </summary>
-    /// <param name="batch">Array of (x, y) vector pairs.</param>
+    /// <param name="xVectors">Array of x vectors.</param>
+    /// <param name="yVectors">Array of y vectors to compare against x vectors.</param>
     /// <returns>Array of cosine similarity results.</returns>
     float[] CosineSimilarityBatch(ReadOnlyMemory<float>[] xVectors, ReadOnlyMemory<float>[] yVectors);
 

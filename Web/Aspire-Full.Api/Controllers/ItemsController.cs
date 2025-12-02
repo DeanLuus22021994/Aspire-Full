@@ -11,11 +11,13 @@ public class ItemsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<ItemsController> _logger;
+    private readonly TimeProvider _timeProvider;
 
-    public ItemsController(AppDbContext context, ILogger<ItemsController> logger)
+    public ItemsController(AppDbContext context, ILogger<ItemsController> logger, TimeProvider timeProvider)
     {
         _context = context;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     [HttpGet]
@@ -41,12 +43,13 @@ public class ItemsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Item>> CreateItem(CreateItemDto dto)
     {
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
         var item = new Item
         {
             Name = dto.Name,
             Description = dto.Description,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         _context.Items.Add(item);
@@ -73,7 +76,7 @@ public class ItemsController : ControllerBase
         if (dto.Description != null)
             item.Description = dto.Description;
 
-        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         await _context.SaveChangesAsync();
 

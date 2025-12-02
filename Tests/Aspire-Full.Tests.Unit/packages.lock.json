@@ -1095,7 +1095,8 @@
       "aspire-full.agents": {
         "type": "Project",
         "dependencies": {
-          "Aspire-Full.Shared": "[1.0.0, )"
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.0, )"
         }
       },
       "aspire-full.api": {

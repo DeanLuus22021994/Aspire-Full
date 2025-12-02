@@ -16,11 +16,13 @@ public class UsersController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<UsersController> _logger;
+    private readonly TimeProvider _timeProvider;
 
-    public UsersController(AppDbContext context, ILogger<UsersController> logger)
+    public UsersController(AppDbContext context, ILogger<UsersController> logger, TimeProvider timeProvider)
     {
         _context = context;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     private static UserDto MapToDto(Aspire_Full.Api.Models.User user) => new()
@@ -102,7 +104,7 @@ public class UsersController : ControllerBase
             existingUser.DisplayName = dto.DisplayName;
             existingUser.IsActive = true;
             existingUser.DeletedAt = null;
-            existingUser.UpdatedAt = DateTime.UtcNow;
+            existingUser.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
 
             // Only allow role upgrade if currently a User
             if (existingUser.Role == UserRole.User && dto.Role == UserRole.Admin)
@@ -118,13 +120,14 @@ public class UsersController : ControllerBase
         }
 
         // Create new user
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
         var user = new Aspire_Full.Api.Models.User
         {
             Email = dto.Email,
             DisplayName = dto.DisplayName,
             Role = dto.Role,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         _context.Users.Add(user);
@@ -156,7 +159,7 @@ public class UsersController : ControllerBase
             user.IsActive = dto.IsActive.Value;
             if (!dto.IsActive.Value)
             {
-                user.DeletedAt = DateTime.UtcNow;
+                user.DeletedAt = _timeProvider.GetUtcNow().UtcDateTime;
             }
             else
             {
@@ -164,7 +167,7 @@ public class UsersController : ControllerBase
             }
         }
 
-        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
 
         await _context.SaveChangesAsync();
 
@@ -188,9 +191,10 @@ public class UsersController : ControllerBase
         }
 
         // Soft delete (downsert)
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
         user.IsActive = false;
-        user.DeletedAt = DateTime.UtcNow;
-        user.UpdatedAt = DateTime.UtcNow;
+        user.DeletedAt = now;
+        user.UpdatedAt = now;
 
         await _context.SaveChangesAsync();
 
@@ -212,7 +216,7 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Recorded login for user {UserId}", id);

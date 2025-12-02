@@ -1,19 +1,20 @@
-using System.Linq;
+using Aspire_Full.Shared.Abstractions;
+using Aspire_Full.Shared.Models;
 
 namespace Aspire_Full.Agents;
 
-public sealed class SubagentSelfReviewService
+public sealed class SubagentSelfReviewService : ISubagentSelfReviewService
 {
-    private readonly Func<DateTimeOffset> _clock;
+    private readonly TimeProvider _timeProvider;
 
     public SubagentSelfReviewService()
-        : this(() => DateTimeOffset.UtcNow)
+        : this(TimeProvider.System)
     {
     }
 
-    public SubagentSelfReviewService(Func<DateTimeOffset> clock)
+    public SubagentSelfReviewService(TimeProvider timeProvider)
     {
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     public SubagentDefinition GetDefinition(SubagentRole role) => SubagentCatalog.Get(role);
@@ -22,30 +23,30 @@ public sealed class SubagentSelfReviewService
     {
         ArgumentNullException.ThrowIfNull(update);
 
-        var highlights = update.Completed.Any()
+        var highlights = update.Completed.Count > 0
             ? update.Completed
-            : new[] { "No highlights were submitted." };
+            : ["No highlights were submitted."];
 
-        var risks = update.Risks.Any()
+        var risks = update.Risks.Count > 0
             ? update.Risks
-            : new[] { "No risks captured." };
+            : ["No risks captured."];
 
-        var next = update.Next.Any()
+        var next = update.Next.Count > 0
             ? update.Next
-            : new[] { "Define explicit next steps." };
+            : ["Define explicit next steps."];
 
-        return new SubagentRetrospective(update.Role, highlights, risks, next, _clock());
+        return new SubagentRetrospective(update.Role, highlights, risks, next, _timeProvider.GetUtcNow());
     }
 
     public SubagentDelegationPlan CreateDelegationPlan(SubagentUpdate update)
     {
         ArgumentNullException.ThrowIfNull(update);
 
-        var items = update.Delegations.Any()
+        var items = update.Delegations.Count > 0
             ? update.Delegations.Select(d => new DelegatedWorkItem(update.Role, d, InferPriority(d))).ToArray()
-            : Array.Empty<DelegatedWorkItem>();
+            : [];
 
-        return new SubagentDelegationPlan(update.Role, items, _clock());
+        return new SubagentDelegationPlan(update.Role, items, _timeProvider.GetUtcNow());
     }
 
     private static DelegationPriority InferPriority(string description)

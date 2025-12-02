@@ -17,12 +17,13 @@ public class ItemsControllerTests : IDisposable
     private readonly Api.Data.AppDbContext _context;
     private readonly ItemsController _controller;
     private readonly Mock<ILogger<ItemsController>> _loggerMock;
+    private readonly TimeProvider _timeProvider = TimeProvider.System;
 
     public ItemsControllerTests()
     {
         _context = TestDbContextFactory.CreateSeededContext();
         _loggerMock = new Mock<ILogger<ItemsController>>();
-        _controller = new ItemsController(_context, _loggerMock.Object);
+        _controller = new ItemsController(_context, _loggerMock.Object, _timeProvider);
     }
 
     public void Dispose()
@@ -57,7 +58,7 @@ public class ItemsControllerTests : IDisposable
     {
         // Arrange
         using var emptyContext = TestDbContextFactory.CreateContext();
-        var controller = new ItemsController(emptyContext, _loggerMock.Object);
+        var controller = new ItemsController(emptyContext, _loggerMock.Object, _timeProvider);
 
         // Act
         var result = await controller.GetItems();

@@ -1,15 +1,22 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Aspire_Full.Agents;
 using Aspire_Full.Shared;
+using Aspire_Full.Shared.Abstractions;
 using Aspire_Full.Shared.Models;
 
 var maintenanceMode = GetOption("--maintenance");
 if (maintenanceMode != null)
 {
     var workspace = GetOption("--workspace") ?? Directory.GetCurrentDirectory();
-    var agent = new MaintenanceAgent();
-    await agent.RunAsync(workspace);
+    IMaintenanceAgent agent = new MaintenanceAgent();
+    var result = await agent.RunAsync(workspace);
+    if (!result.IsSuccess)
+    {
+        Console.Error.WriteLine($"❌ Maintenance failed: {result.Error}");
+        return 1;
+    }
+    Console.WriteLine($"✅ Maintenance complete. Tasks: {string.Join(", ", result.Value!.ExecutedTasks)}");
+    Console.WriteLine($"⏱️ Duration: {result.Value.Duration}");
     return 0;
 }
 
@@ -36,7 +43,7 @@ var update = SubagentUpdate.Normalize(
     agentInput.Next,
     agentInput.Delegations);
 
-var service = new SubagentSelfReviewService();
+ISubagentSelfReviewService service = new SubagentSelfReviewService();
 var definition = service.GetDefinition(update.Role);
 var retrospective = service.CreateRetrospective(update);
 var delegationPlan = service.CreateDelegationPlan(update);

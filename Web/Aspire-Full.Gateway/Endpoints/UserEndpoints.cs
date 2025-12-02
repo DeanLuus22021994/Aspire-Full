@@ -54,6 +54,7 @@ public static class UserEndpoints
         GatewayDbContext db,
         IEmbeddingService embeddingService,
         IUserVectorService vectorStore,
+        TimeProvider timeProvider,
         ILogger<Program> logger)
     {
         var existingUser = await db.Users
@@ -66,7 +67,7 @@ public static class UserEndpoints
             existingUser.DisplayName = dto.DisplayName;
             existingUser.IsActive = true;
             existingUser.DeletedAt = null;
-            existingUser.UpdatedAt = DateTime.UtcNow;
+            existingUser.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
             if (existingUser.Role == UserRole.User && dto.Role == UserRole.Admin)
             {
                 existingUser.Role = dto.Role;
@@ -75,13 +76,14 @@ public static class UserEndpoints
         }
         else
         {
+            var now = timeProvider.GetUtcNow().UtcDateTime;
             user = new User
             {
                 Email = dto.Email,
                 DisplayName = dto.DisplayName,
                 Role = dto.Role,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
             db.Users.Add(user);
         }
@@ -104,15 +106,16 @@ public static class UserEndpoints
         return TypedResults.Ok(ToDto(user));
     }
 
-    static async Task<IResult> DownsertUser(int id, GatewayDbContext db, IUserVectorService vectorStore)
+    static async Task<IResult> DownsertUser(int id, GatewayDbContext db, IUserVectorService vectorStore, TimeProvider timeProvider)
     {
         var user = await db.Users.FindAsync(id);
         if (user is null)
             return TypedResults.NotFound();
 
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         user.IsActive = false;
-        user.DeletedAt = DateTime.UtcNow;
-        user.UpdatedAt = DateTime.UtcNow;
+        user.DeletedAt = now;
+        user.UpdatedAt = now;
         await db.SaveChangesAsync();
 
         // Remove from vector store
@@ -121,13 +124,13 @@ public static class UserEndpoints
         return TypedResults.NoContent();
     }
 
-    static async Task<IResult> RecordLogin(int id, GatewayDbContext db)
+    static async Task<IResult> RecordLogin(int id, GatewayDbContext db, TimeProvider timeProvider)
     {
         var user = await db.Users.FindAsync(id);
         if (user is null)
             return TypedResults.NotFound();
 
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = timeProvider.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync();
         return TypedResults.Ok(ToDto(user));
     }
