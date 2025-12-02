@@ -10,5 +10,3 @@ dotnet test
 dotnet pack
 dotnet publish
 dotnet workload list
-dotnet run
-dotnet watch
