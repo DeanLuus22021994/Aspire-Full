@@ -75,10 +75,38 @@ explicit = false
 target-version = "py314"  # Python 3.15t compatible (using py314 until ruff supports py315)
 line-length = 120
 src = ["src"]
+fix = true
+force-exclude = true
 
 [tool.ruff.lint]
-select = ["I", "E", "W", "F", "UP", "B", "SIM", "RUF"]  # Added UP (pyupgrade), B (bugbear), SIM (simplify), RUF (ruff-specific)
-ignore = ["E203", "E501", "UP007"]  # UP007: Use X | Y instead of Union (already using)
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade (Python 3.15 patterns)
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "TCH",    # type-checking imports
+    "RUF",    # Ruff-specific rules
+    "PTH",    # pathlib
+    "PL",     # pylint
+    "PERF",   # performance
+]
+ignore = [
+    "E203",      # Whitespace before ':' (conflicts with black)
+    "E501",      # Line too long (handled by formatter)
+    "UP007",     # Use X | Y instead of Union (already using)
+    "PLR0913",   # Too many arguments
+    "PLR2004",   # Magic value comparison
+    "PLR0911",   # Too many return statements
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]           # Unused imports in __init__
+"conftest.py" = ["F401", "F811"]   # pytest fixtures
+"tests/**" = ["PLR2004"]           # Magic values in tests OK
 
 [tool.ruff.format]
 quote-style = "double"
