@@ -1,10 +1,40 @@
 {
+  "$schema": "https://json.schemastore.org/aspire-8.0.json",
   "registry": {
+    "host": "localhost",
     "port": 5001,
-    "volumeName": "aspire-registry-data"
+    "volumeName": "aspire-registry-data",
+    "allowInsecure": true
   },
   "agents": {
-    "replicas": 3,
-    "gpu": true
+    "replicas": 1,
+    "gpu": true,
+    "pythonWorkers": 4,
+    "timeoutSeconds": 120
+  },
+  "tensor": {
+    "preferGpu": true,
+    "maxBufferCount": 32,
+    "defaultBufferSizeMb": 128,
+    "enableMetrics": true,
+    "orchestration": {
+      "maxConcurrentJobs": 16,
+      "jobTimeoutSeconds": 300
+    }
+  },
+  "embeddings": {
+    "provider": "onnx",
+    "model": "all-MiniLM-L6-v2",
+    "dimension": 384,
+    "gpuAccelerated": true
+  },
+  "telemetry": {
+    "otlpEndpoint": "http://aspire-dashboard:18889",
+    "gpuSnapshotIntervalSeconds": 5
+  },
+  "healthChecks": {
+    "requireGpu": false,
+    "warningVramThresholdPercent": 80,
+    "criticalVramThresholdPercent": 95
   }
 }

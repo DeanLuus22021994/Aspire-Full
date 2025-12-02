@@ -1,110 +1,79 @@
 # Aspire-Full AI
 
-AI/ML components for GPU-accelerated inference, embeddings, and agent orchestration.
+Thin wrapper projects that provide CLI entry points and re-export types from the **Infra** layer.
+All core implementations live in `Infra/` - this folder contains only CLI executables and backward-compatibility re-exports.
 
 **Solution:** [Aspire-Full.AI.slnx](Aspire-Full.AI.slnx)
 
+## Architecture: AI ↔ Infra Relationship
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              AI/ (This Folder)                          │
+│  Thin wrappers: CLI entry points, global usings, backward compat       │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                    ↓                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                         Infra/ (Implementations)                        │
+│  Aspire-Full.Agents.Core    → Agent orchestration, self-review          │
+│  Aspire-Full.Connectors     → Embeddings, health, tracing, evaluation   │
+│  Aspire-Full.Tensor.Core    → GPU runtime, memory pool, diagnostics     │
+│  Aspire-Full.DevContainer   → Python defaults, devcontainer config      │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
 ## Projects
 
-| Project | Description |
-|---------|-------------|
-| [Aspire-Full.Agents](Aspire-Full.Agents/Aspire-Full.Agents.csproj) | Subagent orchestration, self-review, maintenance automation |
-| [Aspire-Full.Embeddings](Aspire-Full.Embeddings/Aspire-Full.Embeddings.csproj) | ONNX embedding generation with GPU acceleration |
-| [Aspire-Full.Tensor](Aspire-Full.Tensor/Aspire-Full.Tensor.csproj) | WebGPU/CUDA tensor operations for Blazor clients |
-| [Aspire-Full.Python](Aspire-Full.Python/Aspire-Full.Python.csproj) | Python agent integration via uv/pyproject.toml |
+| Project | Type | Delegates To |
+|---------|------|--------------|
+| [Aspire-Full.Agents](Aspire-Full.Agents/) | CLI Exe | `Infra/Aspire-Full.Agents.Core` |
+| [Aspire-Full.Embeddings](Aspire-Full.Embeddings/) | Re-export | `Infra/Aspire-Full.Connectors/Embeddings` |
+| [Aspire-Full.Tensor](Aspire-Full.Tensor/) | Blazor | `Infra/Aspire-Full.Tensor.Core` + JSInterop |
+| [Aspire-Full.Python](Aspire-Full.Python/) | Re-export | `Infra/Aspire-Full.DevContainer` + Python scripts |
 
-## Shared Dependencies
+## Implementation Locations
 
-| Reference | Purpose |
-|-----------|---------|
-| [Core/Aspire-Full.Shared](../Core/Aspire-Full.Shared/) | DTOs, Result<T>, agent abstractions |
-| [Infra/Aspire-Full.VectorStore](../Infra/Aspire-Full.VectorStore/) | Qdrant vector store integration |
-| [Infra/Aspire-Full.Tensor.Core](../Infra/Aspire-Full.Tensor.Core/) | GPU runtime, memory pooling |
+| Component | AI Location | Infra Implementation |
+|-----------|-------------|----------------------|
+| `EmbeddingService` | Re-export via global using | [Infra/Connectors/Embeddings/EmbeddingService.cs](../Infra/Aspire-Full.Connectors/Embeddings/EmbeddingService.cs) |
+| `OnnxEmbeddingGenerator` | Re-export via global using | [Infra/Connectors/Embeddings/OnnxEmbeddingGenerator.cs](../Infra/Aspire-Full.Connectors/Embeddings/OnnxEmbeddingGenerator.cs) |
+| `TensorDiagnostics` | Re-export via global using | [Infra/Tensor.Core/Diagnostics/TensorDiagnostics.cs](../Infra/Aspire-Full.Tensor.Core/Diagnostics/TensorDiagnostics.cs) |
+| `PythonDefaults` | Re-export via global using | [Infra/DevContainer/Configuration/PythonDefaults.cs](../Infra/Aspire-Full.DevContainer/Configuration/PythonDefaults.cs) |
+| Agent orchestration | `Program.cs` entry | [Infra/Agents.Core/](../Infra/Aspire-Full.Agents.Core/) |
 
-## AI Agent Architecture
+## What Stays in AI/
 
-### Abstractions (in `Core/Aspire-Full.Shared/Abstractions/`)
+Only these should remain:
 
-| Interface | Purpose |
-|-----------|---------|
-| `ISubagentSelfReviewService` | Creates retrospectives and delegation plans from agent updates |
-| `IMaintenanceAgent` | GPU-accelerated workspace maintenance automation |
-| `SubagentUpdate` | Normalized input for agent self-review processing |
-
-### Implementations (in `AI/Aspire-Full.Agents/`)
-
-| Class | Implements | Purpose |
-|-------|------------|---------|
-| `SubagentSelfReviewService` | `ISubagentSelfReviewService` | Generates structured retrospectives with TimeProvider |
-| `MaintenanceAgent` | `IMaintenanceAgent` | Docker-based maintenance with Result<T> error handling |
-| `SubagentCatalog` | - | Static registry of subagent definitions |
+1. **CLI Entry Points** (`Program.cs`) - executable bootstrapping
+2. **Blazor JSInterop** (`TensorRuntimeService.cs`) - client-side GPU detection
+3. **Global Usings** - backward compatibility re-exports
+4. **Python Scripts** (`python-agents/`) - actual Python code
+5. **Native Build Artifacts** (`build/*.dll`) - compiled CUDA binaries
 
 ## Coding Standards
 
-- **TimeProvider**: All time operations use `TimeProvider` (not `DateTime.UtcNow`)
-- **Result<T>**: Service methods return `Result<T>` instead of throwing exceptions
-- **ILogger**: All logging via `ILogger<T>` (not `Console.WriteLine`)
-- **DI-Ready**: All services are interface-backed for testability
+- **Use Infra**: All new implementations go in `Infra/`, not here
+- **Re-export Pattern**: Use `global using TypeAlias = Namespace.Type;`
+- **Minimal Dependencies**: AI projects reference Infra projects, not vice versa
 
 ## Structure
 
 ```
 AI/
-├── .pycodestyle                      # Python linting config
-├── pyrightconfig.json                # Python type checking
-├── pytest.ini                        # Python test config
-├── Aspire-Full.AI.slnx               # AI solution file
+├── Aspire-Full.AI.slnx               # AI solution (thin wrappers)
 ├── AGENTS.md                         # This file
-├── Aspire-Full.Agents/               # C# agent orchestration
-│   ├── MaintenanceAgent.cs           # IMaintenanceAgent implementation
-│   ├── SubagentSelfReviewService.cs  # ISubagentSelfReviewService implementation
-│   ├── SubagentCatalog.cs            # Static agent definitions
-│   └── Program.cs                    # CLI entry point
-├── Aspire-Full.Embeddings/           # ONNX embedding service
-│   ├── EmbeddingService.cs           # GPU-accelerated embeddings
-│   └── OnnxEmbeddingGenerator.cs     # ONNX runtime wrapper
-├── Aspire-Full.Tensor/               # Blazor WebGPU/CUDA
-│   ├── TensorRuntimeService.cs       # Client-side tensor detection
-│   ├── TensorModelDescriptor.cs      # Model catalog
-│   ├── Services/                     # Job coordination, compute
-│   └── Diagnostics/                  # ActivitySource tracing
-└── Aspire-Full.Python/               # Python agent integration
-    └── python-agents/                # uv-managed Python project
-        └── pyproject.toml            # Python dependencies
-```
-
-## Key Patterns
-
-### Result<T> Pattern
-```csharp
-// Service methods return Result<T> for graceful error handling
-public async Task<Result<MaintenanceResult>> RunAsync(string workspace, CancellationToken ct)
-{
-    var buildResult = await RunDockerAsync(buildArgs, workspace, ct);
-    if (!buildResult.IsSuccess)
-        return Result<MaintenanceResult>.Failure($"Build failed: {buildResult.Error}");
-    
-    return Result<MaintenanceResult>.Success(new MaintenanceResult { ... });
-}
-```
-
-### TimeProvider Injection
-```csharp
-// Use TimeProvider for testable time operations
-public SubagentSelfReviewService(TimeProvider timeProvider)
-{
-    _timeProvider = timeProvider;
-}
-
-public SubagentRetrospective CreateRetrospective(SubagentUpdate update)
-{
-    return new SubagentRetrospective(update.Role, ..., _timeProvider.GetUtcNow());
-}
-```
-
-### Interface-Backed Services
-```csharp
-// All services implement interfaces for DI/testing
-ISubagentSelfReviewService service = new SubagentSelfReviewService(timeProvider);
-IMaintenanceAgent agent = new MaintenanceAgent(logger, timeProvider);
+├── Aspire-Full.Agents/
+│   ├── Program.cs                    # CLI entry → Agents.Core
+│   └── [Global usings only]
+├── Aspire-Full.Embeddings/
+│   ├── *.cs                          # Global using re-exports
+│   └── → Infra/Connectors/Embeddings
+├── Aspire-Full.Tensor/
+│   ├── GlobalUsings.cs               # Re-exports from Tensor.Core
+│   ├── TensorRuntimeService.cs       # JSInterop (stays here)
+│   └── Native/                       # CUDA sources (build only)
+└── Aspire-Full.Python/
+    ├── PythonDefaults.cs             # Re-export from DevContainer
+    └── python-agents/                # Actual Python code
 ```
