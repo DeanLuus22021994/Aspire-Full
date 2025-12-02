@@ -117,6 +117,7 @@ class RedisClientManager:
     """Manages Redis connections with connection pooling."""
 
     def __init__(self, config: RedisConfig | None = None) -> None:
+        super().__init__()
         self.config = config or RedisConfig()
         self._client: Any = None
         self._pool: Any = None
@@ -191,6 +192,7 @@ class QdrantClientManager:
     """Manages Qdrant connections with memory-optimized settings."""
 
     def __init__(self, config: QdrantConfig | None = None) -> None:
+        super().__init__()
         self.config = config or QdrantConfig()
         self._client: Any = None
 
@@ -392,6 +394,7 @@ class VectorCache:
         redis_config: RedisConfig | None = None,
         qdrant_config: QdrantConfig | None = None,
     ) -> None:
+        super().__init__()
         self.redis = RedisClientManager(redis_config)
         self.qdrant = QdrantClientManager(qdrant_config)
 
