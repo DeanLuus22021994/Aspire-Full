@@ -1,5 +1,10 @@
-"""
+"""Conditional agents-as-tools pattern for Python 3.15+ free-threaded runtime.
 
+Demonstrates dynamic enabling of agent tools based on runtime context.
+Leverages Python 3.15 free-threading for true parallel agent execution.
+
+GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
+"""
 
 from __future__ import annotations
 
@@ -22,9 +27,7 @@ class AppContext(BaseModel):
     Application context for the example.
     """
 
-    language_preference: str = (
-        "spanish_only"  # "spanish_only", "french_spanish", "european"
-    )
+    language_preference: str = "spanish_only"  # "spanish_only", "french_spanish", "european"
 
 
 def french_spanish_enabled(ctx: RunContextWrapper[AppContext], _agent: object) -> bool:
@@ -86,9 +89,7 @@ orchestrator = Agent(
 async def main() -> None:
     """Interactive demo with LLM interaction."""
     print("Agents-as-Tools with Conditional Enabling\n")
-    print(
-        "Demonstrates dynamic enabling of language response tools based on user preferences.\n"
-    )
+    print("Demonstrates dynamic enabling of language response tools based on user preferences.\n")
 
     print("Choose language preference:")
     print("1. Spanish only (1 tool)")

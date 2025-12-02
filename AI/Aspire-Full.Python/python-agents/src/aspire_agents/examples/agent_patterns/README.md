@@ -1,8 +1,23 @@
-# Common agentic patterns
+# Common Agentic Patterns
 
-This folder contains examples of different common patterns for agents.
+This folder contains examples of different common patterns for AI agents, optimized for **Python 3.15+ free-threaded runtime** with **GPU-only** execution.
 
-## Deterministic flows
+## Runtime Requirements
+
+- **Python 3.15+** with free-threading enabled (`PYTHON_GIL=0`)
+- **CUDA GPU** required - no CPU fallback supported
+- **Tensor Core** optimizations for embedding computation
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ASPIRE_SUBAGENT_MAX_CONCURRENT` | 16 | Max concurrent sub-agents |
+| `ASPIRE_AGENT_THREAD_POOL_SIZE` | 8 | Thread pool size |
+| `ASPIRE_TENSOR_BATCH_SIZE` | 32 | Batch size for tensor ops |
+| `CUDA_TENSOR_CORE_ALIGNMENT` | 128 | Memory alignment in bytes |
+
+## Deterministic Flows
 
 A common tactic is to break down a task into a series of smaller steps. Each task can be performed by an agent, and the output of one agent is used as input to the next. For example, if your task was to generate a story, you could break it down into the following steps:
 
