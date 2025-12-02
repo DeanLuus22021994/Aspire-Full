@@ -1,3 +1,12 @@
+# =============================================================================
+# Python 3.15+ Lint Configuration - Free-Threaded Optimized
+# Used by: ruff, pyright, pylint, flake8, pycodestyle
+# =============================================================================
+
+# Target Python version for all linters
+python_version: "3.15"
+free_threaded: true  # PYTHON_GIL=0
+
 line_length: 100
 
 vendor_globs: &vendor_globs
@@ -9,6 +18,13 @@ vendor_globs: &vendor_globs
   - .vscode-*/**
   - node_modules
   - node_modules/**
+  - .venv
+  - .venv/**
+  - __pycache__
+  - __pycache__/**
+  - "*.egg-info"
+  - build
+  - dist
 
 paths:
   lint_roots: &lint_roots
@@ -18,6 +34,39 @@ paths:
     - tools
   exclude_globs: *vendor_globs
 
+# -----------------------------------------------------------------------------
+# Ruff - Fast Python linter (preferred for Python 3.15+)
+# -----------------------------------------------------------------------------
+ruff:
+  target_version: "py315"
+  line_length: 100
+  extend_exclude: *vendor_globs
+  select:
+    - E      # pycodestyle errors
+    - W      # pycodestyle warnings
+    - F      # Pyflakes
+    - I      # isort
+    - UP     # pyupgrade (Python 3.15 patterns)
+    - B      # bugbear
+    - C4     # comprehensions
+    - SIM    # simplify
+    - TCH    # type-checking imports
+    - RUF    # Ruff-specific rules
+  ignore:
+    - E501   # Line too long (handled by formatter)
+    - E203   # Whitespace before ':' (conflicts with black)
+    - W503   # Line break before binary operator
+  per_file_ignores:
+    "__init__.py": ["F401"]  # Unused imports in __init__
+    "conftest.py": ["F401", "F811"]  # pytest fixtures
+  isort:
+    known_first_party: ["aspire_agents"]
+    combine_as_imports: true
+    force_single_line: false
+
+# -----------------------------------------------------------------------------
+# Legacy Linters (for compatibility)
+# -----------------------------------------------------------------------------
 flake8:
   extend_ignore: &flake8_ignore
     - E203
@@ -31,12 +80,16 @@ pylint:
   disable: &pylint_disable
     - missing-docstring
     - invalid-name
+    - too-few-public-methods
+    - too-many-arguments
+    - too-many-instance-attributes
   ignore:
     - .vscode
     - .vscode/extensions
     - .vscode-test
     - .vscode-debug
     - .vscode-extensions
+    - .venv
   ignore_paths: &pylint_vendor_regex
     - ".*/\\.vscode/.*"
     - ".*\\\\.vscode\\\\.*"
@@ -44,11 +97,28 @@ pylint:
     - ".*\\\\.vscode-test\\\\.*"
     - ".*/\\.vscode-.*"
     - ".*\\\\.vscode-.*"
+    - ".*/\\.venv/.*"
   ignore_patterns: *pylint_vendor_regex
 
+# -----------------------------------------------------------------------------
+# Type Checking - Pyright (strict mode)
+# -----------------------------------------------------------------------------
 pyright:
+  python_version: "3.15"
+  type_checking_mode: strict
   exclude: *vendor_globs
+  report_missing_imports: true
+  report_missing_type_stubs: false
+  report_unused_import: warning
+  report_unused_variable: warning
+  # Free-threaded specific: allow Final redefinition in __init__
+  report_constant_redefinition: false
 
+# -----------------------------------------------------------------------------
+# Runner Configuration
+# -----------------------------------------------------------------------------
 runner:
   auto_targets: *lint_roots
   pylint_disable: *pylint_disable
+  prefer_ruff: true  # Use ruff over flake8/pycodestyle when available
+  parallel: true     # Free-threading enables true parallel linting
