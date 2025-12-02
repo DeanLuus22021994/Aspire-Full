@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, override
 
 # Handle optional dependencies without type ignores
 if TYPE_CHECKING:
@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         async def dispose(self) -> None: ...
 
     def create_async_engine(_: str, **__: Any) -> AsyncEngine: ...
+
 else:
     try:
         from sqlalchemy import text
@@ -48,12 +49,10 @@ else:
 class SessionManager:
     """Base class for session managers."""
 
-    async def create_session(
-        self, session_id: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
+    async def create_session(self, session_id: str, metadata: dict[str, Any] | None = None) -> None:
         raise NotImplementedError
 
-    async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def get_session(self, session_id: str) -> dict[str, Any] | None:
         raise NotImplementedError
 
     async def close(self) -> None:
@@ -73,10 +72,10 @@ class PostgreSQLSessionManager(SessionManager):
             connection_string: PostgreSQL connection string
             pool_size: Size of the connection pool
         """
+        super().__init__()
         if create_async_engine is None:
             raise ImportError(
-                "SQLAlchemy is required for PostgreSQL support. "
-                "Install it with: pip install sqlalchemy asyncpg"
+                "SQLAlchemy is required for PostgreSQL support. " "Install it with: pip install sqlalchemy asyncpg"
             )
 
         # Use Any for the engine to avoid static analysis issues when library is missing
@@ -89,39 +88,35 @@ class PostgreSQLSessionManager(SessionManager):
             pool_pre_ping=True,  # Verify connections before using them
         )
 
-    async def create_session(
-        self, session_id: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
+    @override
+    async def create_session(self, session_id: str, metadata: dict[str, Any] | None = None) -> None:
         """Create a new session in the database."""
         # Ensure table exists (in production, use migrations instead)
         async with self._engine.begin() as conn:
             await conn.execute(
                 text(
-                    """
-                CREATE TABLE IF NOT EXISTS sessions (
-                    session_id VARCHAR(255) PRIMARY KEY,
-                    metadata JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """
+                    "CREATE TABLE IF NOT EXISTS sessions ("
+                    "session_id VARCHAR(255) PRIMARY KEY, "
+                    "metadata JSONB, "
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                    "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                    ")"
                 )
             )
 
             # Insert session
             await conn.execute(
                 text(
-                    """
-                INSERT INTO sessions (session_id, metadata)
-                VALUES (:session_id, :metadata)
-                ON CONFLICT (session_id) DO UPDATE
-                SET metadata = :metadata, updated_at = CURRENT_TIMESTAMP
-            """
+                    "INSERT INTO sessions (session_id, metadata) "
+                    "VALUES (:session_id, :metadata) "
+                    "ON CONFLICT (session_id) DO UPDATE "
+                    "SET metadata = :metadata, updated_at = CURRENT_TIMESTAMP"
                 ),
                 {"session_id": session_id, "metadata": json.dumps(metadata or {})},
             )
 
-    async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    @override
+    async def get_session(self, session_id: str) -> dict[str, Any] | None:
         """Retrieve session metadata."""
         async with self._engine.connect() as conn:
             result = await conn.execute(
@@ -133,6 +128,7 @@ class PostgreSQLSessionManager(SessionManager):
                 return dict(json.loads(row[0]))
             return None
 
+    @override
     async def close(self) -> None:
         """Close the connection pool."""
         await self._engine.dispose()
@@ -153,8 +149,7 @@ async def main() -> None:
     postgres_db = "agents"
 
     connection_string = (
-        f"postgresql+asyncpg://{postgres_user}:{postgres_password}"
-        f"@{postgres_host}:{postgres_port}/{postgres_db}"
+        f"postgresql+asyncpg://{postgres_user}:{postgres_password}" f"@{postgres_host}:{postgres_port}/{postgres_db}"
     )
 
     print(f"Connecting to PostgreSQL at {postgres_host}:{postgres_port}...")
@@ -165,9 +160,7 @@ async def main() -> None:
     # Create a session
     session_id = f"user-session-{int(datetime.now().timestamp())}"
     print(f"Creating session: {session_id}")
-    await session_manager.create_session(
-        session_id, {"user_id": "user123", "role": "admin", "theme": "dark"}
-    )
+    await session_manager.create_session(session_id, {"user_id": "user123", "role": "admin", "theme": "dark"})
 
     # Retrieve session
     print("Retrieving session...")
