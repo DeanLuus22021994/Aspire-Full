@@ -3,7 +3,8 @@ Example MCP server using Streamable HTTP transport.
 """
 
 import random
-from typing import Any, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 import requests
 from mcp.server.fastmcp import FastMCP

@@ -107,17 +107,13 @@ from agents.extensions.memory import (
     DaprSession,
 )
 
-os.environ["GRPC_VERBOSITY"] = (
-    "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
-)
+os.environ["GRPC_VERBOSITY"] = "ERROR"  # Suppress gRPC warnings caused by the Dapr Python SDK gRPC connection.
 
 grpc_port = os.environ.get("DAPR_GRPC_PORT", "50001")
 DEFAULT_STATE_STORE = os.environ.get("DAPR_STATE_STORE", "statestore")
 
 
-async def ping_with_retry(
-    session: DaprSession, timeout_seconds: float = 5.0, interval_seconds: float = 0.5
-) -> bool:
+async def ping_with_retry(session: DaprSession, timeout_seconds: float = 5.0, interval_seconds: float = 0.5) -> bool:
     """Retry session.ping() until success or timeout."""
     now = asyncio.get_running_loop().time
     deadline = now() + timeout_seconds
@@ -146,7 +142,7 @@ async def main():
     print()
     print(
         "Start Dapr with: dapr run --app-id myapp --dapr-http-port 3500 "
-        "--dapr-grpc-port 50001 --resources-path ./components"
+        + "--dapr-grpc-port 50001 --resources-path ./components"
     )
     print()
 
@@ -160,14 +156,12 @@ async def main():
         dapr_address=f"localhost:{grpc_port}",
     ) as session:
         # Test Dapr connectivity
-        if not await ping_with_retry(
-            session, timeout_seconds=5.0, interval_seconds=0.5
-        ):
+        if not await ping_with_retry(session, timeout_seconds=5.0, interval_seconds=0.5):
             print("Dapr sidecar is not available!")
             print("Please start Dapr sidecar and try again.")
             print(
                 "Command: dapr run --app-id myapp --dapr-http-port 3500 "
-                "--dapr-grpc-port 50001 --resources-path ./components"
+                + "--dapr-grpc-port 50001 --resources-path ./components"
             )
             return
 
@@ -211,9 +205,7 @@ async def main():
 
         print("=== Conversation Complete ===")
         print("Notice how the agent remembered the context from previous turns!")
-        print(
-            "Dapr session automatically handles conversation history with backend flexibility."
-        )
+        print("Dapr session automatically handles conversation history with " + "backend flexibility.")
 
         # Demonstrate session persistence
         print("\n=== Session Persistence Demo ===")
@@ -290,9 +282,7 @@ async def demonstrate_advanced_features():
     ) as eventual_session:
         if await eventual_session.ping():
             print("Eventual consistency: Better performance, may have slight delays")
-            await eventual_session.add_items(
-                [{"role": "user", "content": "Test eventual"}]
-            )
+            await eventual_session.add_items([{"role": "user", "content": "Test eventual"}])
 
     # Strong consistency (guaranteed read-after-write)
     async with DaprSession.from_address(
@@ -319,12 +309,8 @@ async def demonstrate_advanced_features():
     async with get_tenant_session("tenant-a", "user-123") as tenant_a_session:
         async with get_tenant_session("tenant-b", "user-123") as tenant_b_session:
             if await tenant_a_session.ping() and await tenant_b_session.ping():
-                await tenant_a_session.add_items(
-                    [{"role": "user", "content": "Tenant A data"}]
-                )
-                await tenant_b_session.add_items(
-                    [{"role": "user", "content": "Tenant B data"}]
-                )
+                await tenant_a_session.add_items([{"role": "user", "content": "Tenant A data"}])
+                await tenant_b_session.add_items([{"role": "user", "content": "Tenant B data"}])
                 print("Multi-tenant sessions created with isolated data")
 
 
@@ -332,7 +318,8 @@ async def setup_instructions():
     """Print setup instructions for running the example."""
     print("\n=== Setup Instructions (Multi-store) ===")
     print("\n1. Create components (Redis + PostgreSQL) in ./components:")
-    print("""
+    print(
+        """
 # Save as components/statestore-redis.yaml
 apiVersion: dapr.io/v1alpha1
 kind: Component
@@ -358,35 +345,25 @@ spec:
   metadata:
   - name: connectionString
     value: "host=localhost user=postgres password=postgres dbname=dapr port=5432"
-""")
+"""
+    )
     print("   You can select which one the main demo uses via env var:")
     print("   export DAPR_STATE_STORE=statestore-redis  # or statestore-postgres")
     print("   Start both Redis and PostgreSQL for this multi-store demo:")
     print("   docker run -d -p 6379:6379 redis:7-alpine")
     print(
         "   docker run -d -p 5432:5432 -e POSTGRES_USER=postgres "
-        "-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=dapr postgres:16-alpine"
+        + "-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=dapr postgres:16-alpine"
     )
 
     print("\n   NOTE: Always use secret references for passwords/keys in production!")
     print("   See: https://docs.dapr.io/operations/components/component-secrets/")
 
     print("\n2. Start Dapr sidecar:")
-    print(
-        "   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 "
-        "--resources-path ./components"
-    )
-    print(
-        "\n   IMPORTANT: Always specify --dapr-http-port 3500 to avoid connection errors!"
-    )
-    print(
-        "   If you recreate PostgreSQL while daprd is running, restart daprd or touch the component YAML"
-    )
-    print(
-        "   to trigger a reload, otherwise you may see 'relation "
-        + '\\"state\\"'
-        + " does not exist'."
-    )
+    print("   dapr run --app-id myapp --dapr-http-port 3500 --dapr-grpc-port 50001 " + "--resources-path ./components")
+    print("\n   IMPORTANT: Always specify --dapr-http-port 3500 to avoid connection errors!")
+    print("   If you recreate PostgreSQL while daprd is running, restart daprd or " + "touch the component YAML")
+    print("   to trigger a reload, otherwise you may see 'relation " + '"state"' + " does not exist'.")
 
     print("\n3. Run this example:")
     print("   python examples/memory/dapr_session_example.py")
@@ -428,18 +405,14 @@ async def demonstrate_multi_store():
             dapr_address=f"localhost:{grpc_port}",
         ) as pg_session,
     ):
-        ok_redis = await ping_with_retry(
-            redis_session, timeout_seconds=5.0, interval_seconds=0.5
-        )
-        ok_pg = await ping_with_retry(
-            pg_session, timeout_seconds=5.0, interval_seconds=0.5
-        )
+        ok_redis = await ping_with_retry(redis_session, timeout_seconds=5.0, interval_seconds=0.5)
+        ok_pg = await ping_with_retry(pg_session, timeout_seconds=5.0, interval_seconds=0.5)
         if not (ok_redis and ok_pg):
             print(
                 "----------------------------------------\n"
-                "ERROR: One or both state stores are unavailable. Ensure both components exist and are running. \n"
-                "Run with --setup-env to create the components and start the containers.\n"
-                "----------------------------------------\n"
+                + "ERROR: One or both state stores are unavailable. Ensure both components exist and are running. \n"
+                + "Run with --setup-env to create the components and start the containers.\n"
+                + "----------------------------------------\n"
             )
             print(f"Redis store name: {redis_store}")
             print(f"PostgreSQL store name: {pg_store}")
@@ -449,9 +422,7 @@ async def demonstrate_multi_store():
         await pg_session.clear_session()
 
         await redis_session.add_items([{"role": "user", "content": "Hello from Redis"}])
-        await pg_session.add_items(
-            [{"role": "user", "content": "Hello from PostgreSQL"}]
-        )
+        await pg_session.add_items([{"role": "user", "content": "Hello from PostgreSQL"}])
 
         r_items = await redis_session.get_items()
         p_items = await pg_session.get_items()
@@ -499,9 +470,8 @@ def _container_running(name: str):
 def _ensure_container(name: str, run_args: list[str]) -> None:
     if not _docker_available():
         raise SystemExit(
-            "Docker is required to automatically start containers for '"
-            + name
-            + "'.\nInstall Docker: https://docs.docker.com/get-docker/\n"
+            f"Docker is required to automatically start containers for '{name}'.\n"
+            + "Install Docker: https://docs.docker.com/get-docker/\n"
             + "Alternatively, start the container manually and re-run with --setup-env."
         )
     status = _container_running(name)
@@ -516,9 +486,7 @@ def _ensure_container(name: str, run_args: list[str]) -> None:
     print(f"Created and started container '{name}'.")
 
 
-def setup_environment(
-    components_dir: str = "./components", overwrite: bool = False
-) -> None:
+def setup_environment(components_dir: str = "./components", overwrite: bool = False) -> None:
     """Create Redis/PostgreSQL component files and start containers if available."""
     components_path = Path(components_dir)
     components_path.mkdir(parents=True, exist_ok=True)
@@ -566,12 +534,8 @@ spec:
     value: ""
 """.lstrip()
 
-    _write_text_file(
-        components_path / "statestore-redis.yaml", redis_component, overwrite
-    )
-    _write_text_file(
-        components_path / "statestore-postgres.yaml", postgres_component, overwrite
-    )
+    _write_text_file(components_path / "statestore-redis.yaml", redis_component, overwrite)
+    _write_text_file(components_path / "statestore-postgres.yaml", postgres_component, overwrite)
     _write_text_file(components_path / "statestore.yaml", default_component, overwrite)
 
     print(f"Components written under: {components_path.resolve()}")

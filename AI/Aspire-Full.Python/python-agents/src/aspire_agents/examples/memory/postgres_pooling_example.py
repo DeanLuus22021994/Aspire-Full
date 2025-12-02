@@ -75,7 +75,7 @@ class PostgreSQLSessionManager(SessionManager):
         super().__init__()
         if create_async_engine is None:
             raise ImportError(
-                "SQLAlchemy is required for PostgreSQL support. " "Install it with: pip install sqlalchemy asyncpg"
+                "SQLAlchemy is required for PostgreSQL support. " + "Install it with: pip install sqlalchemy asyncpg"
             )
 
         # Use Any for the engine to avoid static analysis issues when library is missing
@@ -96,11 +96,11 @@ class PostgreSQLSessionManager(SessionManager):
             await conn.execute(
                 text(
                     "CREATE TABLE IF NOT EXISTS sessions ("
-                    "session_id VARCHAR(255) PRIMARY KEY, "
-                    "metadata JSONB, "
-                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-                    "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-                    ")"
+                    + "session_id VARCHAR(255) PRIMARY KEY, "
+                    + "metadata JSONB, "
+                    + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                    + "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                    + ")"
                 )
             )
 
@@ -108,9 +108,9 @@ class PostgreSQLSessionManager(SessionManager):
             await conn.execute(
                 text(
                     "INSERT INTO sessions (session_id, metadata) "
-                    "VALUES (:session_id, :metadata) "
-                    "ON CONFLICT (session_id) DO UPDATE "
-                    "SET metadata = :metadata, updated_at = CURRENT_TIMESTAMP"
+                    + "VALUES (:session_id, :metadata) "
+                    + "ON CONFLICT (session_id) DO UPDATE "
+                    + "SET metadata = :metadata, updated_at = CURRENT_TIMESTAMP"
                 ),
                 {"session_id": session_id, "metadata": json.dumps(metadata or {})},
             )

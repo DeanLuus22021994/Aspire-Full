@@ -95,14 +95,12 @@ async def main():
             enc_item = cast(EncryptedEnvelope, item)
             print(
                 f"  {i}. Encrypted envelope: __enc__={enc_item['__enc__']}, "
-                f"payload length={len(enc_item['payload'])}"
+                + f"payload length={len(enc_item['payload'])}"
             )
         else:
             print(f"  {i}. Unencrypted item: {item}")
 
-    print(
-        f"\nAll {len(raw_items)} items are stored encrypted with TTL-based expiration."
-    )
+    print(f"\nAll {len(raw_items)} items are stored encrypted with TTL-based expiration.")
 
     # Clean up
     underlying_session.close()
