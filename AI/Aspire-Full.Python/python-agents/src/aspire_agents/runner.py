@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, Unpack
 
 from .compute import get_compute_service
 from .config import AgentConfig, ModelConfig
@@ -29,6 +29,7 @@ from .gpu import TensorCoreInfo, ensure_tensor_core_gpu
 if TYPE_CHECKING:
     from agents import RunResult
 
+    from ._kwargs import RunKwargs
     from .compute import BatchComputeService
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
@@ -195,7 +196,7 @@ class AgentRunner:
             )
         return self._agent
 
-    async def run(self, prompt: str) -> AgentResult:
+    async def run(self, prompt: str, **kwargs: Unpack[RunKwargs]) -> AgentResult:
         """Run the agent with the given prompt.
 
         Uses the OpenAI Agents SDK Runner.run() method with integrated
@@ -203,11 +204,13 @@ class AgentRunner:
 
         Args:
             prompt: The user prompt to process
+            **kwargs: Type-safe run configuration (stream, max_iterations, timeout_seconds)
 
         Returns:
             AgentResult with output and metadata
         """
         agent = self._ensure_agent()
+        _ = kwargs  # Currently unused, for future extension
 
         logger.debug(
             "Running agent '%s' with prompt: %s...",

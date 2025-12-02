@@ -25,9 +25,12 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Final, Literal, cast
+from typing import TYPE_CHECKING, Any, Final, Literal, Unpack, cast
 
 import yaml
+
+if TYPE_CHECKING:
+    from ._kwargs import AgentKwargs, ModelKwargs, TensorConfigKwargs
 
 # Type alias for supported providers
 ProviderLiteral = Literal["openai", "azure", "github", "anthropic", "local"]
@@ -125,6 +128,30 @@ class TensorConfig:
         """
         return cls()
 
+    @classmethod
+    def from_kwargs(cls, **kwargs: Unpack[TensorConfigKwargs]) -> TensorConfig:
+        """Create TensorConfig from type-safe kwargs.
+
+        Thread-safe: TypedDict ensures compile-time validation.
+        GPU is always required.
+
+        Args:
+            **kwargs: Type-checked kwargs from TensorConfigKwargs
+
+        Returns:
+            Immutable TensorConfig instance
+        """
+        return cls(
+            use_gpu=kwargs.get("use_gpu", True),
+            use_tensor_cores=kwargs.get("use_tensor_cores", True),
+            use_flash_attention=kwargs.get("use_flash_attention", True),
+            batch_size=kwargs.get("batch_size", _DEFAULT_BATCH_SIZE),
+            max_sequence_length=kwargs.get("max_sequence_length", 512),
+            use_torch_compile=kwargs.get("use_torch_compile", True),
+            mixed_precision=kwargs.get("mixed_precision", True),
+            tensor_alignment=kwargs.get("tensor_alignment", _TENSOR_ALIGNMENT),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class ModelConfig:
@@ -164,6 +191,26 @@ class ModelConfig:
             ModelConfig with default provider and specified name
         """
         return cls(name=model_name)
+
+    @classmethod
+    def from_kwargs(cls, **kwargs: Unpack[ModelKwargs]) -> ModelConfig:
+        """Create ModelConfig from type-safe kwargs.
+
+        Thread-safe: TypedDict ensures compile-time validation.
+
+        Args:
+            **kwargs: Type-checked kwargs from ModelKwargs
+
+        Returns:
+            Immutable ModelConfig instance
+        """
+        return cls(
+            provider=kwargs.get("provider", DEFAULT_PROVIDER),  # type: ignore[arg-type]
+            name=kwargs.get("name", DEFAULT_MODEL),
+            deployment=kwargs.get("deployment"),
+            endpoint=kwargs.get("endpoint"),
+            api_version=kwargs.get("api_version"),
+        )
 
     @classmethod
     def from_mapping(cls, data: Any) -> ModelConfig:
@@ -249,6 +296,36 @@ class AgentConfig:
     def instructions(self) -> str:
         """Alias for prompt (backwards compatibility)."""
         return self.prompt
+
+    @classmethod
+    def from_kwargs(
+        cls,
+        model: ModelConfig | None = None,
+        tensor: TensorConfig | None = None,
+        **kwargs: Unpack[AgentKwargs],
+    ) -> AgentConfig:
+        """Create AgentConfig from type-safe kwargs.
+
+        Thread-safe: TypedDict ensures compile-time validation.
+
+        Args:
+            model: Optional ModelConfig (uses default if not provided)
+            tensor: Optional TensorConfig (uses default if not provided)
+            **kwargs: Type-checked kwargs from AgentKwargs
+
+        Returns:
+            Immutable AgentConfig instance
+        """
+        return cls(
+            name=kwargs.get("name", "default-agent"),
+            description=kwargs.get("description", ""),
+            prompt=kwargs.get("prompt", "You are a helpful AI assistant."),
+            model=model or ModelConfig(),
+            tensor=tensor or TensorConfig(),
+            temperature=kwargs.get("temperature", 0.0),
+            top_p=kwargs.get("top_p"),
+            max_tokens=kwargs.get("max_tokens"),
+        )
 
     @classmethod
     def from_file(cls, path: Path) -> AgentConfig:

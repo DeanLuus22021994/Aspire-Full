@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, Unpack
 
 import torch
 
@@ -32,6 +32,8 @@ from .compute import get_compute_service
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
+
+    from ._kwargs import GuardrailKwargs
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -324,6 +326,7 @@ def reset_guardrail_service() -> None:
 def semantic_input_guardrail(
     category: str = "harmful",
     threshold: float = 0.4,
+    **kwargs: Unpack[GuardrailKwargs],
 ) -> Callable[[ToolInputGuardrailData], Awaitable[ToolGuardrailFunctionOutput]]:
     """Create a semantic input guardrail for a specific category.
 
@@ -333,6 +336,7 @@ def semantic_input_guardrail(
     Args:
         category: Category to check against (default: "harmful")
         threshold: Similarity threshold (default: 0.4)
+        **kwargs: Type-safe additional configuration from GuardrailKwargs
 
     Returns:
         Async guardrail function
@@ -344,6 +348,9 @@ def semantic_input_guardrail(
         ...     semantic_input_guardrail("harmful", 0.5)
         ... )
     """
+    # Override with kwargs if provided
+    effective_category = kwargs.get("category", category)
+    effective_threshold = kwargs.get("threshold", threshold)
 
     async def guardrail(data: ToolInputGuardrailData) -> ToolGuardrailFunctionOutput:
         service = get_guardrail_service()

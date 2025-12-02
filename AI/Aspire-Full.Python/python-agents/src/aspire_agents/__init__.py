@@ -95,6 +95,25 @@ from .subagent import (
     reset_orchestrator,
 )
 
+# Type-safe kwargs patterns for thread-safe configuration
+from ._kwargs import (
+    AgentKwargs,
+    AgentRunKwargs,
+    BatchEmbeddingKwargs,
+    ComputeKwargs,
+    EmbeddingKwargs,
+    FrozenAgentKwargs,
+    FrozenComputeKwargs,
+    GuardrailKwargs,
+    ModelKwargs,
+    RunKwargs,
+    SubAgentKwargs,
+    SupportsAgentRun,
+    SupportsComputeKwargs,
+    SupportsEmbedding,
+    TensorConfigKwargs,
+)
+
 
 def _get_version() -> str:
     """Get package version with fallback for development installs."""
@@ -164,4 +183,22 @@ __all__: Final[tuple[str, ...]] = (
     "ASPIRE_TENSOR_OFFLOAD_ENABLED",
     "ASPIRE_SUBAGENT_GPU_SHARE",
     "CUDA_TENSOR_CORE_ALIGNMENT",
+    # Type-safe Kwargs (TypedDict patterns)
+    "ComputeKwargs",
+    "SubAgentKwargs",
+    "TensorConfigKwargs",
+    "ModelKwargs",
+    "AgentKwargs",
+    "RunKwargs",
+    "AgentRunKwargs",
+    "GuardrailKwargs",
+    "EmbeddingKwargs",
+    "BatchEmbeddingKwargs",
+    # Protocols
+    "SupportsComputeKwargs",
+    "SupportsEmbedding",
+    "SupportsAgentRun",
+    # Frozen kwargs containers
+    "FrozenComputeKwargs",
+    "FrozenAgentKwargs",
 )

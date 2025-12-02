@@ -1,5 +1,9 @@
-"""
-This module demonstrates using an LLM as a judge.
+"""LLM-as-a-judge pattern for Python 3.15+ free-threaded runtime.
+
+Demonstrates iterative improvement via LLM feedback loops.
+Thread-safe via immutable dataclasses and Literal types.
+
+GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 """
 
 from __future__ import annotations
@@ -63,9 +67,7 @@ async def main() -> None:
             )
 
             input_items = story_outline_result.to_input_list()
-            latest_outline = ItemHelpers.text_message_outputs(
-                story_outline_result.new_items
-            )
+            latest_outline = ItemHelpers.text_message_outputs(story_outline_result.new_items)
             print("Story outline generated")
 
             evaluator_result = await Runner.run(evaluator, input_items)
@@ -79,9 +81,7 @@ async def main() -> None:
 
             print("Re-running with feedback")
 
-            input_items.append(
-                {"content": f"Feedback: {result.feedback}", "role": "user"}
-            )
+            input_items.append({"content": f"Feedback: {result.feedback}", "role": "user"})
 
     print(f"Final story outline: {latest_outline}")
 

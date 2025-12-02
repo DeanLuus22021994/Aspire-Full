@@ -1,8 +1,15 @@
-"""
-This module demonstrates using agents as tools.
+"""Agents-as-tools pattern for Python 3.15+ free-threaded runtime.
+
+Demonstrates using agents as callable tools within an orchestrator.
+Leverages Python 3.15 free-threading for parallel tool execution.
+
+GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 """
 
+from __future__ import annotations
+
 import asyncio
+from typing import Final
 
 from agents import Agent, ItemHelpers, MessageOutputItem, Runner, trace
 
@@ -53,10 +60,7 @@ orchestrator_agent = Agent(
 
 synthesizer_agent = Agent(
     name="synthesizer_agent",
-    instructions=(
-        "You inspect translations, correct them if needed, "
-        "and produce a final concatenated response."
-    ),
+    instructions=("You inspect translations, correct them if needed, " "and produce a final concatenated response."),
 )
 
 
@@ -76,9 +80,7 @@ async def main() -> None:
                 if text:
                     print(f"  - Translation step: {text}")
 
-        synthesizer_result = await Runner.run(
-            synthesizer_agent, orchestrator_result.to_input_list()
-        )
+        synthesizer_result = await Runner.run(synthesizer_agent, orchestrator_result.to_input_list())
 
     print(f"\n\nFinal response:\n{synthesizer_result.final_output}")
 

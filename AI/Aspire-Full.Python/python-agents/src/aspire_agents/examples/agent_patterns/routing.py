@@ -1,10 +1,16 @@
+"""Handoffs and routing pattern for Python 3.15+ free-threaded runtime.
+
+Demonstrates language-based routing via agent handoffs.
+Streaming responses with GPU-accelerated tensor core support.
+
+GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 """
-This module demonstrates the handoffs/routing pattern.
-"""
+
+from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any
+from typing import Final
 
 from agents import (
     Agent,
@@ -13,13 +19,7 @@ from agents import (
     TResponseInputItem,
     trace,
 )
-
-try:
-    from aspire_agents.gpu import ensure_tensor_core_gpu
-except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        """Ensure that the tensor core GPU is available."""
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 from openai.types.responses import (

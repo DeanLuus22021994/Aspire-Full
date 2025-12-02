@@ -1,11 +1,16 @@
 """
-This module demonstrates using agents as tools with conditional logic.
-"""
+
+
+from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING, Final
 
 from agents import Agent, RunContextWrapper, Runner, trace
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from agents import Tool
 
 # This example demonstrates the agents-as-tools pattern with conditional tool enabling.
 # Agent tools are dynamically enabled/disabled based on user access levels using the

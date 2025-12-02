@@ -6,8 +6,10 @@ This module demonstrates output guardrails using:
 - Thread-safe guardrail evaluation for Python 3.15+ free-threading
 
 Environment Variables:
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
 - ASPIRE_TENSOR_BATCH_SIZE: Batch size for embeddings (default: 32)
+- CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
+
+GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 """
 
 from __future__ import annotations

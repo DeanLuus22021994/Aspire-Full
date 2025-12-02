@@ -1,16 +1,18 @@
+"""Streaming guardrails for Python 3.15+ free-threaded runtime.
+
+Demonstrates real-time guardrail checking during streaming output.
+GPU-accelerated with Tensor Core support for low-latency checks.
+
+GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
+"""
+
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Final
 
 from agents import Agent, Runner
-
-try:
-    from aspire_agents.gpu import ensure_tensor_core_gpu
-except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        """Ensure that the tensor core GPU is available."""
+from aspire_agents.gpu import ensure_tensor_core_gpu
 
 
 from openai.types.responses import ResponseTextDeltaEvent
@@ -27,8 +29,7 @@ from pydantic import BaseModel, Field
 agent = Agent(
     name="Assistant",
     instructions=(
-        "You are a helpful assistant. You ALWAYS write long responses, "
-        "making sure to be verbose and detailed."
+        "You are a helpful assistant. You ALWAYS write long responses, " "making sure to be verbose and detailed."
     ),
 )
 
@@ -38,12 +39,8 @@ class GuardrailOutput(BaseModel):
     Output schema for the guardrail agent.
     """
 
-    reasoning: str = Field(
-        description="Reasoning about whether the response could be understood by a ten year old."
-    )
-    is_readable_by_ten_year_old: bool = Field(
-        description="Whether the response is understandable by a ten year old."
-    )
+    reasoning: str = Field(description="Reasoning about whether the response could be understood by a ten year old.")
+    is_readable_by_ten_year_old: bool = Field(description="Whether the response is understandable by a ten year old.")
 
 
 guardrail_agent = Agent(
@@ -80,9 +77,7 @@ async def main() -> None:
     guardrail_task = None
 
     async for event in result.stream_events():
-        if event.type == "raw_response_event" and isinstance(
-            event.data, ResponseTextDeltaEvent
-        ):
+        if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
             print(event.data.delta, end="", flush=True)
             current_text += event.data.delta
 
