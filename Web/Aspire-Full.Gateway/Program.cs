@@ -1,5 +1,5 @@
-using Aspire_Full.Embeddings;
-using Aspire_Full.Embeddings.Extensions;
+using Aspire_Full.Connectors.Embeddings;
+using Aspire_Full.Connectors.DependencyInjection;
 using Aspire_Full.Gateway.Data;
 using Aspire_Full.Gateway.Endpoints;
 using Aspire_Full.Gateway.Services;

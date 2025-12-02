@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Re-exports PythonDefaults from Infra/DevContainer -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Infra\Aspire-Full.DevContainer\Aspire-Full.DevContainer.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="python-agents\**\*" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="tools\**\*" CopyToOutputDirectory="PreserveNewest" />

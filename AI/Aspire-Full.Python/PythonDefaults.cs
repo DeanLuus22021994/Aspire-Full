@@ -1,7 +1,5 @@
-namespace Aspire_Full.Python;
+// Moved to Infra/Aspire-Full.DevContainer/Configuration/PythonDefaults.cs
+// This file re-exports for backward compatibility.
 
-public static class PythonDefaults
-{
-    public const string PythonVersion = "3.14.0a1-free-threaded+gil";
-    public const string PythonRuntime = "cpython-free-threaded";
-}
+global using PythonDefaults = Aspire_Full.DevContainer.Configuration.PythonDefaults;
+

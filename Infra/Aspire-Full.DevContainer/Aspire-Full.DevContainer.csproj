@@ -16,10 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\AI\Aspire-Full.Python\Aspire-Full.Python.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="..\.devcontainer\**\*" Link="DevContainerAssets\%(RecursiveDir)%(Filename)%(Extension)" Visible="false" />
   </ItemGroup>
 

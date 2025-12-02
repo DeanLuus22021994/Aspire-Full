@@ -1,7 +1,8 @@
+using Aspire_Full.Tensor.Core.Orchestration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Aspire_Full.Tensor.Core.Orchestration;
+namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extension methods for registering tensor orchestration services.

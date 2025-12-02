@@ -1,7 +1,7 @@
 using Aspire_Full.Api.Data;
 using Aspire_Full.Connectors;
 using Aspire_Full.DockerRegistry.Configuration;
-using Aspire_Full.Tensor;
+using Aspire_Full.Tensor.Core;
 using Aspire_Full.VectorStore.Extensions;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;

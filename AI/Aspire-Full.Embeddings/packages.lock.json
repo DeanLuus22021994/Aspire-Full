@@ -2,60 +2,6 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "Microsoft.Extensions.AI": {
-        "type": "Direct",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "1J4KAyZQsdHt0Dcq5Qsb9l+c5mtZM8F6//VwQse8iIov874aFX1E11UA+Fy/6Krkg2LCw8EtRnobeyADW4slNQ==",
-        "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "System.Numerics.Tensors": "10.0.0"
-        }
-      },
-      "Microsoft.ML.OnnxRuntime.Gpu": {
-        "type": "Direct",
-        "requested": "[1.20.1, )",
-        "resolved": "1.20.1",
-        "contentHash": "ApiYgwyyAJhK8zQO3eCPrBOs38c4IWS/00a/rsTApDuWYfX2opK6LuTms7brySWNdAckkxBC4apGCrkDZrZxcw==",
-        "dependencies": {
-          "Microsoft.ML.OnnxRuntime.Gpu.Linux": "1.20.1",
-          "Microsoft.ML.OnnxRuntime.Gpu.Windows": "1.20.1",
-          "Microsoft.ML.OnnxRuntime.Managed": "1.20.1"
-        }
-      },
-      "Microsoft.ML.Tokenizers": {
-        "type": "Direct",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "V7hC7aHOpIBJPu5QqCrLZql/3AhDqfO+Kg/hwuxV0vGl+Ihq9f20bTc8NAocwA7O0wJmYpuwNvAE5+bOOqeoqg==",
-        "dependencies": {
-          "Google.Protobuf": "3.27.1"
-        }
-      },
-      "Microsoft.SemanticKernel": {
-        "type": "Direct",
-        "requested": "[1.67.1, )",
-        "resolved": "1.67.1",
-        "contentHash": "iQGVgpiX0wooQyBbr3qUxnOpxVc+Asxwa6nU2ZJ9gdh+1PmK2vRqkm2LzufF1Jg/4FJCRRXe7rVMYLiAZd6hlw==",
-        "dependencies": {
-          "Microsoft.SemanticKernel.Connectors.AzureOpenAI": "1.67.1",
-          "Microsoft.SemanticKernel.Core": "1.67.1"
-        }
-      },
-      "Microsoft.SemanticKernel.Connectors.OpenAI": {
-        "type": "Direct",
-        "requested": "[1.67.1, )",
-        "resolved": "1.67.1",
-        "contentHash": "I4A2qX6IuA3WiWuxz2aKRYsrUcokorW5BXeAfEnPwkVYNUo3Rq9mXbLSWgON7A5q7lALwuLJWLO9w5B49adkmQ==",
-        "dependencies": {
-          "Microsoft.Extensions.AI.OpenAI": "9.10.0-preview.1.25513.3",
-          "Microsoft.SemanticKernel.Core": "1.67.1",
-          "OpenAI": "2.5.0"
-        }
-      },
       "Azure.AI.OpenAI": {
         "type": "Transitive",
         "resolved": "2.5.0-beta.1",
@@ -320,10 +266,13 @@
           "Aspire-Full.Shared": "[1.0.0, )",
           "Aspire-Full.Tensor": "[1.0.0, )",
           "Aspire-Full.VectorStore": "[1.0.0, )",
+          "Microsoft.Extensions.AI": "[10.0.1, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.0, )",
           "Microsoft.Extensions.Options": "[10.0.0, )",
           "Microsoft.Extensions.Options.DataAnnotations": "[10.0.0, )",
+          "Microsoft.ML.OnnxRuntime.Gpu": "[1.20.1, )",
+          "Microsoft.ML.Tokenizers": "[1.0.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.12.0, )"
         }
       },
@@ -385,6 +334,19 @@
           "Microsoft.Extensions.Options": "10.0.0",
           "Microsoft.Extensions.Primitives": "10.0.0",
           "Qdrant.Client": "1.15.1"
+        }
+      },
+      "Microsoft.Extensions.AI": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "1J4KAyZQsdHt0Dcq5Qsb9l+c5mtZM8F6//VwQse8iIov874aFX1E11UA+Fy/6Krkg2LCw8EtRnobeyADW4slNQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.0.1",
+          "Microsoft.Extensions.Caching.Abstractions": "10.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
+          "System.Numerics.Tensors": "10.0.0"
         }
       },
       "Microsoft.Extensions.Configuration.Abstractions": {
@@ -467,6 +429,47 @@
         "requested": "[10.0.0, )",
         "resolved": "10.0.0",
         "contentHash": "Qfs4KtmfMUQ/BtD4jdt753kiAa7frm1QVms8UHiFArOokoXBkBOOKE2N5APdt3BlAdTSFJNiuDFfgDzVq/3EZg=="
+      },
+      "Microsoft.ML.OnnxRuntime.Gpu": {
+        "type": "CentralTransitive",
+        "requested": "[1.20.1, )",
+        "resolved": "1.20.1",
+        "contentHash": "ApiYgwyyAJhK8zQO3eCPrBOs38c4IWS/00a/rsTApDuWYfX2opK6LuTms7brySWNdAckkxBC4apGCrkDZrZxcw==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Gpu.Linux": "1.20.1",
+          "Microsoft.ML.OnnxRuntime.Gpu.Windows": "1.20.1",
+          "Microsoft.ML.OnnxRuntime.Managed": "1.20.1"
+        }
+      },
+      "Microsoft.ML.Tokenizers": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "V7hC7aHOpIBJPu5QqCrLZql/3AhDqfO+Kg/hwuxV0vGl+Ihq9f20bTc8NAocwA7O0wJmYpuwNvAE5+bOOqeoqg==",
+        "dependencies": {
+          "Google.Protobuf": "3.27.1"
+        }
+      },
+      "Microsoft.SemanticKernel": {
+        "type": "CentralTransitive",
+        "requested": "[1.67.1, )",
+        "resolved": "1.67.1",
+        "contentHash": "iQGVgpiX0wooQyBbr3qUxnOpxVc+Asxwa6nU2ZJ9gdh+1PmK2vRqkm2LzufF1Jg/4FJCRRXe7rVMYLiAZd6hlw==",
+        "dependencies": {
+          "Microsoft.SemanticKernel.Connectors.AzureOpenAI": "1.67.1",
+          "Microsoft.SemanticKernel.Core": "1.67.1"
+        }
+      },
+      "Microsoft.SemanticKernel.Connectors.OpenAI": {
+        "type": "CentralTransitive",
+        "requested": "[1.67.1, )",
+        "resolved": "1.67.1",
+        "contentHash": "I4A2qX6IuA3WiWuxz2aKRYsrUcokorW5BXeAfEnPwkVYNUo3Rq9mXbLSWgON7A5q7lALwuLJWLO9w5B49adkmQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.OpenAI": "9.10.0-preview.1.25513.3",
+          "Microsoft.SemanticKernel.Core": "1.67.1",
+          "OpenAI": "2.5.0"
+        }
       },
       "Microsoft.SemanticKernel.Connectors.Qdrant": {
         "type": "CentralTransitive",

@@ -374,6 +374,27 @@
           "Microsoft.Extensions.Compliance.Abstractions": "10.0.0"
         }
       },
+      "Microsoft.ML.OnnxRuntime.Gpu.Linux": {
+        "type": "Transitive",
+        "resolved": "1.20.1",
+        "contentHash": "OxYK8psnuboNIbB36w6HVkrzavo2BjJf7sTN6IA9CSDXClUXHDGji8DGdJNq3MnrywroxuzVcglGlVsXdDzSZg==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "1.20.1"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime.Gpu.Windows": {
+        "type": "Transitive",
+        "resolved": "1.20.1",
+        "contentHash": "/qRNtAOYQxicitlFHAYbEJJdvzAFl8aC6gShI3f4XRE9MefOVBJtCYY6/58ooevnxFTrAoDrB097d/rtIC/qUg==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "1.20.1"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime.Managed": {
+        "type": "Transitive",
+        "resolved": "1.20.1",
+        "contentHash": "+EVcEcKdq3gkw6iu8TYl2coJxfPnMi1YQc6eZ80BGNlw6mbBCxNGe6h4udDCwENYWsXFvYjoBc6412t40tl4ew=="
+      },
       "Microsoft.NET.StringTools": {
         "type": "Transitive",
         "resolved": "17.14.28",
@@ -680,6 +701,9 @@
           "Aspire-Full.Shared": "[1.0.0, )",
           "Aspire-Full.Tensor": "[1.0.0, )",
           "Aspire-Full.VectorStore": "[1.0.0, )",
+          "Microsoft.Extensions.AI": "[10.0.1, )",
+          "Microsoft.ML.OnnxRuntime.Gpu": "[1.20.1, )",
+          "Microsoft.ML.Tokenizers": "[1.0.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.12.0, )"
         }
       },
@@ -782,6 +806,26 @@
         "contentHash": "Vth/omSCX2vR0JabzSRU/hdPhr0CvUVZlaS2lJPWHrEwvak8ntrQLDtLMtMiWKSvviGBe/WmjUW8gA3qqn9tjw==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "9.5.0"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime.Gpu": {
+        "type": "CentralTransitive",
+        "requested": "[1.20.1, )",
+        "resolved": "1.20.1",
+        "contentHash": "ApiYgwyyAJhK8zQO3eCPrBOs38c4IWS/00a/rsTApDuWYfX2opK6LuTms7brySWNdAckkxBC4apGCrkDZrZxcw==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Gpu.Linux": "1.20.1",
+          "Microsoft.ML.OnnxRuntime.Gpu.Windows": "1.20.1",
+          "Microsoft.ML.OnnxRuntime.Managed": "1.20.1"
+        }
+      },
+      "Microsoft.ML.Tokenizers": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "V7hC7aHOpIBJPu5QqCrLZql/3AhDqfO+Kg/hwuxV0vGl+Ihq9f20bTc8NAocwA7O0wJmYpuwNvAE5+bOOqeoqg==",
+        "dependencies": {
+          "Google.Protobuf": "3.27.1"
         }
       },
       "Microsoft.SemanticKernel": {

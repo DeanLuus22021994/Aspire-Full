@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Aspire_Full.Python;
+using Aspire_Full.DevContainer.Configuration;
 
 namespace Aspire_Full.DevContainer;
 

@@ -19,12 +19,6 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
     private int _currentUtilization;
     private bool _disposed;
 
-    // Metrics
-    private static readonly Meter s_meter = new("Aspire.Tensor.Core.Runtime", "1.0.0");
-    private static readonly Counter<long> s_operationsCounter = s_meter.CreateCounter<long>("tensor.operations.total");
-    private static readonly Histogram<double> s_operationDuration = s_meter.CreateHistogram<double>("tensor.operation.duration_ms");
-    private static readonly Counter<long> s_bytesProcessed = s_meter.CreateCounter<long>("tensor.bytes.processed");
-
     public TensorRuntime(ILogger<TensorRuntime> logger, int maxBufferCount = 16, nuint defaultBufferSize = 64 * 1024 * 1024)
     {
         _logger = logger;
@@ -63,37 +57,37 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
     public float CosineSimilarity(ReadOnlySpan<float> x, ReadOnlySpan<float> y)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "cosine_similarity"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "cosine_similarity"));
         return NativeTensorContext.CosineSimilarity(x, y);
     }
 
     public float Norm(ReadOnlySpan<float> x)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "norm"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "norm"));
         return NativeTensorContext.Norm(x);
     }
 
     public float Dot(ReadOnlySpan<float> x, ReadOnlySpan<float> y)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "dot"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "dot"));
         return NativeTensorContext.Dot(x, y);
     }
 
     public void SoftMax(ReadOnlySpan<float> x, Span<float> destination)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "softmax"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "softmax"));
         NativeTensorContext.SoftMax(x, destination);
     }
 
     public void ReLU(ReadOnlySpan<float> x, Span<float> destination)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "relu"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "relu"));
         NativeTensorContext.ReLU(x, destination);
     }
 
     public void MatrixMultiply(ReadOnlySpan<float> a, ReadOnlySpan<float> b, Span<float> c, int m, int n, int k)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "matmul"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "matmul"));
 
         if (IsGpuAvailable)
         {
@@ -120,7 +114,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
             // Copy result back
             cBuffer.Buffer.AsSpan<float>().CopyTo(c);
 
-            s_operationDuration.Record(metrics.compute_time_ms);
+            TensorDiagnostics.OperationDuration.Record(metrics.compute_time_ms);
         }
         else
         {
@@ -142,7 +136,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
     public void MeanPooling(ReadOnlySpan<float> input, ReadOnlySpan<long> attentionMask, Span<float> output, int batchSize, int seqLen, int hiddenSize)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "mean_pooling"));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "mean_pooling"));
 
         if (IsGpuAvailable)
         {
@@ -166,7 +160,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
             outputBuffer.Buffer.AsSpan<float>().CopyTo(output);
 
-            s_operationDuration.Record(metrics.compute_time_ms);
+            TensorDiagnostics.OperationDuration.Record(metrics.compute_time_ms);
         }
         else
         {
@@ -193,8 +187,8 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
     public bool ValidateContent(ReadOnlySpan<float> data, float threshold, out NativeTensorContext.TensorMetrics metrics)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "validate"));
-        s_bytesProcessed.Add(data.Length * sizeof(float));
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "validate"));
+        TensorDiagnostics.BytesProcessed.Add(data.Length * sizeof(float));
         return NativeTensorContext.ValidateContent(data, threshold, out metrics);
     }
 
@@ -226,7 +220,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
         if (batchSize == 0)
             return [];
 
-        s_operationsCounter.Add(batchSize, new KeyValuePair<string, object?>("operation", "cosine_similarity_batch"));
+        TensorDiagnostics.OperationsCounter.Add(batchSize, new KeyValuePair<string, object?>("operation", "cosine_similarity_batch"));
 
         var results = new float[batchSize];
 
@@ -260,7 +254,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
         if (requests.Length == 0)
             return [];
 
-        s_operationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "matmul_batch"));
+        TensorDiagnostics.OperationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "matmul_batch"));
 
         var results = new Memory<float>[requests.Length];
 
@@ -288,7 +282,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                     cBuffer.Buffer.DevicePointer,
                     req.M, req.N, req.K, ref metrics);
 
-                s_operationDuration.Record(metrics.compute_time_ms, new KeyValuePair<string, object?>("batch_index", i));
+                TensorDiagnostics.OperationDuration.Record(metrics.compute_time_ms, new KeyValuePair<string, object?>("batch_index", i));
 
                 var result = new float[req.M * req.N];
                 cBuffer.Buffer.AsSpan<float>().CopyTo(result);
@@ -318,7 +312,7 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
         if (requests.Length == 0)
             return [];
 
-        s_operationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "mean_pooling_batch"));
+        TensorDiagnostics.OperationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "mean_pooling_batch"));
 
         var results = new Memory<float>[requests.Length];
 
@@ -345,9 +339,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
     public void RecordOperation(GpuOperationType type, double durationMs, long bytesProcessed)
     {
-        s_operationsCounter.Add(1, new KeyValuePair<string, object?>("type", type.ToString()));
-        s_operationDuration.Record(durationMs, new KeyValuePair<string, object?>("type", type.ToString()));
-        s_bytesProcessed.Add(bytesProcessed);
+        TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("type", type.ToString()));
+        TensorDiagnostics.OperationDuration.Record(durationMs, new KeyValuePair<string, object?>("type", type.ToString()));
+        TensorDiagnostics.BytesProcessed.Add(bytesProcessed);
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)

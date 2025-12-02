@@ -32,8 +32,6 @@ public interface ITensorVectorBridge
 /// </summary>
 public sealed class TensorJobCoordinator : ITensorJobCoordinator
 {
-    private static readonly ActivitySource s_activitySource = new("Aspire-Full.Tensor.Core");
-
     private readonly ITensorJobStore _store;
     private readonly ITensorVectorBridge _vectorBridge;
     private readonly ILogger<TensorJobCoordinator> _logger;
@@ -55,7 +53,7 @@ public sealed class TensorJobCoordinator : ITensorJobCoordinator
     public async Task<TensorJobStatus> SubmitAsync(TensorJobSubmission submission, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(submission);
-        using var activity = s_activitySource.StartActivity("TensorJobCoordinator.Submit");
+        using var activity = TensorDiagnostics.ActivitySource.StartActivity("TensorJobCoordinator.Submit");
         activity?.SetTag("tensor.model_id", submission.ModelId);
         activity?.SetTag("tensor.persist", submission.PersistToVectorStore);
 
