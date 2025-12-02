@@ -17,7 +17,6 @@ from __future__ import annotations
 from collections.abc import Callable, Generator, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from enum import Enum, auto
 from types import TracebackType
 from typing import (
     Any,
@@ -30,6 +29,12 @@ from typing import (
     overload,
     runtime_checkable,
 )
+
+from ._enums import PytestExitCode, PytestOutcome
+
+# Re-export for backwards compatibility
+ExitCodeEnum = PytestExitCode
+TestOutcome = PytestOutcome
 
 # ============================================================================
 # Type Variables
@@ -64,33 +69,6 @@ MarkName: TypeAlias = Literal[
 
 ExitCode: TypeAlias = Literal[0, 1, 2, 3, 4, 5]
 """Pytest exit codes: 0=OK, 1=TESTS_FAILED, 2=INTERRUPTED, 3=INTERNAL_ERROR, 4=USAGE_ERROR, 5=NO_TESTS."""
-
-
-# ============================================================================
-# Enums
-# ============================================================================
-
-
-class ExitCodeEnum(Enum):
-    """Pytest exit codes enumeration."""
-
-    OK = 0
-    TESTS_FAILED = 1
-    INTERRUPTED = 2
-    INTERNAL_ERROR = 3
-    USAGE_ERROR = 4
-    NO_TESTS_COLLECTED = 5
-
-
-class TestOutcome(Enum):
-    """Test execution outcomes."""
-
-    PASSED = auto()
-    FAILED = auto()
-    SKIPPED = auto()
-    XFAILED = auto()  # Expected failure
-    XPASSED = auto()  # Unexpectedly passed
-    ERROR = auto()  # Error during setup/teardown
 
 
 # ============================================================================

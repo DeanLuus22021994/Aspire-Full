@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import (
     Any,
     Final,
@@ -25,6 +24,8 @@ from typing import (
     cast,
 )
 
+from ._enums import VendorCategory
+
 # ============================================================================
 # Type Variables
 # ============================================================================
@@ -32,34 +33,6 @@ from typing import (
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 P = TypeVar("P")
-
-
-# ============================================================================
-# Vendor Categories
-# ============================================================================
-
-
-class VendorCategory(Enum):
-    """Categories of vendor abstractions."""
-
-    # Core ML/AI
-    TORCH = auto()
-    TRANSFORMERS = auto()
-    SAFETENSORS = auto()
-
-    # Agent Frameworks
-    AGENTS = auto()
-    OPENAI = auto()
-    DOCKER_MODEL_RUNNER = auto()
-
-    # Infrastructure
-    REDIS = auto()
-    THREADING = auto()
-    CTYPES = auto()
-
-    # Development
-    PROFILER = auto()
-    PYTEST = auto()
 
 
 # ============================================================================
