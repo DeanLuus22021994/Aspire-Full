@@ -10,6 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// Add Tensor Core for GPU-accelerated embedding operations
+builder.Services.AddTensorCore(options =>
+{
+    options.MaxBufferCount = 16;
+    options.DefaultBufferSize = 64 * 1024 * 1024; // 64MB for embeddings
+    options.PreferGpu = true;
+    options.EnableMetrics = true;
+});
+
 // Add services to the container.
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

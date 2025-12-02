@@ -31,7 +31,16 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 builder.Services.AddDockerRegistryClient(builder.Configuration);
 
-// Add Tensor Orchestration
+// Add Tensor Core (GPU/CPU compute runtime with memory pool)
+builder.Services.AddTensorCore(options =>
+{
+    options.MaxBufferCount = 32;
+    options.DefaultBufferSize = 128 * 1024 * 1024; // 128MB for inference batches
+    options.PreferGpu = true;
+    options.EnableMetrics = true;
+});
+
+// Add Tensor Orchestration (job coordination layer)
 builder.Services.AddTensorOrchestration(builder.Configuration);
 
 // Add Vector Store

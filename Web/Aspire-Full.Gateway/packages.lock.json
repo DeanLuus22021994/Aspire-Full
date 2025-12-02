@@ -413,6 +413,13 @@
       "aspire-full.shared": {
         "type": "Project"
       },
+      "aspire-full.tensor.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "System.Numerics.Tensors": "[10.0.0, )"
+        }
+      },
       "aspire-full.vectorstore": {
         "type": "Project",
         "dependencies": {

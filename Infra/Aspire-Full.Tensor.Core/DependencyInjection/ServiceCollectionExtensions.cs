@@ -1,6 +1,7 @@
 using Aspire_Full.Tensor.Core;
 using Aspire_Full.Tensor.Core.Abstractions;
 using Aspire_Full.Tensor.Core.Memory;
+using Aspire_Full.Tensor.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -13,7 +14,7 @@ public static class TensorCoreServiceCollectionExtensions
 {
     /// <summary>
     /// Adds Tensor.Core services to the service collection.
-    /// Registers ITensorRuntime and IGpuResourceMonitor as singletons.
+    /// Registers ITensorRuntime, IGpuResourceMonitor, and IModelRegistry as singletons.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection for chaining.</returns>
@@ -43,6 +44,16 @@ public static class TensorCoreServiceCollectionExtensions
         services.TryAddSingleton<TensorRuntime>();
         services.TryAddSingleton<ITensorRuntime>(sp => sp.GetRequiredService<TensorRuntime>());
         services.TryAddSingleton<IGpuResourceMonitor>(sp => sp.GetRequiredService<TensorRuntime>());
+
+        // Register ModelRegistry with configuration
+        services.Configure<ModelRegistryOptions>(registryOptions =>
+        {
+            registryOptions.CacheDirectory = options.ModelCacheDirectory;
+            registryOptions.MaxCachedModels = options.MaxCachedModels;
+            registryOptions.EvictionPolicy = options.ModelEvictionPolicy;
+            registryOptions.TrackVersions = options.TrackModelVersions;
+        });
+        services.TryAddSingleton<IModelRegistry, ModelRegistry>();
 
         return services;
     }
@@ -91,4 +102,26 @@ public sealed class TensorCoreOptions
     /// Enable detailed metrics collection. Default is true.
     /// </summary>
     public bool EnableMetrics { get; set; } = true;
+
+    // --- Model Registry Options ---
+
+    /// <summary>
+    /// Directory where models are cached on disk. Default is "/models".
+    /// </summary>
+    public string ModelCacheDirectory { get; set; } = "/models";
+
+    /// <summary>
+    /// Maximum number of models to keep in memory. Default is 10.
+    /// </summary>
+    public int MaxCachedModels { get; set; } = 10;
+
+    /// <summary>
+    /// Whether to track version history for models. Default is true.
+    /// </summary>
+    public bool TrackModelVersions { get; set; } = true;
+
+    /// <summary>
+    /// Policy for evicting models when cache is full. Default is LRU.
+    /// </summary>
+    public EvictionPolicy ModelEvictionPolicy { get; set; } = EvictionPolicy.Lru;
 }

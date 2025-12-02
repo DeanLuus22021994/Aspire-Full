@@ -1106,6 +1106,7 @@
           "Aspire-Full.ServiceDefaults": "[1.0.0, )",
           "Aspire-Full.Shared": "[1.0.0, )",
           "Aspire-Full.Tensor": "[1.0.0, )",
+          "Aspire-Full.Tensor.Core": "[1.0.0, )",
           "Aspire-Full.VectorStore": "[1.0.0, )",
           "Aspire.Npgsql.EntityFrameworkCore.PostgreSQL": "[13.0.1, )",
           "Aspire.StackExchange.Redis": "[13.0.1, )",

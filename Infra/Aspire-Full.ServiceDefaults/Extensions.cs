@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Aspire_Full.ServiceDefaults.Health;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
@@ -171,7 +172,22 @@ public static class Extensions
     {
         builder.Services.AddHealthChecks()
             // Add a default liveness check to ensure app is responsive
-            .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
+            .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"])
+            // Add GPU health check for tensor compute services
+            .AddCheck<GpuHealthCheck>("gpu", HealthStatus.Degraded, ["gpu", "compute"]);
+
+        // Register GPU health check options from configuration
+        builder.Services.Configure<GpuHealthCheckOptions>(options =>
+        {
+            var section = builder.Configuration.GetSection("HealthChecks:Gpu");
+            if (section.Exists())
+            {
+                options.RequireGpu = section.GetValue("RequireGpu", false);
+                options.WarningVramThresholdPercent = section.GetValue("WarningVramThresholdPercent", 80.0);
+                options.CriticalVramThresholdPercent = section.GetValue("CriticalVramThresholdPercent", 95.0);
+                options.MinimumVramMb = section.GetValue("MinimumVramMb", 0L);
+            }
+        });
 
         return builder;
     }
@@ -189,6 +205,12 @@ public static class Extensions
             app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
             {
                 Predicate = r => r.Tags.Contains("live")
+            });
+
+            // GPU-specific health endpoint for monitoring tensor compute resources
+            app.MapHealthChecks("/health/gpu", new HealthCheckOptions
+            {
+                Predicate = r => r.Tags.Contains("gpu")
             });
         }
 

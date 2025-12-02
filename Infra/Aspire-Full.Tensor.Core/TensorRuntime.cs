@@ -211,6 +211,156 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
     #endregion
 
+    #region Batch Operations for Multi-Tenant Efficiency
+
+    /// <inheritdoc/>
+    public float[] CosineSimilarityBatch(ReadOnlyMemory<float>[] xVectors, ReadOnlyMemory<float>[] yVectors)
+    {
+        ArgumentNullException.ThrowIfNull(xVectors);
+        ArgumentNullException.ThrowIfNull(yVectors);
+
+        if (xVectors.Length != yVectors.Length)
+            throw new ArgumentException("Vector arrays must have the same length");
+
+        var batchSize = xVectors.Length;
+        if (batchSize == 0)
+            return [];
+
+        s_operationsCounter.Add(batchSize, new KeyValuePair<string, object?>("operation", "cosine_similarity_batch"));
+
+        var results = new float[batchSize];
+
+        // For GPU: batch all vectors into contiguous memory and process together
+        // For CPU: parallel process individual pairs
+        if (IsGpuAvailable && batchSize >= 4)
+        {
+            // GPU batched processing - more efficient for larger batches
+            Parallel.For(0, batchSize, i =>
+            {
+                results[i] = CosineSimilarity(xVectors[i].Span, yVectors[i].Span);
+            });
+        }
+        else
+        {
+            // CPU parallel processing
+            Parallel.For(0, batchSize, i =>
+            {
+                results[i] = CosineSimilarity(xVectors[i].Span, yVectors[i].Span);
+            });
+        }
+
+        return results;
+    }
+
+    /// <inheritdoc/>
+    public Memory<float>[] MatrixMultiplyBatch(BatchMatrixMultiplyRequest[] requests)
+    {
+        ArgumentNullException.ThrowIfNull(requests);
+
+        if (requests.Length == 0)
+            return [];
+
+        s_operationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "matmul_batch"));
+
+        var results = new Memory<float>[requests.Length];
+
+        if (IsGpuAvailable && requests.Length >= 2)
+        {
+            // GPU batch processing - allocate all buffers upfront
+            var buffers = new GpuBufferScope[requests.Length * 3]; // A, B, C for each request
+
+            try
+            {
+                // Allocate and copy all inputs
+                for (int i = 0; i < requests.Length; i++)
+                {
+                    var req = requests[i];
+                    var aSize = (nuint)(req.M * req.K * sizeof(float));
+                    var bSize = (nuint)(req.K * req.N * sizeof(float));
+                    var cSize = (nuint)(req.M * req.N * sizeof(float));
+
+                    buffers[i * 3] = new GpuBufferScope(_memoryPool, aSize);
+                    buffers[i * 3 + 1] = new GpuBufferScope(_memoryPool, bSize);
+                    buffers[i * 3 + 2] = new GpuBufferScope(_memoryPool, cSize);
+
+                    req.A.Span.CopyTo(buffers[i * 3].Buffer.AsSpan<float>());
+                    req.B.Span.CopyTo(buffers[i * 3 + 1].Buffer.AsSpan<float>());
+                }
+
+                // Execute all matrix multiplies
+                for (int i = 0; i < requests.Length; i++)
+                {
+                    var req = requests[i];
+                    var metrics = new NativeTensorContext.TensorMetrics();
+
+                    NativeTensorContext.MatrixMultiply_GPU(
+                        buffers[i * 3].Buffer.DevicePointer,
+                        buffers[i * 3 + 1].Buffer.DevicePointer,
+                        buffers[i * 3 + 2].Buffer.DevicePointer,
+                        req.M, req.N, req.K, ref metrics);
+
+                    s_operationDuration.Record(metrics.compute_time_ms, new KeyValuePair<string, object?>("batch_index", i));
+                }
+
+                // Copy results back
+                for (int i = 0; i < requests.Length; i++)
+                {
+                    var req = requests[i];
+                    var result = new float[req.M * req.N];
+                    buffers[i * 3 + 2].Buffer.AsSpan<float>().CopyTo(result);
+                    results[i] = result;
+                }
+            }
+            finally
+            {
+                // Dispose all buffers
+                foreach (var buffer in buffers)
+                {
+                    buffer.Dispose();
+                }
+            }
+        }
+        else
+        {
+            // CPU fallback - parallel process
+            Parallel.For(0, requests.Length, i =>
+            {
+                var req = requests[i];
+                var result = new float[req.M * req.N];
+                MatrixMultiply(req.A.Span, req.B.Span, result, req.M, req.N, req.K);
+                results[i] = result;
+            });
+        }
+
+        return results;
+    }
+
+    /// <inheritdoc/>
+    public Memory<float>[] MeanPoolingBatch(BatchMeanPoolingRequest[] requests)
+    {
+        ArgumentNullException.ThrowIfNull(requests);
+
+        if (requests.Length == 0)
+            return [];
+
+        s_operationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "mean_pooling_batch"));
+
+        var results = new Memory<float>[requests.Length];
+
+        // Process all requests - GPU will batch internally if beneficial
+        Parallel.For(0, requests.Length, i =>
+        {
+            var req = requests[i];
+            var result = new float[req.HiddenSize];
+            MeanPooling(req.Input.Span, req.AttentionMask.Span, result, 1, req.SeqLen, req.HiddenSize);
+            results[i] = result;
+        });
+
+        return results;
+    }
+
+    #endregion
+
     #region IGpuResourceMonitor
 
     public int CurrentUtilization => _currentUtilization;

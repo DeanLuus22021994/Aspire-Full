@@ -684,6 +684,7 @@
           "Aspire-Full.Embeddings": "[1.0.0, )",
           "Aspire-Full.ServiceDefaults": "[1.0.0, )",
           "Aspire-Full.Shared": "[1.0.0, )",
+          "Aspire-Full.Tensor.Core": "[1.0.0, )",
           "Aspire-Full.VectorStore": "[1.0.0, )",
           "Aspire.Npgsql.EntityFrameworkCore.PostgreSQL": "[13.0.1, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.0, )"
@@ -708,6 +709,16 @@
       },
       "aspire-full.shared": {
         "type": "Project"
+      },
+      "aspire-full.tensor.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aspire-Full.Shared": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.0, )",
+          "Microsoft.Extensions.Options": "[10.0.0, )",
+          "System.Numerics.Tensors": "[10.0.0, )"
+        }
       },
       "aspire-full.vectorstore": {
         "type": "Project",

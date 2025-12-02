@@ -1,0 +1,141 @@
+# =============================================================================
+# Aspire-Full Unified Configuration
+# Single source of truth for all runtime configuration
+# =============================================================================
+version: 2
+
+# -----------------------------------------------------------------------------
+# Repository Configuration
+# -----------------------------------------------------------------------------
+repository:
+  root: "."  # Relative to workspace root - fully portable
+  branch: master
+
+# -----------------------------------------------------------------------------
+# .NET SDK Configuration
+# -----------------------------------------------------------------------------
+dotnet:
+  sdk: "10.0.100"
+  preview: true
+  telemetry_optout: true
+
+# -----------------------------------------------------------------------------
+# Python Configuration
+# -----------------------------------------------------------------------------
+python:
+  version: "3.15t"  # Free-threaded Python
+  manager: uv
+  gil_disabled: true
+  jit_enabled: true
+  torch:
+    device: cuda
+    cuda_arch_list: "7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+
+# -----------------------------------------------------------------------------
+# Docker & Registry Configuration
+# -----------------------------------------------------------------------------
+docker:
+  registry:
+    host: "localhost:5001"
+    volume_name: aspire-registry
+    port: 5001
+    allow_insecure_tls: true
+  namespace: aspire
+  image_prefix: aspire-agents
+  images:
+    api:
+      name: api
+      tag: dev
+    gateway:
+      name: gateway
+      tag: dev
+    python_agents:
+      name: python-agents
+      tag: dev
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  gpu:
+    enabled: true
+    driver_version: "581.57"
+    require_gpu: false  # If false, CPU fallback is acceptable
+    compute_capability: "8.6"  # RTX 3050
+
+# -----------------------------------------------------------------------------
+# Tensor Core Configuration
+# -----------------------------------------------------------------------------
+tensor:
+  runtime:
+    max_buffer_count: 32
+    default_buffer_size_mb: 128
+    prefer_gpu: true
+    enable_metrics: true
+  orchestration:
+    job_timeout_seconds: 300
+    max_concurrent_jobs: 16
+  batching:
+    enabled: true
+    max_batch_size: 32
+    batch_timeout_ms: 50
+    min_batch_size: 4
+
+# -----------------------------------------------------------------------------
+# Agent Configuration
+# -----------------------------------------------------------------------------
+agents:
+  gpu: true
+  replicas: 1
+  python:
+    workers: 4
+    timeout_seconds: 120
+
+# -----------------------------------------------------------------------------
+# Telemetry Configuration
+# -----------------------------------------------------------------------------
+telemetry:
+  otlp:
+    endpoint: "http://aspire-dashboard:18889"
+    protocol: "http/protobuf"
+  gpu:
+    snapshot_interval_seconds: 5
+    target_utilization: 80
+    warning_threshold: 70
+    critical_threshold: 95
+
+# -----------------------------------------------------------------------------
+# Health Check Configuration
+# -----------------------------------------------------------------------------
+health_checks:
+  gpu:
+    require_gpu: false
+    warning_vram_threshold_percent: 80
+    critical_vram_threshold_percent: 95
+    minimum_vram_mb: 0
+
+# -----------------------------------------------------------------------------
+# Model Registry Configuration
+# -----------------------------------------------------------------------------
+models:
+  cache_directory: "/models"
+  preload:
+    - name: "sentence-transformers/all-MiniLM-L6-v2"
+      type: embedding
+      priority: high
+  registry:
+    track_versions: true
+    max_cached_models: 10
+    eviction_policy: lru
+
+# -----------------------------------------------------------------------------
+# Scaling Configuration (for future auto-scaling)
+# -----------------------------------------------------------------------------
+scaling:
+  enabled: false
+  min_replicas: 1
+  max_replicas: 4
+  target_gpu_utilization: 70
+  scale_up_threshold: 80
+  scale_down_threshold: 30
+  cooldown_seconds: 60

@@ -68,6 +68,54 @@ public interface ITensorRuntime : IAsyncDisposable
     /// Gets device information for a specific GPU.
     /// </summary>
     NativeTensorContext.GpuDeviceInfo? GetDeviceInfo(int deviceId);
+
+    #region Batch Operations for Multi-Tenant Efficiency
+
+    /// <summary>
+    /// Computes cosine similarity for a batch of vector pairs.
+    /// More efficient than calling CosineSimilarity multiple times.
+    /// </summary>
+    /// <param name="batch">Array of (x, y) vector pairs.</param>
+    /// <returns>Array of cosine similarity results.</returns>
+    float[] CosineSimilarityBatch(ReadOnlyMemory<float>[] xVectors, ReadOnlyMemory<float>[] yVectors);
+
+    /// <summary>
+    /// Performs batched matrix multiplication for multiple requests.
+    /// Optimizes GPU utilization by processing multiple matrices together.
+    /// </summary>
+    /// <param name="requests">Array of matrix multiply requests.</param>
+    /// <returns>Array of result matrices.</returns>
+    Memory<float>[] MatrixMultiplyBatch(BatchMatrixMultiplyRequest[] requests);
+
+    /// <summary>
+    /// Performs batched mean pooling for multiple embedding sequences.
+    /// </summary>
+    Memory<float>[] MeanPoolingBatch(BatchMeanPoolingRequest[] requests);
+
+    #endregion
+}
+
+/// <summary>
+/// Request for batched matrix multiplication.
+/// </summary>
+public readonly struct BatchMatrixMultiplyRequest
+{
+    public required ReadOnlyMemory<float> A { get; init; }
+    public required ReadOnlyMemory<float> B { get; init; }
+    public required int M { get; init; }
+    public required int N { get; init; }
+    public required int K { get; init; }
+}
+
+/// <summary>
+/// Request for batched mean pooling.
+/// </summary>
+public readonly struct BatchMeanPoolingRequest
+{
+    public required ReadOnlyMemory<float> Input { get; init; }
+    public required ReadOnlyMemory<long> AttentionMask { get; init; }
+    public required int SeqLen { get; init; }
+    public required int HiddenSize { get; init; }
 }
 
 /// <summary>

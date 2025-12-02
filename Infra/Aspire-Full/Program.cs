@@ -8,13 +8,12 @@ using Microsoft.Extensions.Configuration;
 // =============================================================================
 // Aspire Full AppHost - Distributed Application Orchestrator
 // =============================================================================
-// ... (header omitted) ...
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Load Configuration
+// Load Configuration - prefer unified config, fall back to legacy
 var settings = ConfigLoader.LoadSettings(".aspire/settings.json");
-var runtimeConfig = ConfigLoader.LoadRuntimeConfig(".config/config.yaml");
+var aspireConfig = ConfigLoader.LoadAspireConfig();
 
 // External network for container-to-container communication
 const string networkName = AppHostConstants.NetworkName;
@@ -67,7 +66,6 @@ var registry = builder.AddContainer(AppHostConstants.Resources.Registry, AppHost
 
 builder.AddDevContainer(networkName);
 
-// ... (Database, Cache, Vector DB omitted) ...
 // -----------------------------------------------------------------------------
 // Database Layer - PostgreSQL with pgvector for semantic search
 // -----------------------------------------------------------------------------
@@ -97,7 +95,7 @@ var qdrant = builder.AddQdrant(AppHostConstants.Resources.Qdrant)
     .WithContainerRuntimeArgs("--network", networkName);
 
 // -----------------------------------------------------------------------------
-// API Service - RESTful backend with Entity Framework
+// Application Services
 // -----------------------------------------------------------------------------
 var useBakedImages = builder.Configuration.GetValue<bool>("USE_BAKED_IMAGES");
 var registryHost = AppHostConstants.Configuration.RegistryHost;
@@ -118,26 +116,6 @@ if (useBakedImages)
         .WithContainerRuntimeArgs("--network", networkName);
     ConfigureGateway(gateway);
 
-    //var frontend = builder.AddContainer(AppHostConstants.Resources.Frontend, $"{registryHost}/{namespaceName}/web-{envTag}", $"{version}-{arch}")
-    //    .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.Frontend, targetPort: 80)
-    //    .WithContainerRuntimeArgs("--network", networkName);
-    //ConfigureFrontend(frontend, api);
-
-    //var wasmDocs = builder.AddContainer(AppHostConstants.Resources.WasmDocs, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-    //    .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 80)
-    //    .WithContainerRuntimeArgs("--network", networkName);
-    //ConfigureWasmDocs(wasmDocs, api);
-
-    //var wasmUat = builder.AddContainer(AppHostConstants.Resources.WasmUat, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-    //    .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 80)
-    //    .WithContainerRuntimeArgs("--network", networkName);
-    //ConfigureWasmUat(wasmUat, api);
-
-    //var wasmProd = builder.AddContainer(AppHostConstants.Resources.WasmProd, $"{registryHost}/{namespaceName}/web-assembly-{envTag}", $"{version}-{arch}")
-    //    .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 80)
-    //    .WithContainerRuntimeArgs("--network", networkName);
-    //ConfigureWasmProd(wasmProd, api);
-
     var pythonAgents = builder.AddContainer(AppHostConstants.Resources.PythonAgents, $"{registryHost}/{namespaceName}/python-agents-{envTag}", $"{version}-{arch}")
         .WithHttpEndpoint(name: "http", targetPort: 8000)
         .WithContainerRuntimeArgs("--network", networkName);
@@ -150,26 +128,6 @@ else
 
     var gateway = builder.AddProject<Projects.Aspire_Full_Gateway>(AppHostConstants.Resources.Gateway);
     ConfigureGateway(gateway);
-
-    //var frontend = builder.AddJavaScriptApp(AppHostConstants.Resources.Frontend, "../../Web/Aspire-Full.Web", "dev")
-    //    .WithHttpEndpoint(env: "PORT")
-    //    .WithExternalHttpEndpoints();
-    //ConfigureFrontend(frontend, api);
-
-    //var wasmDocs = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmDocs)
-    //    .WithHttpEndpoint(name: "docs", port: AppHostConstants.Ports.WasmDocs, targetPort: 5175)
-    //    .WithExternalHttpEndpoints();
-    //ConfigureWasmDocs(wasmDocs, api);
-
-    //var wasmUat = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmUat)
-    //    .WithHttpEndpoint(name: "uat", port: AppHostConstants.Ports.WasmUat, targetPort: 5176)
-    //    .WithExternalHttpEndpoints();
-    //ConfigureWasmUat(wasmUat, api);
-
-    //var wasmProd = builder.AddProject<Projects.Aspire_Full_WebAssembly>(AppHostConstants.Resources.WasmProd)
-    //    .WithHttpEndpoint(name: "prod", port: AppHostConstants.Ports.WasmProd, targetPort: 5177)
-    //    .WithExternalHttpEndpoints();
-    //ConfigureWasmProd(wasmProd, api);
 
     var agents = builder.AddProject<Projects.Aspire_Full_Agents>("agents")
         .WithReference(qdrant)
@@ -207,63 +165,24 @@ void ConfigureGateway<T>(IResourceBuilder<T> gateway) where T : IResourceWithEnv
            .WaitFor(qdrant);
 }
 
-//void ConfigureFrontend<T, U>(IResourceBuilder<T> frontend, IResourceBuilder<U> api)
-//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-//    where U : IResourceWithEndpoints
-//{
-//    frontend.WithReference(api.GetEndpoint("http"));
-//    ((dynamic)frontend).WaitFor(api);
-//}
-
-//void ConfigureWasmDocs<T, U>(IResourceBuilder<T> wasmDocs, IResourceBuilder<U> api)
-//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-//    where U : IResourceWithEndpoints
-//{
-//    wasmDocs.WithReference(api.GetEndpoint("http"));
-//    ((dynamic)wasmDocs).WaitFor(api);
-//
-//    wasmDocs.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "docs")
-//            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5175");
-//}
-
-//void ConfigureWasmUat<T, U>(IResourceBuilder<T> wasmUat, IResourceBuilder<U> api)
-//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-//    where U : IResourceWithEndpoints
-//{
-//    wasmUat.WithReference(api.GetEndpoint("http"));
-//    ((dynamic)wasmUat).WaitFor(api);
-//
-//    wasmUat.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "uat")
-//           .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5176");
-//}
-
-//void ConfigureWasmProd<T, U>(IResourceBuilder<T> wasmProd, IResourceBuilder<U> api)
-//    where T : IResourceWithEnvironment, IResourceWithWaitSupport
-//    where U : IResourceWithEndpoints
-//{
-//    wasmProd.WithReference(api.GetEndpoint("http"));
-//    ((dynamic)wasmProd).WaitFor(api);
-//
-//    wasmProd.WithEnvironment(AppHostConstants.EnvironmentVariables.FrontendEnvironmentKey, "prod")
-//            .WithEnvironment(AppHostConstants.EnvironmentVariables.AspNetCoreUrls, "http://0.0.0.0:5177");
-//}
-
 void ConfigurePythonAgents(IResourceBuilder<ContainerResource> pythonAgents)
 {
+    var gpuTargetUtil = aspireConfig.Telemetry.Gpu.TargetUtilization;
+
     pythonAgents.WithEnvironment(AppHostConstants.EnvironmentVariables.OtelServiceName, AppHostConstants.Resources.PythonAgents)
-        .WithEnvironment(AppHostConstants.EnvironmentVariables.OtelExporterOtlpEndpoint, "http://aspire-dashboard:18889")
+        .WithEnvironment(AppHostConstants.EnvironmentVariables.OtelExporterOtlpEndpoint, aspireConfig.Telemetry.Otlp.Endpoint)
         .WithEnvironment(AppHostConstants.EnvironmentVariables.OtelPythonLogCorrelation, "true")
         .WithEnvironment(AppHostConstants.EnvironmentVariables.CudaVisibleDevices, "0")
-        .WithEnvironment(AppHostConstants.EnvironmentVariables.GpuTargetUtilization, runtimeConfig.Telemetry.Gpu.Snapshot.TargetUtilization.ToString());
+        .WithEnvironment(AppHostConstants.EnvironmentVariables.GpuTargetUtilization, gpuTargetUtil.ToString());
 
-    if (settings.Agents.Gpu)
+    if (aspireConfig.Agents.Gpu)
     {
         pythonAgents.WithContainerRuntimeArgs("--gpus", "all");
     }
 
-    if (settings.Agents.Replicas > 1)
+    if (aspireConfig.Agents.Replicas > 1)
     {
-        pythonAgents.WithAnnotation(new ReplicaAnnotation(settings.Agents.Replicas));
+        pythonAgents.WithAnnotation(new ReplicaAnnotation(aspireConfig.Agents.Replicas));
     }
 }
 

@@ -5,10 +5,13 @@ dotnet:
   sdk: "10.0.100"
   preview: true
 python:
-  version: "3.14.0"
+  version: "3.15t"  # Free-threading build - GIL disabled by default
   manager: "uv"
+  gil_disabled: true
+  jit_enabled: true
   torch:
-    device: "cpu" # Warning: CUDA not detected in Python environment
+    device: "cuda"  # Updated to match hardware.gpu.enabled
+    cuda_arch_list: "7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 docker:
   registry: "localhost:5000"
   image_prefix: "aspire-agents"
@@ -16,3 +19,4 @@ hardware:
   gpu:
     enabled: true
     driver: "581.57"
+    compute_capability: "8.6"
