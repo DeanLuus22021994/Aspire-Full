@@ -68,25 +68,40 @@
 
   // Spell Checker
   "cSpell.words": [
+    "ackages",
     "addopts",
+    "appsettings",
     "ASPNETCORE",
     "AUTHMODE",
     "CERTDIR",
     "chelnak",
+    "coveragexml",
     "CUDA",
+    "devcontainer",
     "Dind",
+    "docstates",
+    "dylib",
+    "ehthumbs",
     "Instrumentor",
     "llms",
+    "matmul",
+    "mypy",
     "nektos",
+    "NVML",
+    "NVSMI",
+    "onnx",
     "pgvector",
+    "pycache",
     "pylint",
     "pytest",
     "qdrant",
+    "relu",
     "seachicken",
     "Serilog",
+    "softmax",
+    "tensorcore",
     "triaging",
-    "xmldoc",
-    "devcontainer",
-    "tensorcore"
+    "venv",
+    "xmldoc"
   ]
 }
