@@ -132,10 +132,19 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 # Precompile Python packages for instant import
 RUN . /opt/venv/bin/activate && python -m compileall -q /opt/venv/lib
 
-# Install Microsoft Pyright type checker (powers Pylance in VS Code)
+# =============================================================================
+# Install Microsoft Type Checking + Additional Type Stubs
+# Ensures instant readiness for Pylance/Pyright in VS Code
+# =============================================================================
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
-    uv pip install pyright>=1.1.407 mypy>=1.13.0
+    uv pip install \
+    # Microsoft Type Checking (Pylance backend)
+    pyright>=1.1.407 \
+    mypy>=1.13.0 \
+    # Type stubs for full type coverage
+    types-requests>=2.31.0 \
+    types-PyYAML>=6.0.12
 
 # Create Microsoft Pyright configuration for strict type checking
 RUN mkdir -p /etc/python && \
