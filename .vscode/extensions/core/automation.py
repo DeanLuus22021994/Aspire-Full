@@ -28,7 +28,13 @@ from typing import (
     TypeVar,
 )
 
-import numpy as np
+# Optional numpy - graceful fallback for environments without it
+try:
+    import numpy as np
+    _HAS_NUMPY = True
+except ImportError:
+    np = None  # type: ignore
+    _HAS_NUMPY = False
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -168,17 +174,22 @@ class Problem:
         )
 
 
+def _create_counters() -> Any:
+    """Create counter array - NumPy if available, else list."""
+    if _HAS_NUMPY:
+        return np.zeros(8, dtype=np.int64)
+    return [0] * 8
+
+
 @dataclass(slots=True)
 class WorkerState:
-    """Mutable worker state with NumPy-backed counters."""
+    """Mutable worker state with NumPy-backed counters (or list fallback)."""
 
     worker_id: int
     mode: WorkerMode = WorkerMode.HOT_STANDBY
     current_problem: Problem | None = None
-    # NumPy arrays for SIMD-friendly aggregation
-    counters: NDArray[np.int64] = field(
-        default_factory=lambda: np.zeros(8, dtype=np.int64)
-    )
+    # NumPy arrays for SIMD-friendly aggregation (or list fallback)
+    counters: Any = field(default_factory=_create_counters)
     # Index mapping: 0=processed, 1=fixed, 2=failed, 3=skipped,
     #                4=total_latency_ns, 5=gpu_ops, 6=gpu_time_ns, 7=reserved
 
@@ -219,26 +230,42 @@ class WorkerState:
 # =============================================================================
 
 
+def _bisect_left(arr: list[int], x: int) -> int:
+    """Pure Python bisect_left for when numpy is unavailable."""
+    lo, hi = 0, len(arr)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if arr[mid] < x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
 class GPUProblemQueue:
-    """Lock-free priority queue with GPU-accelerated sorting.
+    """Priority queue with GPU-accelerated sorting when available.
 
     Uses NumPy for SIMD-friendly operations and CuPy for GPU
-    when available. Priorities are based on severity and category.
+    when available. Falls back to pure Python when dependencies unavailable.
     """
 
-    __slots__ = ("_problems", "_priorities", "_lock", "_counter", "_gpu_available")
+    __slots__ = ("_problems", "_priorities", "_lock", "_counter", "_gpu_available", "_capacity")
 
     def __init__(self, capacity: int = MAX_PROBLEM_QUEUE_DEPTH) -> None:
         self._problems: list[Problem] = []
-        # Pre-allocate priority array for SIMD sorting
-        self._priorities = np.zeros(capacity, dtype=np.int32)
+        self._capacity = capacity
+        # Pre-allocate priority array - NumPy if available, else list
+        if _HAS_NUMPY:
+            self._priorities: Any = np.zeros(capacity, dtype=np.int32)
+        else:
+            self._priorities: Any = [0] * capacity
         self._lock = asyncio.Lock()
         self._counter = 0
         self._gpu_available = self._detect_gpu()
 
     def _detect_gpu(self) -> bool:
         """Detect if CuPy GPU acceleration is available."""
-        if not USE_GPU_DIRECT:
+        if not USE_GPU_DIRECT or not _HAS_NUMPY:
             return False
         try:
             import cupy as cp  # type: ignore
@@ -262,55 +289,76 @@ class GPUProblemQueue:
         """Add problem to priority queue."""
         async with self._lock:
             priority = self._compute_priority(problem)
-            # Binary search for insertion point
-            idx = np.searchsorted(self._priorities[: len(self._problems)], priority)
-            self._problems.insert(idx, problem)
-            # Shift priorities
-            self._priorities[idx + 1 : len(self._problems) + 1] = self._priorities[
-                idx : len(self._problems)
-            ]
-            self._priorities[idx] = priority
+
+            if _HAS_NUMPY:
+                # NumPy binary search
+                idx = int(np.searchsorted(self._priorities[: len(self._problems)], priority))
+                self._problems.insert(idx, problem)
+                # Shift priorities
+                self._priorities[idx + 1 : len(self._problems) + 1] = self._priorities[
+                    idx : len(self._problems)
+                ]
+                self._priorities[idx] = priority
+            else:
+                # Pure Python fallback
+                idx = _bisect_left(self._priorities[: len(self._problems)], priority)
+                self._problems.insert(idx, problem)
+                # Shift priorities
+                for i in range(len(self._problems) - 1, idx, -1):
+                    self._priorities[i] = self._priorities[i - 1]
+                self._priorities[idx] = priority
+
             self._counter += 1
 
     async def enqueue_batch(self, problems: list[Problem]) -> None:
-        """Batch enqueue with GPU-accelerated sorting."""
+        """Batch enqueue with GPU-accelerated sorting when available."""
         if not problems:
             return
 
         async with self._lock:
-            # Compute priorities using NumPy vectorization
-            new_priorities = np.array(
-                [self._compute_priority(p) for p in problems], dtype=np.int32
-            )
+            # Compute priorities
+            new_priorities = [self._compute_priority(p) for p in problems]
 
-            if self._gpu_available and len(problems) >= 64:
-                try:
-                    import cupy as cp  # type: ignore
+            if _HAS_NUMPY:
+                new_priorities_arr = np.array(new_priorities, dtype=np.int32)
 
-                    # GPU sort for large batches
-                    gpu_priorities = cp.asarray(new_priorities)
-                    sorted_indices = cp.argsort(gpu_priorities).get()
-                except Exception:
-                    sorted_indices = np.argsort(new_priorities)
+                if self._gpu_available and len(problems) >= 64:
+                    try:
+                        import cupy as cp  # type: ignore
+
+                        # GPU sort for large batches
+                        gpu_priorities = cp.asarray(new_priorities_arr)
+                        sorted_indices = cp.argsort(gpu_priorities).get()
+                    except Exception:
+                        sorted_indices = np.argsort(new_priorities_arr)
+                else:
+                    sorted_indices = np.argsort(new_priorities_arr)
+
+                # Merge sorted problems into existing queue
+                sorted_problems = [problems[i] for i in sorted_indices]
+                sorted_priorities = new_priorities_arr[sorted_indices]
+
+                # Simple merge
+                self._problems.extend(sorted_problems)
+                old_len = len(self._problems) - len(sorted_problems)
+                self._priorities[old_len : old_len + len(sorted_priorities)] = (
+                    sorted_priorities
+                )
+
+                # Full resort
+                all_priorities = self._priorities[: len(self._problems)]
+                resort_indices = np.argsort(all_priorities)
+                self._problems = [self._problems[i] for i in resort_indices]
+                self._priorities[: len(self._problems)] = all_priorities[resort_indices]
             else:
-                sorted_indices = np.argsort(new_priorities)
-
-            # Merge sorted problems into existing queue
-            sorted_problems = [problems[i] for i in sorted_indices]
-            sorted_priorities = new_priorities[sorted_indices]
-
-            # Simple merge for now (can optimize with GPU merge sort)
-            self._problems.extend(sorted_problems)
-            old_len = len(self._problems) - len(sorted_problems)
-            self._priorities[old_len : old_len + len(sorted_priorities)] = (
-                sorted_priorities
-            )
-
-            # Full resort
-            all_priorities = self._priorities[: len(self._problems)]
-            resort_indices = np.argsort(all_priorities)
-            self._problems = [self._problems[i] for i in resort_indices]
-            self._priorities[: len(self._problems)] = all_priorities[resort_indices]
+                # Pure Python fallback - simple sort
+                sorted_pairs = sorted(zip(new_priorities, problems))
+                for priority, problem in sorted_pairs:
+                    idx = _bisect_left(self._priorities[: len(self._problems)], priority)
+                    self._problems.insert(idx, problem)
+                    for i in range(len(self._problems) - 1, idx, -1):
+                        self._priorities[i] = self._priorities[i - 1]
+                    self._priorities[idx] = priority
 
             self._counter += len(problems)
 
@@ -320,10 +368,17 @@ class GPUProblemQueue:
             if not self._problems:
                 return None
             problem = self._problems.pop(0)
-            # Shift priorities left
-            self._priorities[: len(self._problems)] = self._priorities[
-                1 : len(self._problems) + 1
-            ]
+
+            if _HAS_NUMPY:
+                # Shift priorities left
+                self._priorities[: len(self._problems)] = self._priorities[
+                    1 : len(self._problems) + 1
+                ]
+            else:
+                # Pure Python shift
+                for i in range(len(self._problems)):
+                    self._priorities[i] = self._priorities[i + 1]
+
             return problem
 
     async def dequeue_batch(self, max_count: int = BATCH_SIZE) -> list[Problem]:
@@ -334,10 +389,17 @@ class GPUProblemQueue:
                 return []
             batch = self._problems[:take]
             self._problems = self._problems[take:]
-            # Shift priorities
-            self._priorities[: len(self._problems)] = self._priorities[
-                take : take + len(self._problems)
-            ]
+
+            if _HAS_NUMPY:
+                # Shift priorities
+                self._priorities[: len(self._problems)] = self._priorities[
+                    take : take + len(self._problems)
+                ]
+            else:
+                # Pure Python shift
+                for i in range(len(self._problems)):
+                    self._priorities[i] = self._priorities[i + take]
+
             return batch
 
     @property
@@ -345,12 +407,23 @@ class GPUProblemQueue:
         """Number of pending problems."""
         return len(self._problems)
 
-    def get_priority_distribution(self) -> NDArray[np.int32]:
+    def get_priority_distribution(self) -> list[int]:
         """Get histogram of priority levels for monitoring."""
         if not self._problems:
-            return np.zeros(16, dtype=np.int32)
-        priorities = self._priorities[: len(self._problems)]
-        return np.bincount(priorities, minlength=16).astype(np.int32)[:16]
+            return [0] * 16
+
+        if _HAS_NUMPY:
+            priorities = self._priorities[: len(self._problems)]
+            result = np.bincount(priorities, minlength=16).astype(np.int32)[:16]
+            return result.tolist()
+        else:
+            # Pure Python fallback
+            result = [0] * 16
+            for i in range(len(self._problems)):
+                p = self._priorities[i]
+                if 0 <= p < 16:
+                    result[p] += 1
+            return result
 
 
 # =============================================================================
@@ -382,9 +455,14 @@ class ProblemScanner:
     def _compute_hash(self, file: str, line: int, message: str) -> int:
         """Compute deduplication hash."""
         content = f"{file}:{line}:{message}"
-        # Use NumPy for fast hash
-        arr = np.frombuffer(content.encode("utf-8"), dtype=np.uint8)
-        return int(np.bitwise_xor.reduce(arr.view(np.uint64).astype(np.int64)))
+
+        if _HAS_NUMPY:
+            # Use NumPy for fast hash
+            arr = np.frombuffer(content.encode("utf-8"), dtype=np.uint8)
+            return int(np.bitwise_xor.reduce(arr.view(np.uint64).astype(np.int64)))
+        else:
+            # Pure Python hash fallback
+            return hash(content)
 
     async def scan_build_errors(self) -> list[Problem]:
         """Scan dotnet build output for errors."""
@@ -790,7 +868,7 @@ class GPUAutomationPool:
             "workers": HOT_GPU_WORKERS,
             "pending_problems": self._queue.pending_count,
             "worker_metrics": [w.get_metrics() for w in self._workers],
-            "priority_distribution": self._queue.get_priority_distribution().tolist(),
+            "priority_distribution": self._queue.get_priority_distribution(),
         }
 
 
@@ -849,12 +927,13 @@ async def main() -> int:
             print(f"Pending problems: {status['pending_problems']}")
             print("\nWorker Metrics:")
             for m in status["worker_metrics"]:
-                print(
+                msg = (
                     f"  Worker {m['worker_id']}: "
-                    f"{m['problems_processed']} processed, "
-                    f"{m['fixes_applied']} fixed, "
-                    f"avg latency: {m['avg_latency_ms']:.2f}ms"
+                    + f"{m['problems_processed']} processed, "
+                    + f"{m['fixes_applied']} fixed, "
+                    + f"avg latency: {m['avg_latency_ms']:.2f}ms"
                 )
+                print(msg)
         return 0
 
     # Setup signal handlers
@@ -900,13 +979,14 @@ async def main() -> int:
         print(f"Duration: {result['duration_ms']:.2f}ms")
         print("\nPer-Worker Metrics:")
         for m in result["worker_metrics"]:
-            print(
+            msg = (
                 f"  Worker {m['worker_id']}: "
-                f"{m['problems_processed']} processed, "
-                f"{m['fixes_applied']} fixed, "
-                f"avg latency: {m['avg_latency_ms']:.2f}ms, "
-                f"GPU ops: {m['gpu_operations']}"
+                + f"{m['problems_processed']} processed, "
+                + f"{m['fixes_applied']} fixed, "
+                + f"avg latency: {m['avg_latency_ms']:.2f}ms, "
+                + f"GPU ops: {m['gpu_operations']}"
             )
+            print(msg)
 
     return 0
 
