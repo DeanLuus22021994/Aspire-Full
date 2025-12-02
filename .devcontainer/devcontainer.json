@@ -1,15 +1,17 @@
 {
-  "name": "Aspire-Full Lightweight",
+  "name": "Aspire-Full GPU Compute",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
   },
 
+  // GPU passthrough for CUDA/CU compute
+  "runArgs": ["--gpus=all", "--memory=2g", "--memory-swap=2g", "--shm-size=256m"],
+
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest",
-      "moby": true,
-      "dockerDashComposeVersion": "v2"
+      "moby": true
     }
   },
 
@@ -21,34 +23,35 @@
         "editor.formatOnSave": true,
         "files.exclude": {
           "**/bin": true,
-          "**/obj": true,
-          "**/artifacts": true
+          "**/obj": true
         }
       }
     }
   },
 
-  "forwardPorts": [5000, 5001, 5173, 5432, 6379, 6333, 18888],
+  "forwardPorts": [5000, 5001, 5432, 6379, 6333, 18888],
   "portsAttributes": {
-    "5000": { "label": "API", "onAutoForward": "notify" },
-    "5001": { "label": "Gateway", "onAutoForward": "notify" },
-    "5173": { "label": "Frontend", "onAutoForward": "notify" },
+    "5000": { "label": "API" },
+    "5001": { "label": "Gateway" },
     "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
     "6379": { "label": "Redis", "onAutoForward": "silent" },
     "6333": { "label": "Qdrant", "onAutoForward": "silent" },
-    "18888": { "label": "Aspire Dashboard", "onAutoForward": "notify" }
+    "18888": { "label": "Aspire Dashboard", "onAutoForward": "openBrowser" }
   },
 
-  "postCreateCommand": "dotnet restore && dotnet build",
-  "postStartCommand": "echo 'DevContainer ready. Run: dotnet run --project Infra/Aspire-Full'",
+  "postCreateCommand": "dotnet restore",
+  "postStartCommand": "echo 'GPU Compute Ready | 2GB RAM | CUDA/CU Mode'",
 
   "remoteEnv": {
     "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true",
-    "DOTNET_ENVIRONMENT": "Development"
+    "DOTNET_ENVIRONMENT": "Development",
+    "ASPIRE_COMPUTE_MODE": "Gpu",
+    "ASPIRE_FALLBACK_TO_CPU": "false"
   },
 
   "containerEnv": {
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
-    "DOTNET_NOLOGO": "1"
+    "DOTNET_NOLOGO": "1",
+    "DOTNET_GCHeapHardLimit": "1610612736"
   }
 }

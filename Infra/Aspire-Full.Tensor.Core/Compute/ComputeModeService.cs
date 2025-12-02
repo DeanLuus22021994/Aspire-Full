@@ -36,35 +36,45 @@ public enum OffloadStrategy
 
 /// <summary>
 /// Configuration for compute mode and offloading behavior.
+/// Optimized for GPU-only compute with 2GB host RAM constraint.
 /// </summary>
 public sealed class ComputeOptions
 {
-    /// <summary>Current compute mode. Can be toggled at runtime.</summary>
+    /// <summary>Current compute mode. Default GPU - no CPU fallback.</summary>
     public ComputeMode Mode { get; set; } = ComputeMode.Gpu;
 
     /// <summary>Strategy for offloading operations to compute service.</summary>
     public OffloadStrategy OffloadStrategy { get; set; } = OffloadStrategy.Full;
 
-    /// <summary>Whether to fallback to CPU when GPU fails. Default false for strict GPU mode.</summary>
+    /// <summary>Whether to fallback to CPU when GPU fails. Default FALSE for strict GPU mode.</summary>
     public bool FallbackToCpu { get; set; } = false;
 
     /// <summary>GPU device ID to use.</summary>
     public int GpuDeviceId { get; set; } = 0;
 
-    /// <summary>Fraction of GPU memory to allocate (0.0-1.0).</summary>
-    public double MemoryFraction { get; set; } = 0.9;
+    /// <summary>Fraction of GPU memory to allocate (0.0-1.0). Conservative for 2GB host.</summary>
+    public double MemoryFraction { get; set; } = 0.85;
 
     /// <summary>Allow GPU memory to grow dynamically.</summary>
-    public bool AllowGrowth { get; set; } = true;
+    public bool AllowGrowth { get; set; } = false;
 
     /// <summary>Enable dynamic batching for throughput.</summary>
     public bool EnableDynamicBatching { get; set; } = true;
 
-    /// <summary>Maximum batch size for batched operations.</summary>
-    public int MaxBatchSize { get; set; } = 32;
+    /// <summary>Maximum batch size for batched operations. Lower for memory constraints.</summary>
+    public int MaxBatchSize { get; set; } = 16;
 
     /// <summary>Batch timeout in milliseconds before forcing execution.</summary>
-    public int BatchTimeoutMs { get; set; } = 50;
+    public int BatchTimeoutMs { get; set; } = 25;
+
+    /// <summary>Host memory limit in bytes (2GB = 2147483648).</summary>
+    public long HostMemoryLimitBytes { get; set; } = 2L * 1024 * 1024 * 1024;
+
+    /// <summary>Enable CUDA Unified Memory for host-device memory sharing.</summary>
+    public bool EnableUnifiedMemory { get; set; } = true;
+
+    /// <summary>Pin host memory for faster GPU transfers.</summary>
+    public bool PinHostMemory { get; set; } = true;
 }
 
 /// <summary>
