@@ -17,7 +17,7 @@ A full-stack .NET Aspire distributed application demonstrating modern cloud-nati
 - **WebAssembly Frontends** - Blazor WASM alternative that renders Docs, UAT, and Production shells using the same component patterns
 - **Observability** - OpenTelemetry with Aspire Dashboard
 - **Testing** - Unit tests (xUnit) and E2E tests (NUnit)
-- **DevContainer** - `Aspire-Full.DevContainer` project exposes `AddDevContainer()` so Aspire manages the Docker workspace + Python 3.14 free-threaded tooling
+- **DevContainer** - `Aspire-Full.DevContainer` project exposes `AddDevContainer()` so Aspire manages the Docker workspace + Python 3.15t (3.15.0a2) free-threaded tooling with GIL disabled
 - **Subagents** - `Aspire-Full.Subagents` keeps sandbox agent specs self-documented with a CLI (`Aspire-Full.Agents`) that automates retrospectives + delegation
 - **Docker Registry Patterns** - `Aspire-Full.DockerRegistry` provides a pattern-driven client and API surface for querying container repositories, tags, and manifests
 
@@ -50,7 +50,7 @@ dotnet run --project Aspire-Full
 ./scripts/Start-Aspire.ps1 -Status  # view PID / dashboard link
 ./scripts/Start-Aspire.ps1 -Stop    # stop background host
 
-> The AppHost now builds the VS Code devcontainer image through `AddDevContainer()` (from `Aspire-Full.DevContainer`), so both Aspire and Docker Compose share the same relative context, Python 3.14 constraints, and named volumes.
+> The AppHost now builds the VS Code devcontainer image through `AddDevContainer()` (from `Aspire-Full.DevContainer`), so both Aspire and Docker Compose share the same relative context, Python 3.15t (3.15.0a2 free-threaded) constraints, and named volumes.
 ```
 
 > Tensor acceleration is mandatory. `Start-Aspire.ps1` validates CUDA Tensor Core hardware at startup and exits with an error if NVIDIA GPUs are unavailable.

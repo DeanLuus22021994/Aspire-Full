@@ -95,6 +95,7 @@ warn_redundant_casts = true
 warn_unused_configs = true
 mypy_path = "src"
 ignore_missing_imports = true
+cache_dir = ".cache/mypy"
 
 
 [tool.pytest.ini_options]

@@ -4,30 +4,39 @@ namespace Aspire_Full.Pipeline.Modules.Discovery.Components;
 
 public class DockerImagesComponent : IDiscoveryComponent
 {
+    // Python 3.15.0a2 free-threaded (3.15t) - GIL disabled by default
+    // Installed via: uv python install 3.15t
+    private const string PythonVersion = "3.15t";
+    private const string PythonVersionFull = "3.15.0a2";
+
     public Task<DiscoveryResult> DiscoverAsync(EnvironmentConfig config)
     {
-        // Official Python Docker images do not yet have specific tags for free-threading (nogil).
-        // Users must currently build from source or use experimental third-party images.
-        // We list the latest official base tags here.
+        // Python 3.15t free-threaded is installed via uv, not from Docker Hub images.
+        // The base images use CUDA bootstrap + uv to install Python dynamically.
+        // This provides platform-agnostic 64-bit free-threaded Python builds.
 
-        var bleedingEdge = "python:3.14.0a1-slim-bookworm"; // Actual alpha tag
-        var stable = "python:3.14.0a1-slim-bookworm";         // Actual stable tag
+        var bleedingEdge = $"uv python install {PythonVersion}"; // Dynamic via uv
+        var stable = "python:3.14t-slim-bookworm";               // Fallback stable
 
         var details = new Dictionary<string, string>
         {
-            ["Bleeding Edge"] = bleedingEdge,
-            ["Stable"] = stable,
-            ["Note"] = "Official free-threading images are not yet available. Custom build required."
+            ["Version"] = PythonVersionFull,
+            ["Free-Threading"] = PythonVersion,
+            ["Install Method"] = bleedingEdge,
+            ["Stable Fallback"] = stable,
+            ["GIL Status"] = "Disabled (PYTHON_GIL=0)",
+            ["JIT Status"] = "Enabled (PYTHON_JIT=1)",
+            ["Note"] = "Installed via Astral uv for platform-agnostic free-threaded builds"
         };
 
         config.Docker.Images.Python.FreeThreading.BleedingEdge = bleedingEdge;
         config.Docker.Images.Python.FreeThreading.Stable = stable;
-        config.Docker.Images.Python.FreeThreading.Note = "Requires --disable-gil build flag";
+        config.Docker.Images.Python.FreeThreading.Note = "GIL disabled by default in 3.15t builds";
 
         return Task.FromResult(new DiscoveryResult(
             "Docker Images",
             "Info",
-            "Recommended Python Images (Free Threading Base)",
+            $"Python {PythonVersionFull} Free-Threaded ({PythonVersion})",
             details
         ));
     }

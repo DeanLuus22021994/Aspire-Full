@@ -8,6 +8,7 @@ environment:
     preview: true
   python:
     version: 3.15t  # Free-threading build - GIL disabled by default
+    version_full: 3.15.0a2  # Specific alpha release
     manager: uv
     gil_disabled: true
     jit_enabled: true
@@ -20,9 +21,9 @@ environment:
     images:
       python:
         free_threading:
-          bleeding_edge: python:3.15t-slim-bookworm
+          bleeding_edge: "uv python install 3.15t"  # Dynamic via Astral uv
           stable: python:3.14t-slim-bookworm
-          note: GIL disabled by default in 3.15t builds
+          note: GIL disabled (PYTHON_GIL=0), JIT enabled (PYTHON_JIT=1)
   hardware:
     gpu:
       enabled: true

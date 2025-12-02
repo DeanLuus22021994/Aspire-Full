@@ -67,6 +67,7 @@ __pycache__/
 dist/
 *.whl
 .python-version
+.cache/
 
 # Node.js
 node_modules/
