@@ -95,8 +95,8 @@ class ModuleMetrics:
     function_count: int
     class_count: int
     complexity: float
-    imports: "list[str]" = field(default_factory=list)
-    exports: "list[str]" = field(default_factory=list)
+    imports: list[str] = field(default_factory=lambda: [])
+    exports: list[str] = field(default_factory=lambda: [])
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -116,10 +116,10 @@ class AnalysisReport:
 
     timestamp: str
     workspace: str
-    findings: "list[Finding]" = field(default_factory=list)
-    module_metrics: "list[ModuleMetrics]" = field(default_factory=list)
-    docker_images: "list[dict[str, Any]]" = field(default_factory=list)
-    summary: "dict[str, Any]" = field(default_factory=dict)
+    findings: list[Finding] = field(default_factory=lambda: [])
+    module_metrics: list[ModuleMetrics] = field(default_factory=lambda: [])
+    docker_images: list[dict[str, Any]] = field(default_factory=lambda: [])
+    summary: dict[str, Any] = field(default_factory=lambda: {})
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -141,6 +141,7 @@ class PythonModuleAnalyzer:
     """Analyzes Python modules for redundancies and metrics."""
 
     def __init__(self, vendor_dir: Path) -> None:
+        super().__init__()
         self.vendor_dir = vendor_dir
         self.findings: list[Finding] = []
         self.metrics: list[ModuleMetrics] = []
@@ -342,6 +343,7 @@ class DockerRegistryAnalyzer:
     """Analyzes Docker registry for redundancies and cleanup opportunities."""
 
     def __init__(self) -> None:
+        super().__init__()
         self.findings: list[Finding] = []
         self.images: list[dict[str, Any]] = []
 
@@ -412,6 +414,7 @@ class InfrastructureAnalyzer:
     """Analyzes .NET infrastructure for optimization opportunities."""
 
     def __init__(self, infra_dir: Path) -> None:
+        super().__init__()
         self.infra_dir = infra_dir
         self.findings: list[Finding] = []
 
@@ -473,6 +476,7 @@ class RegistryAnalysisRunner:
     """Runs all analyzers and generates the report."""
 
     def __init__(self, workspace: Path, dry_run: bool = False) -> None:
+        super().__init__()
         self.workspace = workspace
         self.dry_run = dry_run
 
