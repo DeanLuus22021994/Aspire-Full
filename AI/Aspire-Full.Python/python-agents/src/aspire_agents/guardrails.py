@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final, Unpack
+from typing import TYPE_CHECKING, Any, Final
 
 import torch
 
@@ -32,8 +32,6 @@ from .compute import get_compute_service
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
-
-    from ._kwargs import GuardrailKwargs
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -326,7 +324,10 @@ def reset_guardrail_service() -> None:
 def semantic_input_guardrail(
     category: str = "harmful",
     threshold: float = 0.4,
-    **kwargs: Unpack[GuardrailKwargs],
+    *,
+    log_blocked: bool = True,
+    raise_on_block: bool = False,
+    include_score: bool = True,
 ) -> Callable[[ToolInputGuardrailData], Awaitable[ToolGuardrailFunctionOutput]]:
     """Create a semantic input guardrail for a specific category.
 
@@ -336,7 +337,9 @@ def semantic_input_guardrail(
     Args:
         category: Category to check against (default: "harmful")
         threshold: Similarity threshold (default: 0.4)
-        **kwargs: Type-safe additional configuration from GuardrailKwargs
+        log_blocked: Log blocked content for analysis (default: True)
+        raise_on_block: Raise exception instead of returning reject (default: False)
+        include_score: Include similarity score in output_info (default: True)
 
     Returns:
         Async guardrail function
@@ -348,26 +351,41 @@ def semantic_input_guardrail(
         ...     semantic_input_guardrail("harmful", 0.5)
         ... )
     """
-    # Override with kwargs if provided
-    effective_category = kwargs.get("category", category)
-    effective_threshold = kwargs.get("threshold", threshold)
+    # Capture in closure for thread safety
+    _category = category
+    _threshold = threshold
+    _log_blocked = log_blocked
+    _raise_on_block = raise_on_block
+    _include_score = include_score
 
     async def guardrail(data: ToolInputGuardrailData) -> ToolGuardrailFunctionOutput:
         service = get_guardrail_service()
         args_str = str(data.context.tool_arguments)
 
-        blocked, score = await service.check_semantic_similarity(args_str, category, threshold)
+        blocked, score = await service.check_semantic_similarity(args_str, _category, _threshold)
 
         if blocked:
+            if _log_blocked:
+                logger.warning(
+                    "Input blocked: category=%s, score=%.3f, tool=%s",
+                    _category,
+                    score,
+                    getattr(data.context, "tool_name", "unknown"),
+                )
+            output_info: dict[str, object] = {"blocked_category": _category}
+            if _include_score:
+                output_info["score"] = score
+            if _raise_on_block:
+                return ToolGuardrailFunctionOutput.raise_exception(output_info=output_info)
             return ToolGuardrailFunctionOutput.reject_content(
                 message=(
                     f"Input blocked: content semantically similar to restricted "
-                    f"category '{category}' (score: {score:.3f})"
+                    f"category '{_category}' (score: {score:.3f})"
                 ),
-                output_info={"blocked_category": category, "score": score},
+                output_info=output_info,
             )
 
-        return ToolGuardrailFunctionOutput.allow({"validated_category": category})
+        return ToolGuardrailFunctionOutput.allow({"validated_category": _category})
 
     return guardrail
 

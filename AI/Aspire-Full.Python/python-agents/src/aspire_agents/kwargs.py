@@ -248,22 +248,27 @@ class RunKwargs(TypedDict, total=False):
 
 
 class GuardrailKwargs(TypedDict, total=False):
-    """Type-safe kwargs for guardrail configuration.
+    """Type-safe kwargs for additional guardrail configuration.
 
     Thread Safety:
     - TypedDict is immutable at runtime
-    - Threshold is a simple float
+    - All values are simple types
+
+    Note: category and threshold are passed as positional/keyword args
+    to semantic_input_guardrail(), not via this TypedDict.
 
     Usage:
-        >>> def create_guardrail(**kwargs: Unpack[GuardrailKwargs]) -> GuardrailFunc:
-        ...     return semantic_input_guardrail(**kwargs)
+        >>> guardrail = semantic_input_guardrail("harmful", 0.5, log_blocked=True)
     """
 
-    category: str
-    """Category to check against (default: harmful for input, pii for output)"""
+    log_blocked: bool
+    """Log blocked content for analysis (default: True)"""
 
-    threshold: float
-    """Similarity threshold 0.0-1.0 (default: 0.4)"""
+    raise_on_block: bool
+    """Raise exception instead of returning reject result (default: False)"""
+
+    include_score: bool
+    """Include similarity score in output_info (default: True)"""
 
 
 # ============================================================================
