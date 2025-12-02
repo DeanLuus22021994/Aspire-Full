@@ -1,4 +1,5 @@
 # GitHub MCP server image built from the workspace sources
+# Enhanced for Agent & Sub-Agent MCP protocol with TensorCore
 FROM node:22-slim AS deps
 WORKDIR /workspace/tools/github-mcp
 
@@ -10,15 +11,23 @@ RUN npm run build && npm prune --omit=dev
 
 FROM nvidia/cuda:13.0.0-runtime-ubuntu24.04 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full GitHub MCP Server (CUDA)"
+LABEL org.opencontainers.image.description="Aspire GitHub MCP Server (CUDA) with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.mcp.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="mcp-protocol,github-integration,subagent-tools"
 
 WORKDIR /opt/github-mcp
 ENV NODE_ENV=production \
     GITHUB_MCP_PORT=17071 \
+    # NVIDIA TensorCore Configuration
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-    NVIDIA_REQUIRE_CUDA=cuda>=12.4,driver>=535
+    NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545" \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Agent & Sub-Agent MCP Configuration
+    ASPIRE_AGENT_MCP_ENABLED=1 \
+    ASPIRE_SUBAGENT_MCP_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=gpu
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl gnupg tini \

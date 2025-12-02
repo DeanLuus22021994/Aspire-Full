@@ -1,16 +1,20 @@
 # syntax=docker/dockerfile:1
 # =============================================================================
 # Aspire Python Agents - Python 3.15t Free-Threaded with TensorCore Compute
+# Enhanced for Agent & Sub-Agent Orchestration with GPU Tensor Offload
 # Build with: docker buildx bake python-agents
 # =============================================================================
 # hadolint global ignore=DL3008,DL3013
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS builder
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Python Agents 3.15t (Free-Threaded)"
+LABEL org.opencontainers.image.description="Aspire Python Agents 3.15t (Free-Threaded) with TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.agent.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="orchestration,subagent,semantic-kernel,mcp,tensor-offload"
 
 # =============================================================================
-# Python 3.15 Free-Threading + TensorCore + Strict Formatting Configuration
+# Python 3.15 Free-Threading + TensorCore + Agent Compute Configuration
+# Enhanced for multi-agent orchestration with sub-agent tensor offload
 # =============================================================================
 ENV PYTHON_GIL=0 \
     PYTHON_JIT=1 \
@@ -18,17 +22,24 @@ ENV PYTHON_GIL=0 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8 \
     PYTHONHASHSEED=random \
-    # NVIDIA Configuration
+    # NVIDIA TensorCore Configuration
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
-    # Strict formatting configuration (baked into image)
-    RUFF_LINE_LENGTH=120 \
-    RUFF_TARGET_VERSION=py315 \
-    RUFF_FORMAT_QUOTE_STYLE=double \
-    RUFF_FORMAT_INDENT_STYLE=space \
-    RUFF_FORMAT_LINE_ENDING=lf \
-    BLACK_LINE_LENGTH=120 \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Microsoft Pyright Configuration (strict type checking)
+    PYRIGHT_PYTHON_VERSION=3.15 \
+    PYRIGHT_TYPE_CHECKING_MODE=strict \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_BATCH_SIZE=32 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=hybrid \
+    # PyTorch TensorCore optimizations
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead \
     # uv configuration
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
@@ -74,10 +85,19 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
     uv sync --frozen --all-extras
 
-# Install strict formatting tools
+# Install Microsoft Pyright type checker (strict mode for Agent code quality)
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
-    uv pip install ruff>=0.8.0 black>=24.0.0 mypy>=1.13.0
+    uv pip install pyright>=1.1.407 mypy>=1.13.0 types-requests>=2.31.0 types-PyYAML>=6.0.12
+
+# Install additional Agent & Sub-Agent orchestration dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    . /opt/venv/bin/activate && \
+    uv pip install \
+    dapr>=1.14.0 \
+    grpcio>=1.68.0 \
+    protobuf>=5.29.0 \
+    accelerate>=1.2.0
 
 # Pre-install Playwright browsers (heavy but necessary for computer use)
 RUN . /opt/venv/bin/activate && playwright install --with-deps chromium
@@ -98,33 +118,50 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
     uv pip install -e .[tracing]
 
-# Run ruff format to ensure strict formatting compliance
-RUN . /opt/venv/bin/activate && \
-    ruff format --line-length 120 src/ || true && \
-    ruff check --fix src/ || true
+# Create cache directories for Agent compute
+RUN mkdir -p /var/cache/semantic-kernel /var/cache/torch-inductor && \
+    chmod -R 777 /var/cache/semantic-kernel /var/cache/torch-inductor
+
+# Create Microsoft Pyright configuration for Agent code quality
+RUN mkdir -p /etc/python && \
+    echo '{"pythonVersion":"3.15","pythonPlatform":"Linux","typeCheckingMode":"strict","include":["src"],"exclude":["**/__pycache__","**/.venv","**/dist","**/build"],"strictListInference":true,"strictDictionaryInference":true,"strictSetInference":true,"reportMissingImports":"error","reportUnusedImport":"error","reportMissingTypeArgument":"error"}' > /etc/python/pyrightconfig.json
 
 # Precompile all Python files for instant startup
 RUN . /opt/venv/bin/activate && python -m compileall -q .
 
 # =============================================================================
 # Runtime Stage - Minimal image with all dependencies baked in
+# Optimized for Agent & Sub-Agent TensorCore inference
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS runtime
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Python Agents Runtime with TensorCore"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.agent.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="inference,subagent,semantic-kernel,mcp,tensor-offload"
 
 ENV PYTHON_GIL=0 \
     PYTHON_JIT=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8 \
-    # NVIDIA Configuration
+    # NVIDIA TensorCore Configuration
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
     # Virtual environment
     PATH="/opt/venv/bin:$PATH" \
     VIRTUAL_ENV="/opt/venv" \
-    # Strict formatting (runtime reference)
-    RUFF_LINE_LENGTH=120 \
-    RUFF_TARGET_VERSION=py315
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_BATCH_SIZE=32 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=gpu \
+    # PyTorch TensorCore optimizations
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \

@@ -2,20 +2,33 @@
 # =============================================================================
 # Base Playwright Image with CUDA 13.0 + Python 3.15t TensorCore Support
 # Playwright browsers baked for instant browser automation
+# Enhanced for Agent Computer-Use and Sub-Agent browser operations
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Base Playwright with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Base Playwright with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.playwright.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="computer-use,browser-automation,screenshot-analysis"
 
-# Python 3.15 Free-Threading + TensorCore Configuration
-ENV PYTHON_GIL=0
-ENV PYTHON_JIT=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+# Python 3.15 Free-Threading + TensorCore + Agent Computer-Use Configuration
+ENV PYTHON_GIL=0 \
+    PYTHON_JIT=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # NVIDIA TensorCore Configuration
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Microsoft Pyright configuration
+    PYRIGHT_PYTHON_VERSION=3.15 \
+    PYRIGHT_TYPE_CHECKING_MODE=strict \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=hybrid
 
 # Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
@@ -40,10 +53,10 @@ RUN uv python install 3.15t && \
 ENV PATH="/opt/venv/bin:$PATH"
 ENV VIRTUAL_ENV="/opt/venv"
 
-# Install Playwright and browsers (baked into image)
+# Install Playwright and browsers (baked into image for Agent computer-use)
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
-    uv pip install playwright && \
+    uv pip install playwright pyright>=1.1.407 && \
     playwright install --with-deps chromium
 
 # Playwright browser cache location

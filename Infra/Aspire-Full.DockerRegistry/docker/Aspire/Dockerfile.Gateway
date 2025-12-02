@@ -27,15 +27,24 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "Aspire-Full.Gateway.csproj" -c Release -r linux-x64 --self-contained true -o /app/publish /p:UseAppHost=true
 
 # Stage 3: Runtime with TensorCore Support
+# Enhanced for Agent & Sub-Agent Gateway operations with GPU compute
 FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS final
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Gateway with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Full Gateway with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.gateway.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="api-gateway,service-discovery,subagent-routing"
 
-# TensorCore Configuration
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+# TensorCore Configuration for Agent Gateway operations
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Agent & Sub-Agent Gateway Configuration
+    ASPIRE_AGENT_ROUTING_ENABLED=1 \
+    ASPIRE_SUBAGENT_DISCOVERY_ENABLED=1 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=gpu
 
 WORKDIR /app
 

@@ -1,16 +1,24 @@
 # =============================================================================
 # Base .NET 10 Image - Inherits from CUDA Bootstrap Runtime
 # .NET 10 SDK for Aspire applications with TensorCore support
+# Enhanced for Agent & Sub-Agent .NET interop with GPU compute
 # =============================================================================
 FROM cuda-bootstrap-runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Base .NET (inherits CUDA Bootstrap)"
+LABEL org.opencontainers.image.description="Aspire Base .NET with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.dotnet.version="10.0"
+LABEL ai.aspire.agent.capabilities="aspire-hosting,tensor-interop,grpc"
 
 # .NET specific environment (TensorCore config inherited from bootstrap)
-ENV DOTNET_RUNNING_IN_CONTAINER=true
-ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
-ENV DOTNET_NOLOGO=1
+# Enhanced for Agent compute service integration
+ENV DOTNET_RUNNING_IN_CONTAINER=true \
+    DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=gpu
 
 # Install .NET 10 SDK
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

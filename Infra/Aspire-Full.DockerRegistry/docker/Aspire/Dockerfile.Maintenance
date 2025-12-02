@@ -2,10 +2,16 @@
 # =============================================================================
 # Maintenance Image: TensorCore-Optimized for Package Compilation
 # Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN for dependency resolution
+# Enhanced for Agent & Sub-Agent dependency management
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS maintenance
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Maintenance with Agent TensorCore"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.maintenance.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="dependency-resolution,package-compilation"
 
-# Python 3.15 Free-Threading + TensorCore + Strict Formatting Configuration
+# Python 3.15 Free-Threading + TensorCore + Agent Compute Configuration
 ENV PYTHON_GIL=0 \
     PYTHON_JIT=1 \
     PYTHONUNBUFFERED=1 \
@@ -16,15 +22,17 @@ ENV PYTHON_GIL=0 \
     DEBIAN_FRONTEND=noninteractive \
     UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
-    # NVIDIA Configuration
+    # NVIDIA TensorCore Configuration
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
-    # Strict formatting configuration
-    RUFF_LINE_LENGTH=120 \
-    RUFF_TARGET_VERSION=py315 \
-    RUFF_FORMAT_QUOTE_STYLE=double \
-    RUFF_FORMAT_LINE_ENDING=lf
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Microsoft Pyright configuration
+    PYRIGHT_PYTHON_VERSION=3.15 \
+    PYRIGHT_TYPE_CHECKING_MODE=strict \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=hybrid
 
 WORKDIR /workspace
 

@@ -2,32 +2,48 @@
 # =============================================================================
 # CUDA Bootstrap Image - Unified Base for All TensorCore Workloads
 # Two-stage build: devel (NVCC + build tools) and runtime (minimal)
+# Enhanced for Agent & Sub-Agent TensorCore Compute with strict alignment
 # =============================================================================
 
 # =============================================================================
 # Stage 1: CUDA Bootstrap Devel - For compilation workloads
 # Includes NVCC, cuDNN, build essentials for native CUDA compilation
+# Optimized for AI Agent tensor operations and sub-agent orchestration
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire CUDA Bootstrap (Devel) - TensorCore"
+LABEL org.opencontainers.image.description="Aspire CUDA Bootstrap (Devel) - TensorCore Agent Compute"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.compute.mode="tensorcore"
+LABEL ai.aspire.agent.capabilities="orchestration,subagent,tensor-offload"
 
 # =============================================================================
 # TensorCore Configuration - Inherited by all child images
+# Enhanced for Agent/Sub-Agent GPU compute with strict memory alignment
 # =============================================================================
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545"
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-ENV CUDA_HOME=/usr/local/cuda
-ENV PATH="${CUDA_HOME}/bin:${PATH}"
-ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
-
-# cuDNN autotuning cache directory
-ENV CUDNN_LOGINFO_DBG=1
-ENV CUDA_CACHE_PATH=/var/cuda-cache
-ENV CUDA_CACHE_MAXSIZE=4294967296
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
+    NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545" \
+    # TensorCore architecture support (Volta through Hopper)
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    # CUDA paths
+    CUDA_HOME=/usr/local/cuda \
+    PATH="${CUDA_HOME}/bin:${PATH}" \
+    LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}" \
+    # cuDNN autotuning for agent inference optimization
+    CUDNN_LOGINFO_DBG=1 \
+    CUDA_CACHE_PATH=/var/cuda-cache \
+    CUDA_CACHE_MAXSIZE=4294967296 \
+    # TensorCore strict memory alignment (128-byte for Tensor Cores)
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Agent compute optimization flags
+    CUDA_LAUNCH_BLOCKING=0 \
+    TORCH_CUDNN_V8_API_ENABLED=1 \
+    CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+    # Sub-agent tensor offload configuration
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=hybrid
 
 # Enable apt caching for faster rebuilds - inherited by all child images
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; \
@@ -53,26 +69,37 @@ VOLUME ["/var/cuda-cache", "/root/.ccache"]
 
 # =============================================================================
 # Stage 2: CUDA Bootstrap Runtime - For production workloads
-# Minimal image with TensorCore support, no build tools
+# Minimal image with TensorCore support for Agent inference
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS cuda-bootstrap-runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire CUDA Bootstrap (Runtime) - TensorCore"
+LABEL org.opencontainers.image.description="Aspire CUDA Bootstrap (Runtime) - TensorCore Agent Compute"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.compute.mode="tensorcore"
+LABEL ai.aspire.agent.capabilities="inference,subagent,tensor-offload"
 
 # =============================================================================
 # TensorCore Configuration - Inherited by all child images
+# Optimized for Agent/Sub-Agent runtime inference
 # =============================================================================
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545"
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-ENV CUDA_HOME=/usr/local/cuda
-ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
-
-# cuDNN autotuning cache
-ENV CUDA_CACHE_PATH=/var/cuda-cache
-ENV CUDA_CACHE_MAXSIZE=4294967296
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545" \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    CUDA_HOME=/usr/local/cuda \
+    LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}" \
+    # cuDNN autotuning cache
+    CUDA_CACHE_PATH=/var/cuda-cache \
+    CUDA_CACHE_MAXSIZE=4294967296 \
+    # TensorCore strict memory alignment
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Agent inference optimization
+    TORCH_CUDNN_V8_API_ENABLED=1 \
+    CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+    # Sub-agent tensor offload
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=gpu
 
 # Enable apt caching
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; \

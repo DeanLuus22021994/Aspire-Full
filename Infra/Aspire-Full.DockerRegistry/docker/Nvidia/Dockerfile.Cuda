@@ -1,17 +1,26 @@
 # =============================================================================
 # NVIDIA CUDA 13.0 Development Image with TensorCore Support
 # Base image for CUDA kernel development and native library builds
+# Enhanced for Agent & Sub-Agent TensorCore kernel compilation
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full NVIDIA CUDA 13.0 with TensorCore"
+LABEL org.opencontainers.image.description="Aspire NVIDIA CUDA 13.0 with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.cuda.version="13.0"
+LABEL ai.aspire.agent.capabilities="cuda-kernels,tensor-ops,native-compute"
 
-# TensorCore Configuration for all GPU architectures
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
-ENV NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545"
+# TensorCore Configuration for all GPU architectures (Volta through Hopper)
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    NVIDIA_REQUIRE_CUDA="cuda>=13.0,driver>=545" \
+    # TensorCore strict memory alignment (128-byte for Tensor Cores)
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Agent TensorCore kernel compilation
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=hybrid \
+    CUBLAS_WORKSPACE_CONFIG=:4096:8
 
 # Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache

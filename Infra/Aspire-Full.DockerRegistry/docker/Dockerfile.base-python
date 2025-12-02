@@ -3,17 +3,21 @@
 # Base Python Image - Python 3.15t Free-Threaded with TensorCore
 # Inherits from CUDA Bootstrap Devel for GPU compilation support
 # Microsoft-Only Tooling: Pyright (Pylance backend) for type checking
+# Enhanced for AI Agent & Sub-Agent TensorCore Compute Operations
 # =============================================================================
 # hadolint global ignore=DL3008,DL3013
 FROM cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Base Python 3.15t (Free-Threaded) with Microsoft Pyright"
+LABEL org.opencontainers.image.description="Aspire Base Python 3.15t (Free-Threaded) with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.python.version="3.15t"
+LABEL ai.aspire.agent.capabilities="orchestration,subagent,semantic-kernel,mcp"
 
 # =============================================================================
 # Python 3.15 Free-Threading Configuration (PEP 803)
-# PYTHON_GIL=0: Disables GIL for true parallel threading
-# PYTHON_JIT=1: Enables experimental JIT compilation
+# PYTHON_GIL=0: Disables GIL for true parallel threading (Agent concurrency)
+# PYTHON_JIT=1: Enables experimental JIT compilation (Agent inference)
+# Enhanced for multi-agent tensor operations
 # =============================================================================
 ENV PYTHON_GIL=0 \
     PYTHON_JIT=1 \
@@ -21,7 +25,7 @@ ENV PYTHON_GIL=0 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8 \
     PYTHONHASHSEED=random \
-    # Microsoft Pyright configuration
+    # Microsoft Pyright configuration (strict type checking)
     PYRIGHT_PYTHON_VERSION=3.15 \
     PYRIGHT_TYPE_CHECKING_MODE=strict \
     # Virtual environment configuration
@@ -30,7 +34,16 @@ ENV PYTHON_GIL=0 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     VIRTUAL_ENV=/opt/venv \
-    PATH="/opt/venv/bin:${PATH}"
+    PATH="/opt/venv/bin:${PATH}" \
+    # Agent & Sub-Agent TensorCore Configuration
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_BATCH_SIZE=32 \
+    ASPIRE_SEMANTIC_KERNEL_CACHE=/var/cache/semantic-kernel \
+    # PyTorch TensorCore optimizations for Agent inference
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead \
+    TORCH_INDUCTOR_CACHE_DIR=/var/cache/torch-inductor
 
 # Install Python system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -52,6 +65,7 @@ RUN uv python install 3.15t \
 # =============================================================================
 # Bake ALL Python dependencies for instant readiness and zero latency
 # This eliminates any package installation during development
+# Enhanced for Agent & Sub-Agent orchestration with TensorCore compute
 # =============================================================================
 # Install Microsoft-only type checking tools + all core dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -62,62 +76,53 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     mypy>=1.13.0 \
     types-requests>=2.31.0 \
     types-PyYAML>=6.0.12 \
-    # Core AI/ML Stack (pre-compiled for Python 3.15t)
+    # Core AI Agent Stack (pre-compiled for Python 3.15t TensorCore)
     openai>=1.51.0 \
     openai-agents>=0.1.0 \
     mcp>=1.10.1 \
     semantic-kernel>=1.15.0 \
+    # Sub-Agent Orchestration & Communication
+    dapr>=1.14.0 \
+    grpcio>=1.68.0 \
+    protobuf>=5.29.0 \
+    # TensorCore Compute Stack
+    torch>=2.5.1 \
+    transformers>=4.47.0 \
+    sentence-transformers>=3.3.0 \
+    accelerate>=1.2.0 \
     # Web/API Stack
-    fastapi>=0.110.0 \
-    uvicorn>=0.27.0 \
-    httpx>=0.27.2 \
-    websockets>=12.0 \
+    fastapi>=0.115.0 \
+    uvicorn>=0.32.0 \
+    httpx>=0.28.0 \
+    websockets>=14.0 \
     # Data/Config Stack
-    pydantic>=2.12.5 \
+    pydantic>=2.10.0 \
     PyYAML>=6.0.2 \
-    python-dotenv>=1.0.0 \
+    python-dotenv>=1.0.1 \
     tenacity>=9.0.0 \
     # CLI/TUI Stack
-    typer>=0.12.5 \
-    rich>=13.8.0 \
-    textual>=0.70.0 \
-    # Database Stack
-    sqlalchemy[asyncio]>=2.0.0 \
-    asyncpg>=0.29.0 \
-    # OpenTelemetry (tracing)
-    opentelemetry-sdk>=1.34.1 \
-    opentelemetry-exporter-otlp-proto-http>=1.34.1 \
+    typer>=0.15.0 \
+    rich>=13.9.0 \
+    textual>=1.0.0 \
+    # Database Stack (Agent state persistence)
+    sqlalchemy[asyncio]>=2.0.36 \
+    asyncpg>=0.30.0 \
+    # OpenTelemetry (Agent tracing & observability)
+    opentelemetry-sdk>=1.29.0 \
+    opentelemetry-exporter-otlp-proto-http>=1.29.0 \
     opentelemetry-instrumentation-openai-v2>=2.1b0 \
-    opentelemetry-instrumentation-fastapi>=0.43b0
+    opentelemetry-instrumentation-fastapi>=0.50b0
+
+# Create cache directories for Agent compute
+RUN mkdir -p /var/cache/semantic-kernel /var/cache/torch-inductor && \
+    chmod -R 777 /var/cache/semantic-kernel /var/cache/torch-inductor
 
 # Precompile all installed packages for instant import (eliminates .pyc latency)
 RUN . /opt/venv/bin/activate && python -m compileall -q /opt/venv/lib
 
-# Create Microsoft Pyright configuration for strict type checking
+# Create Microsoft Pyright configuration for strict type checking (Agent code quality)
 RUN mkdir -p /etc/python && \
-    echo '{' > /etc/python/pyrightconfig.json && \
-    echo '  "pythonVersion": "3.15",' >> /etc/python/pyrightconfig.json && \
-    echo '  "pythonPlatform": "Linux",' >> /etc/python/pyrightconfig.json && \
-    echo '  "typeCheckingMode": "strict",' >> /etc/python/pyrightconfig.json && \
-    echo '  "include": ["src"],' >> /etc/python/pyrightconfig.json && \
-    echo '  "exclude": ["**/__pycache__", "**/.venv", "**/dist", "**/build"],' >> /etc/python/pyrightconfig.json && \
-    echo '  "strictListInference": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "strictDictionaryInference": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "strictSetInference": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "analyzeUnannotatedFunctions": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "strictParameterNoneValue": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "deprecateTypingAliases": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "enableReachabilityAnalysis": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "disableBytesTypePromotions": true,' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportMissingImports": "error",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportMissingTypeStubs": "warning",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportUnusedImport": "error",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportUnusedVariable": "error",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportUnknownParameterType": "error",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportUnknownVariableType": "error",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportMissingParameterType": "error",' >> /etc/python/pyrightconfig.json && \
-    echo '  "reportMissingTypeArgument": "error"' >> /etc/python/pyrightconfig.json && \
-    echo '}' >> /etc/python/pyrightconfig.json
+    echo '{"pythonVersion":"3.15","pythonPlatform":"Linux","typeCheckingMode":"strict","include":["src"],"exclude":["**/__pycache__","**/.venv","**/dist","**/build"],"strictListInference":true,"strictDictionaryInference":true,"strictSetInference":true,"analyzeUnannotatedFunctions":true,"strictParameterNoneValue":true,"deprecateTypingAliases":true,"enableReachabilityAnalysis":true,"disableBytesTypePromotions":true,"reportMissingImports":"error","reportMissingTypeStubs":"warning","reportUnusedImport":"error","reportUnusedVariable":"error","reportUnknownParameterType":"error","reportUnknownVariableType":"error","reportMissingParameterType":"error","reportMissingTypeArgument":"error","reportUnnecessaryCast":"error","reportUnnecessaryComparison":"error","reportPrivateUsage":"warning","reportConstantRedefinition":"error","reportIncompatibleMethodOverride":"error","reportIncompatibleVariableOverride":"error"}' > /etc/python/pyrightconfig.json
 
-# Named volume for uv cache persistence
-VOLUME ["/root/.cache/uv"]
+# Named volumes for Agent compute cache persistence
+VOLUME ["/root/.cache/uv", "/var/cache/semantic-kernel", "/var/cache/torch-inductor"]

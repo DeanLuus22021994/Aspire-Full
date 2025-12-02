@@ -2,18 +2,22 @@
 # Aspire Full DevContainer with TensorCore Compute
 # Python 3.15t (free-threaded) + .NET 10 + CUDA 13.0 + cuDNN
 # All dependencies baked for zero-latency development
+# Enhanced for Agent & Sub-Agent TensorCore Orchestration
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full DevContainer with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Full DevContainer with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.devcontainer.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="development,orchestration,subagent,semantic-kernel,mcp"
 
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # =============================================================================
-# Python 3.15 Free-Threading + TensorCore + Microsoft Pyright Configuration
+# Python 3.15 Free-Threading + TensorCore + Agent Compute Configuration
+# Enhanced for multi-agent development with sub-agent tensor offload
 # =============================================================================
 ENV PYTHON_GIL=0 \
     PYTHON_JIT=1 \
@@ -21,13 +25,24 @@ ENV PYTHON_GIL=0 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8 \
     PYTHONHASHSEED=random \
-    # NVIDIA Configuration
+    # NVIDIA TensorCore Configuration
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
     # Microsoft Pyright configuration (strict type checking)
     PYRIGHT_PYTHON_VERSION=3.15 \
-    PYRIGHT_TYPE_CHECKING_MODE=strict
+    PYRIGHT_TYPE_CHECKING_MODE=strict \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_BATCH_SIZE=32 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=hybrid \
+    # PyTorch TensorCore optimizations
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead
 
 # Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
@@ -133,8 +148,8 @@ RUN --mount=type=cache,target=/root/.cache/huggingface \
 RUN . /opt/venv/bin/activate && python -m compileall -q /opt/venv/lib
 
 # =============================================================================
-# Install Microsoft Type Checking + Additional Type Stubs
-# Ensures instant readiness for Pylance/Pyright in VS Code
+# Install Microsoft Type Checking + Agent Orchestration Dependencies
+# Ensures instant readiness for Pylance/Pyright + Agent development in VS Code
 # =============================================================================
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
@@ -144,7 +159,16 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     mypy>=1.13.0 \
     # Type stubs for full type coverage
     types-requests>=2.31.0 \
-    types-PyYAML>=6.0.12
+    types-PyYAML>=6.0.12 \
+    # Agent & Sub-Agent Orchestration
+    dapr>=1.14.0 \
+    grpcio>=1.68.0 \
+    protobuf>=5.29.0 \
+    accelerate>=1.2.0
+
+# Create cache directories for Agent compute
+RUN mkdir -p /var/cache/semantic-kernel /var/cache/torch-inductor && \
+    chmod -R 777 /var/cache/semantic-kernel /var/cache/torch-inductor
 
 # Create Microsoft Pyright configuration for strict type checking
 RUN mkdir -p /etc/python && \

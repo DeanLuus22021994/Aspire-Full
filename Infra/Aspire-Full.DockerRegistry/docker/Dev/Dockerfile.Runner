@@ -1,19 +1,31 @@
 # =============================================================================
 # Self-hosted GitHub Actions Runner with TensorCore Support
 # .NET 10, Node.js 22, Python 3.15t, Docker-in-Docker
+# Enhanced for Agent & Sub-Agent TensorCore CI/CD Operations
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full GitHub Actions Runner with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Full GitHub Actions Runner with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.runner.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="ci-cd,tensor-build,agent-testing"
 
 ARG RUNNER_VERSION=2.321.0
 ARG TARGETARCH=x64
 
-# TensorCore Configuration
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+# TensorCore Configuration for Agent CI/CD
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    CUDA_TENSOR_CORE_ALIGNMENT=128 \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=hybrid \
+    # Microsoft Pyright configuration
+    PYRIGHT_PYTHON_VERSION=3.15 \
+    PYRIGHT_TYPE_CHECKING_MODE=strict
 
 # Enable apt caching for faster rebuilds
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache

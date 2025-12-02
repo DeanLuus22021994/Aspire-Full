@@ -3,11 +3,29 @@
 # Aspire Tensor Compute with TensorCore Acceleration
 # Inherits from cuda-bootstrap for unified TensorCore configuration
 # Python 3.15t (free-threaded) + CUDA 13.0 + cuDNN
+# Enhanced for Agent & Sub-Agent GPU Tensor Offload Operations
 # =============================================================================
 
 # Stage 1: Builder (Compile dependencies with TensorCore optimization)
 # Inherits TensorCore ENV vars from cuda-bootstrap-devel
 FROM cuda-bootstrap-devel AS builder
+LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
+LABEL org.opencontainers.image.description="Aspire Tensor Compute Builder with Agent TensorCore"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.tensor.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="tensor-offload,matmul,convolution,embedding"
+
+# Agent & Sub-Agent TensorCore Compute Environment
+ENV ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_BATCH_SIZE=32 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=hybrid \
+    # PyTorch TensorCore optimizations
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead \
+    TORCH_INDUCTOR_CACHE_DIR=/var/cache/torch-inductor
 
 WORKDIR /build
 
@@ -41,6 +59,16 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
     uv sync --frozen --all-extras
 
+# Install Microsoft Pyright + Agent orchestration dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    . /opt/venv/bin/activate && \
+    uv pip install \
+    pyright>=1.1.407 \
+    mypy>=1.13.0 \
+    dapr>=1.14.0 \
+    grpcio>=1.68.0 \
+    accelerate>=1.2.0
+
 # Install Playwright browsers
 RUN . /opt/venv/bin/activate && playwright install --with-deps chromium
 
@@ -61,14 +89,27 @@ RUN . /opt/venv/bin/activate && python -m compileall -q .
 # =============================================================================
 # Stage 2: Runtime (Minimal, TensorCore-optimized)
 # Inherits TensorCore ENV vars from cuda-bootstrap-runtime
+# Optimized for Agent & Sub-Agent tensor inference operations
 # =============================================================================
 FROM cuda-bootstrap-runtime AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Tensor Compute with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Full Tensor Compute with Agent TensorCore"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.tensor.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="inference,tensor-offload,matmul,embedding"
 
-ENV PATH="/opt/venv/bin:$PATH"
-ENV VIRTUAL_ENV="/opt/venv"
+ENV PATH="/opt/venv/bin:$PATH" \
+    VIRTUAL_ENV="/opt/venv" \
+    # Agent & Sub-Agent TensorCore Compute
+    ASPIRE_AGENT_THREAD_POOL_SIZE=8 \
+    ASPIRE_SUBAGENT_MAX_CONCURRENT=16 \
+    ASPIRE_TENSOR_BATCH_SIZE=32 \
+    ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_SUBAGENT_GPU_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=gpu \
+    # PyTorch TensorCore optimizations
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512" \
+    TORCH_COMPILE_MODE=reduce-overhead
 
 WORKDIR /app
 

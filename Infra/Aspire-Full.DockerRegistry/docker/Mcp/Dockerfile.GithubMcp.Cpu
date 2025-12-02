@@ -1,8 +1,11 @@
 # GitHub MCP server image with baked dependencies and telemetry tooling
+# Enhanced for Agent & Sub-Agent MCP protocol (CPU fallback)
 FROM node:22-slim AS base
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full GitHub MCP Server (CPU)"
+LABEL org.opencontainers.image.description="Aspire GitHub MCP Server (CPU) with Agent Support"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.mcp.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="mcp-protocol,github-integration,subagent-tools"
 
 WORKDIR /workspace/tools/github-mcp
 
@@ -14,12 +17,18 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-slim AS runtime
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full GitHub MCP Server (CPU)"
+LABEL org.opencontainers.image.description="Aspire GitHub MCP Server (CPU) with Agent Support"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.mcp.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="mcp-protocol,github-integration,subagent-tools"
 
 WORKDIR /opt/github-mcp
 ENV NODE_ENV=production \
-    GITHUB_MCP_PORT=17071
+    GITHUB_MCP_PORT=17071 \
+    # Agent & Sub-Agent MCP Configuration (CPU mode)
+    ASPIRE_AGENT_MCP_ENABLED=1 \
+    ASPIRE_SUBAGENT_MCP_SHARE=1 \
+    ASPIRE_COMPUTE_MODE=cpu
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates tini \

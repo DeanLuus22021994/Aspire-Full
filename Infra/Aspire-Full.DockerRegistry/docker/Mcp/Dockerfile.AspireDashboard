@@ -2,10 +2,13 @@
 FROM mcr.microsoft.com/dotnet/aspire-dashboard:latest AS source
 
 # Stage 2: Build the runtime image with NVIDIA support
+# Enhanced for Agent & Sub-Agent telemetry visualization
 FROM nvidia/cuda:13.0.0-base-ubuntu24.04
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Dashboard (MCP)"
+LABEL org.opencontainers.image.description="Aspire Dashboard (MCP) with Agent TensorCore Telemetry"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.dashboard.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="telemetry,tracing,subagent-monitoring"
 
 # Install dependencies and .NET Runtime
 # We install .NET 9.0 Runtime as it is the current GA version for Aspire
@@ -23,16 +26,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY --from=source /app /app
 
-# Configuration
+# Configuration for Agent & Sub-Agent telemetry
 ENV DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true \
     DASHBOARD__OTLP__AUTHMODE=Unsecured \
     DASHBOARD__FRONTEND__AUTHMODE=Unsecured \
     DASHBOARD__RESOURCESERVICE__AUTHMODE=Unsecured \
     ASPIRE_DASHBOARD_MCP_ENDPOINT_URL=http://0.0.0.0:16036 \
     ASPIRE_ALLOW_UNSECURED_TRANSPORT=true \
-    # NVIDIA Configuration
+    # NVIDIA TensorCore Configuration
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    # Agent & Sub-Agent Telemetry Configuration
+    ASPIRE_AGENT_TELEMETRY_ENABLED=1 \
+    ASPIRE_SUBAGENT_TRACING_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=gpu
 
 EXPOSE 18888 18889 16036
 VOLUME ["/app/data"]

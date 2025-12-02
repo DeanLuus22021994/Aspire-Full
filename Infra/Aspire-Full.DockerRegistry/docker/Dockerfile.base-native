@@ -1,23 +1,31 @@
 # =============================================================================
 # Base Native Image - Inherits from CUDA Bootstrap Devel
 # CMake + Ninja for native CUDA library compilation
+# Enhanced for Agent TensorCore kernel compilation
 # =============================================================================
 FROM cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Base Native (inherits CUDA Bootstrap)"
+LABEL org.opencontainers.image.description="Aspire Base Native with Agent TensorCore Kernels"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL ai.aspire.native.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="cuda-kernels,tensor-ops,native-compute"
+
+# Agent TensorCore kernel compilation environment
+ENV ASPIRE_TENSOR_OFFLOAD_ENABLED=1 \
+    ASPIRE_COMPUTE_MODE=hybrid \
+    CUDA_TENSOR_CORE_ALIGNMENT=128
 
 # TensorCore config inherited from cuda-bootstrap-devel
-# Install CMake 3.28 (stable) and Ninja build system
+# Install CMake 3.31 (latest stable) and Ninja build system for Agent kernels
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
     ninja-build \
     && rm -rf /var/lib/apt/lists/* \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3-linux-x86_64.sh \
-    && chmod +x cmake-3.28.3-linux-x86_64.sh \
-    && ./cmake-3.28.3-linux-x86_64.sh --skip-license --prefix=/usr/local \
-    && rm cmake-3.28.3-linux-x86_64.sh
+    && wget https://github.com/Kitware/CMake/releases/download/v3.31.2/cmake-3.31.2-linux-x86_64.sh \
+    && chmod +x cmake-3.31.2-linux-x86_64.sh \
+    && ./cmake-3.31.2-linux-x86_64.sh --skip-license --prefix=/usr/local \
+    && rm cmake-3.31.2-linux-x86_64.sh
 
 # ccache for faster recompilation
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

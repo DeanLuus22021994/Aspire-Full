@@ -1,5 +1,8 @@
 # Stage 1: Build Native Library
+# Enhanced for Agent TensorCore kernel compilation
 FROM base-native AS build
+LABEL ai.aspire.native.version="1.0.0"
+LABEL ai.aspire.agent.capabilities="cuda-kernels,tensor-ops,native-compute"
 WORKDIR /src
 
 # Copy Native Project
