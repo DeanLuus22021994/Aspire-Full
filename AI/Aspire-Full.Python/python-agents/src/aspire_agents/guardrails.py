@@ -8,15 +8,22 @@ Guardrail Types:
 - Output Guardrails: Detect PII or sensitive data in tool outputs
 
 Thread Safety:
-- GuardrailService uses thread-safe singleton pattern
-- Concept embeddings are pre-computed and immutable
-- All checks are async and non-blocking
+- GuardrailService uses thread-safe singleton pattern with locking
+- Concept embeddings are pre-computed and immutable after initialization
+- All similarity checks are async and non-blocking
+
+Usage:
+    >>> @function_tool
+    ... async def my_tool(arg: str) -> str:
+    ...     return f"Result: {arg}"
+    >>> my_tool.tool_input_guardrails.append(semantic_input_guardrail("harmful"))
 """
 
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+import threading
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final, cast
 
 from .compute import get_compute_service
@@ -26,26 +33,47 @@ if TYPE_CHECKING:
 
     import torch
 
-logger: Final = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(__name__)
+
+# Thread-safe singleton lock
+_GUARDRAIL_LOCK: Final[threading.Lock] = threading.Lock()
+_guardrail_service: GuardrailService | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class ToolInputGuardrailData:
-    """Immutable input data for guardrail evaluation."""
+    """Immutable input data for guardrail evaluation.
+
+    Thread-safe via frozen dataclass.
+
+    Attributes:
+        context: Tool context with name and arguments
+    """
 
     context: Any  # ToolContext from core.py
 
 
 @dataclass(frozen=True, slots=True)
 class ToolOutputGuardrailData:
-    """Immutable output data for guardrail evaluation."""
+    """Immutable output data for guardrail evaluation.
+
+    Thread-safe via frozen dataclass.
+
+    Attributes:
+        output: The tool's output value
+        context: Tool context with name and arguments
+    """
 
     output: Any
     context: Any  # ToolContext from core.py
 
 
 class ToolOutputGuardrailTripwireTriggered(Exception):
-    """Raised when an output guardrail blocks content."""
+    """Raised when an output guardrail blocks content.
+
+    This exception should be caught at the agent runner level
+    to prevent sensitive data from being returned to the user.
+    """
 
     __slots__ = ("output",)
 
@@ -56,19 +84,44 @@ class ToolOutputGuardrailTripwireTriggered(Exception):
 
 @dataclass(slots=True)
 class ToolGuardrailFunctionOutput:
-    """Result of a guardrail evaluation."""
+    """Result of a guardrail evaluation.
+
+    Not frozen to allow modification during evaluation, but
+    individual instances should be treated as effectively immutable
+    after creation.
+
+    Attributes:
+        output_info: Metadata about the guardrail decision
+        message: Human-readable message (present if blocked)
+    """
 
     output_info: dict[str, Any]
     message: str | None = None
 
     @classmethod
-    def reject_content(cls, message: str, output_info: dict[str, Any]) -> ToolGuardrailFunctionOutput:
+    def allow(cls, info: dict[str, Any] | None = None) -> ToolGuardrailFunctionOutput:
+        """Create an allow response (no blocking)."""
+        return cls(output_info=info or {"status": "allowed"}, message=None)
+
+    @classmethod
+    def reject_content(
+        cls,
+        message: str,
+        output_info: dict[str, Any],
+    ) -> ToolGuardrailFunctionOutput:
         """Create a rejection response with a message."""
-        return cls(output_info, message=message)
+        return cls(output_info=output_info, message=message)
 
     @classmethod
     def raise_exception(cls, output_info: dict[str, Any]) -> ToolGuardrailFunctionOutput:
-        """Raise an exception to block the output chain."""
+        """Raise an exception to block the output chain.
+
+        This should be used for output guardrails where we want to
+        prevent the output from ever being returned.
+
+        Raises:
+            ToolOutputGuardrailTripwireTriggered: Always
+        """
         raise ToolOutputGuardrailTripwireTriggered(cls(output_info))
 
 
@@ -82,13 +135,18 @@ class GuardrailService:
     - Uses BatchComputeService singleton (thread-safe)
     - Concept embeddings are immutable after initialization
     - All similarity checks are async and non-blocking
+
+    Attributes:
+        compute: BatchComputeService for embedding computation
+        restricted_concepts: Mapping of category -> list of phrases
+        concept_embeddings: Pre-computed embeddings per category
     """
 
-    __slots__ = ("compute", "restricted_concepts", "concept_embeddings")
+    __slots__ = ("compute", "restricted_concepts", "concept_embeddings", "_initialized")
 
-    # Default restricted concept categories
-    DEFAULT_CONCEPTS: Final[dict[str, list[str]]] = {
-        "pii": [
+    # Default restricted concept categories - comprehensive list
+    DEFAULT_CONCEPTS: Final[dict[str, tuple[str, ...]]] = {
+        "pii": (
             "social security number",
             "credit card number",
             "phone number",
@@ -97,8 +155,15 @@ class GuardrailService:
             "secret key",
             "api key",
             "access token",
-        ],
-        "harmful": [
+            "private key",
+            "bank account number",
+            "driver license",
+            "passport number",
+            "date of birth",
+            "home address",
+            "medical record",
+        ),
+        "harmful": (
             "hack",
             "exploit",
             "malware",
@@ -107,105 +172,242 @@ class GuardrailService:
             "vulnerability",
             "injection",
             "backdoor",
-        ],
+            "ransomware",
+            "phishing",
+            "keylogger",
+            "rootkit",
+            "zero day",
+            "buffer overflow",
+            "privilege escalation",
+        ),
+        "illegal": (
+            "illegal drugs",
+            "weapons trafficking",
+            "money laundering",
+            "fraud",
+            "identity theft",
+            "child exploitation",
+            "terrorism",
+            "human trafficking",
+        ),
     }
 
-    def __init__(self, restricted_concepts: dict[str, list[str]] | None = None) -> None:
+    def __init__(
+        self,
+        restricted_concepts: dict[str, tuple[str, ...] | list[str]] | None = None,
+    ) -> None:
+        """Initialize guardrail service with concept embeddings.
+
+        Args:
+            restricted_concepts: Custom categories and phrases to block.
+                                Defaults to DEFAULT_CONCEPTS if not provided.
+        """
         self.compute = get_compute_service()
-        self.restricted_concepts = restricted_concepts or self.DEFAULT_CONCEPTS
-        self.concept_embeddings: dict[str, torch.Tensor] = {}
+        self._initialized = False
+        self.concept_embeddings: dict[str, Any] = {}  # torch.Tensor
+
+        # Normalize to tuple for immutability
+        if restricted_concepts is None:
+            self.restricted_concepts = self.DEFAULT_CONCEPTS
+        else:
+            self.restricted_concepts = {
+                k: tuple(v) if isinstance(v, list) else v for k, v in restricted_concepts.items()
+            }
+
         self._precompute_embeddings()
+        self._initialized = True
 
     def _precompute_embeddings(self) -> None:
-        """Pre-compute embeddings for restricted concepts on the GPU."""
-        for category, phrases in self.restricted_concepts.items():
-            # Use sync method for initialization
-            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrases)
+        """Pre-compute embeddings for restricted concepts on the GPU.
 
-    async def check_semantic_similarity(self, text: str, category: str, threshold: float = 0.4) -> bool:
+        Uses sync method since this runs during initialization.
         """
-        Check if text is semantically similar to a restricted category.
-        Returns True if similarity exceeds threshold.
+        for category, phrases in self.restricted_concepts.items():
+            phrase_list = list(phrases)  # Convert tuple to list for compute
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrase_list)
+            logger.debug(
+                "Pre-computed %d embeddings for category '%s'",
+                len(phrases),
+                category,
+            )
+
+    async def check_semantic_similarity(
+        self,
+        text: str,
+        category: str,
+        threshold: float = 0.4,
+    ) -> tuple[bool, float]:
+        """Check if text is semantically similar to a restricted category.
+
+        Args:
+            text: Input text to check
+            category: Category name to check against
+            threshold: Similarity threshold (0.0-1.0, default 0.4)
+
+        Returns:
+            Tuple of (is_blocked, max_similarity_score)
         """
         if not text or category not in self.concept_embeddings:
-            return False
+            return False, 0.0
 
         # Compute embedding for the input text asynchronously
-        text_embedding = cast(Any, await self.compute.compute_embedding(text))
+        text_embedding = await self.compute.compute_embedding(text)
 
-        # Compute similarity against the category's pre-computed embeddings
-        # (1, D) x (N, D)^T -> (1, N)
-        # Note: Operations happen on CPU here, which is fast for final dot product
+        # Compute cosine similarity against the category's pre-computed embeddings
+        # Shape: (1, D) @ (N, D).T -> (1, N) -> squeeze -> (N,)
         category_embeddings = self.concept_embeddings[category]
-        similarities = (text_embedding.unsqueeze(0) @ category_embeddings.t()).squeeze(0)
 
-        # Check if any phrase matches
-        max_similarity = similarities.max().item()
+        # Import torch here to avoid issues if not installed
+        import torch
+
+        text_emb = cast(torch.Tensor, text_embedding)
+        cat_emb = cast(torch.Tensor, category_embeddings)
+
+        similarities = (text_emb.unsqueeze(0) @ cat_emb.t()).squeeze(0)
+        max_similarity: float = similarities.max().item()
+
         if max_similarity > threshold:
             logger.warning(
-                "Guardrail triggered: '%s' matched '%s' (score: %.2f)",
-                text,
+                "Guardrail triggered: text matched '%s' category (score: %.3f > %.3f)",
                 category,
                 max_similarity,
+                threshold,
             )
-            return True
+            return True, max_similarity
 
-        return False
+        return False, max_similarity
 
+    async def check_all_categories(
+        self,
+        text: str,
+        threshold: float = 0.4,
+    ) -> dict[str, tuple[bool, float]]:
+        """Check text against all registered categories.
 
-# Singleton instance
-_guardrail_service: GuardrailService | None = None
+        Args:
+            text: Input text to check
+            threshold: Similarity threshold for all categories
+
+        Returns:
+            Dictionary mapping category -> (is_blocked, score)
+        """
+        results: dict[str, tuple[bool, float]] = {}
+        for category in self.restricted_concepts:
+            blocked, score = await self.check_semantic_similarity(text, category, threshold)
+            results[category] = (blocked, score)
+        return results
 
 
 def get_guardrail_service() -> GuardrailService:
-    global _guardrail_service  # pylint: disable=global-statement
+    """Get or create the singleton GuardrailService.
+
+    Thread-safe via double-checked locking pattern.
+
+    Returns:
+        The singleton GuardrailService instance
+    """
+    global _guardrail_service
     if _guardrail_service is None:
-        _guardrail_service = GuardrailService()
+        with _GUARDRAIL_LOCK:
+            if _guardrail_service is None:
+                _guardrail_service = GuardrailService()
     return _guardrail_service
 
 
+def reset_guardrail_service() -> None:
+    """Reset the singleton guardrail service (for testing)."""
+    global _guardrail_service
+    with _GUARDRAIL_LOCK:
+        _guardrail_service = None
+
+
 def semantic_input_guardrail(
-    category: str = "harmful", threshold: float = 0.4
+    category: str = "harmful",
+    threshold: float = 0.4,
 ) -> Callable[[ToolInputGuardrailData], Awaitable[ToolGuardrailFunctionOutput]]:
-    """
-    Decorator factory for semantic input guardrails.
+    """Create a semantic input guardrail for a specific category.
+
+    The returned guardrail checks if tool input arguments are semantically
+    similar to restricted concepts in the specified category.
+
+    Args:
+        category: Category to check against (default: "harmful")
+        threshold: Similarity threshold (default: 0.4)
+
+    Returns:
+        Async guardrail function
+
+    Example:
+        >>> @function_tool
+        ... async def execute_code(code: str) -> str: ...
+        >>> execute_code.tool_input_guardrails.append(
+        ...     semantic_input_guardrail("harmful", 0.5)
+        ... )
     """
 
     async def guardrail(data: ToolInputGuardrailData) -> ToolGuardrailFunctionOutput:
         service = get_guardrail_service()
         args_str = str(data.context.tool_arguments)
 
-        if await service.check_semantic_similarity(args_str, category, threshold):
+        blocked, score = await service.check_semantic_similarity(args_str, category, threshold)
+
+        if blocked:
             return ToolGuardrailFunctionOutput.reject_content(
-                message=(f"Input blocked: content semantically similar to restricted " f"category '{category}'."),
-                output_info={"blocked_category": category},
+                message=(
+                    f"Input blocked: content semantically similar to restricted "
+                    f"category '{category}' (score: {score:.3f})"
+                ),
+                output_info={"blocked_category": category, "score": score},
             )
 
-        return ToolGuardrailFunctionOutput(output_info={"status": "Input validated"})
+        return ToolGuardrailFunctionOutput.allow({"validated_category": category})
 
     return guardrail
 
 
 def semantic_output_guardrail(
-    category: str = "pii", threshold: float = 0.4
+    category: str = "pii",
+    threshold: float = 0.4,
 ) -> Callable[[ToolOutputGuardrailData], Awaitable[ToolGuardrailFunctionOutput]]:
-    """
-    Decorator factory for semantic output guardrails.
+    """Create a semantic output guardrail for a specific category.
+
+    The returned guardrail checks if tool output contains content
+    semantically similar to restricted concepts (e.g., PII).
+
+    For output guardrails, blocking raises an exception to prevent
+    the sensitive data from being returned.
+
+    Args:
+        category: Category to check against (default: "pii")
+        threshold: Similarity threshold (default: 0.4)
+
+    Returns:
+        Async guardrail function
+
+    Example:
+        >>> @function_tool
+        ... async def query_database(sql: str) -> str: ...
+        >>> query_database.tool_output_guardrails.append(
+        ...     semantic_output_guardrail("pii", 0.3)
+        ... )
     """
 
     async def guardrail(data: ToolOutputGuardrailData) -> ToolGuardrailFunctionOutput:
         service = get_guardrail_service()
         output_str = str(data.output)
 
-        if await service.check_semantic_similarity(output_str, category, threshold):
-            # For PII/Output, we often want to raise an exception to stop the chain
+        blocked, score = await service.check_semantic_similarity(output_str, category, threshold)
+
+        if blocked:
+            # For output guardrails, raise exception to prevent data leakage
             return ToolGuardrailFunctionOutput.raise_exception(
                 output_info={
                     "blocked_category": category,
                     "tool": data.context.tool_name,
+                    "score": score,
                 }
             )
 
-        return ToolGuardrailFunctionOutput(output_info={"status": "Output validated"})
+        return ToolGuardrailFunctionOutput.allow({"validated_category": category})
 
     return guardrail

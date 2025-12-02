@@ -2,6 +2,18 @@
 
 Python 3.15+ free-threaded runtime with GIL disabled (PYTHON_GIL=0).
 All agent implementations leverage GPU tensor compute via BatchComputeService.
+
+Key Features:
+- True parallelism via Python 3.15 free-threading
+- NVIDIA Tensor Core acceleration for embeddings
+- Semantic guardrails with GPU-accelerated similarity checks
+- Immutable configuration for thread safety
+
+Quick Start:
+    >>> from aspire_agents import AgentRunner, AgentConfig, ModelConfig
+    >>> config = AgentConfig(model=ModelConfig(name="gpt-4o"))
+    >>> runner = AgentRunner(config)
+    >>> result = await runner.run("Hello, world!")
 """
 
 from __future__ import annotations
@@ -9,7 +21,7 @@ from __future__ import annotations
 from importlib import metadata
 from typing import Final
 
-# Python 3.15+ thread-safe imports
+# Python 3.15+ thread-safe imports - all using frozen dataclasses
 from .compute import (
     BatchComputeService,
     ComputeConfig,
@@ -37,12 +49,14 @@ def _get_version() -> str:
     try:
         return metadata.version("aspire-agents")
     except metadata.PackageNotFoundError:
-        return "0.0.0"
+        return "0.0.0-dev"
 
 
+# Module version - computed once at import time
 __version__: Final[str] = _get_version()
 
-__all__: Final[list[str]] = [
+# Public API exports
+__all__: Final[tuple[str, ...]] = (
     # Version
     "__version__",
     # Core agents
@@ -70,4 +84,4 @@ __all__: Final[list[str]] = [
     "get_guardrail_service",
     "semantic_input_guardrail",
     "semantic_output_guardrail",
-]
+)

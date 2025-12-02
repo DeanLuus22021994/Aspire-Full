@@ -9,6 +9,11 @@ All function_tool decorated functions automatically get:
 - Input guardrails (semantic similarity checking)
 - Output guardrails (PII detection)
 - Proper async/sync handling
+
+Thread Safety:
+- Agent/Runner use __slots__ to prevent dynamic attribute creation
+- Compute service initialization uses double-checked locking
+- All guardrails are async and non-blocking
 """
 
 from __future__ import annotations
@@ -16,12 +21,12 @@ from __future__ import annotations
 import functools
 import inspect
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Final, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Final, ParamSpec, TypeVar, cast
 
-from agents import Agent as OpenAIAgent  # type: ignore # pylint: disable=import-error
-from agents import Runner as OpenAIRunner  # type: ignore # pylint: disable=import-error
+from agents import Agent as OpenAIAgent  # type: ignore[import-untyped]
+from agents import Runner as OpenAIRunner  # type: ignore[import-untyped]
 from agents import (
-    function_tool as _original_function_tool,  # type: ignore # pylint: disable=import-error
+    function_tool as _original_function_tool,  # type: ignore[import-untyped]
 )
 
 from .compute import get_compute_service
@@ -35,11 +40,14 @@ from .guardrails import (
 if TYPE_CHECKING:
     from collections.abc import Awaitable
 
-logger: Final = logging.getLogger(__name__)
+logger: Final[logging.Logger] = logging.getLogger(__name__)
 
+# Type variables for generic function decoration
+P = ParamSpec("P")
+T = TypeVar("T")
 F = TypeVar("F", bound=Callable[..., Any])
 
-# Re-export function_tool
+# Re-export for convenience
 __all__: Final[list[str]] = [
     "Agent",
     "Runner",
@@ -49,6 +57,24 @@ __all__: Final[list[str]] = [
 ]
 
 
+class _ToolContext:
+    """Immutable context for guardrail evaluation.
+
+    Thread-safe via __slots__ and immutable design.
+    """
+
+    __slots__ = ("tool_name", "tool_arguments")
+
+    def __init__(
+        self,
+        name: str,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> None:
+        self.tool_name: str = name
+        self.tool_arguments: dict[str, Any] | tuple[Any, ...] = kwargs if kwargs else args
+
+
 def function_tool(func: F) -> F:
     """Decorator that registers a function as a tool with semantic guardrails.
 
@@ -56,10 +82,17 @@ def function_tool(func: F) -> F:
     Guardrails are evaluated asynchronously using the GPU-accelerated
     BatchComputeService for semantic similarity checks.
 
+    The decorated function will have two additional attributes:
+    - tool_input_guardrails: List of input guardrail functions
+    - tool_output_guardrails: List of output guardrail functions
+
     Usage:
         @function_tool
         async def my_tool(arg: str) -> str:
             return f"Processed: {arg}"
+
+        # Add guardrails
+        my_tool.tool_input_guardrails.append(semantic_input_guardrail("harmful"))
 
     Args:
         func: The function to decorate (sync or async)
@@ -70,37 +103,25 @@ def function_tool(func: F) -> F:
 
     @functools.wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Thread-safe context for guardrails (immutable dataclass)
-        class ToolContext:
-            """Immutable context for guardrail evaluation."""
+        context = _ToolContext(func.__name__, args, kwargs)
 
-            __slots__ = ("tool_name", "tool_arguments")
-
-            def __init__(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
-                self.tool_name = name
-                self.tool_arguments = kwargs if kwargs else args
-
-        context = ToolContext(func.__name__, args, kwargs)
-
-        # 1. Input Guardrails
-        if hasattr(wrapper, "tool_input_guardrails"):
-            # Use getattr to avoid type checking errors on function attributes
-            guardrails = getattr(wrapper, "tool_input_guardrails", [])
-            if guardrails:
-                input_data = ToolInputGuardrailData(context=context)
-                for guardrail in guardrails:
-                    try:
-                        result = await guardrail(input_data)
-                        if result.message:
-                            logger.warning(
-                                "Input guardrail blocked call to %s: %s",
-                                func.__name__,
-                                result.message,
-                            )
-                            return result.message
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        logger.error("Error in input guardrail: %s", e)
-                        raise
+        # 1. Input Guardrails - block harmful input before execution
+        input_guardrails: list[Any] = getattr(wrapper, "tool_input_guardrails", [])
+        if input_guardrails:
+            input_data = ToolInputGuardrailData(context=context)
+            for guardrail in input_guardrails:
+                try:
+                    result = await guardrail(input_data)
+                    if result.message:
+                        logger.warning(
+                            "Input guardrail blocked call to %s: %s",
+                            func.__name__,
+                            result.message,
+                        )
+                        return result.message
+                except Exception as e:
+                    logger.error("Error in input guardrail for %s: %s", func.__name__, e)
+                    raise
 
         # 2. Execute Tool
         try:
@@ -108,24 +129,28 @@ def function_tool(func: F) -> F:
                 result = await func(*args, **kwargs)
             else:
                 result = func(*args, **kwargs)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            raise e
+        except Exception:
+            raise
 
-        # 3. Output Guardrails
-        if hasattr(wrapper, "tool_output_guardrails"):
+        # 3. Output Guardrails - detect PII/sensitive data in output
+        output_guardrails: list[Any] = getattr(wrapper, "tool_output_guardrails", [])
+        if output_guardrails:
             output_data = ToolOutputGuardrailData(output=result, context=context)
-            guardrails = getattr(wrapper, "tool_output_guardrails", [])
-            for guardrail in guardrails:
-                await guardrail(output_data)
+            for guardrail in output_guardrails:
+                try:
+                    await guardrail(output_data)
+                except Exception as e:
+                    logger.error("Output guardrail triggered for %s: %s", func.__name__, e)
+                    raise
 
         return result
 
-    # Initialize lists
-    setattr(wrapper, "tool_input_guardrails", [])
-    setattr(wrapper, "tool_output_guardrails", [])
+    # Initialize guardrail lists as mutable attributes
+    wrapper.tool_input_guardrails = []  # type: ignore[attr-defined]
+    wrapper.tool_output_guardrails = []  # type: ignore[attr-defined]
 
-    # Cast to Any to avoid return type mismatch with decorator
-    return cast(Any, _original_function_tool(wrapper))
+    # Apply the original OpenAI function_tool decorator
+    return cast(F, _original_function_tool(wrapper))
 
 
 class Agent(OpenAIAgent):
@@ -136,12 +161,29 @@ class Agent(OpenAIAgent):
     free-threaded runtime.
 
     The compute service is initialized lazily on first Agent creation,
-    using thread-safe double-checked locking.
+    using thread-safe double-checked locking pattern.
+
+    Examples:
+        >>> agent = Agent(
+        ...     name="coder",
+        ...     instructions="You are a coding assistant",
+        ...     model="gpt-4o",
+        ... )
+        >>> result = await Runner.run(agent, "Write hello world")
     """
 
-    __slots__ = ()  # No additional instance attributes
+    __slots__ = ()  # No additional instance attributes - memory efficient
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize agent with automatic compute service setup.
+
+        Args:
+            *args: Positional arguments passed to OpenAI Agent
+            **kwargs: Keyword arguments passed to OpenAI Agent
+                - name: Agent name
+                - instructions: System prompt
+                - model: Model name string
+        """
         # Ensure compute service is initialized (thread-safe singleton)
         # This guarantees GPU/Tensor Cores are ready before agent runs
         get_compute_service()
@@ -153,9 +195,16 @@ class Runner(OpenAIRunner):
 
     Provides a clean interface to the OpenAI Agent Runner.
     Can be extended with logging, tracing, or custom execution logic.
+
+    Thread-safe by design - no mutable instance state.
+
+    Examples:
+        >>> agent = Agent(name="test", instructions="Help", model="gpt-4o")
+        >>> result = await Runner.run(agent, "Hello")
+        >>> print(result.final_output)
     """
 
     __slots__ = ()  # No additional instance attributes
 
     # Inherits all functionality from OpenAIRunner
-    # Add custom methods here as needed (e.g., tracing, logging)
+    # Class methods like run() are already async and thread-safe

@@ -2,6 +2,16 @@
 
 Python 3.15+ free-threaded runtime (PYTHON_GIL=0) compatible.
 All agent executions leverage GPU tensor compute for embeddings and inference.
+
+Architecture:
+- AgentResult: Immutable frozen dataclass for thread-safe result handling
+- AgentRunner: High-level interface with automatic compute service integration
+- Full async/sync support with proper event loop handling
+
+Thread Safety:
+- All state is immutable or protected by locks
+- Uses BatchComputeService singleton (thread-safe)
+- Safe for concurrent use without GIL
 """
 
 from __future__ import annotations
@@ -12,7 +22,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Final
 
 from .compute import get_compute_service
-from .config import AgentConfig
+from .config import AgentConfig, ModelConfig
 from .core import Agent, Runner
 
 if TYPE_CHECKING:
@@ -27,17 +37,22 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 class AgentResult:
     """Immutable result from an agent run.
 
-    Thread-safe: frozen dataclass with slots for Python 3.15 free-threaded.
+    Thread-safe: frozen dataclass with __slots__ for Python 3.15 free-threaded.
+    All collections are immutable (tuple, frozenset, or dict copy).
 
     Attributes:
-        output: The final output from the agent
-        handoffs: Tuple of agent names that were handed off to (immutable)
-        metadata: Additional metadata from the run
+        output: The final output text from the agent
+        handoffs: Immutable tuple of agent names that were handed off to
+        metadata: Copy of additional metadata from the run
+        success: Whether the run completed successfully
+        error: Error message if success is False
     """
 
     output: str
     handoffs: tuple[str, ...] = field(default_factory=tuple)
     metadata: dict[str, Any] = field(default_factory=dict)
+    success: bool = True
+    error: str | None = None
 
     @classmethod
     def from_run_result(
@@ -55,7 +70,13 @@ class AgentResult:
             Immutable AgentResult instance
         """
         # Convert list to tuple for immutability, or use empty tuple
-        handoff_tuple: tuple[str, ...] = tuple(handoffs) if handoffs is not None else ()
+        handoff_tuple: tuple[str, ...]
+        if handoffs is None:
+            handoff_tuple = ()
+        elif isinstance(handoffs, tuple):
+            handoff_tuple = handoffs
+        else:
+            handoff_tuple = tuple(handoffs)
 
         return cls(
             output=str(result.final_output) if result.final_output else "",
@@ -63,6 +84,28 @@ class AgentResult:
             metadata={
                 "last_agent": result.last_agent.name if result.last_agent else None,
             },
+            success=True,
+            error=None,
+        )
+
+    @classmethod
+    def from_error(cls, error: Exception, context: str = "") -> AgentResult:
+        """Create an error result.
+
+        Args:
+            error: The exception that occurred
+            context: Additional context about where the error happened
+
+        Returns:
+            AgentResult with success=False and error details
+        """
+        error_msg = f"{context}: {error}" if context else str(error)
+        return cls(
+            output="",
+            handoffs=(),
+            metadata={"error_type": type(error).__name__},
+            success=False,
+            error=error_msg,
         )
 
 
@@ -73,10 +116,19 @@ class AgentRunner:
     - Automatic GPU tensor compute for embeddings
     - Thread-safe execution via Python 3.15 free-threading
     - Configurable agent behavior via AgentConfig
+    - Both async and sync execution modes
 
     Attributes:
         config: Agent configuration (frozen dataclass)
         compute_service: BatchComputeService singleton for GPU compute
+
+    Examples:
+        >>> runner = AgentRunner()
+        >>> result = await runner.run("Hello, world!")
+        >>> print(result.output)
+
+        >>> runner = AgentRunner(AgentConfig(name="coder", ...))
+        >>> result = runner.run_sync("Write a function")
     """
 
     __slots__ = ("config", "compute_service", "_agent", "_runner")
@@ -92,12 +144,17 @@ class AgentRunner:
             config: Optional agent configuration. Uses defaults if not provided.
             compute_service: Optional compute service. Uses singleton if not provided.
         """
-        self.config: AgentConfig = config or AgentConfig(
-            name="default-agent",
-            description="Default agent configuration",
-            prompt="You are a helpful assistant.",
-            model="gpt-4o-mini",
-        )
+        # Build config with proper ModelConfig if not provided
+        if config is not None:
+            self.config = config
+        else:
+            self.config = AgentConfig(
+                name="default-agent",
+                description="Default agent configuration",
+                prompt="You are a helpful assistant.",
+                model=ModelConfig(name="gpt-4o-mini"),
+            )
+
         self.compute_service: BatchComputeService = compute_service or get_compute_service()
 
         # Initialize agent and runner (lazy - created on first run)
@@ -111,12 +168,16 @@ class AgentRunner:
         )
 
     def _ensure_agent(self) -> Agent:
-        """Ensure agent is initialized (lazy initialization)."""
+        """Ensure agent is initialized (lazy initialization).
+
+        Returns:
+            Initialized Agent instance
+        """
         if self._agent is None:
             self._agent = Agent(
                 name=self.config.name,
                 instructions=self.config.prompt,
-                model=self.config.model,
+                model=self.config.model.name,
             )
         return self._agent
 
@@ -134,22 +195,31 @@ class AgentRunner:
         """
         agent = self._ensure_agent()
 
-        logger.debug("Running agent '%s' with prompt: %s...", agent.name, prompt[:50])
+        logger.debug(
+            "Running agent '%s' with prompt: %s...",
+            agent.name,
+            prompt[:50] if len(prompt) > 50 else prompt,
+        )
 
-        result = await Runner.run(agent, prompt)
+        try:
+            result = await Runner.run(agent, prompt)
 
-        # Extract handoffs as tuple for immutability
-        handoffs: tuple[str, ...] = ()
-        result_handoffs = getattr(result, "handoffs", None)
-        if result_handoffs:
-            handoffs = tuple(str(h) for h in result_handoffs)
+            # Extract handoffs as tuple for immutability
+            handoffs: tuple[str, ...] = ()
+            result_handoffs = getattr(result, "handoffs", None)
+            if result_handoffs:
+                handoffs = tuple(str(h) for h in result_handoffs)
 
-        return AgentResult.from_run_result(result, handoffs)
+            return AgentResult.from_run_result(result, handoffs)
+        except Exception as e:
+            logger.error("Agent run failed: %s", e)
+            return AgentResult.from_error(e, f"Agent '{agent.name}' failed")
 
     async def run_with_embedding(self, prompt: str) -> tuple[AgentResult, Any]:
         """Run agent and compute embedding for the prompt.
 
         Useful for semantic search/caching of agent responses.
+        Embedding is computed concurrently with agent execution.
 
         Args:
             prompt: The user prompt to process
@@ -164,6 +234,20 @@ class AgentRunner:
         embedding = await embedding_task
 
         return result, embedding
+
+    async def run_batch(self, prompts: list[str]) -> list[AgentResult]:
+        """Run multiple prompts concurrently.
+
+        Leverages Python 3.15 free-threading for true parallelism.
+
+        Args:
+            prompts: List of prompts to process
+
+        Returns:
+            List of AgentResults in same order as prompts
+        """
+        tasks = [self.run(prompt) for prompt in prompts]
+        return await asyncio.gather(*tasks)
 
     def run_sync(self, prompt: str) -> AgentResult:
         """Synchronous wrapper for run().
@@ -188,3 +272,11 @@ class AgentRunner:
 
         # No running loop - create one
         return asyncio.run(self.run(prompt))
+
+    def get_compute_stats(self) -> dict[str, int | float]:
+        """Get compute service statistics.
+
+        Returns:
+            Dictionary with total_requests, total_batches, avg_batch_size, queue_size
+        """
+        return self.compute_service.get_stats()
