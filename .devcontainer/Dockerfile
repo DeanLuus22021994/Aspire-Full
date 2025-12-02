@@ -20,9 +20,12 @@ ENV DOTNET_GCHeapHardLimit=7516192768 \
 # =============================================================================
 # GPU COMPUTE: CUDA/CU with Hybrid Fallback for Maximum Throughput
 # =============================================================================
-ENV ASPIRE_COMPUTE_MODE=Hybrid \
+# Python 3.15t Free-Threading environment
+ENV PYTHON_GIL=0 \
+    PYTHON3_15T=/usr/local/python3.15t/bin/python3.15t \
+    ASPIRE_COMPUTE_MODE=gpu \
     ASPIRE_OFFLOAD_STRATEGY=Full \
-    ASPIRE_FALLBACK_TO_CPU=true \
+    ASPIRE_FALLBACK_TO_CPU=false \
     ASPIRE_MAX_BATCH_SIZE=64 \
     ASPIRE_BATCH_TIMEOUT_MS=25 \
     ASPIRE_GPU_MEMORY_FRACTION=0.90 \
@@ -59,19 +62,51 @@ RUN dotnet workload install wasm-tools aspire \
         libnuma1 \
         libopenblas0 \
         libopenblas-dev \
-        # Python toolchain (for AI/ML)
-        python3.12 \
-        python3.12-venv \
-        python3-pip \
+        # Python 3.15t Free-Threaded (64-bit) for AI/ML
+        # Note: Install via deadsnakes PPA or build from source
+        software-properties-common \
         # Node.js (for React frontend)
         nodejs \
         npm \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
+# =============================================================================
+# Python 3.15t Free-Threaded (GIL disabled) + CuPy Hyper-Virtual GPU
+# =============================================================================
+# Build Python 3.15 with --disable-gil for true free-threading
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libffi-dev \
+        libssl-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        xz-utils \
+        tk-dev \
+        liblzma-dev \
+    && cd /tmp \
+    && wget https://www.python.org/ftp/python/3.15.0/Python-3.15.0a2.tar.xz \
+    && tar -xf Python-3.15.0a2.tar.xz \
+    && cd Python-3.15.0a2 \
+    && ./configure --enable-optimizations --disable-gil --prefix=/usr/local/python3.15t \
+    && make -j$(nproc) \
+    && make install \
+    && ln -sf /usr/local/python3.15t/bin/python3.15t /usr/local/bin/python3.15t \
+    && ln -sf /usr/local/python3.15t/bin/pip3.15 /usr/local/bin/pip3.15t \
+    && rm -rf /tmp/Python-3.15.0a2* \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install uv (fast Python package manager) and ruff (linter)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+# Install CuPy for hyper-virtual GPU compute (CUDA 12.x)
+RUN /usr/local/bin/pip3.15t install --no-cache-dir \
+        cupy-cuda12x>=13.0.0 \
+        numpy>=2.0.0
 
 # =============================================================================
 # VOLUME MOUNT POINTS: Named volumes for all persistent/cache data
