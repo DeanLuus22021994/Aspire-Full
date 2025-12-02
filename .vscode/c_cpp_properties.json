@@ -1,8 +1,4 @@
 {
-  // =============================================================================
-  // C/C++ Properties - Multi-Platform CUDA Configuration
-  // Uses environment variables for portability
-  // =============================================================================
   "configurations": [
     {
       "name": "Linux-CUDA",
