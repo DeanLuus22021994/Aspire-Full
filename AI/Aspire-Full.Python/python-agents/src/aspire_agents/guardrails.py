@@ -1,92 +1,128 @@
-"""
-Tensor-native semantic guardrails for Aspire Agents.
-Leverages LocalComputeService for high-performance, GPU-accelerated checks.
+"""Thread-safe semantic guardrails for Python 3.15+ free-threaded runtime.
+
+Provides GPU-accelerated semantic similarity checks using BatchComputeService.
+All guardrails are async-first and leverage Tensor Cores for embedding computation.
+
+Guardrail Types:
+- Input Guardrails: Block harmful/restricted input before tool execution
+- Output Guardrails: Detect PII or sensitive data in tool outputs
+
+Thread Safety:
+- GuardrailService uses thread-safe singleton pattern
+- Concept embeddings are pre-computed and immutable
+- All checks are async and non-blocking
 """
 
+from __future__ import annotations
+
 import logging
-from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Optional, cast
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from .compute import get_compute_service
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    import torch
+
+logger: Final = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ToolInputGuardrailData:
-    context: Any  # ToolContext
+    """Immutable input data for guardrail evaluation."""
+
+    context: Any  # ToolContext from core.py
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ToolOutputGuardrailData:
+    """Immutable output data for guardrail evaluation."""
+
     output: Any
-    context: Any  # ToolContext
+    context: Any  # ToolContext from core.py
 
 
 class ToolOutputGuardrailTripwireTriggered(Exception):
-    def __init__(self, output: "ToolGuardrailFunctionOutput"):
+    """Raised when an output guardrail blocks content."""
+
+    __slots__ = ("output",)
+
+    def __init__(self, output: ToolGuardrailFunctionOutput) -> None:
+        super().__init__(f"Output guardrail triggered: {output.message}")
         self.output = output
 
 
+@dataclass(slots=True)
 class ToolGuardrailFunctionOutput:
-    def __init__(self, output_info: dict[str, Any], message: Optional[str] = None):
-        self.output_info = output_info
-        self.message = message
+    """Result of a guardrail evaluation."""
+
+    output_info: dict[str, Any]
+    message: str | None = None
 
     @classmethod
-    def reject_content(
-        cls, message: str, output_info: dict[str, Any]
-    ) -> "ToolGuardrailFunctionOutput":
-        # In a real implementation, this would signal rejection to the runner
+    def reject_content(cls, message: str, output_info: dict[str, Any]) -> ToolGuardrailFunctionOutput:
+        """Create a rejection response with a message."""
         return cls(output_info, message=message)
 
     @classmethod
-    def raise_exception(
-        cls, output_info: dict[str, Any]
-    ) -> "ToolGuardrailFunctionOutput":
+    def raise_exception(cls, output_info: dict[str, Any]) -> ToolGuardrailFunctionOutput:
+        """Raise an exception to block the output chain."""
         raise ToolOutputGuardrailTripwireTriggered(cls(output_info))
 
 
 class GuardrailService:
-    """
-    Provides semantic guardrail checks using the local GPU model.
+    """Thread-safe semantic guardrail service with GPU-accelerated checks.
+
+    Pre-computes embeddings for restricted concepts on initialization,
+    then uses cosine similarity for fast semantic matching.
+
+    Thread Safety:
+    - Uses BatchComputeService singleton (thread-safe)
+    - Concept embeddings are immutable after initialization
+    - All similarity checks are async and non-blocking
     """
 
-    def __init__(self) -> None:
+    __slots__ = ("compute", "restricted_concepts", "concept_embeddings")
+
+    # Default restricted concept categories
+    DEFAULT_CONCEPTS: Final[dict[str, list[str]]] = {
+        "pii": [
+            "social security number",
+            "credit card number",
+            "phone number",
+            "email address",
+            "password",
+            "secret key",
+            "api key",
+            "access token",
+        ],
+        "harmful": [
+            "hack",
+            "exploit",
+            "malware",
+            "virus",
+            "attack",
+            "vulnerability",
+            "injection",
+            "backdoor",
+        ],
+    }
+
+    def __init__(self, restricted_concepts: dict[str, list[str]] | None = None) -> None:
         self.compute = get_compute_service()
-        # Pre-compute embeddings for common restricted concepts
-        self.restricted_concepts = {
-            "pii": [
-                "social security number",
-                "credit card number",
-                "phone number",
-                "email address",
-                "password",
-                "secret key",
-            ],
-            "harmful": [
-                "hack",
-                "exploit",
-                "malware",
-                "virus",
-                "attack",
-                "vulnerability",
-            ],
-        }
-        self.concept_embeddings: dict[str, Any] = {}
+        self.restricted_concepts = restricted_concepts or self.DEFAULT_CONCEPTS
+        self.concept_embeddings: dict[str, torch.Tensor] = {}
         self._precompute_embeddings()
 
     def _precompute_embeddings(self) -> None:
         """Pre-compute embeddings for restricted concepts on the GPU."""
         for category, phrases in self.restricted_concepts.items():
             # Use sync method for initialization
-            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(
-                phrases
-            )
+            self.concept_embeddings[category] = self.compute.compute_embeddings_sync(phrases)
 
-    async def check_semantic_similarity(
-        self, text: str, category: str, threshold: float = 0.4
-    ) -> bool:
+    async def check_semantic_similarity(self, text: str, category: str, threshold: float = 0.4) -> bool:
         """
         Check if text is semantically similar to a restricted category.
         Returns True if similarity exceeds threshold.
@@ -101,9 +137,7 @@ class GuardrailService:
         # (1, D) x (N, D)^T -> (1, N)
         # Note: Operations happen on CPU here, which is fast for final dot product
         category_embeddings = self.concept_embeddings[category]
-        similarities = (text_embedding.unsqueeze(0) @ category_embeddings.t()).squeeze(
-            0
-        )
+        similarities = (text_embedding.unsqueeze(0) @ category_embeddings.t()).squeeze(0)
 
         # Check if any phrase matches
         max_similarity = similarities.max().item()
@@ -143,10 +177,7 @@ def semantic_input_guardrail(
 
         if await service.check_semantic_similarity(args_str, category, threshold):
             return ToolGuardrailFunctionOutput.reject_content(
-                message=(
-                    f"Input blocked: content semantically similar to restricted "
-                    f"category '{category}'."
-                ),
+                message=(f"Input blocked: content semantically similar to restricted " f"category '{category}'."),
                 output_info={"blocked_category": category},
             )
 

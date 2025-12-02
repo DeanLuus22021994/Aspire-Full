@@ -1,9 +1,19 @@
-"""High-level runner that wraps Aspire Agents core."""
+"""Thread-safe agent runner for Python 3.15+ free-threaded runtime.
+
+Provides AgentRunner class that:
+- Initializes tensor compute service before agent execution
+- Validates GPU/Tensor Core availability
+- Supports both sync and async execution patterns
+- Handles handoffs between agents
+
+All operations are thread-safe and work correctly with GIL disabled.
+"""
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Final
 
 from rich.console import Console
 
@@ -11,23 +21,48 @@ from .config import AgentConfig
 from .core import Agent, Runner
 from .gpu import TensorCoreInfo, ensure_tensor_core_gpu
 
-console = Console()
+if TYPE_CHECKING:
+    from agents.result import RunResult  # type: ignore
+
+console: Final = Console()
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class AgentResult:
-    """Returned content plus downstream handoff identifiers."""
+    """Immutable result from agent execution.
+
+    Thread-safe due to immutability (frozen=True).
+    """
 
     content: str
-    handoffs: list[str]
+    handoffs: tuple[str, ...] = field(default_factory=tuple)  # Immutable tuple
+
+    @classmethod
+    def from_run_result(cls, result: RunResult, handoffs: list[str]) -> AgentResult:
+        """Create from OpenAI Runner result."""
+        return cls(
+            content=str(result.final_output),
+            handoffs=tuple(handoffs),
+        )
 
 
 class AgentRunner:
-    """Build and execute agents based on a manifest."""
+    """Thread-safe agent runner with tensor compute integration.
 
-    def __init__(self, config: AgentConfig):
+    Manages agent lifecycle with automatic GPU/Tensor Core initialization.
+    Supports both sync and async execution patterns.
+
+    Thread Safety:
+    - tensor_info is immutable (frozen dataclass)
+    - Agent and Runner are instantiated per-runner (no shared state)
+    - GPU initialization uses thread-safe singleton pattern
+    """
+
+    __slots__ = ("config", "tensor_info", "agent")
+
+    def __init__(self, config: AgentConfig) -> None:
         self.config = config
-        # Ensure GPU is ready immediately
+        # Ensure GPU is ready immediately (thread-safe)
         self.tensor_info: TensorCoreInfo = ensure_tensor_core_gpu()
 
         # Initialize the agent using the unified core
@@ -35,22 +70,23 @@ class AgentRunner:
             name=config.name,
             instructions=config.prompt,
             model=config.model.name,
-            # We could map temperature/top_p if Agent supports it,
-            # or pass them via run options.
+            # Temperature/top_p can be passed via run options if supported
         )
 
     async def arun(self, user_input: str) -> AgentResult:
-        """Execute the agent asynchronously."""
-        # Use the core Runner to execute the agent
-        result = await Runner.run(self.agent, user_input)
+        """Execute the agent asynchronously.
 
-        return AgentResult(
-            content=str(result.final_output),
-            handoffs=self.config.handoffs,
-        )
+        Thread-safe: no shared mutable state during execution.
+        """
+        result = await Runner.run(self.agent, user_input)
+        return AgentResult.from_run_result(result, self.config.handoffs)
 
     def run(self, user_input: str) -> AgentResult:
-        """Synchronous helper for consumers that cannot await."""
+        """Synchronous execution helper.
+
+        Creates a new event loop for non-async contexts.
+        Consider using arun() directly in async code.
+        """
         return asyncio.run(self.arun(user_input))
 
     def pretty_print(self, result: AgentResult) -> None:

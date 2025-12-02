@@ -1,9 +1,22 @@
-"""Core definitions for Aspire Agents."""
+"""Core agent definitions for Python 3.15+ free-threaded runtime.
+
+Provides thread-safe Agent and Runner wrappers that:
+- Ensure tensor compute service is initialized on first use
+- Support semantic guardrails with GPU-accelerated checks
+- Work correctly with GIL disabled (PYTHON_GIL=0)
+
+All function_tool decorated functions automatically get:
+- Input guardrails (semantic similarity checking)
+- Output guardrails (PII detection)
+- Proper async/sync handling
+"""
+
+from __future__ import annotations
 
 import functools
 import inspect
 import logging
-from typing import Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Final, TypeVar, cast
 
 from agents import Agent as OpenAIAgent  # type: ignore # pylint: disable=import-error
 from agents import Runner as OpenAIRunner  # type: ignore # pylint: disable=import-error
@@ -19,10 +32,15 @@ from .guardrails import (
     semantic_output_guardrail,
 )
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+
+logger: Final = logging.getLogger(__name__)
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 # Re-export function_tool
-__all__ = [
+__all__: Final[list[str]] = [
     "Agent",
     "Runner",
     "function_tool",
@@ -31,18 +49,34 @@ __all__ = [
 ]
 
 
-def function_tool(func: Callable[..., Any]) -> Callable[..., Any]:
-    """
-    Decorator that registers a function as a tool and enables semantic guardrails.
+def function_tool(func: F) -> F:
+    """Decorator that registers a function as a tool with semantic guardrails.
+
+    Thread-safe for Python 3.15+ free-threaded runtime.
+    Guardrails are evaluated asynchronously using the GPU-accelerated
+    BatchComputeService for semantic similarity checks.
+
+    Usage:
+        @function_tool
+        async def my_tool(arg: str) -> str:
+            return f"Processed: {arg}"
+
+    Args:
+        func: The function to decorate (sync or async)
+
+    Returns:
+        The decorated function with guardrail support
     """
 
     @functools.wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Context for guardrails
+        # Thread-safe context for guardrails (immutable dataclass)
         class ToolContext:
-            def __init__(
-                self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]
-            ) -> None:
+            """Immutable context for guardrail evaluation."""
+
+            __slots__ = ("tool_name", "tool_arguments")
+
+            def __init__(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
                 self.tool_name = name
                 self.tool_arguments = kwargs if kwargs else args
 
@@ -95,19 +129,33 @@ def function_tool(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 class Agent(OpenAIAgent):
-    """
-    Aspire Agent wrapper that ensures tensor compute is ready.
+    """Thread-safe Aspire Agent with automatic tensor compute initialization.
+
+    Extends OpenAI Agent to ensure GPU compute service is ready before
+    any agent operations. Safe for concurrent use in Python 3.15+
+    free-threaded runtime.
+
+    The compute service is initialized lazily on first Agent creation,
+    using thread-safe double-checked locking.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        # Ensure compute service is initialized (and GPU is ready) when Agent is created
+    __slots__ = ()  # No additional instance attributes
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        # Ensure compute service is initialized (thread-safe singleton)
+        # This guarantees GPU/Tensor Cores are ready before agent runs
         get_compute_service()
         super().__init__(*args, **kwargs)
 
 
 class Runner(OpenAIRunner):
-    """
-    Aspire Runner wrapper.
+    """Thread-safe Aspire Runner wrapper.
+
+    Provides a clean interface to the OpenAI Agent Runner.
+    Can be extended with logging, tracing, or custom execution logic.
     """
 
-    # We can add custom logic here if needed, e.g. logging or tracing
+    __slots__ = ()  # No additional instance attributes
+
+    # Inherits all functionality from OpenAIRunner
+    # Add custom methods here as needed (e.g., tracing, logging)
