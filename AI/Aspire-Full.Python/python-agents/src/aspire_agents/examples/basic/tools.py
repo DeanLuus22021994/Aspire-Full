@@ -5,16 +5,17 @@ This module demonstrates tool registration and execution with:
 - Tensor Core validation before execution
 - Thread-safe tool invocation for Python 3.15+ free-threading
 
+GPU-ONLY: This example requires a CUDA GPU. No CPU fallback is supported.
+
 Environment Variables:
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment (default: 128)
 """
 
 import asyncio
-from typing import Annotated, Any
+from typing import Annotated
 
 from agents import Agent, Runner, function_tool
-from aspire_agents import ASPIRE_COMPUTE_MODE, ensure_tensor_core_gpu
+from aspire_agents import ensure_tensor_core_gpu
 from pydantic import BaseModel, Field
 
 
@@ -46,11 +47,11 @@ async def main() -> None:
     """Main entry point for the tools example.
 
     Validates TensorCore GPU and executes agent with tools.
+    GPU is required - no CPU fallback.
     """
-    # Validate GPU before execution
-    if ASPIRE_COMPUTE_MODE in ("gpu", "hybrid"):
-        info = ensure_tensor_core_gpu()
-        print(f"[TensorCore] {info.name} (cc {info.compute_capability}, align={info.tensor_alignment})")
+    # Validate GPU (required - no fallback)
+    info = ensure_tensor_core_gpu()
+    print(f"[TensorCore] {info.name} (cc {info.compute_capability}, align={info.tensor_alignment})")
 
     result = await Runner.run(agent, input="What's the weather in Tokyo?")
     print(result.final_output)

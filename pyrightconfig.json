@@ -1,6 +1,7 @@
 {
   "include": [
-    "AI/Aspire-Full.Python/python-agents/src"
+    "AI/Aspire-Full.Python/python-agents/src",
+    "AI/Aspire-Full.Python/python-agents/tests"
   ],
 
   "exclude": [
@@ -27,8 +28,7 @@
   ],
 
   "extraPaths": [
-    "AI/Aspire-Full.Python/python-agents/src",
-    "AI/Aspire-Full.Python/python-agents/.venv/Lib/site-packages"
+    "AI/Aspire-Full.Python/python-agents/src"
   ],
 
   "pythonVersion": "3.15",

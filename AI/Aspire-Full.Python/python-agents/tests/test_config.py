@@ -24,7 +24,7 @@ _SRC_PATH = str(Path(__file__).parents[1] / "src")
 if _SRC_PATH not in sys.path:
     sys.path.insert(0, _SRC_PATH)
 
-from aspire_agents.config import (  # pyright: ignore[reportMissingModuleSource]
+from aspire_agents.config import (
     AgentConfig,
     ModelConfig,
     TensorConfig,

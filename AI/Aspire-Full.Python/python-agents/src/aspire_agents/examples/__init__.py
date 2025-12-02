@@ -26,8 +26,9 @@ Environment Variables (from Dockerfile):
 - ASPIRE_AGENT_THREAD_POOL_SIZE: Thread pool size (default: 8)
 - ASPIRE_SUBAGENT_MAX_CONCURRENT: Max concurrent sub-agents (default: 16)
 - ASPIRE_TENSOR_BATCH_SIZE: Batch size for tensor ops (default: 32)
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
+
+GPU-ONLY: All examples require a CUDA GPU. No CPU fallback is supported.
 """
 
 from typing import Final

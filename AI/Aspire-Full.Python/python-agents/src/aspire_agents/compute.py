@@ -1,7 +1,7 @@
-"""Thread-safe tensor compute service for Python 3.16+ free-threaded runtime.
+"""Thread-safe tensor compute service for Python 3.15+ free-threaded runtime.
 
 This module provides a BatchComputeService that leverages:
-- Python 3.16 free-threading (PYTHON_GIL=0) for true parallelism
+- Python 3.15 free-threading (PYTHON_GIL=0) for true parallelism
 - NVIDIA Tensor Cores via torch.autocast with float16 precision
 - Dynamic batching with configurable latency bounds
 - Thread-safe singleton pattern using threading.Lock
@@ -27,7 +27,9 @@ import time
 from collections.abc import Sequence
 from concurrent.futures import Future
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Final, Protocol, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, Unpack, cast
+
+from ._kwargs import ComputeKwargs
 
 import torch
 
@@ -94,7 +96,7 @@ else:
 
 logger: Final = logging.getLogger(__name__)
 
-# Thread-safe singleton pattern for Python 3.15 free-threaded
+# Thread-safe singleton pattern for Python 3.15+ free-threaded
 # Using a dedicated lock since __init__ may run concurrently without GIL
 _INIT_LOCK: Final = threading.Lock()
 _compute_service: BatchComputeService | None = None
@@ -137,6 +139,34 @@ class ComputeConfig:
             ComputeConfig with environment-based defaults
         """
         return cls()
+
+    @classmethod
+    def from_kwargs(cls, **kwargs: Unpack[ComputeKwargs]) -> ComputeConfig:
+        """Create ComputeConfig from type-safe kwargs.
+
+        Thread-safe: kwargs are validated at compile time via TypedDict.
+        All kwargs are optional with sensible defaults.
+
+        Args:
+            **kwargs: Type-safe keyword arguments (see ComputeKwargs)
+
+        Returns:
+            ComputeConfig with specified values
+
+        Example:
+            >>> config = ComputeConfig.from_kwargs(
+            ...     batch_size=64,
+            ...     use_torch_compile=True,
+            ... )
+        """
+        return cls(
+            model_name=kwargs.get("model_name", "sentence-transformers/all-MiniLM-L6-v2"),
+            batch_size=kwargs.get("batch_size", _ASPIRE_TENSOR_BATCH_SIZE),
+            max_latency_ms=kwargs.get("max_latency_ms", 10),
+            use_torch_compile=kwargs.get("use_torch_compile", True),
+            use_mixed_precision=kwargs.get("use_mixed_precision", True),
+            tensor_alignment=kwargs.get("tensor_alignment", _CUDA_TENSOR_CORE_ALIGNMENT),
+        )
 
     @property
     def uses_gpu(self) -> bool:
@@ -183,20 +213,33 @@ class BatchComputeService:
     def __init__(
         self,
         config: ComputeConfig | None = None,
-        *,
-        model_name: str | None = None,
-        batch_size: int | None = None,
-        max_latency_ms: int | None = None,
+        **kwargs: Unpack[ComputeKwargs],
     ) -> None:
-        # Support both config object and legacy kwargs
+        """Initialize BatchComputeService with type-safe configuration.
+
+        Thread-safe: Uses double-checked locking for singleton pattern.
+        GPU-ONLY: Requires CUDA, no CPU fallback.
+
+        Args:
+            config: Optional ComputeConfig. If None, created from kwargs.
+            **kwargs: Type-safe keyword arguments (see ComputeKwargs).
+                - model_name: HuggingFace model name
+                - batch_size: Batch size for tensor ops
+                - max_latency_ms: Maximum latency before batch processing
+                - use_torch_compile: Enable torch.compile optimization
+                - use_mixed_precision: Enable FP16/BF16 mixed precision
+                - tensor_alignment: CUDA memory alignment in bytes
+
+        Example:
+            >>> service = BatchComputeService(batch_size=64, use_torch_compile=True)
+        """
+        # Support both config object and type-safe kwargs
         if config is not None:
             self.config = config
+        elif kwargs:
+            self.config = ComputeConfig.from_kwargs(**kwargs)
         else:
-            self.config = ComputeConfig(
-                model_name=model_name or "sentence-transformers/all-MiniLM-L6-v2",
-                batch_size=batch_size or 32,
-                max_latency_ms=max_latency_ms or 10,
-            )
+            self.config = ComputeConfig()
 
         super().__init__()
         self.device = self._enforce_gpu()
@@ -226,7 +269,7 @@ class BatchComputeService:
 
             self.model.eval()
 
-            # Optimize model with torch.compile for Python 3.16+ free-threaded performance
+            # Optimize model with torch.compile for Python 3.15+ free-threaded performance
             # torch.compile provides significant speedups on modern GPUs with Tensor Cores
             if self.config.use_torch_compile:
                 try:
@@ -282,7 +325,7 @@ class BatchComputeService:
         This method runs in a dedicated thread and aggregates incoming requests
         into batches based on batch_size and max_latency_ms constraints.
 
-        Thread Safety (Python 3.15 free-threaded):
+        Thread Safety (Python 3.15+ free-threaded):
         - Queue operations are inherently thread-safe
         - Stats updates use a dedicated lock
         - No shared mutable state beyond the queue
@@ -483,7 +526,7 @@ def get_compute_service(config: ComputeConfig | None = None) -> BatchComputeServ
     """Get or initialize the singleton BatchComputeService.
 
     Thread-safe: uses double-checked locking pattern suitable for
-    Python 3.15 free-threaded runtime (PYTHON_GIL=0).
+    Python 3.15+ free-threaded runtime (PYTHON_GIL=0).
 
     Args:
         config: Optional configuration. Only used on first initialization.

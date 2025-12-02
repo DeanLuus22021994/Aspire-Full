@@ -38,7 +38,7 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 class AgentResult:
     """Immutable result from an agent run.
 
-    Thread-safe: frozen dataclass with __slots__ for Python 3.15 free-threaded.
+    Thread-safe: frozen dataclass with __slots__ for Python 3.15+ free-threaded.
     All collections are immutable (tuple, frozenset, or dict copy).
 
     Attributes:

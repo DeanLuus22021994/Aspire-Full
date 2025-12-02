@@ -234,7 +234,7 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
     """Validate and configure a Tensor Core capable GPU.
 
     Thread-safe: lru_cache ensures single initialization even with GIL disabled.
-    The cache is immune to race conditions in Python 3.15 free-threaded mode.
+    The cache is immune to race conditions in Python 3.15+ free-threaded mode.
 
     This function:
     1. Validates PyTorch CUDA is available

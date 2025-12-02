@@ -1,8 +1,8 @@
-"""Type definitions and runtime utilities for Python 3.16+ free-threading.
+"""Type definitions and runtime utilities for Python 3.15+ free-threading.
 
 This module provides:
 - Type-safe wrappers for PyTorch CUDA functions
-- Free-threading detection via public Python 3.13+ APIs
+- Free-threading detection via public Python 3.15+ APIs
 - Explicit type definitions for CUDA device properties
 
 Thread Safety:
@@ -17,14 +17,14 @@ from dataclasses import dataclass
 from typing import Final
 
 # ============================================================================
-# Free-Threading Detection (Python 3.13+ public API)
+# Free-Threading Detection (Python 3.15+ public API)
 # ============================================================================
 
 
 def is_gil_disabled() -> bool:
     """Check if Python GIL is disabled using public API.
 
-    Python 3.13+ provides `sys.flags.free_threading` as the public API
+    Python 3.15+ provides `sys.flags.free_threading` as the public API
     for detecting free-threaded builds. The private `sys._is_gil_enabled()`
     should not be used in type-checked code.
 
@@ -35,7 +35,7 @@ def is_gil_disabled() -> bool:
         >>> if is_gil_disabled():
         ...     print("Running in free-threaded mode")
     """
-    # Python 3.13+ public API via sys.flags
+    # Python 3.15+ public API via sys.flags
     flags = getattr(sys, "flags", None)
     if flags is not None and hasattr(flags, "free_threading"):
         return bool(flags.free_threading)

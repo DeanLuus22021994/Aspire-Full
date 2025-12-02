@@ -1,4 +1,4 @@
-"""Sub-Agent orchestration for Python 3.16+ free-threaded runtime.
+"""Sub-Agent orchestration for Python 3.15+ free-threaded runtime.
 
 GPU-ONLY. NO CPU FALLBACK.
 
@@ -11,7 +11,7 @@ Provides thread-safe sub-agent management with:
 Thread Safety:
 - All orchestration uses ThreadPoolExecutor with configurable size
 - GPU memory is shared with memory fraction per sub-agent
-- Uses Python 3.16 free-threading (PYTHON_GIL=0) for true parallelism
+- Uses Python 3.15 free-threading (PYTHON_GIL=0) for true parallelism
 
 Environment Variables:
 - ASPIRE_SUBAGENT_MAX_CONCURRENT: Max concurrent sub-agents (default: 16)
@@ -31,11 +31,12 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Final
+from typing import Any, Final, Unpack
 
 import torch
 from agents import Agent as BaseAgent
 
+from ._kwargs import SubAgentKwargs
 from ._typing import is_gil_disabled, set_cuda_memory_fraction
 from .config import AgentConfig
 from .core import Agent
@@ -99,6 +100,40 @@ class SubAgentConfig:
         """
         return cls()
 
+    @classmethod
+    def from_kwargs(cls, **kwargs: Unpack[SubAgentKwargs]) -> SubAgentConfig:
+        """Create SubAgentConfig from type-safe kwargs.
+
+        Thread-safe: kwargs are validated at compile time via TypedDict.
+        GPU-ONLY: No CPU fallback - compute_mode is always 'gpu'.
+
+        Args:
+            **kwargs: Type-safe keyword arguments (see SubAgentKwargs)
+                - max_concurrent: Max concurrent sub-agents
+                - gpu_share_enabled: Enable GPU memory sharing
+                - thread_pool_size: Thread pool size
+                - tensor_batch_size: Batch size for tensor ops
+                - tensor_alignment: CUDA memory alignment
+                - offload_enabled: Enable tensor offloading
+
+        Returns:
+            SubAgentConfig with specified values
+
+        Example:
+            >>> config = SubAgentConfig.from_kwargs(
+            ...     max_concurrent=8,
+            ...     gpu_share_enabled=True,
+            ... )
+        """
+        return cls(
+            max_concurrent=kwargs.get("max_concurrent", ASPIRE_SUBAGENT_MAX_CONCURRENT),
+            gpu_share_enabled=kwargs.get("gpu_share_enabled", ASPIRE_SUBAGENT_GPU_SHARE),
+            thread_pool_size=kwargs.get("thread_pool_size", ASPIRE_AGENT_THREAD_POOL_SIZE),
+            tensor_batch_size=kwargs.get("tensor_batch_size", ASPIRE_TENSOR_BATCH_SIZE),
+            tensor_alignment=kwargs.get("tensor_alignment", CUDA_TENSOR_CORE_ALIGNMENT),
+            offload_enabled=kwargs.get("offload_enabled", ASPIRE_TENSOR_OFFLOAD_ENABLED),
+        )
+
     @property
     def uses_gpu(self) -> bool:
         """GPU is always required - no CPU fallback."""
@@ -147,7 +182,7 @@ class SubAgentOrchestrator:
     Thread Safety:
     - Uses ThreadPoolExecutor for concurrent execution
     - All state is protected by locks
-    - Safe for Python 3.15 free-threaded runtime (GIL disabled)
+    - Safe for Python 3.15+ free-threaded runtime (GIL disabled)
 
     Attributes:
         config: SubAgentConfig with orchestration settings
@@ -167,13 +202,38 @@ class SubAgentOrchestrator:
         "_initialized",
     )
 
-    def __init__(self, config: SubAgentConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: SubAgentConfig | None = None,
+        **kwargs: Unpack[SubAgentKwargs],
+    ) -> None:
         """Initialize the sub-agent orchestrator.
 
+        Thread-safe: Uses type-safe kwargs validated at compile time.
+        GPU-ONLY: Requires CUDA, no CPU fallback.
+
         Args:
-            config: Optional configuration. Uses environment defaults if None.
+            config: Optional SubAgentConfig. If None, created from kwargs.
+            **kwargs: Type-safe keyword arguments (see SubAgentKwargs)
+                - max_concurrent: Max concurrent sub-agents
+                - gpu_share_enabled: Enable GPU memory sharing
+                - thread_pool_size: Thread pool size
+                - tensor_batch_size: Batch size for tensor ops
+                - tensor_alignment: CUDA memory alignment
+                - offload_enabled: Enable tensor offloading
+
+        Example:
+            >>> orchestrator = SubAgentOrchestrator(
+            ...     max_concurrent=8,
+            ...     gpu_share_enabled=True,
+            ... )
         """
-        self.config = config or SubAgentConfig.from_env()
+        if config is not None:
+            self.config = config
+        elif kwargs:
+            self.config = SubAgentConfig.from_kwargs(**kwargs)
+        else:
+            self.config = SubAgentConfig.from_env()
         self.executor = ThreadPoolExecutor(
             max_workers=self.config.thread_pool_size,
             thread_name_prefix="SubAgent-Worker",
@@ -260,7 +320,7 @@ class SubAgentOrchestrator:
         """Execute a registered sub-agent with concurrency control.
 
         Uses semaphore to limit concurrent executions to max_concurrent.
-        Thread-safe for Python 3.15 free-threaded runtime.
+        Thread-safe for Python 3.15+ free-threaded runtime.
 
         Args:
             name: Name of the registered sub-agent
