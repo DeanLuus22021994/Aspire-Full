@@ -1,9 +1,11 @@
 # Tensor-Optimized VS Code Extension Manager
 
-High-performance VS Code extension management for Aspire-Full with GPU-accelerated operations.
+High-performance VS Code extension management for Aspire-Full with GPU-accelerated operations and **3 Hot GPU Automation Workers**.
 
 ## Features
 
+- **3 Hot GPU Workers**: Low-latency high-throughput async workers with direct GPU acceleration
+- **Automatic Problem Detection**: Scans build errors, lint violations, test failures
 - **Async I/O**: Zero-copy streaming with aiohttp and memory-mapped files
 - **GPU Acceleration**: CuPy-powered SHA-256 hashing (with NumPy fallback)
 - **SIMD-Friendly**: NumPy-backed state tracking with cache-aligned memory layout
@@ -16,6 +18,7 @@ High-performance VS Code extension management for Aspire-Full with GPU-accelerat
 ```
 .vscode/extensions/
 ├── core/                    # Tensor-optimized core modules
+│   ├── automation.py       # 3 Hot GPU workers + problem detection
 │   ├── context.py          # NumPy-backed registry with vectorized state
 │   ├── downloader.py       # Async streaming with mmap I/O
 │   ├── hasher.py           # GPU-accelerated SHA-256 (CuPy/NumPy)
@@ -27,6 +30,67 @@ High-performance VS Code extension management for Aspire-Full with GPU-accelerat
 └── <extension>/             # Per-extension handlers
     ├── handler.py           # Extension-specific entry point
     └── helper.py            # Extension metadata
+```
+
+## 3 Hot GPU Automation Workers
+
+The automation system provides 3 dedicated hot standby GPU workers for automatic problem detection and fixing:
+
+### Start Workers
+
+```bash
+# Continuous operation with 30s scan interval
+python .vscode/extensions/core/automation.py
+
+# Single scan and process
+python .vscode/extensions/core/automation.py --run-once
+
+# Custom workspace and scan interval
+python .vscode/extensions/core/automation.py --workspace /path/to/repo --scan-interval 60
+
+# Show worker status
+python .vscode/extensions/core/automation.py --status --json
+```
+
+### Problem Detection
+
+Workers automatically scan for:
+
+| Category | Source | Priority |
+|----------|--------|----------|
+| Compile Errors | `dotnet build` | CRITICAL |
+| Lint Violations | `ruff check` | HIGH |
+| Type Errors | `mypy` | HIGH |
+| Test Failures | `.trx` files | CRITICAL |
+| Docker Issues | Container logs | NORMAL |
+
+### Worker Configuration
+
+Environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HOT_GPU_WORKERS` | `3` | Number of hot standby workers |
+| `USE_GPU_DIRECT` | `1` | Enable direct GPU acceleration |
+| `CUDA_VISIBLE_DEVICES` | `0` | GPU device(s) to use |
+| `TARGET_LATENCY_NS` | `50000000` | Target latency (50ms) |
+
+### Aspire Settings
+
+The workers are configured in `.aspire/settings.json`:
+
+```jsonc
+{
+  "agents": {
+    "replicas": 3,
+    "minHotStandby": 3,
+    "gpuDirect": true,
+    "pool": {
+      "mode": "hot-standby",
+      "acquireTimeoutMs": 50
+    }
+  }
+}
 ```
 
 ## Quick Start

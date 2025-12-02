@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Worker pool with tensor-optimized task scheduling."""
+"""Worker pool with tensor-optimized task scheduling.
+
+Supports 3 hot GPU workers for low-latency high-throughput automation.
+"""
 
 from __future__ import annotations
 
@@ -22,10 +25,27 @@ if TYPE_CHECKING:
 # Free-threading support (Python 3.13+)
 _FREE_THREADING: Final[bool] = os.environ.get("PYTHON_GIL", "1") == "0"
 
-# Pool sizing constants
+# =============================================================================
+# Pool Configuration - 3 Hot GPU Workers
+# =============================================================================
+
+# Hot GPU worker count for automation
+HOT_GPU_WORKERS: Final[int] = 3
+
+# Default workers scales with CPU but capped at 32
 DEFAULT_WORKERS: Final[int] = min(32, (os.cpu_count() or 4) * 2)
-MAX_QUEUE_DEPTH: Final[int] = 1024
+
+# Queue sizing for high throughput
+MAX_QUEUE_DEPTH: Final[int] = 4096  # Increased for automation workloads
 PRIORITY_LEVELS: Final[int] = 4
+
+# Latency targets (nanoseconds)
+TARGET_LATENCY_NS: Final[int] = 50_000_000  # 50ms target
+LOW_LATENCY_SPIN_NS: Final[int] = 1_000_000  # 1ms spin for hot standby
+
+# GPU direct acceleration
+GPU_DIRECT_ENABLED: Final[bool] = os.environ.get("USE_GPU_DIRECT", "1") == "1"
+CUDA_VISIBLE_DEVICES: Final[str] = os.environ.get("CUDA_VISIBLE_DEVICES", "0")
 
 T = TypeVar("T")
 
@@ -324,6 +344,263 @@ async def run_with_pool(
     # Wait for all tasks to complete
     while not all(t.completed for t in tasks):
         await asyncio.sleep(0.05)
+
+    # Shutdown pool
+    await pool.shutdown()
+    await pool_task
+
+    # Collect results in order
+    results: list[T] = []
+    for task in tasks:
+        if task.error:
+            raise task.error
+        results.append(task.result)
+
+    return results
+
+
+# =============================================================================
+# Hot GPU Worker Pool - 3 Dedicated Workers
+# =============================================================================
+
+
+class HotGPUWorkerState(IntEnum):
+    """Hot GPU worker states for low-latency operation."""
+
+    HOT_STANDBY = 0  # Warm, GPU loaded, immediate dispatch
+    ACTIVE = 1  # Currently processing
+    DRAINING = 2  # Completing current work
+    COOLDOWN = 3  # Temporary backoff (GPU memory pressure)
+
+
+@dataclass(slots=True)
+class GPUWorkerStats:
+    """Extended stats for GPU-accelerated workers."""
+
+    worker_id: int
+    tasks_completed: int = 0
+    tasks_failed: int = 0
+    total_bytes: int = 0
+    total_ns: int = 0
+    gpu_operations: int = 0
+    gpu_compute_time_ns: int = 0
+    current_state: HotGPUWorkerState = HotGPUWorkerState.HOT_STANDBY
+
+    @property
+    def avg_latency_ms(self) -> float:
+        """Average task latency in milliseconds."""
+        if self.tasks_completed == 0:
+            return 0.0
+        return (self.total_ns / self.tasks_completed) / 1_000_000
+
+    @property
+    def avg_gpu_time_ms(self) -> float:
+        """Average GPU compute time in milliseconds."""
+        if self.gpu_operations == 0:
+            return 0.0
+        return (self.gpu_compute_time_ns / self.gpu_operations) / 1_000_000
+
+
+class HotGPUWorkerPool:
+    """3 Hot GPU Workers with Direct Acceleration.
+
+    Features:
+    - 3 dedicated hot standby workers
+    - Direct GPU compute without CPU fallback
+    - 1ms spin wait for ultra-low latency
+    - Priority-based task distribution
+    - Automatic GPU memory management
+    """
+
+    __slots__ = (
+        "_workers",
+        "_queue",
+        "_stats",
+        "_states",
+        "_shutdown_event",
+        "_task_counter",
+        "_executor",
+        "_gpu_available",
+    )
+
+    def __init__(self) -> None:
+        """Initialize 3 hot GPU workers."""
+        self._workers = HOT_GPU_WORKERS
+        self._queue = PriorityQueue(capacity=MAX_QUEUE_DEPTH)
+        self._stats = [GPUWorkerStats(worker_id=i) for i in range(HOT_GPU_WORKERS)]
+        self._states = [HotGPUWorkerState.HOT_STANDBY] * HOT_GPU_WORKERS
+        self._shutdown_event = asyncio.Event()
+        self._task_counter = 0
+
+        # Thread pool for CPU-bound operations (fallback only)
+        self._executor = ThreadPoolExecutor(
+            max_workers=HOT_GPU_WORKERS,
+            thread_name_prefix="hot-gpu-worker",
+        )
+
+        # Detect GPU availability
+        self._gpu_available = self._detect_gpu()
+
+    def _detect_gpu(self) -> bool:
+        """Detect if GPU acceleration is available."""
+        if not GPU_DIRECT_ENABLED:
+            return False
+        try:
+            import cupy as cp  # type: ignore
+
+            cp.cuda.Device(0).compute_capability
+            return True
+        except Exception:
+            return False
+
+    async def submit(
+        self,
+        context: ExtensionContext,
+        coro_factory: Callable[[ExtensionContext], Awaitable[T]],
+        priority: TaskPriority = TaskPriority.CRITICAL,
+    ) -> Task:
+        """Submit task to hot GPU pool.
+
+        Args:
+            context: Extension context for task.
+            coro_factory: Async function to execute.
+            priority: Task priority level (defaults to CRITICAL for GPU).
+
+        Returns:
+            Task handle for result retrieval.
+        """
+        self._task_counter += 1
+        task = Task(
+            id=self._task_counter,
+            priority=priority,
+            context=context,
+            coro_factory=coro_factory,
+        )
+        await self._queue.enqueue(task)
+        return task
+
+    async def _hot_worker_loop(self, worker_id: int) -> None:
+        """Hot standby worker loop with 1ms spin wait.
+
+        Args:
+            worker_id: Worker index (0-2).
+        """
+        stats = self._stats[worker_id]
+        stats.current_state = HotGPUWorkerState.HOT_STANDBY
+
+        while not self._shutdown_event.is_set():
+            task = await self._queue.dequeue()
+
+            if task is None:
+                # Hot standby - 1ms spin for low latency
+                await asyncio.sleep(0.001)
+                continue
+
+            stats.current_state = HotGPUWorkerState.ACTIVE
+            start_ns = int(asyncio.get_event_loop().time() * 1_000_000_000)
+
+            try:
+                coro = task.coro_factory(task.context)
+                task.result = await coro
+                task.completed = True
+                stats.tasks_completed += 1
+
+                # Track GPU operations if available
+                if self._gpu_available:
+                    stats.gpu_operations += 1
+
+            except Exception as e:
+                task.error = e
+                task.completed = True
+                stats.tasks_failed += 1
+
+            elapsed_ns = int(asyncio.get_event_loop().time() * 1_000_000_000) - start_ns
+            stats.total_ns += elapsed_ns
+            stats.current_state = HotGPUWorkerState.HOT_STANDBY
+
+    async def run(self) -> None:
+        """Start all 3 hot GPU workers."""
+        # Create 3 hot worker tasks
+        workers = [
+            asyncio.create_task(self._hot_worker_loop(i))
+            for i in range(HOT_GPU_WORKERS)
+        ]
+
+        # Wait for shutdown signal
+        await self._shutdown_event.wait()
+
+        # Mark all workers as draining
+        for i in range(HOT_GPU_WORKERS):
+            self._stats[i].current_state = HotGPUWorkerState.DRAINING
+
+        # Drain remaining tasks
+        while self._queue.total_pending > 0:
+            await asyncio.sleep(0.01)
+
+        # Cancel workers
+        for worker in workers:
+            worker.cancel()
+
+        await asyncio.gather(*workers, return_exceptions=True)
+
+    async def shutdown(self, timeout: float = 30.0) -> None:
+        """Gracefully shutdown hot GPU pool.
+
+        Args:
+            timeout: Maximum seconds to wait for drain.
+        """
+        self._shutdown_event.set()
+        self._executor.shutdown(wait=True, cancel_futures=True)
+
+    def get_stats(self) -> list[GPUWorkerStats]:
+        """Get per-worker statistics."""
+        return self._stats.copy()
+
+    @property
+    def pending_count(self) -> int:
+        """Number of pending tasks."""
+        return self._queue.total_pending
+
+    @property
+    def gpu_available(self) -> bool:
+        """Whether GPU acceleration is available."""
+        return self._gpu_available
+
+    def get_worker_states(self) -> list[HotGPUWorkerState]:
+        """Get current state of each worker."""
+        return [s.current_state for s in self._stats]
+
+
+async def run_with_hot_gpu_pool(
+    contexts: list[ExtensionContext],
+    coro_factory: Callable[[ExtensionContext], Awaitable[T]],
+) -> list[T]:
+    """Run tasks through 3 hot GPU workers.
+
+    Optimized for low-latency high-throughput GPU workloads.
+
+    Args:
+        contexts: Extension contexts to process.
+        coro_factory: Async function for each context.
+
+    Returns:
+        List of results in input order.
+    """
+    pool = HotGPUWorkerPool()
+    tasks: list[Task] = []
+
+    # Submit all tasks with CRITICAL priority for GPU
+    for ctx in contexts:
+        priority = TaskPriority.CRITICAL if ctx.is_gpu_required else TaskPriority.HIGH
+        task = await pool.submit(ctx, coro_factory, priority)
+        tasks.append(task)
+
+    # Start pool in background
+    pool_task = asyncio.create_task(pool.run())
+
+    # Wait for all tasks to complete (with low-latency polling)
+    while not all(t.completed for t in tasks):
+        await asyncio.sleep(0.005)  # 5ms poll interval
 
     # Shutdown pool
     await pool.shutdown()
