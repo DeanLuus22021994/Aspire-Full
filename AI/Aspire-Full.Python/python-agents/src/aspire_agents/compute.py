@@ -163,7 +163,7 @@ class BatchComputeService:
 
     Attributes:
         config: Immutable configuration for the compute service
-        device: torch.device (cuda or cpu with fallback)
+        device: torch.device (cuda only - GPU required)
         model: Pre-trained transformer model (compiled if supported)
         tokenizer: HuggingFace tokenizer for text encoding
     """

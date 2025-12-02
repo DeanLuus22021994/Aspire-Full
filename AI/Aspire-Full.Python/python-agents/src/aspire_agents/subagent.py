@@ -18,8 +18,9 @@ Environment Variables:
 - ASPIRE_SUBAGENT_GPU_SHARE: Enable GPU sharing (default: 1)
 - ASPIRE_AGENT_THREAD_POOL_SIZE: Thread pool size (default: 8)
 - ASPIRE_TENSOR_BATCH_SIZE: Batch size for tensor ops (default: 32)
-- ASPIRE_COMPUTE_MODE: Compute mode - GPU only (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment bytes (default: 128)
+
+GPU-ONLY: This module requires a CUDA GPU. No CPU fallback is supported.
 """
 
 from __future__ import annotations
@@ -50,7 +51,6 @@ ASPIRE_SUBAGENT_MAX_CONCURRENT: Final[int] = int(os.environ.get("ASPIRE_SUBAGENT
 ASPIRE_SUBAGENT_GPU_SHARE: Final[bool] = os.environ.get("ASPIRE_SUBAGENT_GPU_SHARE", "1") == "1"
 ASPIRE_AGENT_THREAD_POOL_SIZE: Final[int] = int(os.environ.get("ASPIRE_AGENT_THREAD_POOL_SIZE", "8"))
 ASPIRE_TENSOR_BATCH_SIZE: Final[int] = int(os.environ.get("ASPIRE_TENSOR_BATCH_SIZE", "32"))
-ASPIRE_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
 CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
 ASPIRE_TENSOR_OFFLOAD_ENABLED: Final[bool] = os.environ.get("ASPIRE_TENSOR_OFFLOAD_ENABLED", "1") == "1"
 
@@ -463,7 +463,6 @@ __all__: Final[tuple[str, ...]] = (
     "ASPIRE_SUBAGENT_GPU_SHARE",
     "ASPIRE_AGENT_THREAD_POOL_SIZE",
     "ASPIRE_TENSOR_BATCH_SIZE",
-    "ASPIRE_COMPUTE_MODE",
     "CUDA_TENSOR_CORE_ALIGNMENT",
     "ASPIRE_TENSOR_OFFLOAD_ENABLED",
 )
