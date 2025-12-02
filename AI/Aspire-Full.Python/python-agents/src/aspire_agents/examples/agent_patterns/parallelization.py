@@ -18,7 +18,6 @@ GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 from __future__ import annotations
 
 import asyncio
-from typing import Final
 
 from agents import Agent, ItemHelpers, Runner, trace
 from aspire_agents import (

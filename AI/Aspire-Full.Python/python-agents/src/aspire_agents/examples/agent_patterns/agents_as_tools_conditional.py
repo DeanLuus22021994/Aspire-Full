@@ -9,13 +9,13 @@ GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from agents import Agent, RunContextWrapper, Runner, trace
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from agents import Tool
+    pass  # Future type hints
 
 # This example demonstrates the agents-as-tools pattern with conditional tool enabling.
 # Agent tools are dynamically enabled/disabled based on user access levels using the

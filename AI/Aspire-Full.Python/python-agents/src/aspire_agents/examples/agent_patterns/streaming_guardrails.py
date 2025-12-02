@@ -9,7 +9,6 @@ GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 from __future__ import annotations
 
 import asyncio
-from typing import Final
 
 from agents import Agent, Runner
 from aspire_agents.gpu import ensure_tensor_core_gpu

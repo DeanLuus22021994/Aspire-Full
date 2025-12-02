@@ -25,10 +25,6 @@ from agents import (
     TResponseInputItem,
     input_guardrail,
 )
-from aspire_agents import (
-    get_guardrail_service,
-    semantic_input_guardrail,
-)
 from pydantic import BaseModel
 
 # This example shows how to use guardrails.

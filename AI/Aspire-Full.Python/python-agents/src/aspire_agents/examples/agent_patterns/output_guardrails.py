@@ -26,10 +26,6 @@ from agents import (
     Runner,
     output_guardrail,
 )
-from aspire_agents import (
-    get_guardrail_service,
-    semantic_output_guardrail,
-)
 from pydantic import BaseModel, Field
 
 # This example shows how to use output guardrails.

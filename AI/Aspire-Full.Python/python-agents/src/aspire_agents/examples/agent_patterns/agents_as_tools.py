@@ -9,7 +9,6 @@ GPU-ONLY: Requires CUDA GPU. No CPU fallback supported.
 from __future__ import annotations
 
 import asyncio
-from typing import Final
 
 from agents import Agent, ItemHelpers, MessageOutputItem, Runner, trace
 
