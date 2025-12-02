@@ -18,10 +18,11 @@ Supported GPUs:
 - Hopper (H100): Compute 9.0+ - FP8/FP16/BF16/TF32 Tensor Cores
 
 Environment Variables (from Dockerfile):
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
 - ASPIRE_TENSOR_OFFLOAD_ENABLED: Enable tensor offloading (default: 1)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
 - PYTORCH_CUDA_ALLOC_CONF: PyTorch memory allocator configuration
+
+GPU-ONLY: This module requires a CUDA GPU. No CPU fallback is supported.
 """
 
 from __future__ import annotations
@@ -43,8 +44,7 @@ from ._typing import (
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
 
-# Environment variable configuration
-_ASPIRE_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
+# Environment variable configuration - GPU-ONLY, no CPU fallback
 _ASPIRE_TENSOR_OFFLOAD_ENABLED: Final[bool] = os.environ.get("ASPIRE_TENSOR_OFFLOAD_ENABLED", "1") == "1"
 _CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
 
@@ -76,7 +76,6 @@ class TensorCoreInfo:
         gil_disabled: Whether Python GIL is disabled (3.15+ free-threaded)
         tensor_alignment: CUDA memory alignment from CUDA_TENSOR_CORE_ALIGNMENT
         offload_enabled: Whether tensor offloading is enabled
-        compute_mode: Compute mode from ASPIRE_COMPUTE_MODE
     """
 
     name: str
@@ -88,7 +87,6 @@ class TensorCoreInfo:
     gil_disabled: bool = False
     tensor_alignment: int = 128
     offload_enabled: bool = True
-    compute_mode: str = "gpu"
 
     @property
     def supports_fp16(self) -> bool:
@@ -292,7 +290,6 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
         gil_disabled=gil_disabled,
         tensor_alignment=_CUDA_TENSOR_CORE_ALIGNMENT,
         offload_enabled=_ASPIRE_TENSOR_OFFLOAD_ENABLED,
-        compute_mode=_ASPIRE_COMPUTE_MODE,
     )
 
     logger.info(
@@ -351,7 +348,7 @@ def get_optimal_batch_size(
         Recommended batch size
     """
     if not torch.cuda.is_available():
-        return 8  # CPU fallback default
+        raise TensorCoreUnavailableError("CUDA GPU required for batch size calculation. No CPU fallback.")
 
     mem_info = get_gpu_memory_info()
     free_memory_mb = mem_info["free_gb"] * 1024

@@ -16,8 +16,9 @@ Environment Variables (from Dockerfile):
 - ASPIRE_TENSOR_BATCH_SIZE: Batch size for tensor ops (default: 32)
 - ASPIRE_TENSOR_OFFLOAD_ENABLED: Enable tensor offloading (default: 1)
 - ASPIRE_SUBAGENT_GPU_SHARE: Enable GPU sharing (default: 1)
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
+
+GPU-ONLY: This package requires a CUDA GPU. No CPU fallback is supported.
 
 Quick Start:
     >>> from aspire_agents import AgentRunner, AgentConfig, ModelConfig
@@ -82,7 +83,6 @@ from .kernel import (
 from .runner import AgentResult, AgentRunner
 from .subagent import (
     ASPIRE_AGENT_THREAD_POOL_SIZE,
-    ASPIRE_COMPUTE_MODE,
     ASPIRE_SUBAGENT_GPU_SHARE,
     ASPIRE_SUBAGENT_MAX_CONCURRENT,
     ASPIRE_TENSOR_BATCH_SIZE,
@@ -163,6 +163,5 @@ __all__: Final[tuple[str, ...]] = (
     "ASPIRE_TENSOR_BATCH_SIZE",
     "ASPIRE_TENSOR_OFFLOAD_ENABLED",
     "ASPIRE_SUBAGENT_GPU_SHARE",
-    "ASPIRE_COMPUTE_MODE",
     "CUDA_TENSOR_CORE_ALIGNMENT",
 )

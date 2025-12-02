@@ -5,17 +5,15 @@ Provides fixtures for:
 - SubAgent orchestrator setup
 - Environment variable configuration
 
-Environment Variables:
-- ASPIRE_COMPUTE_MODE: Set to 'cpu' for test isolation
-- ASPIRE_ALLOW_CPU_FALLBACK: Set to '1' for CI environments
+GPU-ONLY: Tests require CUDA GPU. Use ASPIRE_TEST_GPU=1 to run.
 """
 
 from __future__ import annotations
 
 import os
 import sys
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
@@ -26,7 +24,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 
-def pytest_addoption(parser):  # pragma: no cover - pytest hook
+def pytest_addoption(parser: pytest.Parser) -> None:  # pragma: no cover - pytest hook
     """Register ini options that pytest-asyncio would normally add."""
 
     parser.addini(
@@ -38,19 +36,16 @@ def pytest_addoption(parser):  # pragma: no cover - pytest hook
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment() -> Generator[None, None, None]:
-    """Set up test environment with CPU fallback enabled.
+    """Set up test environment - GPU required.
 
-    This ensures tests can run in CI without GPU.
+    GPU-ONLY: No CPU fallback. Tests require CUDA.
     """
     original_values = {
         "ASPIRE_COMPUTE_MODE": os.environ.get("ASPIRE_COMPUTE_MODE"),
-        "ASPIRE_ALLOW_CPU_FALLBACK": os.environ.get("ASPIRE_ALLOW_CPU_FALLBACK"),
     }
 
-    # Force CPU mode for tests unless GPU is explicitly available
-    if not os.environ.get("ASPIRE_TEST_GPU", ""):
-        os.environ["ASPIRE_COMPUTE_MODE"] = "cpu"
-        os.environ["ASPIRE_ALLOW_CPU_FALLBACK"] = "1"
+    # GPU-only mode
+    os.environ["ASPIRE_COMPUTE_MODE"] = "gpu"
 
     yield
 
@@ -63,33 +58,33 @@ def setup_test_environment() -> Generator[None, None, None]:
 
 
 @pytest.fixture
-def subagent_config():
-    """Create a test SubAgentConfig with CPU mode."""
+def subagent_config() -> "SubAgentConfig":
+    """Create a test SubAgentConfig - GPU required."""
     from aspire_agents import SubAgentConfig
 
     return SubAgentConfig(
         max_concurrent=4,
-        gpu_share_enabled=False,
+        gpu_share_enabled=True,
         thread_pool_size=2,
         tensor_batch_size=8,
-        compute_mode="cpu",
+        compute_mode="gpu",
         tensor_alignment=128,
-        offload_enabled=False,
+        offload_enabled=True,
     )
 
 
 @pytest.fixture
-def tensor_config():
-    """Create a test TensorConfig with CPU mode."""
+def tensor_config() -> "TensorConfig":
+    """Create a test TensorConfig - GPU required."""
     from aspire_agents import TensorConfig
 
     return TensorConfig(
-        use_gpu=False,
-        use_tensor_cores=False,
-        use_flash_attention=False,
+        use_gpu=True,
+        use_tensor_cores=True,
+        use_flash_attention=True,
         batch_size=8,
         max_sequence_length=128,
-        use_torch_compile=False,
-        mixed_precision=False,
+        use_torch_compile=True,
+        mixed_precision=True,
         tensor_alignment=128,
     )

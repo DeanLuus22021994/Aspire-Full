@@ -15,8 +15,9 @@ Python 3.15 Optimizations:
 
 Environment Variables (from Dockerfile):
 - ASPIRE_TENSOR_BATCH_SIZE: Default batch size for tensor ops (default: 32)
-- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
+
+GPU-ONLY: This module requires a CUDA GPU. No CPU fallback is supported.
 """
 
 from __future__ import annotations
@@ -35,9 +36,8 @@ ProviderLiteral = Literal["openai", "azure", "github", "anthropic", "local"]
 DEFAULT_MODEL: Final[str] = "gpt-4.1-mini"
 DEFAULT_PROVIDER: Final[ProviderLiteral] = "openai"
 
-# Environment variable defaults for tensor configuration
+# Environment variable defaults for tensor configuration - GPU-ONLY
 _DEFAULT_BATCH_SIZE: Final[int] = int(os.environ.get("ASPIRE_TENSOR_BATCH_SIZE", "32"))
-_DEFAULT_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
 _TENSOR_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
 
 
@@ -87,15 +87,14 @@ class TensorConfig:
     """Immutable tensor compute configuration.
 
     Controls GPU acceleration settings for embedding and inference.
-    Thread-safe due to immutability.
+    Thread-safe due to immutability. GPU is ALWAYS required.
 
     Default values are read from environment variables set in Dockerfiles:
     - ASPIRE_TENSOR_BATCH_SIZE for batch_size
-    - ASPIRE_COMPUTE_MODE for determining GPU usage
     - CUDA_TENSOR_CORE_ALIGNMENT for memory alignment
 
     Attributes:
-        use_gpu: Enable GPU acceleration
+        use_gpu: Always True - GPU is required
         use_tensor_cores: Enable Tensor Core optimizations (FP16/TF32)
         use_flash_attention: Enable Flash Attention for transformers
         batch_size: Default batch size for batched operations
@@ -105,7 +104,7 @@ class TensorConfig:
         tensor_alignment: CUDA memory alignment in bytes (default: 128)
     """
 
-    use_gpu: bool = field(default_factory=lambda: _DEFAULT_COMPUTE_MODE in ("gpu", "hybrid"))
+    use_gpu: bool = True  # GPU is ALWAYS required
     use_tensor_cores: bool = True
     use_flash_attention: bool = True
     batch_size: int = field(default_factory=lambda: _DEFAULT_BATCH_SIZE)
@@ -118,8 +117,8 @@ class TensorConfig:
     def from_env(cls) -> TensorConfig:
         """Create TensorConfig from environment variables.
 
-        Reads ASPIRE_TENSOR_BATCH_SIZE, ASPIRE_COMPUTE_MODE, and
-        CUDA_TENSOR_CORE_ALIGNMENT from environment.
+        Reads ASPIRE_TENSOR_BATCH_SIZE and CUDA_TENSOR_CORE_ALIGNMENT.
+        GPU is always required.
 
         Returns:
             TensorConfig with environment-based defaults
