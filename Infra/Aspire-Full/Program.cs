@@ -50,7 +50,7 @@ var dashboard = builder.AddContainer(AppHostConstants.Resources.AspireDashboard,
     .WithEnvironment(AppHostConstants.EnvironmentVariables.DashboardResourceServiceAuthMode, "Unsecured")
     .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireDashboardMcpEndpointUrl, "http://0.0.0.0:16036")
     .WithEnvironment(AppHostConstants.EnvironmentVariables.AspireAllowUnsecuredTransport, "true")
-    .WithHttpEndpoint(name: "ui", port: AppHostConstants.Ports.DashboardUi, targetPort: 18888)
+    .WithHttpEndpoint(name: "http", port: AppHostConstants.Ports.DashboardUi, targetPort: 18888)
     .WithHttpEndpoint(name: "otlp", port: AppHostConstants.Ports.DashboardOtlp, targetPort: 18889)
     .WithContainerRuntimeArgs("--network", networkName)
     .WithLifetime(ContainerLifetime.Persistent);
