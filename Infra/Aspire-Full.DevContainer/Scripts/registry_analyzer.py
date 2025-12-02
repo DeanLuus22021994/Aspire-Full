@@ -95,8 +95,8 @@ class ModuleMetrics:
     function_count: int
     class_count: int
     complexity: float
-    imports: list[str] = field(default_factory=list)
-    exports: list[str] = field(default_factory=list)
+    imports: "list[str]" = field(default_factory=list)
+    exports: "list[str]" = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -116,10 +116,10 @@ class AnalysisReport:
 
     timestamp: str
     workspace: str
-    findings: list[Finding] = field(default_factory=list)
-    module_metrics: list[ModuleMetrics] = field(default_factory=list)
-    docker_images: list[dict[str, Any]] = field(default_factory=list)
-    summary: dict[str, Any] = field(default_factory=dict)
+    findings: "list[Finding]" = field(default_factory=list)
+    module_metrics: "list[ModuleMetrics]" = field(default_factory=list)
+    docker_images: "list[dict[str, Any]]" = field(default_factory=list)
+    summary: "dict[str, Any]" = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
