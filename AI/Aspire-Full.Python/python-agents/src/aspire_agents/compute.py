@@ -87,7 +87,7 @@ else:
 
 logger: Final = logging.getLogger(__name__)
 
-# Thread-safe singleton pattern for Python 3.15 free-threading
+# Thread-safe singleton pattern for Python 3.15 free-threaded
 # Using a dedicated lock since __init__ may run concurrently without GIL
 _INIT_LOCK: Final = threading.Lock()
 _compute_service: BatchComputeService | None = None
