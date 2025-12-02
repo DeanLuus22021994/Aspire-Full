@@ -5,7 +5,7 @@ organized by their corresponding interface category in the VendorFactory.
 
 Categories align with VendorFactory interface collections:
 - VendorCategory: Factory-level categorization
-- Torch: TorchInterfaces enums (currently type aliases)
+- Torch: TorchInterfaces enums
 - Transformers: TransformersInterfaces enums
 - Agents: AgentsInterfaces enums
 - OpenAI: OpenAIInterfaces enums
@@ -16,6 +16,8 @@ Categories align with VendorFactory interface collections:
 - Profiler: ProfilerInterfaces enums
 - Safetensors: SafetensorsInterfaces enums
 - Pytest: PytestInterfaces enums
+
+All string literals are centralized here to avoid hardcoding across the codebase.
 """
 
 from __future__ import annotations
@@ -71,6 +73,160 @@ class VendorCategory(Enum):
 
     PYTEST = auto()
     """Testing framework."""
+
+
+# ============================================================================
+# Torch Enums
+# ============================================================================
+
+
+class TorchDeviceType(StrEnum):
+    """Device types for PyTorch tensors.
+
+    Corresponds to TorchInterfaces.
+    Specifies where tensors are stored and computed.
+    """
+
+    CPU = "cpu"
+    """CPU device (default)."""
+
+    CUDA = "cuda"
+    """NVIDIA CUDA GPU device."""
+
+    MPS = "mps"
+    """Apple Metal Performance Shaders (M1/M2/M3)."""
+
+    XPU = "xpu"
+    """Intel XPU device."""
+
+    NPU = "npu"
+    """Neural Processing Unit."""
+
+    @classmethod
+    def from_string(cls, value: str) -> "TorchDeviceType":
+        """Create from string value.
+
+        Args:
+            value: Device type string (case-insensitive).
+
+        Returns:
+            Corresponding TorchDeviceType.
+
+        Raises:
+            ValueError: If value is not a valid device type.
+        """
+        # Handle device:index format (e.g., "cuda:0")
+        base = value.split(":")[0].lower()
+        try:
+            return cls(base)
+        except ValueError as e:
+            valid = ", ".join(m.value for m in cls)
+            msg = f"Invalid device type '{value}'. Valid: {valid}"
+            raise ValueError(msg) from e
+
+    @property
+    def supports_gpu(self) -> bool:
+        """Check if this device type supports GPU acceleration.
+
+        Returns:
+            True for CUDA, MPS, XPU, NPU.
+        """
+        return self in (
+            TorchDeviceType.CUDA,
+            TorchDeviceType.MPS,
+            TorchDeviceType.XPU,
+            TorchDeviceType.NPU,
+        )
+
+
+class TorchDtypeEnum(StrEnum):
+    """Data types for PyTorch tensors.
+
+    Corresponds to TorchInterfaces.
+    Specifies the numeric type of tensor elements.
+    """
+
+    # Floating point
+    FLOAT16 = "float16"
+    """16-bit floating point (half precision)."""
+
+    FLOAT32 = "float32"
+    """32-bit floating point (single precision)."""
+
+    FLOAT64 = "float64"
+    """64-bit floating point (double precision)."""
+
+    BFLOAT16 = "bfloat16"
+    """Brain floating point (16-bit, better range than float16)."""
+
+    # Integer
+    INT8 = "int8"
+    """8-bit signed integer."""
+
+    INT16 = "int16"
+    """16-bit signed integer."""
+
+    INT32 = "int32"
+    """32-bit signed integer."""
+
+    INT64 = "int64"
+    """64-bit signed integer."""
+
+    UINT8 = "uint8"
+    """8-bit unsigned integer."""
+
+    # Boolean
+    BOOL = "bool"
+    """Boolean type."""
+
+    # Complex
+    COMPLEX64 = "complex64"
+    """Complex number with 32-bit float components."""
+
+    COMPLEX128 = "complex128"
+    """Complex number with 64-bit float components."""
+
+    @property
+    def is_floating_point(self) -> bool:
+        """Check if this is a floating point type.
+
+        Returns:
+            True for float16, float32, float64, bfloat16.
+        """
+        return self in (
+            TorchDtypeEnum.FLOAT16,
+            TorchDtypeEnum.FLOAT32,
+            TorchDtypeEnum.FLOAT64,
+            TorchDtypeEnum.BFLOAT16,
+        )
+
+    @property
+    def is_integer(self) -> bool:
+        """Check if this is an integer type.
+
+        Returns:
+            True for int8, int16, int32, int64, uint8.
+        """
+        return self in (
+            TorchDtypeEnum.INT8,
+            TorchDtypeEnum.INT16,
+            TorchDtypeEnum.INT32,
+            TorchDtypeEnum.INT64,
+            TorchDtypeEnum.UINT8,
+        )
+
+    @property
+    def is_complex(self) -> bool:
+        """Check if this is a complex type.
+
+        Returns:
+            True for complex64, complex128.
+        """
+        return self in (TorchDtypeEnum.COMPLEX64, TorchDtypeEnum.COMPLEX128)
+
+
+# Backwards compatibility alias
+DeviceType = TorchDeviceType
 
 
 # ============================================================================
