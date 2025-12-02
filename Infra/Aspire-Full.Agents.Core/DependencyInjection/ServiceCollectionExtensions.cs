@@ -14,7 +14,7 @@ public static class AgentsCoreServiceCollectionExtensions
 {
     /// <summary>
     /// Adds Agents.Core services to the service collection.
-    /// Registers ISubagentCatalog, ISubagentSelfReviewService, and IMaintenanceAgent.
+    /// Registers ISubagentCatalog, ISubagentSelfReviewService, IMaintenanceAgent, and ISelfEnhancementService.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection for chaining.</returns>
@@ -23,6 +23,7 @@ public static class AgentsCoreServiceCollectionExtensions
         services.TryAddSingleton<ISubagentCatalog, SubagentCatalog>();
         services.TryAddSingleton<ISubagentSelfReviewService, SubagentSelfReviewService>();
         services.TryAddSingleton<IMaintenanceAgent, MaintenanceAgent>();
+        services.TryAddSingleton<ISelfEnhancementService, SelfEnhancementService>();
         services.TryAddSingleton(TimeProvider.System);
 
         return services;
@@ -40,6 +41,7 @@ public static class AgentsCoreServiceCollectionExtensions
         services.TryAddSingleton<ISubagentCatalog, SubagentCatalog>();
         services.TryAddSingleton<ISubagentSelfReviewService, SubagentSelfReviewService>();
         services.TryAddSingleton<IMaintenanceAgent, MaintenanceAgent>();
+        services.TryAddSingleton<ISelfEnhancementService, SelfEnhancementService>();
 
         return services;
     }

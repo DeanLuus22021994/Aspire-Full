@@ -18,11 +18,24 @@ from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass, field
-from enum import StrEnum
-from typing import TYPE_CHECKING, Any, Final, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Final, Protocol, Sequence, runtime_checkable
+
+# Import centralized enums from _enums.py
+from ._enums import (
+    QdrantDistance as Distance,
+)
+from ._enums import (
+    QdrantIndexType as IndexType,
+)
+from ._enums import (
+    QdrantPayloadType as PayloadSchemaType,
+)
+from ._enums import (
+    QdrantQuantization as QuantizationType,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    pass  # No type-only imports needed
 
 # ============================================================================
 # Constants
@@ -31,48 +44,6 @@ if TYPE_CHECKING:
 QDRANT_DEFAULT_URL: Final[str] = "http://localhost:6333"
 QDRANT_DEFAULT_GRPC_PORT: Final[int] = 6334
 QDRANT_DEFAULT_TIMEOUT: Final[float] = 30.0
-
-
-# ============================================================================
-# Enums
-# ============================================================================
-
-
-class Distance(StrEnum):
-    """Distance metrics for vector similarity."""
-
-    COSINE = "Cosine"
-    EUCLID = "Euclid"
-    DOT = "Dot"
-    MANHATTAN = "Manhattan"
-
-
-class IndexType(StrEnum):
-    """HNSW index configuration types."""
-
-    DEFAULT = "default"
-    FLAT = "flat"  # Brute force, exact but slow
-
-
-class QuantizationType(StrEnum):
-    """Quantization methods for memory optimization."""
-
-    NONE = "none"
-    SCALAR_INT8 = "scalar_int8"  # 4x compression
-    PRODUCT = "product"  # Higher compression, lower precision
-    BINARY = "binary"  # 32x compression for binary-like vectors
-
-
-class PayloadSchemaType(StrEnum):
-    """Payload field types for indexing."""
-
-    KEYWORD = "keyword"
-    INTEGER = "integer"
-    FLOAT = "float"
-    GEO = "geo"
-    TEXT = "text"
-    BOOL = "bool"
-    DATETIME = "datetime"
 
 
 # ============================================================================

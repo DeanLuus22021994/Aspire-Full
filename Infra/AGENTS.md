@@ -9,6 +9,7 @@ All infrastructure components are now properly encapsulated in the `Infra/` fold
 | Project | Description |
 |---------|-------------|
 | [Aspire-Full](Aspire-Full/Aspire-Full.csproj) | AppHost orchestrator - distributed application entry point |
+| [Aspire-Full.Agents.Core](Aspire-Full.Agents.Core/Aspire-Full.Agents.Core.csproj) | Agent abstractions, self-enhancement automation |
 | [Aspire-Full.Connectors](Aspire-Full.Connectors/Aspire-Full.Connectors.csproj) | Connector hub, health monitoring, tracing, evaluation |
 | [Aspire-Full.DevContainer](Aspire-Full.DevContainer/Aspire-Full.DevContainer.csproj) | Devcontainer configuration and defaults |
 | [Aspire-Full.DockerRegistry](Aspire-Full.DockerRegistry/Aspire-Full.DockerRegistry.csproj) | Docker build, registry management, garbage collection |
@@ -16,6 +17,43 @@ All infrastructure components are now properly encapsulated in the `Infra/` fold
 | [Aspire-Full.ServiceDefaults](Aspire-Full.ServiceDefaults/Aspire-Full.ServiceDefaults.csproj) | Health checks, telemetry, service discovery |
 | [Aspire-Full.Tensor.Core](Aspire-Full.Tensor.Core/Aspire-Full.Tensor.Core.csproj) | GPU runtime core, memory pooling, native interop |
 | [Aspire-Full.VectorStore](Aspire-Full.VectorStore/Aspire-Full.VectorStore.csproj) | Qdrant vector database integration |
+
+## Self-Enhancement Automation
+
+The infrastructure supports agent self-enhancement through automated analysis and optimization:
+
+### Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `SelfEnhancementService` | [Agents.Core/Maintenance](Aspire-Full.Agents.Core/Maintenance/SelfEnhancementService.cs) | Orchestrates analyze → fix → verify cycles |
+| `MaintenanceAgent` | [Agents.Core/Maintenance](Aspire-Full.Agents.Core/Maintenance/MaintenanceAgent.cs) | GPU-accelerated Docker maintenance tasks |
+| `RedundancyDetectionPolicy` | [DockerRegistry/GarbageCollection](Aspire-Full.DockerRegistry/GarbageCollection/RedundancyDetectionPolicy.cs) | Identifies redundant Docker images |
+| `registry_analyzer.py` | [DevContainer/Scripts](Aspire-Full.DevContainer/Scripts/registry_analyzer.py) | Python/Docker/Infra analysis tool |
+
+### Analysis Reports
+
+Reports are generated to `.config/registry-analysis.json` and include:
+- Python vendor module metrics (LOC, complexity, imports)
+- Docker image redundancy analysis (dangling, superseded)
+- .NET package reference consistency checks
+
+### Running Analysis
+
+```bash
+# Dry run (no file output)
+python Infra/Aspire-Full.DevContainer/Scripts/registry_analyzer.py --dry-run
+
+# Full analysis with report
+python Infra/Aspire-Full.DevContainer/Scripts/registry_analyzer.py
+```
+
+### Automation Triggers
+
+The analysis runs automatically during:
+1. DevContainer post-create hook
+2. `ISelfEnhancementService.RunFullCycleAsync()` invocation
+3. Manual execution via scripts
 
 ## Configuration
 

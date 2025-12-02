@@ -33,8 +33,6 @@ from typing import (
     runtime_checkable,
 )
 
-from ._enums import GpuBackendType
-
 # ============================================================================
 # Type Aliases
 # ============================================================================
@@ -358,7 +356,7 @@ class ModelManagerProtocol(Protocol):
 
 
 @runtime_checkable
-class RunnerProtocol(Protocol):
+class DockerRunnerProtocol(Protocol):
     """Protocol for Docker Model Runner lifecycle management.
 
     Provides operations for managing the model runner daemon:
@@ -366,6 +364,8 @@ class RunnerProtocol(Protocol):
     - Get status
     - Configure GPU backend
     - Check health
+
+    Note: This is distinct from agents.RunnerProtocol which handles agent execution.
     """
 
     def start(
@@ -567,7 +567,7 @@ class DockerModelRunnerProtocol(Protocol):
         ...
 
     @property
-    def runner(self) -> RunnerProtocol:
+    def runner(self) -> DockerRunnerProtocol:
         """Access runner lifecycle operations."""
         ...
 
@@ -932,8 +932,6 @@ __all__: Final[list[str]] = [
     "GpuBackend",
     "ModelFormat",
     "RunnerStatus",
-    # Enums
-    "GpuBackendType",
     # Exceptions
     "DockerModelRunnerError",
     "ModelNotFoundError",
@@ -950,7 +948,7 @@ __all__: Final[list[str]] = [
     "ModelRunnerConfig",
     # Protocols
     "ModelManagerProtocol",
-    "RunnerProtocol",
+    "DockerRunnerProtocol",
     "InferenceProtocol",
     "DockerModelRunnerProtocol",
     # CLI Functions

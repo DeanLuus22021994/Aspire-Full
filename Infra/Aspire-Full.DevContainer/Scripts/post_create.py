@@ -141,6 +141,20 @@ def _install_python_package_editable() -> None:
         _warn(f"⚠️ Could not find python-agents at {python_agents_path}")
 
 
+def _run_registry_analysis() -> None:
+    """Run the registry analyzer for self-enhancement automation."""
+    _log("🔍 Running registry analysis for self-enhancement...")
+    analyzer_path = Path(__file__).parent / "registry_analyzer.py"
+    if analyzer_path.exists():
+        _run(
+            [sys.executable, str(analyzer_path), "--output-dir", str(WORKSPACE / "Infra" / ".config")],
+            cwd=WORKSPACE,
+            allow_failure=True,
+        )
+    else:
+        _warn(f"⚠️ Registry analyzer not found at {analyzer_path}")
+
+
 def main() -> None:
     """Execute the VS Code post-create automation sequence."""
     _log("🚀 Running post-create setup...")
@@ -152,6 +166,7 @@ def main() -> None:
     _configure_git_safe_directory()
     _install_gh_extensions()
     _install_python_package_editable()
+    _run_registry_analysis()
 
     _log("")
     _log("📋 Self-hosted runner info:")
