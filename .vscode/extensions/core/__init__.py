@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Tensor-optimized extension management core.
+"""Extension management core - delegates to centralized AI automation.
 
-Provides 3 hot GPU workers for low-latency high-throughput automation.
+GPU workers are now in AI/Aspire-Full.Python/python-agents/src/aspire_agents/automation.py
+- 2 x 1GB VRAM workers
+- 1GB VRAM Qdrant (same subnet)
+- GPU-only, no CPU fallback
 """
 
 from __future__ import annotations
@@ -9,18 +12,11 @@ from __future__ import annotations
 from .context import ExtensionContext, ExtensionRegistry
 from .downloader import TensorDownloader
 from .hasher import GPUHasher
-from .pool import (
-    GPUWorkerStats,
-    HotGPUWorkerPool,
-    HotGPUWorkerState,
-    TaskPriority,
-    WorkerPool,
-    run_with_hot_gpu_pool,
-    run_with_pool,
-)
 
-# Hot GPU worker count
-HOT_GPU_WORKERS = 3
+# Configuration: 2 workers @ 1GB VRAM each
+HOT_GPU_WORKERS = 2
+WORKER_VRAM_MB = 1024
+QDRANT_VRAM_MB = 1024
 
 __all__ = [
     # Context
@@ -30,14 +26,8 @@ __all__ = [
     "TensorDownloader",
     # Hashing
     "GPUHasher",
-    # Worker Pool
-    "WorkerPool",
-    "TaskPriority",
-    # Hot GPU Workers
+    # Configuration
     "HOT_GPU_WORKERS",
-    "HotGPUWorkerPool",
-    "HotGPUWorkerState",
-    "GPUWorkerStats",
-    "run_with_pool",
-    "run_with_hot_gpu_pool",
+    "WORKER_VRAM_MB",
+    "QDRANT_VRAM_MB",
 ]

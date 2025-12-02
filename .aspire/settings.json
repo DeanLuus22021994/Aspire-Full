@@ -188,13 +188,16 @@
         "NVIDIA_VISIBLE_DEVICES": "all",
         "ASPIRE_TARGET": "agent",
         "ASPIRE_WORKER_ID": "2",
-        "COMPUTE_MODE": "{compute.mode}",
+        "ASPIRE_WORKER_VRAM_MB": "1024",
+        "ASPIRE_GPU_ONLY": "true",
+        "COMPUTE_MODE": "gpu",
         "AGENT_POOL_MODE": "hot-standby",
         "AGENT_WARMUP_ON_START": "true",
         "AGENT_PRELOAD_MODELS": "true",
         "MODEL_CACHE_DIR": "/volumes/models",
         "UV_CACHE_DIR": "/volumes/uv",
-        "OMP_NUM_THREADS": "4"
+        "OMP_NUM_THREADS": "4",
+        "CUDA_VISIBLE_DEVICES": "0"
       },
       "bindings": {
         "grpc": {
