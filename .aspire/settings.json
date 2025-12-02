@@ -213,52 +213,12 @@
         { "name": "aspire-pip-cache", "target": "/volumes/pip", "readOnly": false },
         { "name": "aspire-logs", "target": "/volumes/logs", "readOnly": false }
       ]
-    },
+    }
 
     // ========================================================================
-    // Agent Worker 3 - Third Hot Standby for Maximum Throughput
+    // REMOVED: agent-worker-3 - Consolidated to 2 workers for VRAM budget
+    // Budget: 2 x 1GB VRAM + 1GB Qdrant = 3GB total
     // ========================================================================
-    "agent-worker-3": {
-      "type": "container.v1",
-      "image": "localhost:5001/aspire/runtime:latest",
-      "env": {
-        "NVIDIA_VISIBLE_DEVICES": "all",
-        "ASPIRE_TARGET": "agent",
-        "ASPIRE_WORKER_ID": "3",
-        "COMPUTE_MODE": "{compute.mode}",
-        "AGENT_POOL_MODE": "hot-standby",
-        "AGENT_WARMUP_ON_START": "true",
-        "AGENT_PRELOAD_MODELS": "true",
-        "GPU_DIRECT_ENABLED": "true",
-        "MODEL_CACHE_DIR": "/volumes/models",
-        "UV_CACHE_DIR": "/volumes/uv",
-        "OMP_NUM_THREADS": "4"
-      },
-      "bindings": {
-        "grpc": {
-          "scheme": "http",
-          "protocol": "tcp",
-          "transport": "http2",
-          "targetPort": 50053,
-          "port": 50055,
-          "external": false
-        },
-        "health": {
-          "scheme": "http",
-          "protocol": "tcp",
-          "transport": "http",
-          "targetPort": 8080,
-          "port": 8083,
-          "external": false
-        }
-      },
-      "volumes": [
-        { "name": "aspire-models", "target": "/volumes/models", "readOnly": true },
-        { "name": "aspire-uv-cache", "target": "/volumes/uv", "readOnly": false },
-        { "name": "aspire-pip-cache", "target": "/volumes/pip", "readOnly": false },
-        { "name": "aspire-logs", "target": "/volumes/logs", "readOnly": false }
-      ]
-    }
   },
 
   // ==========================================================================
