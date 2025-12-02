@@ -8,17 +8,22 @@ from typing import Any
 from agents import Agent, Runner, gen_trace_id, trace
 from agents.mcp import MCPServer, MCPServerStreamableHttp
 from agents.model_settings import ModelSettings
+from mcp.types import TextContent
 
 
-async def get_instructions_from_prompt(mcp_server: MCPServer, prompt_name: str, **kwargs) -> str:
+async def get_instructions_from_prompt(mcp_server: MCPServer, prompt_name: str, **kwargs: str) -> str:
     """Get agent instructions by calling MCP prompt endpoint (user-controlled)"""
     print(f"Getting instructions from prompt: {prompt_name}")
 
     try:
-        prompt_result = await mcp_server.get_prompt(prompt_name, kwargs)
+        arguments: dict[str, str] = dict(kwargs)
+        prompt_result = await mcp_server.get_prompt(prompt_name, arguments)
         content = prompt_result.messages[0].content
-        if hasattr(content, "text"):
+        instructions: str
+        if isinstance(content, TextContent):
             instructions = content.text
+        elif hasattr(content, "text"):
+            instructions = str(getattr(content, "text"))
         else:
             instructions = str(content)
         print("Generated instructions")
@@ -28,7 +33,7 @@ async def get_instructions_from_prompt(mcp_server: MCPServer, prompt_name: str, 
         return f"You are a helpful assistant. Error: {e}"
 
 
-async def demo_code_review(mcp_server: MCPServer):
+async def demo_code_review(mcp_server: MCPServer) -> None:
     """Demo: Code review with user-selected prompt"""
     print("=== CODE REVIEW DEMO ===")
 
@@ -61,7 +66,7 @@ def process_user_input(user_input):
     print("\n" + "=" * 50 + "\n")
 
 
-async def show_available_prompts(mcp_server: MCPServer):
+async def show_available_prompts(mcp_server: MCPServer) -> None:
     """Show available prompts for user selection"""
     print("=== AVAILABLE PROMPTS ===")
 
@@ -72,7 +77,7 @@ async def show_available_prompts(mcp_server: MCPServer):
     print()
 
 
-async def main():
+async def main() -> None:
     async with MCPServerStreamableHttp(
         name="Simple Prompt Server",
         params={"url": "http://localhost:8000/mcp"},
