@@ -7,9 +7,9 @@ public static class PythonDefaults
 {
     /// <summary>
     /// Python version used in the devcontainer.
-    /// Uses free-threaded build with GIL for improved concurrency.
+    /// Uses free-threaded build with GIL disabled for true parallel threading.
     /// </summary>
-    public const string PythonVersion = "3.14.0a1-free-threaded+gil";
+    public const string PythonVersion = "3.15.0a2-free-threaded";
 
     /// <summary>
     /// Python runtime type identifier.

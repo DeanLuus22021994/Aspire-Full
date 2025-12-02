@@ -22,7 +22,7 @@ environment:
       python:
         free_threading:
           bleeding_edge: "uv python install 3.15t"  # Dynamic via Astral uv
-          stable: python:3.14t-slim-bookworm
+          stable: python:3.15t-slim-bookworm
           note: GIL disabled (PYTHON_GIL=0), JIT enabled (PYTHON_JIT=1)
   hardware:
     gpu:

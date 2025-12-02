@@ -16,7 +16,7 @@ public class DockerImagesComponent : IDiscoveryComponent
         // This provides platform-agnostic 64-bit free-threaded Python builds.
 
         var bleedingEdge = $"uv python install {PythonVersion}"; // Dynamic via uv
-        var stable = "python:3.14t-slim-bookworm";               // Fallback stable
+        var stable = "python:3.15t-slim-bookworm";               // Fallback stable
 
         var details = new Dictionary<string, string>
         {

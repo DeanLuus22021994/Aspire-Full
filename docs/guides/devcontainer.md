@@ -20,14 +20,14 @@ The devcontainer provides a fully isolated, reproducible development environment
 ├── docker-compose.yml   # Service definitions
 ├── Dockerfile           # Container image
 └── scripts/
-  ├── post_create.py   # Initial setup (Python 3.14 free-threaded ready)
-  └── post_start.py    # Startup checks (Python 3.14 free-threaded ready)
+  ├── post_create.py   # Initial setup (Python 3.15 free-threaded ready)
+  └── post_start.py    # Startup checks (Python 3.15 free-threaded ready)
 ```
 
 ## .NET Aspire Integration
 
 - `Aspire-Full.DevContainer` is a dedicated .NET 10 project that ships the Dockerfile, compose file, and bootstrap scripts. It also exposes `AddDevContainer()` so the AppHost can register the container declaratively.
-- `Aspire-Full/AppHost.cs` now calls `builder.AddDevContainer("aspire-network")`, guaranteeing all resource metadata (volumes, env vars, Python 3.14 free-threaded pins) stays centralized.
+- `Aspire-Full/AppHost.cs` now calls `builder.AddDevContainer("aspire-network")`, guaranteeing all resource metadata (volumes, env vars, Python 3.15 free-threaded pins) stays centralized.
 - The devcontainer depends on two additional Aspire resources:
   - `docker` (Docker-in-Docker daemon with the `aspire-docker-*` volumes)
   - `aspire-dashboard` (dashboard/MCP endpoints mapped through `WithHttpEndpoint`)

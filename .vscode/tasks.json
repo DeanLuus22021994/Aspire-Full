@@ -82,7 +82,7 @@
       "label": "generate-dependency-report",
       "type": "shell",
       "command": "uv",
-      "args": ["run", "--python", "3.14", "scripts/generate_dependency_report.py"],
+      "args": ["run", "--python", "3.15t", "scripts/generate_dependency_report.py"],
       "problemMatcher": []
     }
   ]

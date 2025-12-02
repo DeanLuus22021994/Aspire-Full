@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Description>Aspire resource helpers for the devcontainer surface (Docker + Python 3.14 free-threaded).</Description>
+    <Description>Aspire resource helpers for the devcontainer surface (Docker + Python 3.15 free-threaded).</Description>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <IsAspireProjectResource>false</IsAspireProjectResource>
   </PropertyGroup>
