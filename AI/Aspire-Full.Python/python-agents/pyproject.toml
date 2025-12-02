@@ -158,6 +158,6 @@ asyncio_mode = "auto"
 
 [dependency-groups]
 dev = [
-    "types-pyyaml>=6.0.12.20250915",
+    "types-PyYAML>=6.0.12.20250915",
     "types-requests>=2.32.4.20250913",
 ]
