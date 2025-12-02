@@ -12,10 +12,16 @@ Python 3.15 Optimizations:
 - Frozen dataclasses with __slots__ for zero-copy thread safety
 - Immutable tuple collections instead of lists
 - Type aliases for cleaner annotations
+
+Environment Variables (from Dockerfile):
+- ASPIRE_TENSOR_BATCH_SIZE: Default batch size for tensor ops (default: 32)
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
 """
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final, Literal
@@ -28,6 +34,11 @@ ProviderLiteral = Literal["openai", "azure", "github", "anthropic", "local"]
 # Default model for new agents - GPT-4.1 mini for cost efficiency
 DEFAULT_MODEL: Final[str] = "gpt-4.1-mini"
 DEFAULT_PROVIDER: Final[ProviderLiteral] = "openai"
+
+# Environment variable defaults for tensor configuration
+_DEFAULT_BATCH_SIZE: Final[int] = int(os.environ.get("ASPIRE_TENSOR_BATCH_SIZE", "32"))
+_DEFAULT_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
+_TENSOR_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
 
 
 def _read_prompt(base: Path, prompt: str | None) -> str:
@@ -45,9 +56,7 @@ def _read_prompt(base: Path, prompt: str | None) -> str:
         FileNotFoundError: If prompt file doesn't exist
     """
     if not prompt:
-        raise ValueError(
-            "Agent config requires a 'prompt' field pointing to a text/markdown file."
-        )
+        raise ValueError("Agent config requires a 'prompt' field pointing to a text/markdown file.")
 
     prompt_path = (base / prompt).resolve()
     if not prompt_path.exists():
@@ -80,6 +89,11 @@ class TensorConfig:
     Controls GPU acceleration settings for embedding and inference.
     Thread-safe due to immutability.
 
+    Default values are read from environment variables set in Dockerfiles:
+    - ASPIRE_TENSOR_BATCH_SIZE for batch_size
+    - ASPIRE_COMPUTE_MODE for determining GPU usage
+    - CUDA_TENSOR_CORE_ALIGNMENT for memory alignment
+
     Attributes:
         use_gpu: Enable GPU acceleration
         use_tensor_cores: Enable Tensor Core optimizations (FP16/TF32)
@@ -88,15 +102,29 @@ class TensorConfig:
         max_sequence_length: Maximum token sequence length
         use_torch_compile: Enable torch.compile() optimization
         mixed_precision: Enable automatic mixed precision
+        tensor_alignment: CUDA memory alignment in bytes (default: 128)
     """
 
-    use_gpu: bool = True
+    use_gpu: bool = field(default_factory=lambda: _DEFAULT_COMPUTE_MODE in ("gpu", "hybrid"))
     use_tensor_cores: bool = True
     use_flash_attention: bool = True
-    batch_size: int = 32
+    batch_size: int = field(default_factory=lambda: _DEFAULT_BATCH_SIZE)
     max_sequence_length: int = 512
     use_torch_compile: bool = True
     mixed_precision: bool = True
+    tensor_alignment: int = field(default_factory=lambda: _TENSOR_ALIGNMENT)
+
+    @classmethod
+    def from_env(cls) -> TensorConfig:
+        """Create TensorConfig from environment variables.
+
+        Reads ASPIRE_TENSOR_BATCH_SIZE, ASPIRE_COMPUTE_MODE, and
+        CUDA_TENSOR_CORE_ALIGNMENT from environment.
+
+        Returns:
+            TensorConfig with environment-based defaults
+        """
+        return cls()
 
 
 @dataclass(frozen=True, slots=True)
@@ -259,11 +287,7 @@ class AgentConfig:
             model=model,
             tensor=tensor,
             temperature=float(payload.get("temperature", 0.0)),
-            top_p=(
-                float(payload["top_p"])
-                if payload.get("top_p") is not None
-                else None
-            ),
+            top_p=(float(payload["top_p"]) if payload.get("top_p") is not None else None),
             handoffs=tuple(payload.get("handoffs", [])),
             tags=tuple(payload.get("tags", [])),
             max_tokens=payload.get("max_tokens"),

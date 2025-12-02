@@ -1,5 +1,13 @@
-"""
-This module demonstrates input guardrails.
+"""Input guardrails with GPU-accelerated semantic similarity checking.
+
+This module demonstrates input guardrails using:
+- GPU-accelerated semantic similarity via BatchComputeService
+- Tensor Core optimized embedding computation
+- Thread-safe guardrail evaluation for Python 3.15+ free-threading
+
+Environment Variables:
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- ASPIRE_TENSOR_BATCH_SIZE: Batch size for embeddings (default: 32)
 """
 
 from __future__ import annotations
@@ -14,6 +22,10 @@ from agents import (
     Runner,
     TResponseInputItem,
     input_guardrail,
+)
+from aspire_agents import (
+    get_guardrail_service,
+    semantic_input_guardrail,
 )
 from pydantic import BaseModel
 

@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
-"""Shared lint/test configuration loader and helpers."""
+"""Shared lint/test configuration loader and helpers.
+
+Provides centralized configuration loading for:
+- Pyright/Pylance settings (Microsoft Python tooling)
+- Pytest configuration
+- Path normalization and vendor detection
+
+Environment Variables (from Dockerfile):
+- ASPIRE_COMPUTE_MODE: Affects test isolation settings
+- CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment validation
+"""
 
 from __future__ import annotations
 
 import fnmatch
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Final, Iterable, Sequence
 
 try:
     import yaml  # type: ignore
@@ -19,9 +30,15 @@ except ImportError as exc:  # pragma: no cover
 # Aspire-Full.Python/tools/config.py -> parents[0]=tools,
 # parents[1]=Aspire-Full.Python,
 # parents[2]=Root
-REPO_ROOT = Path(__file__).resolve().parents[2]
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CONFIG_PATH = PROJECT_ROOT / "python-config.yaml"
+REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[2]
+PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
+CONFIG_PATH: Final[Path] = PROJECT_ROOT / "python-config.yaml"
+
+# Environment-based configuration
+ASPIRE_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
+CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(
+    os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128")
+)
 
 
 def _as_tuple(values: Sequence[str] | None) -> tuple[str, ...]:

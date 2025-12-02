@@ -7,6 +7,13 @@ This module provides a BatchComputeService that leverages:
 - Thread-safe singleton pattern using threading.Lock
 
 All embeddings are computed on GPU with automatic CPU fallback.
+
+Environment Variables (from Dockerfile):
+- ASPIRE_ALLOW_CPU_FALLBACK: Allow CPU fallback (default: false)
+- ASPIRE_TENSOR_BATCH_SIZE: Batch size for tensor ops (default: 32)
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
+- PYTORCH_CUDA_ALLOC_CONF: PyTorch memory allocator config
 """
 
 from __future__ import annotations
@@ -92,19 +99,58 @@ logger: Final = logging.getLogger(__name__)
 _INIT_LOCK: Final = threading.Lock()
 _compute_service: BatchComputeService | None = None
 
+# Environment variable configuration
+_ASPIRE_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
+_ASPIRE_TENSOR_BATCH_SIZE: Final[int] = int(os.environ.get("ASPIRE_TENSOR_BATCH_SIZE", "32"))
+_CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
+
 
 @dataclass(frozen=True, slots=True)
 class ComputeConfig:
-    """Immutable configuration for tensor compute service."""
+    """Immutable configuration for tensor compute service.
+
+    Default values are read from environment variables set in Dockerfiles.
+
+    Attributes:
+        model_name: HuggingFace model for embeddings
+        batch_size: Batch size from ASPIRE_TENSOR_BATCH_SIZE
+        max_latency_ms: Maximum latency before batch processing
+        allow_cpu_fallback: From ASPIRE_ALLOW_CPU_FALLBACK
+        use_torch_compile: Enable torch.compile optimization
+        use_mixed_precision: Enable FP16/BF16 mixed precision
+        compute_mode: From ASPIRE_COMPUTE_MODE (gpu|cpu|hybrid)
+        tensor_alignment: From CUDA_TENSOR_CORE_ALIGNMENT (default: 128)
+    """
 
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
-    batch_size: int = 32
+    batch_size: int = field(default_factory=lambda: _ASPIRE_TENSOR_BATCH_SIZE)
     max_latency_ms: int = 10
     allow_cpu_fallback: bool = field(
         default_factory=lambda: os.environ.get("ASPIRE_ALLOW_CPU_FALLBACK", "").lower() in ("1", "true")
     )
     use_torch_compile: bool = True
     use_mixed_precision: bool = True
+    compute_mode: str = field(default_factory=lambda: _ASPIRE_COMPUTE_MODE)
+    tensor_alignment: int = field(default_factory=lambda: _CUDA_TENSOR_CORE_ALIGNMENT)
+
+    @classmethod
+    def from_env(cls) -> ComputeConfig:
+        """Create ComputeConfig from environment variables.
+
+        Returns:
+            ComputeConfig with environment-based defaults
+        """
+        return cls()
+
+    @property
+    def uses_gpu(self) -> bool:
+        """Check if this configuration uses GPU compute."""
+        return self.compute_mode in ("gpu", "hybrid")
+
+    @property
+    def is_hybrid(self) -> bool:
+        """Check if this configuration uses hybrid compute mode."""
+        return self.compute_mode == "hybrid"
 
 
 class TensorCoreUnavailableError(RuntimeError):

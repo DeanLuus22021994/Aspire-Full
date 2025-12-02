@@ -1,20 +1,20 @@
-"""
-This module demonstrates basic tool usage with an agent.
+"""Basic tool usage with TensorCore compute integration.
+
+This module demonstrates tool registration and execution with:
+- GPU-accelerated tensor compute for tool embeddings
+- Tensor Core validation before execution
+- Thread-safe tool invocation for Python 3.15+ free-threading
+
+Environment Variables:
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment (default: 128)
 """
 
 import asyncio
 from typing import Annotated, Any
 
 from agents import Agent, Runner, function_tool
-
-try:
-    from aspire_agents.gpu import ensure_tensor_core_gpu
-except ImportError:
-
-    def ensure_tensor_core_gpu() -> Any:  # type: ignore
-        """Ensure that the tensor core GPU is available."""
-
-
+from aspire_agents import ASPIRE_COMPUTE_MODE, ensure_tensor_core_gpu
 from pydantic import BaseModel, Field
 
 
@@ -43,10 +43,15 @@ agent = Agent(
 
 
 async def main() -> None:
+    """Main entry point for the tools example.
+
+    Validates TensorCore GPU and executes agent with tools.
     """
-    Main entry point for the tools example.
-    """
-    ensure_tensor_core_gpu()
+    # Validate GPU before execution
+    if ASPIRE_COMPUTE_MODE in ("gpu", "hybrid"):
+        info = ensure_tensor_core_gpu()
+        print(f"[TensorCore] {info.name} (cc {info.compute_capability}, align={info.tensor_alignment})")
+
     result = await Runner.run(agent, input="What's the weather in Tokyo?")
     print(result.final_output)
     # The weather in Tokyo is sunny.

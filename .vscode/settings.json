@@ -105,6 +105,7 @@
     "DCMAKE",
     "devcontainer",
     "Dind",
+    "Dockerfiles",
     "docstates",
     "dotenv",
     "dpkg",

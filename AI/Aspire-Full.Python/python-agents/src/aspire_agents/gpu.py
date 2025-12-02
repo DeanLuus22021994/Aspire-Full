@@ -9,17 +9,25 @@ Key Features:
 - Configures TF32/FP16 matrix math for Ampere+ GPUs
 - Sets default device for automatic tensor placement
 - Thread-safe via lru_cache (immune to GIL state)
+- CUDA_TENSOR_CORE_ALIGNMENT=128 byte alignment enforcement
 
 Supported GPUs:
 - Volta (V100): Compute 7.0+ - FP16 Tensor Cores
 - Turing (RTX 20xx): Compute 7.5+ - FP16 Tensor Cores
 - Ampere (A100, RTX 30xx): Compute 8.0+ - FP16/BF16/TF32 Tensor Cores
 - Hopper (H100): Compute 9.0+ - FP8/FP16/BF16/TF32 Tensor Cores
+
+Environment Variables (from Dockerfile):
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- ASPIRE_TENSOR_OFFLOAD_ENABLED: Enable tensor offloading (default: 1)
+- CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment in bytes (default: 128)
+- PYTORCH_CUDA_ALLOC_CONF: PyTorch memory allocator configuration
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
@@ -28,6 +36,11 @@ from typing import Final
 import torch
 
 logger: Final[logging.Logger] = logging.getLogger(__name__)
+
+# Environment variable configuration
+_ASPIRE_COMPUTE_MODE: Final[str] = os.environ.get("ASPIRE_COMPUTE_MODE", "gpu")
+_ASPIRE_TENSOR_OFFLOAD_ENABLED: Final[bool] = os.environ.get("ASPIRE_TENSOR_OFFLOAD_ENABLED", "1") == "1"
+_CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_ALIGNMENT", "128"))
 
 
 class TensorCoreUnavailableError(RuntimeError):
@@ -55,6 +68,9 @@ class TensorCoreInfo:
         tf32_enabled: Whether TF32 matrix math is enabled
         cudnn_tf32_enabled: Whether cuDNN TF32 is enabled
         gil_disabled: Whether Python GIL is disabled (3.15+ free-threaded)
+        tensor_alignment: CUDA memory alignment from CUDA_TENSOR_CORE_ALIGNMENT
+        offload_enabled: Whether tensor offloading is enabled
+        compute_mode: Compute mode from ASPIRE_COMPUTE_MODE
     """
 
     name: str
@@ -64,6 +80,9 @@ class TensorCoreInfo:
     tf32_enabled: bool = True
     cudnn_tf32_enabled: bool = True
     gil_disabled: bool = False
+    tensor_alignment: int = 128
+    offload_enabled: bool = True
+    compute_mode: str = "gpu"
 
     @property
     def supports_fp16(self) -> bool:
@@ -275,15 +294,19 @@ def ensure_tensor_core_gpu() -> TensorCoreInfo:
         tf32_enabled=tf32_enabled,
         cudnn_tf32_enabled=cudnn_tf32_enabled,
         gil_disabled=gil_disabled,
+        tensor_alignment=_CUDA_TENSOR_CORE_ALIGNMENT,
+        offload_enabled=_ASPIRE_TENSOR_OFFLOAD_ENABLED,
+        compute_mode=_ASPIRE_COMPUTE_MODE,
     )
 
     logger.info(
-        "Tensor Core GPU provisioned: %s (Compute %s, %.2f GB, TF32=%s, GIL=%s)",
+        "Tensor Core GPU provisioned: %s (Compute %s, %.2f GB, TF32=%s, GIL=%s, align=%d)",
         info.name,
         info.compute_capability,
         info.total_memory_gb,
         "enabled" if info.tf32_enabled else "disabled",
         "disabled" if info.gil_disabled else "enabled",
+        info.tensor_alignment,
     )
 
     return info

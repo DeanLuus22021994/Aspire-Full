@@ -1,4 +1,10 @@
-"""Tests for aspire_agents.config helpers."""
+"""Tests for aspire_agents.config helpers.
+
+Tests configuration classes including:
+- ModelConfig: Provider settings
+- AgentConfig: Full agent configuration
+- TensorConfig: GPU compute settings with environment variable defaults
+"""
 
 from __future__ import annotations
 
@@ -10,10 +16,10 @@ from textwrap import dedent
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 import pytest  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position
-
 from aspire_agents.config import (  # type: ignore # noqa: E402 # pylint: disable=wrong-import-position, import-error
     AgentConfig,
     ModelConfig,
+    TensorConfig,
 )
 
 
@@ -101,3 +107,49 @@ def test_as_prompt_injects_user_input() -> None:
     assert "Act nice." in result
     assert "User request:" in result
     assert result.rstrip().endswith("Tell me a joke")
+
+
+def test_tensor_config_defaults() -> None:
+    """Test TensorConfig default values from environment."""
+    cfg = TensorConfig()
+
+    # These use environment variable defaults
+    assert isinstance(cfg.batch_size, int)
+    assert isinstance(cfg.tensor_alignment, int)
+    assert cfg.tensor_alignment == 128  # CUDA_TENSOR_CORE_ALIGNMENT default
+    assert cfg.use_tensor_cores is True
+    assert cfg.use_flash_attention is True
+    assert cfg.use_torch_compile is True
+    assert cfg.mixed_precision is True
+
+
+def test_tensor_config_from_env() -> None:
+    """Test TensorConfig.from_env() factory method."""
+    cfg = TensorConfig.from_env()
+
+    assert cfg.batch_size > 0
+    assert cfg.tensor_alignment > 0
+
+
+def test_tensor_config_immutable() -> None:
+    """Test that TensorConfig is truly frozen."""
+    cfg = TensorConfig()
+
+    with pytest.raises(AttributeError):
+        cfg.batch_size = 64  # type: ignore
+
+
+def test_agent_config_with_tensor() -> None:
+    """Test AgentConfig.with_tensor() creates new config."""
+    original = AgentConfig(
+        name="test",
+        prompt="Test prompt",
+        model=ModelConfig(name="gpt-4o"),
+    )
+
+    new_tensor = TensorConfig(batch_size=64, use_gpu=False)
+    modified = original.with_tensor(new_tensor)
+
+    assert modified.tensor.batch_size == 64
+    assert modified.tensor.use_gpu is False
+    assert original.tensor.batch_size != 64  # Original unchanged

@@ -1,5 +1,13 @@
-"""
-This module demonstrates output guardrails.
+"""Output guardrails with GPU-accelerated semantic similarity checking.
+
+This module demonstrates output guardrails using:
+- GPU-accelerated PII detection via BatchComputeService
+- Semantic similarity checking with Tensor Core optimization
+- Thread-safe guardrail evaluation for Python 3.15+ free-threading
+
+Environment Variables:
+- ASPIRE_COMPUTE_MODE: Compute mode - gpu|cpu|hybrid (default: gpu)
+- ASPIRE_TENSOR_BATCH_SIZE: Batch size for embeddings (default: 32)
 """
 
 from __future__ import annotations
@@ -15,6 +23,10 @@ from agents import (
     RunContextWrapper,
     Runner,
     output_guardrail,
+)
+from aspire_agents import (
+    get_guardrail_service,
+    semantic_output_guardrail,
 )
 from pydantic import BaseModel, Field
 
@@ -35,13 +47,9 @@ class MessageOutput(BaseModel):
     Output schema for the agent.
     """
 
-    reasoning: str = Field(
-        description="Thoughts on how to respond to the user's message"
-    )
+    reasoning: str = Field(description="Thoughts on how to respond to the user's message")
     response: str = Field(description="The response to the user's message")
-    user_name: str | None = Field(
-        description="The name of the user who sent the message, if known"
-    )
+    user_name: str | None = Field(description="The name of the user who sent the message, if known")
 
 
 @output_guardrail
@@ -81,9 +89,7 @@ async def main() -> None:
 
     # This should trip the guardrail
     try:
-        result = await Runner.run(
-            agent, "My phone number is 650-123-4567. Where do you think I live?"
-        )
+        result = await Runner.run(agent, "My phone number is 650-123-4567. Where do you think I live?")
         print(
             f"Guardrail didn't trip - this is unexpected. Output: "
             f"{json.dumps(result.final_output.model_dump(), indent=2)}"
