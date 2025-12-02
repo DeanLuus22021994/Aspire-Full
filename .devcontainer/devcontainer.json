@@ -45,9 +45,7 @@
     }
   },
 
-  "forwardPorts": [
-    18888, 18889, 16036, 17071, 5000, 5001, 5173, 5174, 5432, 6379
-  ],
+  "forwardPorts": [18888, 18889, 16036, 17071, 5000, 5001, 5173, 5174, 5432, 6379],
   "portsAttributes": {
     "18888": {
       "label": "Aspire Dashboard",
@@ -84,8 +82,8 @@
     }
   },
 
-  "postCreateCommand": "python3 /opt/devcontainer-scripts/post_create.py",
-  "postStartCommand": "python3 /opt/devcontainer-scripts/post_start.py",
+  "postCreateCommand": "python3 /workspace/Infra/Aspire-Full.DevContainer/Scripts/post_create.py",
+  "postStartCommand": "python3 /workspace/Infra/Aspire-Full.DevContainer/Scripts/post_start.py",
 
   "remoteEnv": {
     "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://aspire-dashboard:18889",
