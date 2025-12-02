@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, override
 
 from agents import (
     Agent,
@@ -39,16 +39,11 @@ class ExampleProviderConfig:
         }
         missing = [
             env_name
-            for env_name, value in zip(
-                (_BASE_URL_ENV, _API_KEY_ENV, _MODEL_ENV), values.values(), strict=True
-            )
+            for env_name, value in zip((_BASE_URL_ENV, _API_KEY_ENV, _MODEL_ENV), values.values(), strict=True)
             if not value
         ]
         if missing:
-            raise RuntimeError(
-                "Missing configuration for custom provider example: "
-                + ", ".join(missing)
-            )
+            raise RuntimeError("Missing configuration for custom provider example: " + ", ".join(missing))
         return cls(**values)
 
 
@@ -65,14 +60,14 @@ class CustomModelProvider(ModelProvider):
     """Simple provider that always routes to the supplied AsyncOpenAI client."""
 
     def __init__(self, *, client: AsyncOpenAI, default_model: str) -> None:
+        super().__init__()
         self._client = client
         self._default_model = default_model
 
+    @override
     def get_model(self, model_name: str | None) -> Model:
         chosen_model = (model_name or self._default_model).strip()
-        return OpenAIChatCompletionsModel(
-            model=chosen_model, openai_client=self._client
-        )
+        return OpenAIChatCompletionsModel(model=chosen_model, openai_client=self._client)
 
 
 def build_custom_provider(config: ExampleProviderConfig) -> CustomModelProvider:
