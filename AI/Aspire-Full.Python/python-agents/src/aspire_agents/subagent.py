@@ -1,4 +1,6 @@
-"""Sub-Agent orchestration for Python 3.15+ free-threaded runtime.
+"""Sub-Agent orchestration for Python 3.16+ free-threaded runtime.
+
+GPU-ONLY. NO CPU FALLBACK.
 
 Provides thread-safe sub-agent management with:
 - ASPIRE_SUBAGENT_MAX_CONCURRENT concurrent sub-agent execution
@@ -9,14 +11,14 @@ Provides thread-safe sub-agent management with:
 Thread Safety:
 - All orchestration uses ThreadPoolExecutor with configurable size
 - GPU memory is shared with memory fraction per sub-agent
-- Uses Python 3.15 free-threading (PYTHON_GIL=0) for true parallelism
+- Uses Python 3.16 free-threading (PYTHON_GIL=0) for true parallelism
 
 Environment Variables:
 - ASPIRE_SUBAGENT_MAX_CONCURRENT: Max concurrent sub-agents (default: 16)
 - ASPIRE_SUBAGENT_GPU_SHARE: Enable GPU sharing (default: 1)
 - ASPIRE_AGENT_THREAD_POOL_SIZE: Thread pool size (default: 8)
 - ASPIRE_TENSOR_BATCH_SIZE: Batch size for tensor ops (default: 32)
-- ASPIRE_COMPUTE_MODE: Compute mode (gpu|cpu|hybrid, default: gpu)
+- ASPIRE_COMPUTE_MODE: Compute mode - GPU only (default: gpu)
 - CUDA_TENSOR_CORE_ALIGNMENT: Memory alignment bytes (default: 128)
 """
 
@@ -53,17 +55,8 @@ CUDA_TENSOR_CORE_ALIGNMENT: Final[int] = int(os.environ.get("CUDA_TENSOR_CORE_AL
 ASPIRE_TENSOR_OFFLOAD_ENABLED: Final[bool] = os.environ.get("ASPIRE_TENSOR_OFFLOAD_ENABLED", "1") == "1"
 
 
-def _get_compute_mode() -> str:
-    """Get the compute mode from environment.
-
-    Returns:
-        'gpu', 'cpu', or 'hybrid'
-    """
-    mode = ASPIRE_COMPUTE_MODE.lower()
-    if mode not in ("gpu", "cpu", "hybrid"):
-        logger.warning("Invalid ASPIRE_COMPUTE_MODE '%s', defaulting to 'gpu'", mode)
-        return "gpu"
-    return mode
+# GPU-only: compute_mode is always 'gpu'
+_COMPUTE_MODE: Final[str] = "gpu"
 
 
 # ============================================================================
@@ -75,6 +68,7 @@ def _get_compute_mode() -> str:
 class SubAgentConfig:
     """Immutable configuration for sub-agent orchestration.
 
+    GPU-ONLY. NO CPU FALLBACK.
     Thread-safe via frozen dataclass with __slots__.
     All values are read from environment or provided at construction.
 
@@ -83,7 +77,7 @@ class SubAgentConfig:
         gpu_share_enabled: Whether sub-agents share GPU memory
         thread_pool_size: Size of the thread pool for sub-agent execution
         tensor_batch_size: Batch size for tensor operations
-        compute_mode: Compute mode ('gpu', 'cpu', 'hybrid')
+        compute_mode: Always 'gpu' - no CPU fallback
         tensor_alignment: CUDA memory alignment in bytes
         offload_enabled: Whether tensor offloading is enabled
     """
@@ -92,7 +86,7 @@ class SubAgentConfig:
     gpu_share_enabled: bool = field(default_factory=lambda: ASPIRE_SUBAGENT_GPU_SHARE)
     thread_pool_size: int = field(default_factory=lambda: ASPIRE_AGENT_THREAD_POOL_SIZE)
     tensor_batch_size: int = field(default_factory=lambda: ASPIRE_TENSOR_BATCH_SIZE)
-    compute_mode: str = field(default_factory=_get_compute_mode)
+    compute_mode: str = "gpu"  # GPU-only, no CPU fallback
     tensor_alignment: int = field(default_factory=lambda: CUDA_TENSOR_CORE_ALIGNMENT)
     offload_enabled: bool = field(default_factory=lambda: ASPIRE_TENSOR_OFFLOAD_ENABLED)
 
@@ -107,12 +101,8 @@ class SubAgentConfig:
 
     @property
     def uses_gpu(self) -> bool:
-        """Check if this configuration uses GPU compute."""
-        return self.compute_mode in ("gpu", "hybrid")
-
-    @property
-    def is_hybrid(self) -> bool:
-        """Check if this configuration uses hybrid compute."""
+        """GPU is always required - no CPU fallback."""
+        return True
         return self.compute_mode == "hybrid"
 
 
