@@ -73,6 +73,7 @@
     "appsettings",
     "ASPNETCORE",
     "AUTHMODE",
+    "Blazor",
     "CERTDIR",
     "chelnak",
     "coveragexml",
