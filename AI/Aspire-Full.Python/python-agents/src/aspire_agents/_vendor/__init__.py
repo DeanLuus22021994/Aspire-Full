@@ -144,6 +144,12 @@ from ._enums import (
     # Pytest
     PytestExitCode,
     PytestOutcome,
+    # Qdrant
+    QdrantDistance,
+    QdrantIndexType,
+    QdrantPayloadType,
+    QdrantQuantization,
+    QdrantStorageMode,
     # Redis
     RedisDataType,
     RedisPubSubType,
@@ -258,6 +264,41 @@ from ._pytest import (
     assert_not_in,
     assert_raises,
     assert_true,
+)
+
+# Qdrant abstractions
+from ._qdrant import (
+    # Constants
+    QDRANT_DEFAULT_GRPC_PORT,
+    QDRANT_DEFAULT_TIMEOUT,
+    QDRANT_DEFAULT_URL,
+    # Protocols
+    AsyncQdrantClientProtocol,
+    # Response Types
+    CollectionDescription,
+    CollectionInfo,
+    CollectionsResponse,
+    # Enums
+    Distance,
+    FieldCondition,
+    Filter,
+    # Data Classes
+    HnswConfig,
+    IndexType,
+    OptimizersConfig,
+    PayloadSchemaType,
+    PointsSelector,
+    PointStruct,
+    QdrantClientProtocol,
+    QuantizationConfig,
+    QuantizationType,
+    ScoredPoint,
+    UpdateResult,
+    VectorParams,
+    # Factory Functions
+    create_async_client,
+    create_client,
+    create_local_client,
 )
 from ._redis import (
     AuthenticationError,
@@ -671,4 +712,44 @@ __all__: Final[list[str]] = [
     "assert_not_in",
     "assert_isinstance",
     "assert_raises",
+    # =========================================================================
+    # Qdrant abstractions
+    # =========================================================================
+    # Qdrant - Constants
+    "QDRANT_DEFAULT_URL",
+    "QDRANT_DEFAULT_GRPC_PORT",
+    "QDRANT_DEFAULT_TIMEOUT",
+    # Qdrant - Enums
+    "Distance",
+    "IndexType",
+    "QuantizationType",
+    "PayloadSchemaType",
+    # Qdrant - Data Classes
+    "VectorParams",
+    "HnswConfig",
+    "QuantizationConfig",
+    "OptimizersConfig",
+    "PointStruct",
+    "ScoredPoint",
+    "CollectionInfo",
+    "Filter",
+    "FieldCondition",
+    # Qdrant - Response Types
+    "CollectionsResponse",
+    "CollectionDescription",
+    "UpdateResult",
+    "PointsSelector",
+    # Qdrant - Protocols
+    "QdrantClientProtocol",
+    "AsyncQdrantClientProtocol",
+    # Qdrant - Factory Functions
+    "create_client",
+    "create_async_client",
+    "create_local_client",
+    # Qdrant - Enums (from _enums.py)
+    "QdrantDistance",
+    "QdrantIndexType",
+    "QdrantPayloadType",
+    "QdrantQuantization",
+    "QdrantStorageMode",
 ]

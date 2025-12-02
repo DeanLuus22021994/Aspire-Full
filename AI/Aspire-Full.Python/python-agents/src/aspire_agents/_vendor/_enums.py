@@ -714,12 +714,121 @@ class CTypesEndian(StrEnum):
 
 
 # ============================================================================
+# Qdrant Enums
+# ============================================================================
+
+
+class QdrantDistance(StrEnum):
+    """Distance metrics for vector similarity.
+
+    Corresponds to QdrantInterfaces.
+    Used to measure similarity between vectors.
+    """
+
+    COSINE = "Cosine"
+    """Cosine similarity (normalized dot product)."""
+
+    EUCLID = "Euclid"
+    """Euclidean distance (L2 norm)."""
+
+    DOT = "Dot"
+    """Dot product similarity."""
+
+    MANHATTAN = "Manhattan"
+    """Manhattan distance (L1 norm)."""
+
+
+class QdrantIndexType(StrEnum):
+    """HNSW index configuration types.
+
+    Corresponds to QdrantInterfaces.
+    Controls how vectors are indexed for search.
+    """
+
+    DEFAULT = "default"
+    """HNSW index (approximate, fast)."""
+
+    FLAT = "flat"
+    """Brute force, exact but slow."""
+
+
+class QdrantQuantization(StrEnum):
+    """Quantization methods for memory optimization.
+
+    Corresponds to QdrantInterfaces.
+    Reduces memory footprint at cost of precision.
+    """
+
+    NONE = "none"
+    """No quantization (full precision)."""
+
+    SCALAR_INT8 = "scalar_int8"
+    """Scalar quantization to int8 (4x compression)."""
+
+    PRODUCT = "product"
+    """Product quantization (higher compression)."""
+
+    BINARY = "binary"
+    """Binary quantization (32x compression)."""
+
+
+class QdrantPayloadType(StrEnum):
+    """Payload field types for indexing.
+
+    Corresponds to QdrantInterfaces.
+    Specifies how payload fields are indexed.
+    """
+
+    KEYWORD = "keyword"
+    """Exact match keyword field."""
+
+    INTEGER = "integer"
+    """Integer field with range queries."""
+
+    FLOAT = "float"
+    """Float field with range queries."""
+
+    GEO = "geo"
+    """Geographic coordinates field."""
+
+    TEXT = "text"
+    """Full-text search field."""
+
+    BOOL = "bool"
+    """Boolean field."""
+
+    DATETIME = "datetime"
+    """Date/time field."""
+
+
+class QdrantStorageMode(StrEnum):
+    """Storage modes for memory optimization.
+
+    Corresponds to QdrantInterfaces.
+    Controls where vectors and payloads are stored.
+    """
+
+    IN_MEMORY = "in_memory"
+    """Store everything in RAM (fastest, highest memory)."""
+
+    MMAP = "mmap"
+    """Memory-mapped storage (low RAM, moderate speed)."""
+
+    ON_DISK = "on_disk"
+    """On-disk storage (lowest RAM, slowest)."""
+
+
+# ============================================================================
 # Module Exports
 # ============================================================================
 
 __all__: Final[list[str]] = [
     # Factory
     "VendorCategory",
+    # Torch
+    "TorchDeviceType",
+    "DeviceType",  # Alias
+    "TorchDtypeEnum",
     # Docker Model Runner
     "GpuBackendType",
     # Profiler
@@ -747,4 +856,10 @@ __all__: Final[list[str]] = [
     # CTypes
     "CTypesCallConv",
     "CTypesEndian",
+    # Qdrant
+    "QdrantDistance",
+    "QdrantIndexType",
+    "QdrantQuantization",
+    "QdrantPayloadType",
+    "QdrantStorageMode",
 ]

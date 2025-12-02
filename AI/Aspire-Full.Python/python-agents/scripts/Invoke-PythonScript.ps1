@@ -23,7 +23,7 @@
 .PARAMETER Config
     Configuration file path (required for run_agent)
 
-.PARAMETER Input
+.PARAMETER AgentInput
     Input message (required for run_agent)
 
 .PARAMETER Packages
@@ -42,7 +42,7 @@
     .\Invoke-PythonScript.ps1 -ScriptName download_models
 
 .EXAMPLE
-    .\Invoke-PythonScript.ps1 -ScriptName run_agent -Config "config.yaml" -Input "Hello"
+    .\Invoke-PythonScript.ps1 -ScriptName run_agent -Config "config.yaml" -AgentInput "Hello"
 
 .NOTES
     Requires Python 3.15+ with free-threading support and uv package manager.
@@ -55,7 +55,8 @@ param(
         "abstract_dependency_report",
         "download_models",
         "generate_dependency_report",
-        "run_agent"
+        "run_agent",
+        "vector_cache"
     )]
     [string]$ScriptName,
 
@@ -63,13 +64,22 @@ param(
     [string]$Config,
 
     [Parameter()]
-    [string]$Input,
+    [string]$AgentInput,
 
     [Parameter()]
     [string]$Packages,
 
     [Parameter()]
     [string]$OutputDir,
+
+    [Parameter()]
+    [string]$RedisUrl,
+
+    [Parameter()]
+    [string]$QdrantUrl,
+
+    [Parameter()]
+    [string]$CollectionName,
 
     [Parameter()]
     [switch]$PassThru
@@ -138,17 +148,17 @@ function Invoke-AbstractDependencyReport {
     )
 
     $scriptPath = Join-Path $ScriptDir "abstract_dependency_report.py"
-    $args = @()
+    $scriptArgs = @()
 
     if ($Packages) {
-        $args += "--packages", $Packages
+        $scriptArgs += "--packages", $Packages
     }
 
     if ($OutputDir) {
-        $args += "--output-dir", $OutputDir
+        $scriptArgs += "--output-dir", $OutputDir
     }
 
-    $args += "--base-dir", $ProjectRoot
+    $scriptArgs += "--base-dir", $ProjectRoot
 
     Write-Host "Running abstract_dependency_report..." -ForegroundColor Cyan
     Write-Host "  Cache Dir: $CacheDir" -ForegroundColor DarkGray
@@ -156,8 +166,8 @@ function Invoke-AbstractDependencyReport {
 
     Push-Location $ProjectRoot
     try {
-        if ($args.Count -gt 0) {
-            uv run python $scriptPath @args
+        if ($scriptArgs.Count -gt 0) {
+            uv run python $scriptPath @scriptArgs
         }
         else {
             uv run python $scriptPath --base-dir $ProjectRoot
@@ -217,18 +227,61 @@ function Invoke-RunAgent {
         [string]$Config,
 
         [Parameter(Mandatory = $true)]
-        [string]$Input
+        [string]$AgentInput
     )
 
     Write-Host "Running agent..." -ForegroundColor Cyan
     Write-Host "  Config: $Config" -ForegroundColor DarkGray
-    Write-Host "  Input: $Input" -ForegroundColor DarkGray
+    Write-Host "  Input: $AgentInput" -ForegroundColor DarkGray
 
     Push-Location $ProjectRoot
     try {
-        uv run python -m aspire_agents.cli run --config $Config --input $Input
+        uv run python -m aspire_agents.cli run --config $Config --input $AgentInput
     }
     finally {
+        Pop-Location
+    }
+}
+
+function Invoke-VectorCache {
+    <#
+    .SYNOPSIS
+        Tests Redis + Qdrant vector cache connectivity.
+    #>
+    param(
+        [string]$RedisUrl,
+        [string]$QdrantUrl,
+        [string]$CollectionName
+    )
+
+    $scriptPath = Join-Path $ScriptDir "vector_cache.py"
+
+    Write-Host "Running vector_cache status check..." -ForegroundColor Cyan
+
+    if ($RedisUrl) {
+        Write-Host "  Redis URL: $RedisUrl" -ForegroundColor DarkGray
+    }
+    if ($QdrantUrl) {
+        Write-Host "  Qdrant URL: $QdrantUrl" -ForegroundColor DarkGray
+    }
+    if ($CollectionName) {
+        Write-Host "  Collection: $CollectionName" -ForegroundColor DarkGray
+    }
+
+    Push-Location $ProjectRoot
+    try {
+        # Set environment variables for the script
+        $env:REDIS_URL = $RedisUrl
+        $env:QDRANT_URL = $QdrantUrl
+        $env:QDRANT_COLLECTION = $CollectionName
+
+        uv run python $scriptPath
+    }
+    finally {
+        # Clean up environment
+        Remove-Item Env:REDIS_URL -ErrorAction SilentlyContinue
+        Remove-Item Env:QDRANT_URL -ErrorAction SilentlyContinue
+        Remove-Item Env:QDRANT_COLLECTION -ErrorAction SilentlyContinue
         Pop-Location
     }
 }
@@ -255,10 +308,13 @@ switch ($ScriptName) {
         if (-not $Config) {
             throw "Config parameter is required for run_agent"
         }
-        if (-not $Input) {
-            throw "Input parameter is required for run_agent"
+        if (-not $AgentInput) {
+            throw "AgentInput parameter is required for run_agent"
         }
-        Invoke-RunAgent -Config $Config -Input $Input
+        Invoke-RunAgent -Config $Config -AgentInput $AgentInput
+    }
+    "vector_cache" {
+        Invoke-VectorCache -RedisUrl $RedisUrl -QdrantUrl $QdrantUrl -CollectionName $CollectionName
     }
 }
 

@@ -9,11 +9,11 @@
 .PARAMETER Config
     Path to the agent configuration file.
 
-.PARAMETER Input
+.PARAMETER AgentInput
     Input message to send to the agent.
 
 .EXAMPLE
-    .\run_agent.ps1 -Config "config.yaml" -Input "Hello, agent!"
+    .\run_agent.ps1 -Config "config.yaml" -AgentInput "Hello, agent!"
 
 .NOTES
     For more options, use Invoke-PythonScript.ps1 directly.
@@ -24,11 +24,11 @@ param(
     [string]$Config,
 
     [Parameter(Mandatory = $true)]
-    [string]$Input
+    [string]$AgentInput
 )
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = $PSScriptRoot
 
 # Delegate to unified script runner
-& "$ScriptDir\Invoke-PythonScript.ps1" -ScriptName "run_agent" -Config $Config -Input $Input
+& "$ScriptDir\Invoke-PythonScript.ps1" -ScriptName "run_agent" -Config $Config -AgentInput $AgentInput
