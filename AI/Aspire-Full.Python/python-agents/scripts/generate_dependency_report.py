@@ -5,13 +5,17 @@ This script uses `uv` to list installed and outdated packages and generates
 a YAML report containing the status of each package.
 """
 
+from __future__ import annotations
+
+import importlib
 import json
 import subprocess
 import sys
 from datetime import datetime
-from typing import Dict, List, TypedDict
+from typing import Any, TypedDict
 
-import yaml
+# Dynamic import for yaml - types-PyYAML stub not required
+_yaml_module: Any = importlib.import_module("yaml")
 
 
 class InstalledPackage(TypedDict):
@@ -52,15 +56,15 @@ class ReportData(TypedDict):
 
     generated_at: str
     summary: Summary
-    packages: List[ReportPackageInfo]
+    packages: list[ReportPackageInfo]
 
 
-def get_installed_packages() -> List[InstalledPackage]:
+def get_installed_packages() -> list[InstalledPackage]:
     """
     Retrieves a list of installed packages using `uv pip list`.
 
     Returns:
-        List[InstalledPackage]: A list of dictionaries containing package details.
+        list[InstalledPackage]: A list of dictionaries containing package details.
     """
     try:
         result = subprocess.run(
@@ -69,7 +73,7 @@ def get_installed_packages() -> List[InstalledPackage]:
             text=True,
             check=True,
         )
-        data: List[InstalledPackage] = json.loads(result.stdout)
+        data: list[InstalledPackage] = json.loads(result.stdout)
         return data
     except subprocess.CalledProcessError as e:
         print(f"Error getting installed packages: {e}")
@@ -79,12 +83,12 @@ def get_installed_packages() -> List[InstalledPackage]:
         sys.exit(1)
 
 
-def get_outdated_packages() -> List[OutdatedPackage]:
+def get_outdated_packages() -> list[OutdatedPackage]:
     """
     Retrieves a list of outdated packages using `uv pip list --outdated`.
 
     Returns:
-        List[OutdatedPackage]: A list of dictionaries containing outdated package details.
+        list[OutdatedPackage]: A list of dictionaries containing outdated package details.
     """
     try:
         # uv pip list --outdated returns a table, not JSON currently in all versions,
@@ -96,7 +100,7 @@ def get_outdated_packages() -> List[OutdatedPackage]:
             text=True,
             check=True,
         )
-        data: List[OutdatedPackage] = json.loads(result.stdout)
+        data: list[OutdatedPackage] = json.loads(result.stdout)
         return data
     except subprocess.CalledProcessError:
         # Fallback if json format not supported or other error
@@ -112,9 +116,9 @@ def generate_report() -> None:
     installed = get_installed_packages()
     outdated = get_outdated_packages()
 
-    outdated_map: Dict[str, OutdatedPackage] = {pkg["name"]: pkg for pkg in outdated}
+    outdated_map: dict[str, OutdatedPackage] = {pkg["name"]: pkg for pkg in outdated}
 
-    report_packages: List[ReportPackageInfo] = []
+    report_packages: list[ReportPackageInfo] = []
 
     for pkg in installed:
         name = pkg["name"]
@@ -146,7 +150,7 @@ def generate_report() -> None:
     }
 
     with open("python-deps.config.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(report_data, f, sort_keys=False)
+        _yaml_module.dump(report_data, f, sort_keys=False)
 
     print("Report generated: python-deps.config.yaml")
 

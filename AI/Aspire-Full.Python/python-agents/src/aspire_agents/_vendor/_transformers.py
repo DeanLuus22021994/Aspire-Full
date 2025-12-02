@@ -239,9 +239,12 @@ class AutoTokenizer:
             RuntimeError: If transformers package is not installed.
         """
         try:
-            from transformers import AutoTokenizer as _AutoTokenizer
+            # Dynamic import - module may not be installed
+            import importlib
 
-            tokenizer = _AutoTokenizer.from_pretrained(
+            transformers_module: Any = importlib.import_module("transformers")
+            tokenizer_class: Any = getattr(transformers_module, "AutoTokenizer")
+            tokenizer: Any = tokenizer_class.from_pretrained(
                 model_name_or_path,
                 use_fast=use_fast,
                 trust_remote_code=trust_remote_code,
@@ -281,9 +284,12 @@ class AutoModel:
             RuntimeError: If transformers package is not installed.
         """
         try:
-            from transformers import AutoModel as _AutoModel
+            # Dynamic import - module may not be installed
+            import importlib
 
-            model = _AutoModel.from_pretrained(
+            transformers_module: Any = importlib.import_module("transformers")
+            model_class: Any = getattr(transformers_module, "AutoModel")
+            model: Any = model_class.from_pretrained(
                 model_name_or_path,
                 trust_remote_code=trust_remote_code,
                 torch_dtype=torch_dtype,

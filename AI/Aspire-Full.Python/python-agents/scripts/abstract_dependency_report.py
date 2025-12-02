@@ -12,15 +12,20 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, cast
 
-import yaml
+# Dynamic import for yaml - types-PyYAML stub not required
+_yaml_module: Any = importlib.import_module("yaml")
+
+# Type alias for JSON-like dictionaries
+JsonDict = dict[str, Any]
 
 # ============================================================================
 # Constants
@@ -86,10 +91,14 @@ class ExtractedType:
     name: str
     category: TypeCategory
     module: str
-    bases: list[str] = field(default_factory=list)
-    methods: list[str] = field(default_factory=list)
-    attributes: list[str] = field(default_factory=list)
+    bases: list[str] = field(default_factory=lambda: list[str]())
+    methods: list[str] = field(default_factory=lambda: list[str]())
+    attributes: list[str] = field(default_factory=lambda: list[str]())
     signature: str | None = None
+
+    def __post_init__(self) -> None:
+        """Validate fields after initialization."""
+        pass
 
 
 @dataclass
@@ -101,8 +110,12 @@ class PackageAbstraction:
     cache_path: str | None = None
     vendor_file: str | None = None
     types_extracted: int = 0
-    types: list[ExtractedType] = field(default_factory=list)
+    types: list[ExtractedType] = field(default_factory=lambda: list[ExtractedType]())
     error: str | None = None
+
+    def __post_init__(self) -> None:
+        """Validate fields after initialization."""
+        pass
 
 
 @dataclass
@@ -113,7 +126,13 @@ class AbstractionReport:
     mypy_cache_dir: str
     vendor_dir: str
     python_version: str
-    packages: list[PackageAbstraction] = field(default_factory=list)
+    packages: list[PackageAbstraction] = field(
+        default_factory=lambda: list[PackageAbstraction]()
+    )
+
+    def __post_init__(self) -> None:
+        """Validate fields after initialization."""
+        pass
 
     @property
     def summary(self) -> dict[str, int]:
@@ -145,6 +164,7 @@ class MypyCacheParser:
     """Parses mypy cache JSON files to extract type information."""
 
     def __init__(self, cache_dir: Path) -> None:
+        super().__init__()
         self.cache_dir = cache_dir
 
     def find_package_cache(self, package: str) -> Path | None:
@@ -172,46 +192,50 @@ class MypyCacheParser:
         """Parse a mypy cache file and extract type definitions."""
         try:
             with cache_path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
+                data: JsonDict = json.load(f)
         except (json.JSONDecodeError, OSError) as e:
             print(f"  Warning: Failed to parse {cache_path}: {e}", file=sys.stderr)
             return []
 
         types: list[ExtractedType] = []
-        names = data.get("names", {})
+        names_data = data.get("names", {})
+        names: JsonDict = cast(JsonDict, names_data) if isinstance(names_data, dict) else {}
 
-        if isinstance(names, dict) and names.get(".class") == "SymbolTable":
-            for name, symbol in names.items():
-                if name.startswith((".", "__")) and name not in (
+        if names.get(".class") == "SymbolTable":
+            for symbol_name, symbol_raw in names.items():
+                if symbol_name.startswith((".", "__")) and symbol_name not in (
                     "__init__",
                     "__enter__",
                     "__exit__",
                 ):
                     continue
 
-                extracted = self._extract_symbol(name, symbol, data.get("_fullname", ""))
+                if not isinstance(symbol_raw, dict):
+                    continue
+
+                symbol_data: JsonDict = cast(JsonDict, symbol_raw)
+                fullname: str = str(data.get("_fullname", ""))
+                extracted = self._extract_symbol(symbol_name, symbol_data, fullname)
                 if extracted:
                     types.append(extracted)
 
         return types
 
     def _extract_symbol(
-        self, name: str, symbol: dict[str, Any], module: str
+        self, name: str, symbol: JsonDict, module: str
     ) -> ExtractedType | None:
         """Extract a single symbol from the cache."""
-        if not isinstance(symbol, dict):
-            return None
+        _kind = symbol.get("kind")  # Prefixed with _ to indicate intentionally unused
+        node_raw = symbol.get("node")
 
-        kind = symbol.get("kind")
-        node = symbol.get("node")
-
-        if not node or not isinstance(node, dict):
+        if not node_raw or not isinstance(node_raw, dict):
             # Check for cross-reference
             if symbol.get("cross_ref"):
                 return None
             return None
 
-        node_class = node.get(".class")
+        node: JsonDict = cast(JsonDict, node_raw)
+        node_class = str(node.get(".class", ""))
 
         # Handle TypeInfo (classes)
         if node_class == "TypeInfo":
@@ -235,30 +259,34 @@ class MypyCacheParser:
 
         # Handle Decorator (decorated functions)
         if node_class == "Decorator":
-            func = node.get("func", {})
-            if func.get(".class") == "FuncDef":
-                return self._extract_function(name, func, module)
+            func_raw = node.get("func", {})
+            if isinstance(func_raw, dict):
+                func: JsonDict = cast(JsonDict, func_raw)
+                if func.get(".class") == "FuncDef":
+                    return self._extract_function(name, func, module)
 
         return None
 
     def _extract_class(
-        self, name: str, node: dict[str, Any], module: str
+        self, name: str, node: JsonDict, module: str
     ) -> ExtractedType:
         """Extract class information."""
-        bases = node.get("bases", [])
-        base_names = []
-        for base in bases:
-            if isinstance(base, str):
-                base_names.append(base.split(".")[-1])
+        bases_raw = node.get("bases", [])
+        base_names: list[str] = []
+        if isinstance(bases_raw, list):
+            bases_list: list[Any] = cast(list[Any], bases_raw)
+            for base in bases_list:
+                if isinstance(base, str):
+                    base_names.append(base.split(".")[-1])
 
         # Determine category
         flags = node.get("flags", [])
         metadata = node.get("metadata", {})
 
         category = TypeCategory.CLASS
-        if "is_enum" in flags:
+        if isinstance(flags, list) and "is_enum" in flags:
             category = TypeCategory.ENUM
-        elif "dataclass" in metadata:
+        elif isinstance(metadata, dict) and "dataclass" in metadata:
             category = TypeCategory.DATACLASS
         elif any("Exception" in b or "Error" in b for b in base_names):
             category = TypeCategory.EXCEPTION
@@ -267,17 +295,22 @@ class MypyCacheParser:
         methods: list[str] = []
         attributes: list[str] = []
 
-        class_names = node.get("names", {})
-        if isinstance(class_names, dict):
-            for member_name, member in class_names.items():
+        class_names_raw = node.get("names", {})
+        if isinstance(class_names_raw, dict):
+            class_names: JsonDict = cast(JsonDict, class_names_raw)
+            for member_name_raw, member_raw in class_names.items():
+                member_name: str = str(member_name_raw)
                 if member_name.startswith("."):
                     continue
-                if isinstance(member, dict):
-                    member_node = member.get("node", {})
-                    if isinstance(member_node, dict):
-                        if member_node.get(".class") in ("FuncDef", "OverloadedFuncDef"):
+                if isinstance(member_raw, dict):
+                    member: JsonDict = cast(JsonDict, member_raw)
+                    member_node_raw = member.get("node", {})
+                    if isinstance(member_node_raw, dict):
+                        member_node: JsonDict = cast(JsonDict, member_node_raw)
+                        node_class_str = str(member_node.get(".class", ""))
+                        if node_class_str in ("FuncDef", "OverloadedFuncDef"):
                             methods.append(member_name)
-                        elif member_node.get(".class") == "Var":
+                        elif node_class_str == "Var":
                             attributes.append(member_name)
 
         return ExtractedType(
@@ -290,10 +323,11 @@ class MypyCacheParser:
         )
 
     def _extract_function(
-        self, name: str, node: dict[str, Any], module: str
+        self, name: str, node: JsonDict, module: str
     ) -> ExtractedType:
         """Extract function information."""
-        arg_names = node.get("arg_names", [])
+        arg_names_raw = node.get("arg_names", [])
+        arg_names: list[Any] = cast(list[Any], arg_names_raw) if isinstance(arg_names_raw, list) else []
         signature = f"({', '.join(str(a) for a in arg_names if a)})"
 
         return ExtractedType(
@@ -304,7 +338,7 @@ class MypyCacheParser:
         )
 
     def _extract_variable(
-        self, name: str, node: dict[str, Any], module: str
+        self, name: str, node: JsonDict, module: str
     ) -> ExtractedType:
         """Extract variable/constant information."""
         return ExtractedType(
@@ -338,6 +372,7 @@ class VendorStatusChecker:
     }
 
     def __init__(self, vendor_dir: Path) -> None:
+        super().__init__()
         self.vendor_dir = vendor_dir
 
     def get_vendor_file(self, package: str) -> str | None:
@@ -373,6 +408,7 @@ class AbstractionGenerator:
         base_dir: Path,
         packages: list[str] | None = None,
     ) -> None:
+        super().__init__()
         self.base_dir = base_dir
         self.packages = packages or DEFAULT_PACKAGES
         self.cache_dir = base_dir / MYPY_CACHE_DIR
@@ -467,15 +503,21 @@ class AbstractionGenerator:
         # Clean None values
         def clean_dict(d: Any) -> Any:
             if isinstance(d, dict):
-                return {k: clean_dict(v) for k, v in d.items() if v is not None}
+                dict_d: dict[str, Any] = cast(dict[str, Any], d)
+                return {
+                    str(k): clean_dict(v)
+                    for k, v in dict_d.items()
+                    if v is not None
+                }
             if isinstance(d, list):
-                return [clean_dict(i) for i in d]
+                list_d: list[Any] = cast(list[Any], d)
+                return [clean_dict(item) for item in list_d]
             return d
 
         report_dict = clean_dict(report_dict)
 
         with output_path.open("w", encoding="utf-8") as f:
-            yaml.dump(report_dict, f, sort_keys=False, default_flow_style=False)
+            _yaml_module.dump(report_dict, f, sort_keys=False, default_flow_style=False)
 
     def print_summary(self, report: AbstractionReport) -> None:
         """Print a summary to stdout."""

@@ -306,22 +306,24 @@ def create_agent(
         RuntimeError: If openai-agents package is not installed.
     """
     try:
-        from agents import Agent
+        # Dynamic import - module may not be installed
+        import importlib
+
+        agents_module: Any = importlib.import_module("agents")
+        agent_class: Any = getattr(agents_module, "Agent")
 
         # Cast output_type to Any to avoid strict type checking issues
         # between our AgentOutputSchema and the SDK's AgentOutputSchemaBase
         _output_type: Any = output_type
 
-        return cast(
-            AgentProtocol,
-            Agent(
-                name=name,
-                instructions=instructions,
-                model=model,
-                tools=list(tools) if tools else [],
-                output_type=_output_type,
-            ),
+        agent: Any = agent_class(
+            name=name,
+            instructions=instructions,
+            model=model,
+            tools=list(tools) if tools else [],
+            output_type=_output_type,
         )
+        return cast(AgentProtocol, agent)
     except ImportError as e:
         msg = "openai-agents package required. Install with: pip install openai-agents"
         raise RuntimeError(msg) from e
@@ -340,9 +342,13 @@ def function_tool(func: Callable[..., Any]) -> FunctionToolProtocol:
         RuntimeError: If openai-agents package is not installed.
     """
     try:
-        from agents import function_tool as _function_tool
+        # Dynamic import - module may not be installed
+        import importlib
 
-        return cast(FunctionToolProtocol, _function_tool(func))
+        agents_module: Any = importlib.import_module("agents")
+        function_tool_decorator: Any = getattr(agents_module, "function_tool")
+        decorated: Any = function_tool_decorator(func)
+        return cast(FunctionToolProtocol, decorated)
     except ImportError as e:
         msg = "openai-agents package required. Install with: pip install openai-agents"
         raise RuntimeError(msg) from e

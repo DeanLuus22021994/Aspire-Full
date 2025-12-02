@@ -12,6 +12,7 @@ from typing import (
     Final,
     Literal,
     Protocol,
+    cast,
     runtime_checkable,
 )
 
@@ -211,14 +212,17 @@ def create_openai_client(
         RuntimeError: If openai package is not installed.
     """
     try:
-        from openai import AsyncOpenAI as _AsyncOpenAI
+        # Dynamic import - module may not be installed
+        import importlib
 
-        client: OpenAIClient = _AsyncOpenAI(
+        openai_module: Any = importlib.import_module("openai")
+        async_client_class: Any = getattr(openai_module, "AsyncOpenAI")
+        client: Any = async_client_class(
             api_key=api_key,
             base_url=base_url,
             timeout=timeout,
         )
-        return client
+        return cast(OpenAIClient, client)
     except ImportError as e:
         msg = "openai package required. Install with: pip install openai"
         raise RuntimeError(msg) from e

@@ -256,15 +256,15 @@ _torch_available: bool = False
 _torch: Any = None
 
 if TYPE_CHECKING:
-    import torch as _torch_import
-
-    _torch = _torch_import
-    _torch_available = True
+    # For static analysis only - torch types
+    pass
 else:
     try:
-        import torch as _torch_import
+        # Dynamic import - module may not be installed
+        import importlib
 
-        _torch = _torch_import
+        _torch_module: Any = importlib.import_module("torch")
+        _torch = _torch_module
         _torch_available = True
     except ImportError:
         pass
