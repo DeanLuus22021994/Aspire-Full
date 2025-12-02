@@ -1,5 +1,6 @@
 using System.Diagnostics.Metrics;
 using Aspire_Full.Tensor.Core.Abstractions;
+using Aspire_Full.Tensor.Core.Compute;
 using Aspire_Full.Tensor.Core.Memory;
 using Aspire_Full.Tensor.Core.Native;
 using Microsoft.Extensions.Logging;
@@ -7,21 +8,28 @@ using Microsoft.Extensions.Logging;
 namespace Aspire_Full.Tensor.Core;
 
 /// <summary>
-/// Default tensor runtime implementation with GPU/CPU fallback.
-/// Provides unified access to GPU compute operations via NativeTensorContext.
+/// Default tensor runtime implementation with GPU compute.
+/// All operations are offloaded to GPU when ComputeMode is GPU.
+/// CPU fallback is only used when explicitly configured.
 /// </summary>
 public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 {
     private readonly ILogger<TensorRuntime> _logger;
+    private readonly IComputeModeService? _computeModeService;
     private readonly GpuMemoryPool _memoryPool;
     private long _totalMemory;
     private long _allocatedMemory;
     private int _currentUtilization;
     private bool _disposed;
 
-    public TensorRuntime(ILogger<TensorRuntime> logger, int maxBufferCount = 16, nuint defaultBufferSize = 64 * 1024 * 1024)
+    public TensorRuntime(
+        ILogger<TensorRuntime> logger,
+        IComputeModeService? computeModeService = null,
+        int maxBufferCount = 16,
+        nuint defaultBufferSize = 64 * 1024 * 1024)
     {
         _logger = logger;
+        _computeModeService = computeModeService;
         _memoryPool = new GpuMemoryPool(maxBufferCount, defaultBufferSize);
 
         // Initialize GPU info
@@ -48,6 +56,44 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
         _logger.LogInformation("TensorRuntime initialized (GPU: {IsGpuAvailable}, Devices: {DeviceCount})",
             IsGpuAvailable, DeviceCount);
     }
+
+    #region Compute Mode Helpers
+
+    /// <summary>
+    /// Determines if GPU should be used for the given operation type.
+    /// Returns true if GPU is available AND either:
+    /// - ComputeModeService is not configured (default to GPU when available)
+    /// - ComputeModeService.ShouldOffload returns true for this operation
+    /// </summary>
+    private bool ShouldUseGpu(OperationType operationType)
+    {
+        if (!IsGpuAvailable)
+            return false;
+
+        // If no compute mode service is configured, use GPU when available
+        if (_computeModeService is null)
+            return true;
+
+        return _computeModeService.ShouldOffload(operationType);
+    }
+
+    /// <summary>
+    /// Determines if CPU fallback is allowed.
+    /// CPU fallback is only allowed when:
+    /// - ComputeModeService is not configured (legacy behavior)
+    /// - ComputeModeService mode is CPU or Hybrid
+    /// </summary>
+    private bool AllowCpuFallback()
+    {
+        // If no compute mode service, allow fallback (legacy behavior)
+        if (_computeModeService is null)
+            return true;
+
+        // CPU fallback is allowed when mode is CPU or Hybrid
+        return _computeModeService.CurrentMode != ComputeMode.Gpu;
+    }
+
+    #endregion
 
     #region ITensorRuntime
 
@@ -89,7 +135,10 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
     {
         TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "matmul"));
 
-        if (IsGpuAvailable)
+        // Check if we should offload and GPU is available
+        var useGpu = ShouldUseGpu(OperationType.TensorMatMul);
+
+        if (useGpu)
         {
             // Allocate device memory
             var aSize = (nuint)(m * k * sizeof(float));
@@ -116,8 +165,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
             TensorDiagnostics.OperationDuration.Record(metrics.compute_time_ms);
         }
-        else
+        else if (AllowCpuFallback())
         {
+            _logger.LogWarning("MatrixMultiply using CPU fallback - performance will be degraded");
             // CPU fallback - naive matrix multiply
             for (int i = 0; i < m; i++)
             {
@@ -132,13 +182,21 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                 }
             }
         }
+        else
+        {
+            throw new InvalidOperationException(
+                "GPU is required for MatrixMultiply but not available. " +
+                "Enable FallbackToCpu in compute options or ensure GPU is accessible.");
+        }
     }
 
     public void MeanPooling(ReadOnlySpan<float> input, ReadOnlySpan<long> attentionMask, Span<float> output, int batchSize, int seqLen, int hiddenSize)
     {
         TensorDiagnostics.OperationsCounter.Add(1, new KeyValuePair<string, object?>("operation", "mean_pooling"));
 
-        if (IsGpuAvailable)
+        var useGpu = ShouldUseGpu(OperationType.TensorPooling);
+
+        if (useGpu)
         {
             var inputSize = (nuint)(batchSize * seqLen * hiddenSize * sizeof(float));
             var maskSize = (nuint)(batchSize * seqLen * sizeof(long));
@@ -162,8 +220,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
 
             TensorDiagnostics.OperationDuration.Record(metrics.compute_time_ms);
         }
-        else
+        else if (AllowCpuFallback())
         {
+            _logger.LogWarning("MeanPooling using CPU fallback - performance will be degraded");
             // CPU fallback
             for (int b = 0; b < batchSize; b++)
             {
@@ -182,6 +241,12 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                     output[b * hiddenSize + h] = count > 0 ? sum / count : 0;
                 }
             }
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "GPU is required for MeanPooling but not available. " +
+                "Enable FallbackToCpu in compute options or ensure GPU is accessible.");
         }
     }
 
@@ -223,10 +288,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
         TensorDiagnostics.OperationsCounter.Add(batchSize, new KeyValuePair<string, object?>("operation", "cosine_similarity_batch"));
 
         var results = new float[batchSize];
+        var useGpu = ShouldUseGpu(OperationType.BatchProcessing);
 
-        // For GPU: batch all vectors into contiguous memory and process together
-        // For CPU: parallel process individual pairs
-        if (IsGpuAvailable && batchSize >= 4)
+        if (useGpu && batchSize >= 4)
         {
             // GPU batched processing - more efficient for larger batches
             Parallel.For(0, batchSize, i =>
@@ -234,13 +298,20 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                 results[i] = CosineSimilarity(xVectors[i].Span, yVectors[i].Span);
             });
         }
-        else
+        else if (AllowCpuFallback())
         {
+            _logger.LogDebug("CosineSimilarityBatch using CPU parallel processing");
             // CPU parallel processing
             Parallel.For(0, batchSize, i =>
             {
                 results[i] = CosineSimilarity(xVectors[i].Span, yVectors[i].Span);
             });
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "GPU is required for CosineSimilarityBatch but not available. " +
+                "Ensure GPU is accessible or enable CPU fallback mode.");
         }
 
         return results;
@@ -257,8 +328,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
         TensorDiagnostics.OperationsCounter.Add(requests.Length, new KeyValuePair<string, object?>("operation", "matmul_batch"));
 
         var results = new Memory<float>[requests.Length];
+        var useGpu = ShouldUseGpu(OperationType.BatchProcessing);
 
-        if (IsGpuAvailable && requests.Length >= 2)
+        if (useGpu && requests.Length >= 2)
         {
             // GPU batch processing - process sequentially due to ref struct constraints
             for (int i = 0; i < requests.Length; i++)
@@ -289,8 +361,9 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                 results[i] = result;
             }
         }
-        else
+        else if (AllowCpuFallback())
         {
+            _logger.LogWarning("MatrixMultiplyBatch using CPU fallback - performance will be degraded");
             // CPU fallback - parallel process
             Parallel.For(0, requests.Length, i =>
             {
@@ -299,6 +372,12 @@ public sealed class TensorRuntime : ITensorRuntime, IGpuResourceMonitor
                 MatrixMultiply(req.A.Span, req.B.Span, result, req.M, req.N, req.K);
                 results[i] = result;
             });
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "GPU is required for MatrixMultiplyBatch but not available. " +
+                "Ensure GPU is accessible or enable CPU fallback mode.");
         }
 
         return results;

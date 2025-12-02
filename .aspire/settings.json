@@ -1,6 +1,133 @@
 {
   "$schema": "https://json.schemastore.org/aspire-8.0.json",
-  "resources": {},
+  "resources": {
+    "tensor-compute": {
+      "type": "container.v1",
+      "image": "localhost:5001/aspire/tensor-compute:latest",
+      "env": {
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+        "CUDA_VISIBLE_DEVICES": "0",
+        "COMPUTE_MODE": "{compute.mode}",
+        "SHARED_STORAGE_PATH": "/shared",
+        "OTLP_ENDPOINT": "{telemetry.otlpEndpoint}",
+        "MODEL_CACHE_DIR": "/shared/models",
+        "VECTOR_STORE_PATH": "/shared/qdrant"
+      },
+      "bindings": {
+        "grpc": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http2",
+          "targetPort": 50051,
+          "port": 50051,
+          "external": false
+        },
+        "metrics": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9090,
+          "port": 9090,
+          "external": false
+        }
+      },
+      "bindMounts": [
+        {
+          "source": "C:\\SHARED",
+          "target": "/shared",
+          "readOnly": false
+        }
+      ],
+      "volumes": []
+    },
+    "qdrant": {
+      "type": "container.v1",
+      "image": "qdrant/qdrant:latest",
+      "env": {
+        "QDRANT__SERVICE__GRPC_PORT": "6334",
+        "QDRANT__STORAGE__STORAGE_PATH": "/shared/qdrant/storage"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 6333,
+          "port": 6333,
+          "external": false
+        },
+        "grpc": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http2",
+          "targetPort": 6334,
+          "port": 6334,
+          "external": false
+        }
+      },
+      "bindMounts": [
+        {
+          "source": "C:\\SHARED",
+          "target": "/shared",
+          "readOnly": false
+        }
+      ],
+      "volumes": []
+    },
+    "embedding-service": {
+      "type": "container.v1",
+      "image": "localhost:5001/aspire/embedding-service:latest",
+      "env": {
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "COMPUTE_MODE": "{compute.mode}",
+        "MODEL_PATH": "/shared/models/all-MiniLM-L6-v2.onnx",
+        "VOCAB_PATH": "/shared/models/vocab.txt",
+        "EMBEDDING_DIMENSION": "384",
+        "BATCH_SIZE": "32"
+      },
+      "bindings": {
+        "grpc": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http2",
+          "targetPort": 50052,
+          "port": 50052,
+          "external": false
+        }
+      },
+      "bindMounts": [
+        {
+          "source": "C:\\SHARED",
+          "target": "/shared",
+          "readOnly": false
+        }
+      ],
+      "volumes": []
+    }
+  },
+  "compute": {
+    "mode": "gpu",
+    "offloadStrategy": "full",
+    "fallbackToCpu": false,
+    "runtimeToggle": {
+      "enabled": true,
+      "endpoint": "/api/compute/mode",
+      "allowedModes": ["gpu", "cpu", "hybrid"]
+    },
+    "gpu": {
+      "deviceId": 0,
+      "memoryFraction": 0.9,
+      "allowGrowth": true,
+      "computeCapability": "8.6"
+    },
+    "batching": {
+      "enabled": true,
+      "maxBatchSize": 32,
+      "batchTimeoutMs": 50,
+      "dynamicBatching": true
+    }
+  },
   "sharedStorage": {
     "hostPath": "C:\\SHARED",
     "containerPath": "/shared",

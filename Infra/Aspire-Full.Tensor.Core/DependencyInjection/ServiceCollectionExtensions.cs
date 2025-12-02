@@ -38,6 +38,21 @@ public static class TensorCoreServiceCollectionExtensions
         var options = new TensorCoreOptions();
         configure?.Invoke(options);
 
+        // Register ComputeModeService for GPU/CPU/Hybrid mode toggling
+        services.Configure<ComputeOptions>(computeOptions =>
+        {
+            computeOptions.Mode = options.ComputeMode;
+            computeOptions.OffloadStrategy = options.OffloadStrategy;
+            computeOptions.FallbackToCpu = options.FallbackToCpu;
+            computeOptions.GpuDeviceId = options.GpuDeviceId;
+            computeOptions.MemoryFraction = options.MemoryFraction;
+            computeOptions.AllowGrowth = options.AllowGrowth;
+            computeOptions.EnableDynamicBatching = options.EnableDynamicBatching;
+            computeOptions.MaxBatchSize = options.MaxBatchSize;
+            computeOptions.BatchTimeoutMs = options.BatchTimeoutMs;
+        });
+        services.TryAddSingleton<IComputeModeService, ComputeModeService>();
+
         // Register the memory pool as singleton
         services.TryAddSingleton(sp =>
             new GpuMemoryPool(options.MaxBufferCount, options.DefaultBufferSize));
@@ -110,6 +125,53 @@ public sealed class TensorCoreOptions
     /// Enable detailed metrics collection. Default is true.
     /// </summary>
     public bool EnableMetrics { get; set; } = true;
+
+    // --- Compute Mode Options ---
+
+    /// <summary>
+    /// Compute execution mode. Default is GPU for full offload.
+    /// </summary>
+    public ComputeMode ComputeMode { get; set; } = ComputeMode.Gpu;
+
+    /// <summary>
+    /// Strategy for offloading operations. Default is Full.
+    /// </summary>
+    public OffloadStrategy OffloadStrategy { get; set; } = OffloadStrategy.Full;
+
+    /// <summary>
+    /// Whether to fallback to CPU when GPU fails. Default is false for strict GPU mode.
+    /// </summary>
+    public bool FallbackToCpu { get; set; } = false;
+
+    /// <summary>
+    /// GPU device ID to use. Default is 0.
+    /// </summary>
+    public int GpuDeviceId { get; set; } = 0;
+
+    /// <summary>
+    /// Fraction of GPU memory to allocate (0.0-1.0). Default is 0.9.
+    /// </summary>
+    public double MemoryFraction { get; set; } = 0.9;
+
+    /// <summary>
+    /// Allow GPU memory to grow dynamically. Default is true.
+    /// </summary>
+    public bool AllowGrowth { get; set; } = true;
+
+    /// <summary>
+    /// Enable dynamic batching for throughput. Default is true.
+    /// </summary>
+    public bool EnableDynamicBatching { get; set; } = true;
+
+    /// <summary>
+    /// Maximum batch size for batched operations. Default is 32.
+    /// </summary>
+    public int MaxBatchSize { get; set; } = 32;
+
+    /// <summary>
+    /// Batch timeout in milliseconds before forcing execution. Default is 50.
+    /// </summary>
+    public int BatchTimeoutMs { get; set; } = 50;
 
     // --- Model Registry Options ---
 
