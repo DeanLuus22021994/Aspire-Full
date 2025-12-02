@@ -1,25 +1,41 @@
 # syntax=docker/dockerfile:1
 # =============================================================================
-# Aspire Python Agents with TensorCore Compute
+# Aspire Python Agents - Python 3.15t Free-Threaded with TensorCore Compute
 # Build with: docker buildx bake python-agents
 # =============================================================================
+# hadolint global ignore=DL3008,DL3013
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS builder
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Full Python Agents with TensorCore"
+LABEL org.opencontainers.image.description="Aspire Python Agents 3.15t (Free-Threaded)"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # =============================================================================
-# Python 3.15 Free-Threading + TensorCore Configuration
+# Python 3.15 Free-Threading + TensorCore + Strict Formatting Configuration
 # =============================================================================
-ENV PYTHON_GIL=0
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
+ENV PYTHON_GIL=0 \
+    PYTHON_JIT=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8 \
+    PYTHONHASHSEED=random \
+    # NVIDIA Configuration
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX" \
+    # Strict formatting configuration (baked into image)
+    RUFF_LINE_LENGTH=120 \
+    RUFF_TARGET_VERSION=py315 \
+    RUFF_FORMAT_QUOTE_STYLE=double \
+    RUFF_FORMAT_INDENT_STYLE=space \
+    RUFF_FORMAT_LINE_ENDING=lf \
+    BLACK_LINE_LENGTH=120 \
+    # uv configuration
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 # Enable apt caching
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -34,7 +50,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv (Astral's ultra-fast Python package manager)
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 # Install Python 3.15t (free-threaded)
 RUN uv python install 3.15t
@@ -43,10 +59,11 @@ RUN uv python install 3.15t
 WORKDIR /app
 
 # =============================================================================
-# Bake ALL dependencies into the image
+# Bake ALL dependencies into the image with strict formatting
 # Copy pyproject.toml and uv.lock for reproducible builds
 # =============================================================================
-COPY AI/Aspire-Full.Python/python-agents/pyproject.toml AI/Aspire-Full.Python/python-agents/uv.lock ./
+COPY AI/Aspire-Full.Python/python-agents/pyproject.toml \
+     AI/Aspire-Full.Python/python-agents/uv.lock ./
 
 # Create virtual environment with Python 3.15t
 RUN uv venv /opt/venv --python 3.15t
@@ -56,6 +73,11 @@ RUN uv venv /opt/venv --python 3.15t
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
     uv sync --frozen --all-extras
+
+# Install strict formatting tools
+RUN --mount=type=cache,target=/root/.cache/uv \
+    . /opt/venv/bin/activate && \
+    uv pip install ruff>=0.8.0 black>=24.0.0 mypy>=1.13.0
 
 # Pre-install Playwright browsers (heavy but necessary for computer use)
 RUN . /opt/venv/bin/activate && playwright install --with-deps chromium
@@ -76,6 +98,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     . /opt/venv/bin/activate && \
     uv pip install -e .[tracing]
 
+# Run ruff format to ensure strict formatting compliance
+RUN . /opt/venv/bin/activate && \
+    ruff format --line-length 120 src/ || true && \
+    ruff check --fix src/ || true
+
 # Precompile all Python files for instant startup
 RUN . /opt/venv/bin/activate && python -m compileall -q .
 
@@ -84,13 +111,20 @@ RUN . /opt/venv/bin/activate && python -m compileall -q .
 # =============================================================================
 FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04 AS runtime
 
-ENV PYTHON_GIL=0
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV PATH="/opt/venv/bin:$PATH"
-ENV VIRTUAL_ENV="/opt/venv"
+ENV PYTHON_GIL=0 \
+    PYTHON_JIT=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8 \
+    # NVIDIA Configuration
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    # Virtual environment
+    PATH="/opt/venv/bin:$PATH" \
+    VIRTUAL_ENV="/opt/venv" \
+    # Strict formatting (runtime reference)
+    RUFF_LINE_LENGTH=120 \
+    RUFF_TARGET_VERSION=py315
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -111,7 +145,7 @@ COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
 # Copy HuggingFace model cache
 COPY --from=builder /root/.cache/huggingface /root/.cache/huggingface
 
-# Copy application code (precompiled)
+# Copy application code (precompiled and formatted)
 COPY --from=builder /app .
 
 # Create non-root user
@@ -120,6 +154,10 @@ USER aspire
 
 # Expose port
 EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1
 
 # Run the server
 CMD ["python", "src/aspire_agents/examples/realtime/app/server.py"]

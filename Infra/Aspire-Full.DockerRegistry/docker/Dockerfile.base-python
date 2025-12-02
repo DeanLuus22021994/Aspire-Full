@@ -1,21 +1,36 @@
+# syntax=docker/dockerfile:1
 # =============================================================================
-# Base Python Image - Inherits from CUDA Bootstrap Devel
-# Python 3.15t (free-threaded) with TensorCore acceleration
+# Base Python Image - Python 3.15t Free-Threaded with TensorCore
+# Inherits from CUDA Bootstrap Devel for GPU compilation support
 # =============================================================================
+# hadolint global ignore=DL3008,DL3013
 FROM cuda-bootstrap-devel
 LABEL org.opencontainers.image.source="https://github.com/Dean/Aspire-Full"
-LABEL org.opencontainers.image.description="Aspire Base Python (inherits CUDA Bootstrap)"
+LABEL org.opencontainers.image.description="Aspire Base Python 3.15t (Free-Threaded)"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # =============================================================================
 # Python 3.15 Free-Threading Configuration
-# PYTHON_GIL=0 disables the Global Interpreter Lock for true parallelism
-# TensorCore config inherited from cuda-bootstrap-devel
+# PYTHON_GIL=0: Disables GIL for true parallel threading
+# PYTHON_JIT=1: Enables experimental JIT compilation
 # =============================================================================
-ENV PYTHON_GIL=0
-ENV PYTHON_JIT=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHON_GIL=0 \
+    PYTHON_JIT=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8 \
+    PYTHONHASHSEED=random \
+    # Strict formatting configuration
+    RUFF_LINE_LENGTH=120 \
+    RUFF_TARGET_VERSION=py315 \
+    BLACK_LINE_LENGTH=120 \
+    # Virtual environment configuration
+    UV_SYSTEM_PYTHON=0 \
+    UV_PYTHON=3.15t \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:${PATH}"
 
 # Install Python system dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -27,14 +42,41 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv (Astral's ultra-fast Python package manager)
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 # Install Python 3.15t (free-threaded) via uv
-RUN uv python install 3.15t
+RUN uv python install 3.15t \
+    && uv venv /opt/venv --python 3.15t \
+    && chmod -R 755 /opt/venv
 
-# Set uv to use installed Python
-ENV UV_SYSTEM_PYTHON=0
-ENV UV_PYTHON=3.15t
+# Install strict formatting tools globally in the venv
+RUN --mount=type=cache,target=/root/.cache/uv \
+    . /opt/venv/bin/activate && \
+    uv pip install \
+    ruff>=0.8.0 \
+    black>=24.0.0 \
+    mypy>=1.13.0 \
+    isort>=5.13.0
+
+# Create ruff configuration for strict formatting
+RUN mkdir -p /etc/python && \
+    echo '[tool.ruff]' > /etc/python/ruff.toml && \
+    echo 'target-version = "py315"' >> /etc/python/ruff.toml && \
+    echo 'line-length = 120' >> /etc/python/ruff.toml && \
+    echo 'fix = true' >> /etc/python/ruff.toml && \
+    echo '' >> /etc/python/ruff.toml && \
+    echo '[tool.ruff.lint]' >> /etc/python/ruff.toml && \
+    echo 'select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "TCH", "RUF", "PTH", "PL"]' >> /etc/python/ruff.toml && \
+    echo 'ignore = ["E501", "PLR0913", "PLR2004"]' >> /etc/python/ruff.toml && \
+    echo '' >> /etc/python/ruff.toml && \
+    echo '[tool.ruff.lint.isort]' >> /etc/python/ruff.toml && \
+    echo 'known-first-party = ["aspire_agents"]' >> /etc/python/ruff.toml && \
+    echo 'combine-as-imports = true' >> /etc/python/ruff.toml && \
+    echo '' >> /etc/python/ruff.toml && \
+    echo '[tool.ruff.format]' >> /etc/python/ruff.toml && \
+    echo 'quote-style = "double"' >> /etc/python/ruff.toml && \
+    echo 'indent-style = "space"' >> /etc/python/ruff.toml && \
+    echo 'line-ending = "lf"' >> /etc/python/ruff.toml
 
 # Named volume for uv cache persistence
 VOLUME ["/root/.cache/uv"]
